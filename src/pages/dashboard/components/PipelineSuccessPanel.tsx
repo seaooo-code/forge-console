@@ -24,7 +24,7 @@ export function PipelineSuccessPanel({ rates }: PipelineSuccessPanelProps) {
               background: `conic-gradient(#0f7ae5 ${overallRate * 3.6}deg, #e8eef7 0deg)`,
             }}
           >
-            <div className="size-[70px] rounded-full bg-white" />
+            <div className="size-17.5 rounded-full bg-white" />
           </div>
           <div>
             <div className="font-semibold text-3xl text-slate-900">{overallRate}%</div>

@@ -80,7 +80,7 @@ function MiniSparkline({ values }: { values: number[] }) {
   });
 
   return (
-    <svg className="mt-3 h-[34px] w-full" viewBox={`0 0 ${width} ${height}`} role="img">
+    <svg className="mt-3 h-8.5 w-full" viewBox={`0 0 ${width} ${height}`} role="img">
       <title>metric trend</title>
       <polyline
         fill="none"

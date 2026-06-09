@@ -11,7 +11,7 @@
 ## 前端边界
 
 - `src/components/ui` 只放 shadcn/ui 原子组件，不写业务逻辑、请求、状态管理。
-- 业务功能按 `src/features/<feature>` 收敛，跨功能只通过 feature 的公开出口引用。
+- 业务和布局代码优先使用 shadcn/ui 组件；已有对应组件时，不直接写原生 `button`、`input`、`select`、`textarea`、`checkbox` 等交互控件。
+- 页面业务按 `src/pages/<page>` 收敛，跨页面只通过页面的公开出口引用。
 - 全局应用装配只放 `src/app`，不要把页面业务堆在 `src/main.tsx`。
-- 请求、Query key、Zustand store、复杂类型必须贴近所属 feature；只有真正跨功能复用时才放入 `src/lib`、`src/store` 或 `src/types`。
-
+- 请求、Query key、Zustand store、复杂类型必须贴近所属页面；只有真正跨页面复用时才放入 `src/lib`、`src/store` 或 `src/types`。

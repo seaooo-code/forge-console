@@ -2,6 +2,7 @@ import { type ColDef, themeQuartz } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 import { useMemo } from "react";
 
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
@@ -59,10 +60,7 @@ export function RecentReleasesTable({ releases }: RecentReleasesTableProps) {
         cellRenderer: ({ value }: { value?: ReleaseRecord["environment"] }) =>
           value ? (
             <span
-              className={cn(
-                "inline-flex rounded px-2 py-0.5 font-medium text-[12px]",
-                envClass[value],
-              )}
+              className={cn("inline-flex rounded px-2 py-0.5 font-medium text-xs", envClass[value])}
             >
               {value}
             </span>
@@ -83,7 +81,7 @@ export function RecentReleasesTable({ releases }: RecentReleasesTableProps) {
           value ? (
             <span
               className={cn(
-                "inline-flex rounded px-2 py-0.5 font-medium text-[12px]",
+                "inline-flex rounded px-2 py-0.5 font-medium text-xs",
                 releaseStatusClass[value],
               )}
             >
@@ -113,9 +111,13 @@ export function RecentReleasesTable({ releases }: RecentReleasesTableProps) {
     <Card className="rounded-lg py-0 shadow-none">
       <CardHeader className="flex h-12 flex-row items-center justify-between border-b px-4 py-0">
         <CardTitle className="text-slate-900 text-sm">最近发布</CardTitle>
-        <button type="button" className="font-medium text-blue-600 text-xs">
+        <Button
+          variant="link"
+          type="button"
+          className="h-auto p-0 font-medium text-blue-600 text-xs"
+        >
           查看全部 →
-        </button>
+        </Button>
       </CardHeader>
       <CardContent className="px-0 py-0">
         <AgGridReact<ReleaseRecord>

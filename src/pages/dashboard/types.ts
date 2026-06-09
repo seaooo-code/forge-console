@@ -1,27 +1,3 @@
-export type NavItem = {
-  id: string;
-  label: string;
-  href: string;
-  icon: NavIconName;
-};
-
-export type NavGroup = {
-  label: string;
-  items: NavItem[];
-};
-
-export type NavIconName =
-  | "app"
-  | "bundle"
-  | "dashboard"
-  | "environment"
-  | "module"
-  | "pipeline"
-  | "release"
-  | "rollback"
-  | "settings"
-  | "task";
-
 export type MetricIconName = "app" | "bundle" | "module" | "pipeline" | "release" | "task";
 
 export type SummaryMetric = {
@@ -61,8 +37,7 @@ export type ReleaseRecord = {
   status: "灰度中" | "已完成" | "已回滚";
 };
 
-export type ConsoleSnapshot = {
-  navGroups: NavGroup[];
+export type DashboardSnapshot = {
   metrics: SummaryMetric[];
   buildTrend: BuildTrendPoint[];
   pipelineRates: PipelineSuccessRate[];

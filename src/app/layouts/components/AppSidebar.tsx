@@ -14,10 +14,11 @@ import {
   Workflow,
 } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-import { useConsoleStore } from "../model/use-console-store";
-import type { NavGroup, NavIconName } from "../types";
+import { useConsoleLayoutStore } from "../model/use-console-layout-store";
+import type { NavGroup, NavIconName, NavItem } from "../types";
 
 const navIcons: Record<NavIconName, LucideIcon> = {
   app: AppWindow,
@@ -34,27 +35,28 @@ const navIcons: Record<NavIconName, LucideIcon> = {
 
 type AppSidebarProps = {
   navGroups: NavGroup[];
+  onNavigate: (item: NavItem) => void;
 };
 
-export function AppSidebar({ navGroups }: AppSidebarProps) {
-  const activeNavId = useConsoleStore((state) => state.activeNavId);
-  const sidebarTheme = useConsoleStore((state) => state.sidebarTheme);
-  const setActiveNavId = useConsoleStore((state) => state.setActiveNavId);
-  const toggleSidebarTheme = useConsoleStore((state) => state.toggleSidebarTheme);
+export function AppSidebar({ navGroups, onNavigate }: AppSidebarProps) {
+  const activeNavId = useConsoleLayoutStore((state) => state.activeNavId);
+  const sidebarTheme = useConsoleLayoutStore((state) => state.sidebarTheme);
+  const setActiveNavId = useConsoleLayoutStore((state) => state.setActiveNavId);
+  const toggleSidebarTheme = useConsoleLayoutStore((state) => state.toggleSidebarTheme);
   const isLight = sidebarTheme === "light";
 
   return (
     <aside
       className={cn(
-        "flex min-h-screen w-full flex-col lg:sticky lg:top-0 lg:h-screen",
+        "flex min-h-screen w-full flex-col lg:sticky lg:top-0 lg:h-screen lg:w-62 lg:shrink-0",
         isLight
           ? "border-slate-200 border-r bg-white text-slate-700"
-          : "bg-[#071120] text-slate-300",
+          : "bg-slate-950 text-slate-300",
       )}
     >
       <div
         className={cn(
-          "flex h-[72px] items-center gap-3 border-b px-5",
+          "flex h-18 items-center gap-3 border-b px-5",
           isLight ? "border-slate-200" : "border-slate-800",
         )}
       >
@@ -70,9 +72,7 @@ export function AppSidebar({ navGroups }: AppSidebarProps) {
           >
             RN Bundle 平台
           </div>
-          <div
-            className={cn("truncate text-[11px]", isLight ? "text-slate-500" : "text-slate-400")}
-          >
+          <div className={cn("truncate text-xs", isLight ? "text-slate-500" : "text-slate-400")}>
             Engineering Console
           </div>
         </div>
@@ -83,7 +83,7 @@ export function AppSidebar({ navGroups }: AppSidebarProps) {
           <div key={group.label} className="space-y-0.5">
             <div
               className={cn(
-                "px-3 pb-1 font-medium text-[10px] uppercase tracking-wide",
+                "px-3 pb-1 font-medium text-xs uppercase tracking-wide",
                 isLight ? "text-slate-400" : "text-slate-500",
               )}
             >
@@ -94,22 +94,26 @@ export function AppSidebar({ navGroups }: AppSidebarProps) {
               const active = activeNavId === item.id;
 
               return (
-                <button
+                <Button
                   key={item.id}
+                  variant="ghost"
                   type="button"
                   className={cn(
-                    "flex h-9 w-full items-center gap-3 rounded-md px-3 text-left font-medium text-sm transition-colors",
-                    active && "bg-blue-600 text-white shadow-[0_8px_20px_rgba(37,99,235,0.25)]",
+                    "flex h-9 w-full justify-start gap-3 rounded-md px-3 text-left font-medium text-sm transition-colors",
+                    active && "bg-blue-600 text-white shadow-blue-600/25 shadow-lg",
                     !active &&
                       (isLight
                         ? "text-slate-600 hover:bg-slate-100 hover:text-slate-950"
                         : "text-slate-300 hover:bg-slate-800/80 hover:text-white"),
                   )}
-                  onClick={() => setActiveNavId(item.id)}
+                  onClick={() => {
+                    setActiveNavId(item.id);
+                    onNavigate(item);
+                  }}
                 >
                   <Icon className="size-4 shrink-0" />
                   <span className="truncate">{item.label}</span>
-                </button>
+                </Button>
               );
             })}
           </div>
@@ -118,15 +122,17 @@ export function AppSidebar({ navGroups }: AppSidebarProps) {
 
       <div
         className={cn(
-          "flex items-center justify-between gap-3 border-t px-5 py-3 text-[11px]",
+          "flex items-center justify-between gap-3 border-t px-5 py-3 text-xs",
           isLight ? "border-slate-200 text-slate-500" : "border-slate-800 text-slate-500",
         )}
       >
         <span>v2.8.4 · build 20260609</span>
-        <button
+        <Button
+          variant="ghost"
+          size="icon"
           type="button"
           className={cn(
-            "flex size-7 items-center justify-center rounded-md transition-colors",
+            "size-7 rounded-md transition-colors",
             isLight
               ? "bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-950"
               : "bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white",
@@ -135,7 +141,7 @@ export function AppSidebar({ navGroups }: AppSidebarProps) {
           onClick={toggleSidebarTheme}
         >
           {isLight ? <Moon className="size-3.5" /> : <Sun className="size-3.5" />}
-        </button>
+        </Button>
       </div>
     </aside>
   );

@@ -114,7 +114,7 @@ export function BuildTrendChart({ data }: BuildTrendChartProps) {
         </CardTitle>
       </CardHeader>
       <CardContent className="px-4 py-4">
-        <div ref={chartRef} className="h-[206px] w-full" />
+        <div ref={chartRef} className="h-52 w-full" />
       </CardContent>
     </Card>
   );

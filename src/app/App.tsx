@@ -1,5 +1,5 @@
-import { ConsoleDashboard } from "@/features/console";
+import { ConsoleLayout } from "./layouts/ConsoleLayout";
 
 export function App() {
-  return <ConsoleDashboard />;
+  return <ConsoleLayout />;
 }
