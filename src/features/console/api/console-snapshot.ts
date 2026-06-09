@@ -1,104 +1,176 @@
-import type { ConsoleSnapshot, MetricPoint, PipelineRow } from "../types";
+import type { ConsoleSnapshot } from "../types";
 
 export const consoleSnapshotQueryKey = ["console-snapshot"] as const;
 
-const pipelines: PipelineRow[] = [
-  {
-    id: "pipe-api",
-    service: "Control API",
-    owner: "Platform",
-    environment: "prod",
-    status: "healthy",
-    deploys: 38,
-    failureRate: 0.7,
-    latency: 141,
-    cost: 12840,
-    region: "us-east-1",
-    lastRun: "09:42",
-  },
-  {
-    id: "pipe-web",
-    service: "Console Web",
-    owner: "Experience",
-    environment: "prod",
-    status: "warning",
-    deploys: 27,
-    failureRate: 2.8,
-    latency: 188,
-    cost: 9020,
-    region: "us-west-2",
-    lastRun: "09:31",
-  },
-  {
-    id: "pipe-worker",
-    service: "Build Worker",
-    owner: "Automation",
-    environment: "prod",
-    status: "blocked",
-    deploys: 14,
-    failureRate: 6.4,
-    latency: 262,
-    cost: 18760,
-    region: "eu-central-1",
-    lastRun: "08:58",
-  },
-  {
-    id: "pipe-search",
-    service: "Search Index",
-    owner: "Data",
-    environment: "stage",
-    status: "healthy",
-    deploys: 19,
-    failureRate: 1.2,
-    latency: 119,
-    cost: 6410,
-    region: "ap-southeast-1",
-    lastRun: "09:22",
-  },
-  {
-    id: "pipe-insights",
-    service: "Insight Jobs",
-    owner: "Analytics",
-    environment: "dev",
-    status: "healthy",
-    deploys: 45,
-    failureRate: 1.5,
-    latency: 96,
-    cost: 5120,
-    region: "us-east-2",
-    lastRun: "09:47",
-  },
-  {
-    id: "pipe-billing",
-    service: "Billing Sync",
-    owner: "Revenue",
-    environment: "prod",
-    status: "warning",
-    deploys: 12,
-    failureRate: 3.3,
-    latency: 214,
-    cost: 11020,
-    region: "us-east-1",
-    lastRun: "08:44",
-  },
-];
-
-const metrics: MetricPoint[] = [
-  { day: "Mon", buildMinutes: 420, successRate: 97.1, incidents: 1 },
-  { day: "Tue", buildMinutes: 390, successRate: 98.4, incidents: 0 },
-  { day: "Wed", buildMinutes: 452, successRate: 96.6, incidents: 2 },
-  { day: "Thu", buildMinutes: 376, successRate: 99.1, incidents: 0 },
-  { day: "Fri", buildMinutes: 498, successRate: 95.8, incidents: 3 },
-  { day: "Sat", buildMinutes: 228, successRate: 99.4, incidents: 0 },
-  { day: "Sun", buildMinutes: 254, successRate: 98.9, incidents: 1 },
-];
+const snapshot: ConsoleSnapshot = {
+  navGroups: [
+    {
+      label: "概览",
+      items: [{ id: "dashboard", label: "仪表盘", href: "/", icon: "dashboard" }],
+    },
+    {
+      label: "资源管理",
+      items: [
+        { id: "apps", label: "应用管理", href: "/apps", icon: "app" },
+        { id: "environments", label: "环境管理", href: "/environments", icon: "environment" },
+        { id: "modules", label: "模块管理", href: "/modules", icon: "module" },
+      ],
+    },
+    {
+      label: "研发协作",
+      items: [
+        { id: "dev-tasks", label: "开发任务", href: "/dev-tasks", icon: "task" },
+        { id: "pipelines", label: "流水线执行", href: "/pipelines", icon: "pipeline" },
+      ],
+    },
+    {
+      label: "BUNDLE 产物",
+      items: [
+        { id: "bundles", label: "Bundle 版本", href: "/bundles", icon: "bundle" },
+        { id: "combinations", label: "Bundle 组合", href: "/combinations", icon: "dashboard" },
+      ],
+    },
+    {
+      label: "发布运维",
+      items: [
+        { id: "releases", label: "发布任务", href: "/releases", icon: "release" },
+        { id: "gray", label: "灰度管理", href: "/gray", icon: "pipeline" },
+        { id: "rollback", label: "回滚中心", href: "/rollback", icon: "rollback" },
+      ],
+    },
+    {
+      label: "平台",
+      items: [{ id: "settings", label: "系统设置", href: "/settings", icon: "settings" }],
+    },
+  ],
+  metrics: [
+    {
+      id: "apps",
+      label: "应用数量",
+      value: "8",
+      trend: "+1",
+      trendTone: "positive",
+      icon: "app",
+      iconTone: "blue",
+      sparkline: [8, 12, 10, 15, 13, 17, 21, 19, 23],
+    },
+    {
+      id: "modules",
+      label: "模块数量",
+      value: "42",
+      trend: "+3",
+      trendTone: "positive",
+      icon: "module",
+      iconTone: "cyan",
+      sparkline: [14, 19, 17, 23, 21, 26, 31, 29, 34],
+    },
+    {
+      id: "tasks",
+      label: "开发任务",
+      value: "126",
+      trend: "+18",
+      trendTone: "positive",
+      icon: "task",
+      iconTone: "amber",
+      sparkline: [31, 38, 35, 44, 40, 48, 56, 53, 61],
+    },
+    {
+      id: "pipelines",
+      label: "运行中流水线",
+      value: "9",
+      trend: "-2",
+      trendTone: "negative",
+      icon: "pipeline",
+      iconTone: "green",
+      sparkline: [5, 9, 7, 12, 10, 14, 18, 16, 20],
+    },
+    {
+      id: "bundles",
+      label: "Bundle 版本",
+      value: "3,284",
+      trend: "+126",
+      trendTone: "positive",
+      icon: "bundle",
+      iconTone: "sky",
+      sparkline: [44, 52, 49, 58, 61, 69, 77, 73, 82],
+    },
+    {
+      id: "releases",
+      label: "进行中发布",
+      value: "4",
+      trend: "+1",
+      trendTone: "positive",
+      icon: "release",
+      iconTone: "red",
+      sparkline: [2, 4, 3, 5, 4, 6, 8, 7, 9],
+    },
+  ],
+  buildTrend: [
+    { date: "6/3", buildCount: 64, successCount: 57 },
+    { date: "6/4", buildCount: 86, successCount: 77 },
+    { date: "6/5", buildCount: 74, successCount: 68 },
+    { date: "6/6", buildCount: 108, successCount: 95 },
+    { date: "6/7", buildCount: 94, successCount: 88 },
+    { date: "6/8", buildCount: 132, successCount: 121 },
+    { date: "6/9", buildCount: 144, successCount: 138 },
+  ],
+  pipelineRates: [
+    { name: "RN Standard Pipeline", rate: 96 },
+    { name: "Vehicle Pipeline", rate: 92 },
+    { name: "AI Pipeline", rate: 88 },
+  ],
+  tasks: [
+    {
+      id: "MCAR-1234",
+      title: "AI助手入口改版",
+      developer: "li.ming",
+      moduleCount: 3,
+      status: "dev",
+    },
+    {
+      id: "MCAR-1208",
+      title: "首页车控卡片重构",
+      developer: "wang.fang",
+      moduleCount: 2,
+      status: "test",
+    },
+    {
+      id: "MCAR-1196",
+      title: "消息中心 IM 升级",
+      developer: "zhao.lei",
+      moduleCount: 4,
+      status: "review",
+    },
+    {
+      id: "MCAR-1187",
+      title: "OTA 升级提醒",
+      developer: "chen.hao",
+      moduleCount: 1,
+      status: "done",
+    },
+    {
+      id: "MCAR-1172",
+      title: "语音指令优化",
+      developer: "sun.yu",
+      moduleCount: 2,
+      status: "dev",
+    },
+  ],
+  releases: [
+    { id: "RT-20260611", environment: "prod", gray: "20%", status: "灰度中" },
+    { id: "RT-20260610", environment: "pre", gray: "100%", status: "已完成" },
+    { id: "RT-20260609", environment: "prod", gray: "100%", status: "已完成" },
+    { id: "RT-20260608", environment: "prod", gray: "5%", status: "已回滚" },
+    { id: "RT-20260607", environment: "test", gray: "—", status: "已完成" },
+  ],
+  updatedAt: new Date().toISOString(),
+};
 
 export async function fetchConsoleSnapshot(): Promise<ConsoleSnapshot> {
-  await new Promise((resolve) => window.setTimeout(resolve, 240));
+  await new Promise((resolve) => window.setTimeout(resolve, 120));
 
   return {
-    pipelines,
-    metrics,
+    ...snapshot,
     updatedAt: new Date().toISOString(),
   };
 }

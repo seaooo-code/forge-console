@@ -1,29 +1,31 @@
 import { create } from "zustand";
 
 export type Density = "comfortable" | "compact";
-type ThemeMode = "light" | "dark";
+export type SidebarTheme = "dark" | "light";
 
 type ConsoleStore = {
-  density: Density;
-  editorValue: string;
-  selectedPipelineId: string | null;
-  theme: ThemeMode;
+  activeNavId: string;
+  environment: "prod" | "pre" | "test";
+  project: "小米汽车";
+  sidebarTheme: SidebarTheme;
   setDensity: (density: Density) => void;
-  setEditorValue: (value: string) => void;
-  setSelectedPipelineId: (id: string) => void;
-  toggleTheme: () => void;
+  setActiveNavId: (id: string) => void;
+  setEnvironment: (environment: "prod" | "pre" | "test") => void;
+  toggleSidebarTheme: () => void;
+  density: Density;
 };
 
 export const useConsoleStore = create<ConsoleStore>((set) => ({
+  activeNavId: "dashboard",
   density: "comfortable",
-  editorValue: "{}",
-  selectedPipelineId: null,
-  theme: "light",
+  environment: "prod",
+  project: "小米汽车",
+  sidebarTheme: "light",
   setDensity: (density) => set({ density }),
-  setEditorValue: (editorValue) => set({ editorValue }),
-  setSelectedPipelineId: (selectedPipelineId) => set({ selectedPipelineId }),
-  toggleTheme: () =>
+  setActiveNavId: (activeNavId) => set({ activeNavId }),
+  setEnvironment: (environment) => set({ environment }),
+  toggleSidebarTheme: () =>
     set((state) => ({
-      theme: state.theme === "light" ? "dark" : "light",
+      sidebarTheme: state.sidebarTheme === "dark" ? "light" : "dark",
     })),
 }));

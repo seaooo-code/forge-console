@@ -1,28 +1,72 @@
-export type PipelineStatus = "healthy" | "warning" | "blocked";
-
-export type PipelineRow = {
+export type NavItem = {
   id: string;
-  service: string;
-  owner: string;
-  environment: "prod" | "stage" | "dev";
-  status: PipelineStatus;
-  deploys: number;
-  failureRate: number;
-  latency: number;
-  cost: number;
-  region: string;
-  lastRun: string;
+  label: string;
+  href: string;
+  icon: NavIconName;
 };
 
-export type MetricPoint = {
-  day: string;
-  buildMinutes: number;
-  successRate: number;
-  incidents: number;
+export type NavGroup = {
+  label: string;
+  items: NavItem[];
+};
+
+export type NavIconName =
+  | "app"
+  | "bundle"
+  | "dashboard"
+  | "environment"
+  | "module"
+  | "pipeline"
+  | "release"
+  | "rollback"
+  | "settings"
+  | "task";
+
+export type MetricIconName = "app" | "bundle" | "module" | "pipeline" | "release" | "task";
+
+export type SummaryMetric = {
+  id: string;
+  label: string;
+  value: string;
+  trend: string;
+  trendTone: "positive" | "negative";
+  icon: MetricIconName;
+  iconTone: "blue" | "cyan" | "amber" | "green" | "sky" | "red";
+  sparkline: number[];
+};
+
+export type BuildTrendPoint = {
+  date: string;
+  buildCount: number;
+  successCount: number;
+};
+
+export type PipelineSuccessRate = {
+  name: string;
+  rate: number;
+};
+
+export type DevTask = {
+  id: string;
+  title: string;
+  developer: string;
+  moduleCount: number;
+  status: "dev" | "test" | "review" | "done";
+};
+
+export type ReleaseRecord = {
+  id: string;
+  environment: "prod" | "pre" | "test";
+  gray: string;
+  status: "灰度中" | "已完成" | "已回滚";
 };
 
 export type ConsoleSnapshot = {
-  pipelines: PipelineRow[];
-  metrics: MetricPoint[];
+  navGroups: NavGroup[];
+  metrics: SummaryMetric[];
+  buildTrend: BuildTrendPoint[];
+  pipelineRates: PipelineSuccessRate[];
+  tasks: DevTask[];
+  releases: ReleaseRecord[];
   updatedAt: string;
 };

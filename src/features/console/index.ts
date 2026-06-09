@@ -1,2 +1,12 @@
 export { ConsoleDashboard } from "./ConsoleDashboard";
-export type { ConsoleSnapshot, MetricPoint, PipelineRow, PipelineStatus } from "./types";
+export type {
+  BuildTrendPoint,
+  ConsoleSnapshot,
+  DevTask,
+  NavGroup,
+  NavIconName,
+  NavItem,
+  PipelineSuccessRate,
+  ReleaseRecord,
+  SummaryMetric,
+} from "./types";
