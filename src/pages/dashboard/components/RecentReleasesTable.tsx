@@ -31,7 +31,8 @@ const summaryGridTheme = themeQuartz.withParams({
   borderRadius: 0,
   browserColorScheme: "light",
   columnBorder: false,
-  fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
+  fontFamily:
+    '"Roboto Flex Variable", "Noto Sans SC Variable", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif',
   fontSize: 13,
   foregroundColor: "#334155",
   headerBackgroundColor: "#ffffff",

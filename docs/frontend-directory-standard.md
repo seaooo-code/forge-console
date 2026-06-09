@@ -90,6 +90,7 @@ pages/applications/
 
 - Tailwind utility 是默认样式方案。
 - 主题 token、CSS 变量、基础 reset 只放 `src/index.css`。
+- 字体使用 Google 开源字体自托管方案：UI 使用 `Roboto Flex Variable + Noto Sans SC Variable`，代码/等宽文本使用 `Roboto Mono`，通过 Fontsource 包在 `src/main.tsx` 引入。
 - 不新增全局 CSS 文件，除非是第三方库必须要求，并在引入处说明用途。
 - shadcn/ui 组件可按项目主题微调，但不得塞入业务文案或业务状态。
 - 业务和布局代码优先使用 `src/components/ui` 中的 shadcn/ui 原子组件；已有对应组件时，不直接写原生 `button`、`input`、`select`、`textarea`、`checkbox` 等交互控件。

@@ -100,7 +100,8 @@ export function AppSidebar({ navGroups, onNavigate }: AppSidebarProps) {
                   type="button"
                   className={cn(
                     "flex h-9 w-full justify-start gap-3 rounded-md px-3 text-left font-medium text-sm transition-colors",
-                    active && "bg-blue-600 text-white shadow-blue-600/25 shadow-lg",
+                    active &&
+                      "bg-blue-600 text-white shadow-blue-600/25 shadow-lg hover:bg-blue-600 hover:text-white",
                     !active &&
                       (isLight
                         ? "text-slate-600 hover:bg-slate-100 hover:text-slate-950"

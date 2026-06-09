@@ -53,7 +53,8 @@ const appGridTheme = themeQuartz.withParams({
   borderRadius: 0,
   browserColorScheme: "light",
   columnBorder: false,
-  fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
+  fontFamily:
+    '"Roboto Flex Variable", "Noto Sans SC Variable", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif',
   fontSize: 13,
   foregroundColor: "#334155",
   headerBackgroundColor: "#f8fafc",
@@ -201,8 +202,7 @@ export function ApplicationsPage({
     <>
       <div className="border-slate-200 border-b bg-white px-6 py-5">
         <div>
-          <div className="text-slate-500 text-xs">资源管理 / 应用管理</div>
-          <h1 className="mt-2 font-semibold text-2xl text-slate-950 tracking-tight">应用管理</h1>
+          <h1 className="font-semibold text-2xl text-slate-950 tracking-tight">应用管理</h1>
           <p className="mt-2 text-slate-600 text-sm">管理 RN Bundle 平台接入的所有宿主应用</p>
         </div>
       </div>
