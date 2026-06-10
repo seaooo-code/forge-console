@@ -10,7 +10,7 @@ type TopToolbarProps = {
 
 export function TopToolbar({ isFetching, onRefresh }: TopToolbarProps) {
   return (
-    <header className="sticky top-0 z-20 flex h-16 items-center justify-between gap-4 border-slate-200 border-b bg-white/95 px-6 backdrop-blur">
+    <header className="sticky top-0 z-20 flex h-18 items-center justify-between gap-4 border-slate-200 border-b bg-white/95 px-6 backdrop-blur">
       <div className="flex min-w-0 flex-1 items-center gap-3">
         <div className="flex h-9 min-w-65 max-w-130 flex-1 items-center gap-2 rounded-md bg-slate-100 px-3 text-slate-500">
           <Search className="size-4 shrink-0" />

@@ -4,6 +4,7 @@ import { ArrowRight, Clock3, type LucideIcon, Server, Waves } from "lucide-react
 import { useMemo } from "react";
 
 import { miCarEnvironmentBadgeClass } from "@/components/common/EnvironmentBadge";
+import { MockSurface } from "@/components/common/MockSurface";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { themeQuartz } from "@/lib/ag-grid";
@@ -19,6 +20,7 @@ import type {
 } from "./types";
 
 type EnvironmentsPageProps = {
+  onOpenEnvironment: (environmentId: MiCarEnvironmentCode) => void;
   snapshot: EnvironmentsSnapshot;
 };
 
@@ -61,7 +63,7 @@ const environmentGridTheme = themeQuartz.withParams({
   wrapperBorderRadius: 0,
 });
 
-export function EnvironmentsPage({ snapshot }: EnvironmentsPageProps) {
+export function EnvironmentsPage({ onOpenEnvironment, snapshot }: EnvironmentsPageProps) {
   const columnDefs = useMemo<ColDef<BundleVersionMatrixRow>[]>(
     () => [
       {
@@ -144,11 +146,18 @@ export function EnvironmentsPage({ snapshot }: EnvironmentsPageProps) {
       <div className="space-y-4 px-6 py-5">
         <section className="grid gap-3 xl:grid-cols-5">
           {snapshot.environments.map((environment) => (
-            <EnvironmentCard key={environment.id} environment={environment} />
+            <EnvironmentCard
+              key={environment.id}
+              environment={environment}
+              onOpen={() => onOpenEnvironment(environment.id)}
+            />
           ))}
         </section>
 
-        <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+        <MockSurface
+          as="section"
+          className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm"
+        >
           <Card className="gap-0 rounded-none border-0 py-0 shadow-none">
             <CardHeader className="h-12 justify-center border-slate-200 border-b px-4">
               <CardTitle className="font-semibold text-slate-900 text-sm">
@@ -170,13 +179,19 @@ export function EnvironmentsPage({ snapshot }: EnvironmentsPageProps) {
               />
             </CardContent>
           </Card>
-        </section>
+        </MockSurface>
       </div>
     </>
   );
 }
 
-function EnvironmentCard({ environment }: { environment: RuntimeEnvironment }) {
+function EnvironmentCard({
+  environment,
+  onOpen,
+}: {
+  environment: RuntimeEnvironment;
+  onOpen: () => void;
+}) {
   return (
     <Card
       className={cn(
@@ -222,6 +237,7 @@ function EnvironmentCard({ environment }: { environment: RuntimeEnvironment }) {
         variant="outline"
         type="button"
         className="h-9 w-full border-slate-200 bg-white font-medium text-blue-600 text-xs hover:bg-blue-50 hover:text-blue-700"
+        onClick={onOpen}
       >
         进入环境详情
         <ArrowRight className="size-3.5" />

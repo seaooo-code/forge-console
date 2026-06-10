@@ -20,8 +20,8 @@ import {
 } from "@/components/common/ConsoleControls";
 import { consoleGridTheme } from "@/components/common/console-grid-theme";
 import { EnvironmentBadge } from "@/components/common/EnvironmentBadge";
+import { MockCard as Card, MockSurface } from "@/components/common/MockSurface";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { miCarEnvironmentFilterOptions } from "@/types/environments";
@@ -201,7 +201,10 @@ export function BundlesPage({ snapshot }: BundlesPageProps) {
           ))}
         </section>
 
-        <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+        <MockSurface
+          as="section"
+          className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm"
+        >
           <div className="flex flex-wrap items-center justify-between gap-3 border-slate-200 border-b px-4 py-3">
             <div className="flex min-w-0 flex-wrap items-center gap-2">
               <ConsoleFilterSelect
@@ -284,7 +287,7 @@ export function BundlesPage({ snapshot }: BundlesPageProps) {
           />
 
           <ConsoleTableFooter total={snapshot.bundles.length} />
-        </section>
+        </MockSurface>
       </div>
     </>
   );

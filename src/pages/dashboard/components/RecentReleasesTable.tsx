@@ -3,8 +3,9 @@ import { AgGridReact } from "ag-grid-react";
 import { useMemo } from "react";
 
 import { EnvironmentBadge } from "@/components/common/EnvironmentBadge";
+import { MockCard as Card } from "@/components/common/MockSurface";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { themeQuartz } from "@/lib/ag-grid";
 import { cn } from "@/lib/utils";
 

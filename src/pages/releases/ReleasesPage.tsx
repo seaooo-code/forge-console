@@ -23,8 +23,8 @@ import {
 } from "@/components/common/ConsoleControls";
 import { consoleGridTheme } from "@/components/common/console-grid-theme";
 import { EnvironmentBadge } from "@/components/common/EnvironmentBadge";
+import { MockCard as Card, MockSurface } from "@/components/common/MockSurface";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { miCarEnvironmentFilterOptions } from "@/types/environments";
@@ -160,7 +160,10 @@ export function ReleasesPage({ snapshot }: ReleasesPageProps) {
       </div>
 
       <div className="space-y-4 px-6 py-5">
-        <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+        <MockSurface
+          as="section"
+          className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm"
+        >
           <div className="flex flex-col gap-2 border-slate-200 border-b px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="truncate font-semibold text-slate-900 text-sm">
               {snapshot.focus.id} · {snapshot.focus.title}
@@ -252,9 +255,12 @@ export function ReleasesPage({ snapshot }: ReleasesPageProps) {
               ))}
             </div>
           </div>
-        </section>
+        </MockSurface>
 
-        <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+        <MockSurface
+          as="section"
+          className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm"
+        >
           <div className="flex flex-wrap items-center justify-between gap-3 border-slate-200 border-b px-4 py-3">
             <div className="flex min-w-0 flex-wrap items-center gap-2">
               <ConsoleFilterSelect
@@ -330,7 +336,7 @@ export function ReleasesPage({ snapshot }: ReleasesPageProps) {
           />
 
           <ConsoleTableFooter total={snapshot.releases.length} />
-        </section>
+        </MockSurface>
       </div>
     </>
   );

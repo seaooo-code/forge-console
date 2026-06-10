@@ -27,8 +27,8 @@ import {
   ConsoleTableFooter,
 } from "@/components/common/ConsoleControls";
 import { consoleGridTheme } from "@/components/common/console-grid-theme";
+import { MockCard as Card, MockSurface } from "@/components/common/MockSurface";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 
@@ -279,7 +279,10 @@ export function PipelinesPage({ snapshot }: PipelinesPageProps) {
           </div>
         </Card>
 
-        <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+        <MockSurface
+          as="section"
+          className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm"
+        >
           <div className="flex flex-wrap items-center justify-between gap-3 border-slate-200 border-b px-4 py-3">
             <div className="flex min-w-0 flex-wrap items-center gap-2">
               <ConsoleFilterSelect
@@ -366,7 +369,7 @@ export function PipelinesPage({ snapshot }: PipelinesPageProps) {
           />
 
           <ConsoleTableFooter total={snapshot.pipelines.length} />
-        </section>
+        </MockSurface>
       </div>
     </>
   );

@@ -15,14 +15,13 @@ import {
   Wrench,
 } from "lucide-react";
 import { useMemo } from "react";
-
 import {
   ConsoleFilterSelect,
   ConsoleSearchInput,
   ConsoleTableFooter,
 } from "@/components/common/ConsoleControls";
+import { MockCard as Card, MockSurface } from "@/components/common/MockSurface";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { themeQuartz } from "@/lib/ag-grid";
 import { cn } from "@/lib/utils";
@@ -32,6 +31,8 @@ import type { ApplicationSummary, HostApplication } from "./types";
 type ApplicationsPageProps = {
   applications: HostApplication[];
   isFetching: boolean;
+  onCreateApplication: () => void;
+  onOpenApplication: (applicationSlug: string) => void;
   onRefresh: () => void;
   summary: ApplicationSummary;
 };
@@ -69,6 +70,8 @@ const appGridTheme = themeQuartz.withParams({
 export function ApplicationsPage({
   applications,
   isFetching,
+  onCreateApplication,
+  onOpenApplication,
   onRefresh,
   summary,
 }: ApplicationsPageProps) {
@@ -169,6 +172,7 @@ export function ApplicationsPage({
       },
       {
         cellRenderer: ActionsCell,
+        cellRendererParams: { onOpenApplication },
         colId: "actions",
         flex: 0.75,
         headerName: "操作",
@@ -176,7 +180,7 @@ export function ApplicationsPage({
         sortable: false,
       },
     ],
-    [],
+    [onOpenApplication],
   );
 
   const defaultColDef = useMemo<ColDef<HostApplication>>(
@@ -232,7 +236,10 @@ export function ApplicationsPage({
           })}
         </section>
 
-        <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+        <MockSurface
+          as="section"
+          className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm"
+        >
           <div className="flex flex-wrap items-center justify-between gap-3 border-slate-200 border-b px-4 py-3">
             <div className="flex min-w-0 flex-wrap items-center gap-2">
               <ConsoleFilterSelect
@@ -277,7 +284,7 @@ export function ApplicationsPage({
               <Button variant="outline" size="icon" aria-label="下载应用列表">
                 <Download className="size-4" />
               </Button>
-              <Button className="bg-blue-600 hover:bg-blue-700">
+              <Button className="bg-blue-600 hover:bg-blue-700" onClick={onCreateApplication}>
                 <Plus className="size-4" />
                 新建应用
               </Button>
@@ -298,7 +305,7 @@ export function ApplicationsPage({
           />
 
           <ConsoleTableFooter total={applications.length} />
-        </section>
+        </MockSurface>
       </div>
     </>
   );
@@ -353,13 +360,23 @@ function StatusCell({ value }: ICellRendererParams<HostApplication, HostApplicat
   );
 }
 
-function ActionsCell() {
+function ActionsCell({
+  data,
+  onOpenApplication,
+}: ICellRendererParams<HostApplication> & {
+  onOpenApplication?: (applicationSlug: string) => void;
+}) {
   return (
     <div className="flex h-full items-center gap-2 whitespace-nowrap font-medium text-blue-600 text-xs">
       <Button
         variant="link"
         type="button"
         className="h-auto p-0 text-blue-600 text-xs hover:text-blue-700"
+        onClick={() => {
+          if (data) {
+            onOpenApplication?.(data.slug);
+          }
+        }}
       >
         详情
       </Button>

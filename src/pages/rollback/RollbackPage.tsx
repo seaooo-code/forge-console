@@ -12,8 +12,8 @@ import {
 import { useMemo } from "react";
 import { consoleGridTheme } from "@/components/common/console-grid-theme";
 import { EnvironmentBadge } from "@/components/common/EnvironmentBadge";
+import { MockCard as Card, MockSurface } from "@/components/common/MockSurface";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { miCarEnvironmentShortLabels } from "@/types/environments";
 
@@ -125,7 +125,10 @@ export function RollbackPage({ snapshot }: RollbackPageProps) {
       </div>
 
       <div className="space-y-4 px-6 py-5">
-        <section className="rounded-lg border border-slate-200 bg-white px-4 py-4 shadow-sm">
+        <MockSurface
+          as="section"
+          className="rounded-lg border border-slate-200 bg-white px-4 py-4 shadow-sm"
+        >
           <div className="flex items-start gap-3">
             <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-red-50 text-red-500">
               <AlertTriangle className="size-4" />
@@ -137,7 +140,7 @@ export function RollbackPage({ snapshot }: RollbackPageProps) {
               </p>
             </div>
           </div>
-        </section>
+        </MockSurface>
 
         <section className="grid gap-3 xl:grid-cols-5">
           {snapshot.environments.map((environment) => (
@@ -208,7 +211,10 @@ export function RollbackPage({ snapshot }: RollbackPageProps) {
           </Card>
         </section>
 
-        <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+        <MockSurface
+          as="section"
+          className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm"
+        >
           <div className="flex h-12 items-center border-slate-200 border-b px-4">
             <h2 className="font-semibold text-slate-900 text-sm">回滚记录</h2>
           </div>
@@ -224,7 +230,7 @@ export function RollbackPage({ snapshot }: RollbackPageProps) {
             suppressContextMenu
             getRowId={({ data }) => `${data.time}-${data.fromCombination}`}
           />
-        </section>
+        </MockSurface>
       </div>
     </>
   );

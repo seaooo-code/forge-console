@@ -12,6 +12,7 @@ import {
 
 import { navGroups } from "@/app/navigation";
 import { Card } from "@/components/ui/card";
+import { type MiCarEnvironmentCode, miCarEnvironmentCodes } from "@/types/environments";
 
 import { AppSidebar } from "./components/AppSidebar";
 import { TopToolbar } from "./components/TopToolbar";
@@ -29,9 +30,24 @@ const ApplicationsPage = lazy(async () => ({
     .ApplicationsPage as unknown as AnyPage,
 }));
 
+const ApplicationCreatePage = lazy(async () => ({
+  default: (await import("@/pages/applications/ApplicationCreatePage"))
+    .ApplicationCreatePage as unknown as AnyPage,
+}));
+
+const ApplicationDetailPage = lazy(async () => ({
+  default: (await import("@/pages/applications/ApplicationDetailPage"))
+    .ApplicationDetailPage as unknown as AnyPage,
+}));
+
 const EnvironmentsPage = lazy(async () => ({
   default: (await import("@/pages/environments/EnvironmentsPage"))
     .EnvironmentsPage as unknown as AnyPage,
+}));
+
+const EnvironmentDetailPage = lazy(async () => ({
+  default: (await import("@/pages/environments/EnvironmentDetailPage"))
+    .EnvironmentDetailPage as unknown as AnyPage,
 }));
 
 const ModulesPage = lazy(async () => ({
@@ -82,6 +98,7 @@ const emptyDashboardSnapshot = {
 
 const emptyApplicationsSnapshot = {
   applications: [],
+  details: {},
   summary: {
     maintenance: 0,
     offline: 0,
@@ -91,6 +108,7 @@ const emptyApplicationsSnapshot = {
 };
 
 const emptyEnvironmentsSnapshot = {
+  details: {},
   environments: [],
   matrix: [],
 };
@@ -188,6 +206,7 @@ const emptySettingsSnapshot = {
 
 type PageRenderOptions = {
   isFetching: boolean;
+  navigateTo: (path: string) => void;
   refetch: () => void;
 };
 
@@ -198,7 +217,7 @@ type PageRouteConfig = {
   render: (data: unknown, options: PageRenderOptions) => ReactNode;
 };
 
-const pageRoutes: Record<string, PageRouteConfig> = {
+const staticPageRoutes: Record<string, PageRouteConfig> = {
   "/": {
     emptyData: emptyDashboardSnapshot,
     queryFn: async () =>
@@ -211,13 +230,15 @@ const pageRoutes: Record<string, PageRouteConfig> = {
     queryFn: async () =>
       (await import("@/pages/applications/api/applications-snapshot")).fetchApplicationsSnapshot(),
     queryKey: ["applications-snapshot"],
-    render: (snapshot, { isFetching, refetch }) => {
+    render: (snapshot, { isFetching, navigateTo, refetch }) => {
       const applicationsSnapshot = snapshot as typeof emptyApplicationsSnapshot;
 
       return (
         <ApplicationsPage
           applications={applicationsSnapshot.applications}
           isFetching={isFetching}
+          onCreateApplication={() => navigateTo("/apps/new")}
+          onOpenApplication={(applicationSlug: string) => navigateTo(`/apps/${applicationSlug}`)}
           onRefresh={refetch}
           summary={applicationsSnapshot.summary}
         />
@@ -228,8 +249,15 @@ const pageRoutes: Record<string, PageRouteConfig> = {
     emptyData: emptyEnvironmentsSnapshot,
     queryFn: async () =>
       (await import("@/pages/environments/api/environments-snapshot")).fetchEnvironmentsSnapshot(),
-    queryKey: ["environments-snapshot"],
-    render: (snapshot) => <EnvironmentsPage snapshot={snapshot} />,
+    queryKey: ["environments"],
+    render: (snapshot, { navigateTo }) => (
+      <EnvironmentsPage
+        onOpenEnvironment={(environmentId: MiCarEnvironmentCode) =>
+          navigateTo(`/environments/${environmentId}`)
+        }
+        snapshot={snapshot}
+      />
+    ),
   },
   "/modules": {
     emptyData: emptyModulesSnapshot,
@@ -295,11 +323,66 @@ const pageRoutes: Record<string, PageRouteConfig> = {
   },
 };
 
+function getRouteConfig(path: string): PageRouteConfig {
+  if (path === "/apps/new") {
+    return {
+      emptyData: null,
+      queryFn: async () => null,
+      queryKey: ["applications-snapshot", "new"],
+      render: (_, { navigateTo }) => <ApplicationCreatePage onBack={() => navigateTo("/apps")} />,
+    };
+  }
+
+  const applicationSlug = getApplicationDetailSlug(path);
+
+  if (applicationSlug) {
+    return {
+      emptyData: emptyApplicationsSnapshot,
+      queryFn: async () =>
+        (
+          await import("@/pages/applications/api/applications-snapshot")
+        ).fetchApplicationsSnapshot(),
+      queryKey: ["applications-snapshot", "detail", applicationSlug],
+      render: (snapshot, { isFetching, navigateTo }) => (
+        <ApplicationDetailPage
+          applicationSlug={applicationSlug}
+          isFetching={isFetching}
+          onBack={() => navigateTo("/apps")}
+          snapshot={snapshot}
+        />
+      ),
+    };
+  }
+
+  const environmentId = getEnvironmentDetailId(path);
+
+  if (environmentId) {
+    return {
+      emptyData: emptyEnvironmentsSnapshot,
+      queryFn: async () =>
+        (
+          await import("@/pages/environments/api/environments-snapshot")
+        ).fetchEnvironmentDetailSnapshot(environmentId),
+      queryKey: ["environments", "detail", environmentId],
+      render: (snapshot, { isFetching, navigateTo }) => (
+        <EnvironmentDetailPage
+          environmentId={environmentId}
+          isFetching={isFetching}
+          onBack={() => navigateTo("/environments")}
+          snapshot={snapshot}
+        />
+      ),
+    };
+  }
+
+  return staticPageRoutes[path] ?? staticPageRoutes["/"];
+}
+
 export function ConsoleLayout() {
   const [routePath, setRoutePath] = useState(getCurrentPath);
   const setActiveNavId = useConsoleLayoutStore((state) => state.setActiveNavId);
   const activeNav = useMemo(() => findNavItem(routePath) ?? findNavItem("/"), [routePath]);
-  const routeConfig = pageRoutes[routePath] ?? pageRoutes["/"];
+  const routeConfig = useMemo(() => getRouteConfig(routePath), [routePath]);
 
   const { data, isFetching, refetch } = useQuery({
     queryKey: routeConfig.queryKey,
@@ -327,13 +410,31 @@ export function ConsoleLayout() {
     document.title = `${activeNav.label} · RN Bundle 平台`;
   }, [activeNav, setActiveNavId]);
 
-  const handleNavigate = useCallback((item: NavItem) => {
-    if (window.location.pathname !== item.href) {
-      window.history.pushState(null, "", item.href);
+  const handleNavigatePath = useCallback((path: string) => {
+    const normalizedPath = normalizePath(path);
+
+    if (window.location.pathname !== normalizedPath) {
+      window.history.pushState(null, "", normalizedPath);
     }
 
-    setRoutePath(normalizePath(item.href));
+    setRoutePath(normalizedPath);
   }, []);
+
+  const handleNavigate = useCallback(
+    (item: NavItem) => {
+      handleNavigatePath(item.href);
+    },
+    [handleNavigatePath],
+  );
+
+  const renderOptions = useMemo<PageRenderOptions>(
+    () => ({
+      isFetching,
+      navigateTo: handleNavigatePath,
+      refetch: refetchPage,
+    }),
+    [handleNavigatePath, isFetching, refetchPage],
+  );
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900">
@@ -344,10 +445,7 @@ export function ConsoleLayout() {
           <TopToolbar isFetching={isFetching} onRefresh={refetchPage} />
 
           <Suspense fallback={<PageFallback />}>
-            {routeConfig.render(pageData, {
-              isFetching,
-              refetch: refetchPage,
-            })}
+            {routeConfig.render(pageData, renderOptions)}
           </Suspense>
         </section>
       </div>
@@ -356,13 +454,55 @@ export function ConsoleLayout() {
 }
 
 function findNavItem(path: string) {
-  return navGroups
-    .flatMap((group) => group.items)
-    .find((item) => normalizePath(item.href) === path);
+  const navItems = navGroups.flatMap((group) => group.items);
+  const normalizedPath = normalizePath(path);
+  const exactItem = navItems.find((item) => normalizePath(item.href) === normalizedPath);
+
+  if (exactItem) {
+    return exactItem;
+  }
+
+  return navItems.find((item) => {
+    const href = normalizePath(item.href);
+
+    return href !== "/" && normalizedPath.startsWith(`${href}/`);
+  });
 }
 
 function getCurrentPath() {
   return normalizePath(window.location.pathname);
+}
+
+function getApplicationDetailSlug(path: string): string | null {
+  const normalizedPath = normalizePath(path);
+  const prefix = "/apps/";
+
+  if (!normalizedPath.startsWith(prefix)) {
+    return null;
+  }
+
+  const applicationSlug = normalizedPath.slice(prefix.length);
+
+  if (applicationSlug === "" || applicationSlug === "new" || applicationSlug.includes("/")) {
+    return null;
+  }
+
+  return applicationSlug;
+}
+
+function getEnvironmentDetailId(path: string): MiCarEnvironmentCode | null {
+  const normalizedPath = normalizePath(path);
+  const prefix = "/environments/";
+
+  if (!normalizedPath.startsWith(prefix)) {
+    return null;
+  }
+
+  const environmentId = normalizedPath.slice(prefix.length);
+
+  return miCarEnvironmentCodes.includes(environmentId as MiCarEnvironmentCode)
+    ? (environmentId as MiCarEnvironmentCode)
+    : null;
 }
 
 function normalizePath(path: string) {

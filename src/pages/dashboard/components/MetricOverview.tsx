@@ -1,7 +1,8 @@
 import type { LucideIcon } from "lucide-react";
 import { AppWindow, Boxes, GitBranch, Package, Rocket, Workflow } from "lucide-react";
 
-import { Card, CardContent } from "@/components/ui/card";
+import { MockCard as Card } from "@/components/common/MockSurface";
+import { CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 import type { MetricIconName, SummaryMetric } from "../types";

@@ -1,4 +1,5 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { MockCard as Card } from "@/components/common/MockSurface";
+import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import type { PipelineSuccessRate } from "../types";
 

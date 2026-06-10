@@ -12,8 +12,8 @@ import {
 import { useEffect, useMemo, useRef } from "react";
 
 import { consoleGridTheme } from "@/components/common/console-grid-theme";
+import { MockCard as Card, MockSurface } from "@/components/common/MockSurface";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { type EChartsOption, echarts } from "@/lib/echarts";
 import { cn } from "@/lib/utils";
 
@@ -140,7 +140,10 @@ export function GrayPage({ snapshot }: GrayPageProps) {
           ))}
         </section>
 
-        <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+        <MockSurface
+          as="section"
+          className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm"
+        >
           <div className="flex h-12 items-center border-slate-200 border-b px-4">
             <h2 className="font-semibold text-slate-900 text-sm">灰度调整历史</h2>
           </div>
@@ -156,7 +159,7 @@ export function GrayPage({ snapshot }: GrayPageProps) {
             suppressContextMenu
             getRowId={({ data }) => data.id}
           />
-        </section>
+        </MockSurface>
       </div>
     </>
   );

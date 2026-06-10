@@ -17,8 +17,8 @@ import {
 import { Fragment, type ReactNode, useMemo } from "react";
 import { consoleGridTheme } from "@/components/common/console-grid-theme";
 import { EnvironmentBadge } from "@/components/common/EnvironmentBadge";
+import { MockCard as Card, MockSurface } from "@/components/common/MockSurface";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 import type {
@@ -211,7 +211,10 @@ export function SettingsPage({ snapshot }: SettingsPageProps) {
         </aside>
 
         <div className="space-y-4 xl:col-span-9">
-          <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+          <MockSurface
+            as="section"
+            className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm"
+          >
             <div className="flex h-12 items-center justify-between border-slate-200 border-b px-4">
               <h2 className="font-semibold text-slate-900 text-sm">用户管理 · 成员列表</h2>
               <Button variant="link" type="button" className="h-auto p-0 text-blue-600 text-xs">
@@ -231,9 +234,12 @@ export function SettingsPage({ snapshot }: SettingsPageProps) {
               suppressContextMenu
               getRowId={({ data }) => data.id}
             />
-          </section>
+          </MockSurface>
 
-          <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+          <MockSurface
+            as="section"
+            className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm"
+          >
             <div className="flex h-12 items-center border-slate-200 border-b px-4">
               <h2 className="font-semibold text-slate-900 text-sm">角色权限矩阵</h2>
             </div>
@@ -249,7 +255,7 @@ export function SettingsPage({ snapshot }: SettingsPageProps) {
               suppressContextMenu
               getRowId={({ data }) => data.id}
             />
-          </section>
+          </MockSurface>
 
           <section className="grid gap-4 xl:grid-cols-2">
             <ConfigPanel
