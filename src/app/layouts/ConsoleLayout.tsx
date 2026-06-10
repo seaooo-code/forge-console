@@ -418,6 +418,7 @@ export function ConsoleLayout() {
     }
 
     setRoutePath(normalizedPath);
+    window.dispatchEvent(new PopStateEvent("popstate"));
   }, []);
 
   const handleNavigate = useCallback(
