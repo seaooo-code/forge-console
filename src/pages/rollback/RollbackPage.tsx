@@ -10,11 +10,12 @@ import {
   ShieldAlert,
 } from "lucide-react";
 import { useMemo } from "react";
-
-import { consoleGridTheme } from "@/components/common/ConsolePage";
+import { consoleGridTheme } from "@/components/common/console-grid-theme";
+import { EnvironmentBadge } from "@/components/common/EnvironmentBadge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { miCarEnvironmentShortLabels } from "@/types/environments";
 
 import type {
   RollbackCombinationStatus,
@@ -28,20 +29,6 @@ import type {
 
 type RollbackPageProps = {
   snapshot: RollbackSnapshot;
-};
-
-const envLabel: Record<RollbackEnvironment, string> = {
-  dev: "DEV",
-  pre: "PRE",
-  prod: "PROD",
-  test: "TEST",
-};
-
-const envBadgeClass: Record<RollbackEnvironment, string> = {
-  dev: "border-sky-200 bg-sky-50 text-sky-700",
-  pre: "border-amber-200 bg-amber-50 text-amber-700",
-  prod: "border-red-200 bg-red-50 text-red-600",
-  test: "border-blue-200 bg-blue-50 text-blue-700",
 };
 
 const riskClass: Record<RollbackRisk, string> = {
@@ -152,7 +139,7 @@ export function RollbackPage({ snapshot }: RollbackPageProps) {
           </div>
         </section>
 
-        <section className="grid gap-3 xl:grid-cols-4">
+        <section className="grid gap-3 xl:grid-cols-5">
           {snapshot.environments.map((environment) => (
             <EnvironmentCard key={environment.id} environment={environment} />
           ))}
@@ -248,16 +235,9 @@ function EnvironmentCard({ environment }: { environment: RollbackEnvironmentStat
     <Card className="rounded-lg px-4 py-4 shadow-none">
       <div className="mb-4 flex items-center justify-between">
         <div className="font-semibold text-slate-950 text-base">
-          {envLabel[environment.environment]}
+          {miCarEnvironmentShortLabels[environment.environment]}
         </div>
-        <span
-          className={cn(
-            "inline-flex h-6 items-center rounded border px-2 font-semibold text-xs leading-none",
-            envBadgeClass[environment.environment],
-          )}
-        >
-          当前
-        </span>
+        <EnvironmentBadge environment={environment.environment}>当前</EnvironmentBadge>
       </div>
       <div className="font-medium text-slate-500 text-xs">当前 Combination</div>
       <div className="mt-2 rounded-md bg-slate-100 px-3 py-2 font-mono font-semibold text-slate-800 text-xs">
@@ -354,16 +334,7 @@ function EnvironmentCell({ value }: ICellRendererParams<RollbackRecord, Rollback
     return null;
   }
 
-  return (
-    <span
-      className={cn(
-        "inline-flex h-6 items-center rounded border px-2 font-semibold text-xs leading-none",
-        envBadgeClass[value],
-      )}
-    >
-      {value}
-    </span>
-  );
+  return <EnvironmentBadge environment={value} />;
 }
 
 function CombinationCell({ value }: ICellRendererParams<RollbackRecord, string>) {

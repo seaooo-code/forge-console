@@ -1,7 +1,5 @@
 import type { ColDef, ICellRendererParams } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
-import type { EChartsOption } from "echarts";
-import * as echarts from "echarts";
 import {
   AlertTriangle,
   type LucideIcon,
@@ -13,9 +11,10 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useRef } from "react";
 
-import { consoleGridTheme } from "@/components/common/ConsolePage";
+import { consoleGridTheme } from "@/components/common/console-grid-theme";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { type EChartsOption, echarts } from "@/lib/echarts";
 import { cn } from "@/lib/utils";
 
 import type {
@@ -298,9 +297,6 @@ function ErrorRateChart({ data }: { data: number[] }) {
         left: 4,
         right: 4,
         top: 8,
-      },
-      tooltip: {
-        trigger: "axis",
       },
       xAxis: {
         axisLabel: {

@@ -1,11 +1,14 @@
-import { type ColDef, type ICellRendererParams, themeQuartz } from "ag-grid-community";
+import type { ColDef, ICellRendererParams } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 import { ArrowRight, Clock3, type LucideIcon, Server, Waves } from "lucide-react";
 import { useMemo } from "react";
 
+import { miCarEnvironmentBadgeClass } from "@/components/common/EnvironmentBadge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { themeQuartz } from "@/lib/ag-grid";
 import { cn } from "@/lib/utils";
+import type { MiCarEnvironmentCode } from "@/types/environments";
 
 import type {
   BundleVersionMatrixRow,
@@ -22,6 +25,7 @@ type EnvironmentsPageProps = {
 const environmentToneClass: Record<EnvironmentCardTone, string> = {
   amber: "border-t-amber-500",
   blue: "border-t-blue-500",
+  emerald: "border-t-emerald-500",
   rose: "border-t-rose-500",
   sky: "border-t-sky-500",
 };
@@ -31,12 +35,7 @@ const statusClass: Record<EnvironmentStatus, string> = {
   灰度中: "border-amber-200 bg-amber-50 text-amber-700",
 };
 
-const versionToneClass: Record<"dev" | "pre" | "prod" | "test", string> = {
-  dev: "border-sky-200 bg-sky-50 text-sky-700",
-  pre: "border-amber-200 bg-amber-50 text-amber-700",
-  prod: "border-emerald-200 bg-emerald-50 text-emerald-700",
-  test: "border-blue-200 bg-blue-50 text-blue-700",
-};
+type VersionTone = MiCarEnvironmentCode;
 
 const environmentGridTheme = themeQuartz.withParams({
   accentColor: "#1677ff",
@@ -46,7 +45,7 @@ const environmentGridTheme = themeQuartz.withParams({
   browserColorScheme: "light",
   columnBorder: false,
   fontFamily:
-    '"Roboto Flex Variable", "Noto Sans SC Variable", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif',
+    '"Roboto Flex Variable", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif',
   fontSize: 13,
   foregroundColor: "#334155",
   headerBackgroundColor: "#f8fafc",
@@ -82,26 +81,34 @@ export function EnvironmentsPage({ snapshot }: EnvironmentsPageProps) {
       },
       {
         cellRenderer: VersionCell,
-        cellRendererParams: { tone: "test" },
-        field: "test",
+        cellRendererParams: { tone: "staging" },
+        field: "staging",
         flex: 1,
-        headerName: "TEST",
+        headerName: "STAGING",
         minWidth: 140,
       },
       {
         cellRenderer: VersionCell,
-        cellRendererParams: { tone: "pre" },
-        field: "pre",
+        cellRendererParams: { tone: "preview" },
+        field: "preview",
         flex: 1,
-        headerName: "PRE",
+        headerName: "PREVIEW",
         minWidth: 140,
       },
       {
         cellRenderer: VersionCell,
-        cellRendererParams: { tone: "prod" },
-        field: "prod",
+        cellRendererParams: { tone: "preProduct" },
+        field: "preProduct",
         flex: 1,
-        headerName: "PROD",
+        headerName: "PREPRODUCT",
+        minWidth: 150,
+      },
+      {
+        cellRenderer: VersionCell,
+        cellRendererParams: { tone: "product" },
+        field: "product",
+        flex: 1,
+        headerName: "PRODUCT",
         minWidth: 140,
       },
     ],
@@ -129,13 +136,13 @@ export function EnvironmentsPage({ snapshot }: EnvironmentsPageProps) {
         <div>
           <h1 className="font-semibold text-2xl text-slate-950 tracking-tight">环境管理</h1>
           <p className="mt-2 text-slate-600 text-sm">
-            管理 dev / test / pre / prod 四套环境的当前 Bundle Combination
+            管理 dev / staging / preview / preProduct / product 五套环境的当前 Bundle Combination
           </p>
         </div>
       </div>
 
       <div className="space-y-4 px-6 py-5">
-        <section className="grid gap-3 xl:grid-cols-4">
+        <section className="grid gap-3 xl:grid-cols-5">
           {snapshot.environments.map((environment) => (
             <EnvironmentCard key={environment.id} environment={environment} />
           ))}
@@ -260,7 +267,7 @@ function VersionCell({
   value,
   tone,
 }: ICellRendererParams<BundleVersionMatrixRow, string> & {
-  tone?: "dev" | "pre" | "prod" | "test";
+  tone?: VersionTone;
 }) {
   if (!value || !tone) {
     return null;
@@ -270,7 +277,7 @@ function VersionCell({
     <span
       className={cn(
         "inline-flex rounded border px-2 py-0.5 font-mono font-semibold text-xs",
-        versionToneClass[tone],
+        miCarEnvironmentBadgeClass[tone],
       )}
     >
       {value}

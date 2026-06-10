@@ -1,4 +1,4 @@
-import { type ColDef, type ICellRendererParams, themeQuartz } from "ag-grid-community";
+import type { ColDef, ICellRendererParams } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 import {
   Activity,
@@ -6,29 +6,25 @@ import {
   ArchiveX,
   CircleDot,
   Download,
-  type LucideIcon,
   MonitorSmartphone,
   MoreHorizontal,
   Plus,
   RefreshCw,
-  Search,
   Smartphone,
   UserRound,
   Wrench,
 } from "lucide-react";
 import { useMemo } from "react";
 
+import {
+  ConsoleFilterSelect,
+  ConsoleSearchInput,
+  ConsoleTableFooter,
+} from "@/components/common/ConsoleControls";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { themeQuartz } from "@/lib/ag-grid";
 import { cn } from "@/lib/utils";
 
 import type { ApplicationSummary, HostApplication } from "./types";
@@ -54,7 +50,7 @@ const appGridTheme = themeQuartz.withParams({
   browserColorScheme: "light",
   columnBorder: false,
   fontFamily:
-    '"Roboto Flex Variable", "Noto Sans SC Variable", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif',
+    '"Roboto Flex Variable", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif',
   fontSize: 13,
   foregroundColor: "#334155",
   headerBackgroundColor: "#f8fafc",
@@ -239,7 +235,7 @@ export function ApplicationsPage({
         <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-3 border-slate-200 border-b px-4 py-3">
             <div className="flex min-w-0 flex-wrap items-center gap-2">
-              <FilterSelect
+              <ConsoleFilterSelect
                 icon={MonitorSmartphone}
                 label="平台"
                 value="all"
@@ -249,7 +245,7 @@ export function ApplicationsPage({
                   { label: "Android", value: "android" },
                 ]}
               />
-              <FilterSelect
+              <ConsoleFilterSelect
                 icon={CircleDot}
                 label="状态"
                 value="all"
@@ -260,7 +256,7 @@ export function ApplicationsPage({
                   { label: "已下线", value: "offline" },
                 ]}
               />
-              <FilterSelect
+              <ConsoleFilterSelect
                 icon={UserRound}
                 label="负责人"
                 value="all"
@@ -271,13 +267,7 @@ export function ApplicationsPage({
                   { label: "zhao.lei", value: "zhao.lei" },
                 ]}
               />
-              <div className="flex h-9 min-w-60 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 text-slate-500">
-                <Search className="size-4 shrink-0" />
-                <Input
-                  className="h-auto min-w-0 flex-1 border-0 bg-transparent px-0 py-0 text-sm shadow-none placeholder:text-slate-400 focus-visible:ring-0"
-                  placeholder="搜索..."
-                />
-              </div>
+              <ConsoleSearchInput />
             </div>
 
             <div className="flex shrink-0 items-center gap-2">
@@ -307,79 +297,10 @@ export function ApplicationsPage({
             getRowId={({ data }) => data.id}
           />
 
-          <div className="flex flex-col gap-3 border-slate-200 border-t px-4 py-3 text-slate-500 text-sm md:flex-row md:items-center md:justify-between">
-            <span>共 {applications.length} 条</span>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                type="button"
-                size="icon"
-                className="size-8 border-slate-200 bg-white text-slate-400"
-              >
-                ‹
-              </Button>
-              <Button
-                type="button"
-                size="icon"
-                className="size-8 border border-blue-600 bg-blue-600 font-medium text-white hover:bg-blue-700"
-              >
-                1
-              </Button>
-              <Button
-                variant="outline"
-                type="button"
-                size="icon"
-                className="size-8 border-slate-200 bg-white text-slate-400"
-              >
-                ›
-              </Button>
-              <Select defaultValue="20">
-                <SelectTrigger className="h-8 w-27 border-slate-200 bg-white px-3 text-slate-600 text-xs shadow-none">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="20">20 条/页</SelectItem>
-                  <SelectItem value="50">50 条/页</SelectItem>
-                  <SelectItem value="100">100 条/页</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+          <ConsoleTableFooter total={applications.length} />
         </section>
       </div>
     </>
-  );
-}
-
-type FilterSelectProps = {
-  icon: LucideIcon;
-  label: string;
-  options: Array<{
-    label: string;
-    value: string;
-  }>;
-  value: string;
-};
-
-function FilterSelect({ icon: Icon, label, options, value }: FilterSelectProps) {
-  return (
-    <Select defaultValue={value}>
-      <SelectTrigger
-        className="h-9 w-auto min-w-28 gap-2 border-slate-200 bg-white px-3 font-medium text-slate-600 shadow-sm"
-        aria-label={`${label}筛选`}
-      >
-        <Icon className="size-3.5 shrink-0 text-slate-400" />
-        <span>{label}</span>
-        <SelectValue className="hidden" />
-      </SelectTrigger>
-      <SelectContent>
-        {options.map((option) => (
-          <SelectItem key={option.value} value={option.value}>
-            {option.label}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
   );
 }
 

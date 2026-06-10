@@ -1,81 +1,77 @@
 import { type QueryKey, useQuery } from "@tanstack/react-query";
-import { type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
+import {
+  type ComponentType,
+  lazy,
+  type ReactNode,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
 import { navGroups } from "@/app/navigation";
-import {
-  ApplicationsPage,
-  type ApplicationsSnapshot,
-  applicationsSnapshotQueryKey,
-  fetchApplicationsSnapshot,
-} from "@/pages/applications";
-import {
-  BundlesPage,
-  type BundlesSnapshot,
-  bundlesSnapshotQueryKey,
-  fetchBundlesSnapshot,
-} from "@/pages/bundles";
-import {
-  CombinationsPage,
-  type CombinationsSnapshot,
-  combinationsSnapshotQueryKey,
-  fetchCombinationsSnapshot,
-} from "@/pages/combinations";
-import {
-  DashboardPage,
-  type DashboardSnapshot,
-  dashboardSnapshotQueryKey,
-  fetchDashboardSnapshot,
-} from "@/pages/dashboard";
-import {
-  DevTasksPage,
-  type DevTasksSnapshot,
-  devTasksSnapshotQueryKey,
-  fetchDevTasksSnapshot,
-} from "@/pages/dev-tasks";
-import {
-  EnvironmentsPage,
-  type EnvironmentsSnapshot,
-  environmentsSnapshotQueryKey,
-  fetchEnvironmentsSnapshot,
-} from "@/pages/environments";
-import { fetchGraySnapshot, GrayPage, type GraySnapshot, graySnapshotQueryKey } from "@/pages/gray";
-import {
-  fetchModulesSnapshot,
-  ModulesPage,
-  type ModulesSnapshot,
-  modulesSnapshotQueryKey,
-} from "@/pages/modules";
-import {
-  fetchPipelinesSnapshot,
-  PipelinesPage,
-  type PipelinesSnapshot,
-  pipelinesSnapshotQueryKey,
-} from "@/pages/pipelines";
-import {
-  fetchReleasesSnapshot,
-  ReleasesPage,
-  type ReleasesSnapshot,
-  releasesSnapshotQueryKey,
-} from "@/pages/releases";
-import {
-  fetchRollbackSnapshot,
-  RollbackPage,
-  type RollbackSnapshot,
-  rollbackSnapshotQueryKey,
-} from "@/pages/rollback";
-import {
-  fetchSettingsSnapshot,
-  SettingsPage,
-  type SettingsSnapshot,
-  settingsSnapshotQueryKey,
-} from "@/pages/settings";
+import { Card } from "@/components/ui/card";
 
 import { AppSidebar } from "./components/AppSidebar";
 import { TopToolbar } from "./components/TopToolbar";
 import { useConsoleLayoutStore } from "./model/use-console-layout-store";
 import type { NavItem } from "./types";
 
-const emptyDashboardSnapshot: DashboardSnapshot = {
+type AnyPage = ComponentType<Record<string, unknown>>;
+
+const DashboardPage = lazy(async () => ({
+  default: (await import("@/pages/dashboard/DashboardPage")).DashboardPage as unknown as AnyPage,
+}));
+
+const ApplicationsPage = lazy(async () => ({
+  default: (await import("@/pages/applications/ApplicationsPage"))
+    .ApplicationsPage as unknown as AnyPage,
+}));
+
+const EnvironmentsPage = lazy(async () => ({
+  default: (await import("@/pages/environments/EnvironmentsPage"))
+    .EnvironmentsPage as unknown as AnyPage,
+}));
+
+const ModulesPage = lazy(async () => ({
+  default: (await import("@/pages/modules/ModulesPage")).ModulesPage as unknown as AnyPage,
+}));
+
+const DevTasksPage = lazy(async () => ({
+  default: (await import("@/pages/dev-tasks/DevTasksPage")).DevTasksPage as unknown as AnyPage,
+}));
+
+const PipelinesPage = lazy(async () => ({
+  default: (await import("@/pages/pipelines/PipelinesPage")).PipelinesPage as unknown as AnyPage,
+}));
+
+const BundlesPage = lazy(async () => ({
+  default: (await import("@/pages/bundles/BundlesPage")).BundlesPage as unknown as AnyPage,
+}));
+
+const CombinationsPage = lazy(async () => ({
+  default: (await import("@/pages/combinations/CombinationsPage"))
+    .CombinationsPage as unknown as AnyPage,
+}));
+
+const ReleasesPage = lazy(async () => ({
+  default: (await import("@/pages/releases/ReleasesPage")).ReleasesPage as unknown as AnyPage,
+}));
+
+const GrayPage = lazy(async () => ({
+  default: (await import("@/pages/gray/GrayPage")).GrayPage as unknown as AnyPage,
+}));
+
+const RollbackPage = lazy(async () => ({
+  default: (await import("@/pages/rollback/RollbackPage")).RollbackPage as unknown as AnyPage,
+}));
+
+const SettingsPage = lazy(async () => ({
+  default: (await import("@/pages/settings/SettingsPage")).SettingsPage as unknown as AnyPage,
+}));
+
+const emptyDashboardSnapshot = {
   buildTrend: [],
   metrics: [],
   pipelineRates: [],
@@ -84,7 +80,7 @@ const emptyDashboardSnapshot: DashboardSnapshot = {
   updatedAt: "",
 };
 
-const emptyApplicationsSnapshot: ApplicationsSnapshot = {
+const emptyApplicationsSnapshot = {
   applications: [],
   summary: {
     maintenance: 0,
@@ -94,16 +90,16 @@ const emptyApplicationsSnapshot: ApplicationsSnapshot = {
   },
 };
 
-const emptyEnvironmentsSnapshot: EnvironmentsSnapshot = {
+const emptyEnvironmentsSnapshot = {
   environments: [],
   matrix: [],
 };
 
-const emptyModulesSnapshot: ModulesSnapshot = {
+const emptyModulesSnapshot = {
   modules: [],
 };
 
-const emptyDevTasksSnapshot: DevTasksSnapshot = {
+const emptyDevTasksSnapshot = {
   featuredTask: {
     id: "",
     members: [],
@@ -114,7 +110,7 @@ const emptyDevTasksSnapshot: DevTasksSnapshot = {
   tasks: [],
 };
 
-const emptyPipelinesSnapshot: PipelinesSnapshot = {
+const emptyPipelinesSnapshot = {
   currentRun: {
     branch: "",
     duration: "",
@@ -126,11 +122,11 @@ const emptyPipelinesSnapshot: PipelinesSnapshot = {
   pipelines: [],
 };
 
-const emptyBundlesSnapshot: BundlesSnapshot = {
+const emptyBundlesSnapshot = {
   bundles: [],
 };
 
-const emptyCombinationsSnapshot: CombinationsSnapshot = {
+const emptyCombinationsSnapshot = {
   current: {
     bundleCount: 0,
     bundles: [],
@@ -143,7 +139,7 @@ const emptyCombinationsSnapshot: CombinationsSnapshot = {
   combinations: [],
 };
 
-const emptyReleasesSnapshot: ReleasesSnapshot = {
+const emptyReleasesSnapshot = {
   focus: {
     approvalChannels: "",
     approvalStatus: "",
@@ -163,13 +159,13 @@ const emptyReleasesSnapshot: ReleasesSnapshot = {
   releases: [],
 };
 
-const emptyGraySnapshot: GraySnapshot = {
+const emptyGraySnapshot = {
   histories: [],
   rollouts: [],
   summary: [],
 };
 
-const emptyRollbackSnapshot: RollbackSnapshot = {
+const emptyRollbackSnapshot = {
   environments: [],
   histories: [],
   impact: {
@@ -182,7 +178,7 @@ const emptyRollbackSnapshot: RollbackSnapshot = {
   records: [],
 };
 
-const emptySettingsSnapshot: SettingsSnapshot = {
+const emptySettingsSnapshot = {
   cdnConfigs: [],
   members: [],
   navItems: [],
@@ -205,16 +201,18 @@ type PageRouteConfig = {
 const pageRoutes: Record<string, PageRouteConfig> = {
   "/": {
     emptyData: emptyDashboardSnapshot,
-    queryFn: fetchDashboardSnapshot,
-    queryKey: dashboardSnapshotQueryKey,
-    render: (snapshot) => <DashboardPage snapshot={snapshot as DashboardSnapshot} />,
+    queryFn: async () =>
+      (await import("@/pages/dashboard/api/dashboard-snapshot")).fetchDashboardSnapshot(),
+    queryKey: ["dashboard-snapshot"],
+    render: (snapshot) => <DashboardPage snapshot={snapshot} />,
   },
   "/apps": {
     emptyData: emptyApplicationsSnapshot,
-    queryFn: fetchApplicationsSnapshot,
-    queryKey: applicationsSnapshotQueryKey,
+    queryFn: async () =>
+      (await import("@/pages/applications/api/applications-snapshot")).fetchApplicationsSnapshot(),
+    queryKey: ["applications-snapshot"],
     render: (snapshot, { isFetching, refetch }) => {
-      const applicationsSnapshot = snapshot as ApplicationsSnapshot;
+      const applicationsSnapshot = snapshot as typeof emptyApplicationsSnapshot;
 
       return (
         <ApplicationsPage
@@ -228,63 +226,72 @@ const pageRoutes: Record<string, PageRouteConfig> = {
   },
   "/environments": {
     emptyData: emptyEnvironmentsSnapshot,
-    queryFn: fetchEnvironmentsSnapshot,
-    queryKey: environmentsSnapshotQueryKey,
-    render: (snapshot) => <EnvironmentsPage snapshot={snapshot as EnvironmentsSnapshot} />,
+    queryFn: async () =>
+      (await import("@/pages/environments/api/environments-snapshot")).fetchEnvironmentsSnapshot(),
+    queryKey: ["environments-snapshot"],
+    render: (snapshot) => <EnvironmentsPage snapshot={snapshot} />,
   },
   "/modules": {
     emptyData: emptyModulesSnapshot,
-    queryFn: fetchModulesSnapshot,
-    queryKey: modulesSnapshotQueryKey,
-    render: (snapshot) => <ModulesPage snapshot={snapshot as ModulesSnapshot} />,
+    queryFn: async () =>
+      (await import("@/pages/modules/api/modules-snapshot")).fetchModulesSnapshot(),
+    queryKey: ["modules-snapshot"],
+    render: (snapshot) => <ModulesPage snapshot={snapshot} />,
   },
   "/dev-tasks": {
     emptyData: emptyDevTasksSnapshot,
-    queryFn: fetchDevTasksSnapshot,
-    queryKey: devTasksSnapshotQueryKey,
-    render: (snapshot) => <DevTasksPage snapshot={snapshot as DevTasksSnapshot} />,
+    queryFn: async () =>
+      (await import("@/pages/dev-tasks/api/dev-tasks-snapshot")).fetchDevTasksSnapshot(),
+    queryKey: ["dev-tasks-snapshot"],
+    render: (snapshot) => <DevTasksPage snapshot={snapshot} />,
   },
   "/pipelines": {
     emptyData: emptyPipelinesSnapshot,
-    queryFn: fetchPipelinesSnapshot,
-    queryKey: pipelinesSnapshotQueryKey,
-    render: (snapshot) => <PipelinesPage snapshot={snapshot as PipelinesSnapshot} />,
+    queryFn: async () =>
+      (await import("@/pages/pipelines/api/pipelines-snapshot")).fetchPipelinesSnapshot(),
+    queryKey: ["pipelines-snapshot"],
+    render: (snapshot) => <PipelinesPage snapshot={snapshot} />,
   },
   "/bundles": {
     emptyData: emptyBundlesSnapshot,
-    queryFn: fetchBundlesSnapshot,
-    queryKey: bundlesSnapshotQueryKey,
-    render: (snapshot) => <BundlesPage snapshot={snapshot as BundlesSnapshot} />,
+    queryFn: async () =>
+      (await import("@/pages/bundles/api/bundles-snapshot")).fetchBundlesSnapshot(),
+    queryKey: ["bundles-snapshot"],
+    render: (snapshot) => <BundlesPage snapshot={snapshot} />,
   },
   "/combinations": {
     emptyData: emptyCombinationsSnapshot,
-    queryFn: fetchCombinationsSnapshot,
-    queryKey: combinationsSnapshotQueryKey,
-    render: (snapshot) => <CombinationsPage snapshot={snapshot as CombinationsSnapshot} />,
+    queryFn: async () =>
+      (await import("@/pages/combinations/api/combinations-snapshot")).fetchCombinationsSnapshot(),
+    queryKey: ["combinations-snapshot"],
+    render: (snapshot) => <CombinationsPage snapshot={snapshot} />,
   },
   "/releases": {
     emptyData: emptyReleasesSnapshot,
-    queryFn: fetchReleasesSnapshot,
-    queryKey: releasesSnapshotQueryKey,
-    render: (snapshot) => <ReleasesPage snapshot={snapshot as ReleasesSnapshot} />,
+    queryFn: async () =>
+      (await import("@/pages/releases/api/releases-snapshot")).fetchReleasesSnapshot(),
+    queryKey: ["releases-snapshot"],
+    render: (snapshot) => <ReleasesPage snapshot={snapshot} />,
   },
   "/gray": {
     emptyData: emptyGraySnapshot,
-    queryFn: fetchGraySnapshot,
-    queryKey: graySnapshotQueryKey,
-    render: (snapshot) => <GrayPage snapshot={snapshot as GraySnapshot} />,
+    queryFn: async () => (await import("@/pages/gray/api/gray-snapshot")).fetchGraySnapshot(),
+    queryKey: ["gray-snapshot"],
+    render: (snapshot) => <GrayPage snapshot={snapshot} />,
   },
   "/rollback": {
     emptyData: emptyRollbackSnapshot,
-    queryFn: fetchRollbackSnapshot,
-    queryKey: rollbackSnapshotQueryKey,
-    render: (snapshot) => <RollbackPage snapshot={snapshot as RollbackSnapshot} />,
+    queryFn: async () =>
+      (await import("@/pages/rollback/api/rollback-snapshot")).fetchRollbackSnapshot(),
+    queryKey: ["rollback-snapshot"],
+    render: (snapshot) => <RollbackPage snapshot={snapshot} />,
   },
   "/settings": {
     emptyData: emptySettingsSnapshot,
-    queryFn: fetchSettingsSnapshot,
-    queryKey: settingsSnapshotQueryKey,
-    render: (snapshot) => <SettingsPage snapshot={snapshot as SettingsSnapshot} />,
+    queryFn: async () =>
+      (await import("@/pages/settings/api/settings-snapshot")).fetchSettingsSnapshot(),
+    queryKey: ["settings-snapshot"],
+    render: (snapshot) => <SettingsPage snapshot={snapshot} />,
   },
 };
 
@@ -336,10 +343,12 @@ export function ConsoleLayout() {
         <section className="min-w-0 flex-1">
           <TopToolbar isFetching={isFetching} onRefresh={refetchPage} />
 
-          {routeConfig.render(pageData, {
-            isFetching,
-            refetch: refetchPage,
-          })}
+          <Suspense fallback={<PageFallback />}>
+            {routeConfig.render(pageData, {
+              isFetching,
+              refetch: refetchPage,
+            })}
+          </Suspense>
         </section>
       </div>
     </main>
@@ -362,4 +371,13 @@ function normalizePath(path: string) {
   }
 
   return path.replace(/\/+$/, "") || "/";
+}
+
+function PageFallback() {
+  return (
+    <div className="space-y-4 px-6 py-5">
+      <Card className="h-22 animate-pulse rounded-lg border-slate-200 bg-white shadow-none" />
+      <Card className="h-96 animate-pulse rounded-lg border-slate-200 bg-white shadow-none" />
+    </div>
+  );
 }

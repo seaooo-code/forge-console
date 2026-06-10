@@ -117,11 +117,11 @@ const dashboardSnapshot: DashboardSnapshot = {
     },
   ],
   releases: [
-    { id: "RT-20260611", environment: "prod", gray: "20%", status: "灰度中" },
-    { id: "RT-20260610", environment: "pre", gray: "100%", status: "已完成" },
-    { id: "RT-20260609", environment: "prod", gray: "100%", status: "已完成" },
-    { id: "RT-20260608", environment: "prod", gray: "5%", status: "已回滚" },
-    { id: "RT-20260607", environment: "test", gray: "—", status: "已完成" },
+    { id: "RT-20260611", environment: "product", gray: "20%", status: "灰度中" },
+    { id: "RT-20260610", environment: "preProduct", gray: "100%", status: "已完成" },
+    { id: "RT-20260609", environment: "product", gray: "100%", status: "已完成" },
+    { id: "RT-20260608", environment: "product", gray: "5%", status: "已回滚" },
+    { id: "RT-20260607", environment: "staging", gray: "—", status: "已完成" },
   ],
   updatedAt: new Date().toISOString(),
 };

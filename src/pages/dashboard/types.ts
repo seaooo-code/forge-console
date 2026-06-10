@@ -1,3 +1,5 @@
+import type { MiCarEnvironmentCode } from "@/types/environments";
+
 export type MetricIconName = "app" | "bundle" | "module" | "pipeline" | "release" | "task";
 
 export type SummaryMetric = {
@@ -32,7 +34,7 @@ export type DevTask = {
 
 export type ReleaseRecord = {
   id: string;
-  environment: "prod" | "pre" | "test";
+  environment: Exclude<MiCarEnvironmentCode, "dev">;
   gray: string;
   status: "灰度中" | "已完成" | "已回滚";
 };

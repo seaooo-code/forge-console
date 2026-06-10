@@ -1,9 +1,10 @@
-import { type ColDef, themeQuartz } from "ag-grid-community";
+import type { ColDef } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 import { useMemo } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { themeQuartz } from "@/lib/ag-grid";
 import { cn } from "@/lib/utils";
 
 import type { DevTask } from "../types";
@@ -27,7 +28,7 @@ const summaryGridTheme = themeQuartz.withParams({
   browserColorScheme: "light",
   columnBorder: false,
   fontFamily:
-    '"Roboto Flex Variable", "Noto Sans SC Variable", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif',
+    '"Roboto Flex Variable", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif',
   fontSize: 13,
   foregroundColor: "#334155",
   headerBackgroundColor: "#ffffff",

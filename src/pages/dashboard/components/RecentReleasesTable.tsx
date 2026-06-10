@@ -1,9 +1,11 @@
-import { type ColDef, themeQuartz } from "ag-grid-community";
+import type { ColDef } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 import { useMemo } from "react";
 
+import { EnvironmentBadge } from "@/components/common/EnvironmentBadge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { themeQuartz } from "@/lib/ag-grid";
 import { cn } from "@/lib/utils";
 
 import type { ReleaseRecord } from "../types";
@@ -18,12 +20,6 @@ const releaseStatusClass: Record<ReleaseRecord["status"], string> = {
   灰度中: "bg-amber-100 text-amber-700",
 };
 
-const envClass: Record<ReleaseRecord["environment"], string> = {
-  pre: "bg-slate-100 text-slate-600",
-  prod: "bg-slate-200 text-slate-700",
-  test: "bg-blue-100 text-blue-700",
-};
-
 const summaryGridTheme = themeQuartz.withParams({
   accentColor: "#1677ff",
   backgroundColor: "#ffffff",
@@ -32,7 +28,7 @@ const summaryGridTheme = themeQuartz.withParams({
   browserColorScheme: "light",
   columnBorder: false,
   fontFamily:
-    '"Roboto Flex Variable", "Noto Sans SC Variable", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif',
+    '"Roboto Flex Variable", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif',
   fontSize: 13,
   foregroundColor: "#334155",
   headerBackgroundColor: "#ffffff",
@@ -60,11 +56,7 @@ export function RecentReleasesTable({ releases }: RecentReleasesTableProps) {
       {
         cellRenderer: ({ value }: { value?: ReleaseRecord["environment"] }) =>
           value ? (
-            <span
-              className={cn("inline-flex rounded px-2 py-0.5 font-medium text-xs", envClass[value])}
-            >
-              {value}
-            </span>
+            <EnvironmentBadge className="h-5 px-2 py-0.5 font-medium" environment={value} />
           ) : null,
         field: "environment",
         flex: 0.7,

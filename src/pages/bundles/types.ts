@@ -1,4 +1,8 @@
+import type { MiCarEnvironmentCode } from "@/types/environments";
+
 export type BundleStatus = "已发布" | "已归档" | "已驳回" | "草稿";
+
+export type BundleEnvironment = MiCarEnvironmentCode;
 
 export type BundleRecord = {
   build: string;
@@ -6,7 +10,7 @@ export type BundleRecord = {
   commit: string;
   createdAt: string;
   creator: string;
-  environments: string[];
+  environments: BundleEnvironment[];
   module: string;
   sizeKb: number;
   status: BundleStatus;

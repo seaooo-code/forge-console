@@ -1,4 +1,6 @@
-export type RollbackEnvironment = "dev" | "pre" | "prod" | "test";
+import type { MiCarEnvironmentCode } from "@/types/environments";
+
+export type RollbackEnvironment = MiCarEnvironmentCode;
 
 export type RollbackRisk = "low" | "med";
 

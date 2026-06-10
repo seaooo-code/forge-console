@@ -1,3 +1,5 @@
+import type { MiCarEnvironmentCode } from "@/types/environments";
+
 export type MemberStatus = "停用" | "启用";
 
 export type SettingsNavItem = {
@@ -29,7 +31,7 @@ export type PermissionMatrixRecord = {
 
 export type CdnConfigRecord = {
   domain: string;
-  environment: "dev" | "pre" | "prod" | "test";
+  environment: MiCarEnvironmentCode;
   hitRate: string;
   id: string;
 };

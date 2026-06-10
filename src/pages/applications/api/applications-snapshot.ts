@@ -17,7 +17,7 @@ const applicationsSnapshot: ApplicationsSnapshot = {
       platform: "iOS / Android",
       owner: "li.ming",
       moduleCount: 12,
-      environmentCount: 4,
+      environmentCount: 5,
       createdAt: "2024-03-12",
       status: "运行中",
     },

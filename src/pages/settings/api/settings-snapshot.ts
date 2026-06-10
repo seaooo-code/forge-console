@@ -5,22 +5,28 @@ export const settingsSnapshotQueryKey = ["settings-snapshot"] as const;
 const settingsSnapshot: SettingsSnapshot = {
   cdnConfigs: [
     {
-      domain: "rn-cdn.xiaomi.com",
-      environment: "prod",
+      domain: "rn-cdn-product.xiaomi.com",
+      environment: "product",
       hitRate: "98.7%",
-      id: "cdn-prod",
+      id: "cdn-product",
     },
     {
-      domain: "rn-cdn-pre.xiaomi.com",
-      environment: "pre",
+      domain: "rn-cdn-preproduct.xiaomi.com",
+      environment: "preProduct",
       hitRate: "97.4%",
-      id: "cdn-pre",
+      id: "cdn-preproduct",
     },
     {
-      domain: "rn-cdn-test.xiaomi.com",
-      environment: "test",
+      domain: "rn-cdn-preview.xiaomi.com",
+      environment: "preview",
+      hitRate: "96.6%",
+      id: "cdn-preview",
+    },
+    {
+      domain: "rn-cdn-staging.xiaomi.com",
+      environment: "staging",
       hitRate: "95.1%",
-      id: "cdn-test",
+      id: "cdn-staging",
     },
     {
       domain: "rn-cdn-dev.xiaomi.com",
@@ -176,8 +182,8 @@ const settingsSnapshot: SettingsSnapshot = {
     },
     {
       developer: false,
-      id: "permission-release-prod",
-      permission: "创建发布单 (prod)",
+      id: "permission-release-product",
+      permission: "创建发布单 (product)",
       platformAdmin: true,
       readonly: false,
       releaseAdmin: true,

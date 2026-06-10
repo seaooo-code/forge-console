@@ -1,4 +1,6 @@
-export type ReleaseEnvironment = "pre" | "prod" | "test";
+import type { MiCarEnvironmentCode } from "@/types/environments";
+
+export type ReleaseEnvironment = Exclude<MiCarEnvironmentCode, "dev">;
 
 export type ReleaseStatus = "待审批" | "已回滚" | "已完成" | "灰度中";
 

@@ -1,6 +1,8 @@
 import { create } from "zustand";
 
-type DashboardEnvironment = "prod" | "pre" | "test";
+import type { MiCarEnvironmentCode } from "@/types/environments";
+
+type DashboardEnvironment = MiCarEnvironmentCode;
 
 type DashboardContextStore = {
   environment: DashboardEnvironment;
@@ -9,7 +11,7 @@ type DashboardContextStore = {
 };
 
 export const useDashboardContextStore = create<DashboardContextStore>((set) => ({
-  environment: "prod",
+  environment: "product",
   project: "小米汽车",
   setEnvironment: (environment) => set({ environment }),
 }));

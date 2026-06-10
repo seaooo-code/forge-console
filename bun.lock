@@ -5,10 +5,8 @@
     "": {
       "name": "forge-console",
       "dependencies": {
-        "@fontsource-variable/noto-sans-sc": "^5.2.10",
         "@fontsource-variable/roboto-flex": "^5.2.8",
         "@fontsource/roboto-mono": "^5.2.9",
-        "@monaco-editor/react": "^4.7.0",
         "@radix-ui/react-checkbox": "^1.3.4",
         "@radix-ui/react-select": "^2.3.0",
         "@radix-ui/react-slot": "^1.2.5",
@@ -20,7 +18,6 @@
         "clsx": "^2.1.1",
         "echarts": "^6.1.0",
         "lucide-react": "^1.17.0",
-        "monaco-editor": "^0.55.1",
         "react": "^19.2.7",
         "react-dom": "^19.2.7",
         "tailwind-merge": "^3.6.0",
@@ -73,8 +70,6 @@
 
     "@floating-ui/utils": ["@floating-ui/utils@0.2.11", "https://pkgs.d.xiaomi.net:443/artifactory/api/npm/mi-npm/@floating-ui/utils/-/utils-0.2.11.tgz", {}, "sha512-RiB/yIh78pcIxl6lLMG0CgBXAZ2Y0eVHqMPYugu+9U0AeT6YBeiJpf7lbdJNIugFP5SIjwNRgo4DhR1Qxi26Gg=="],
 
-    "@fontsource-variable/noto-sans-sc": ["@fontsource-variable/noto-sans-sc@5.2.10", "https://pkgs.d.xiaomi.net:443/artifactory/api/npm/mi-npm/@fontsource-variable/noto-sans-sc/-/noto-sans-sc-5.2.10.tgz", {}, "sha512-zdk10i5HrDQTXI7ldD61zToX1fsgig8vDTsu7zB48SXOitWfuX0e5viZAwnkHuhwh096PU6X6i1AyAsbBCISpA=="],
-
     "@fontsource-variable/roboto-flex": ["@fontsource-variable/roboto-flex@5.2.8", "https://pkgs.d.xiaomi.net:443/artifactory/api/npm/mi-npm/@fontsource-variable/roboto-flex/-/roboto-flex-5.2.8.tgz", {}, "sha512-Q9zbz+P2VrDeIxBu9YAIG+eYpLmQF5FIJEEwAWn8En9Lao1TOISnoYcywGV+jSv7LGsHEndCR8hveXPnvCBEQQ=="],
 
     "@fontsource/roboto-mono": ["@fontsource/roboto-mono@5.2.9", "https://pkgs.d.xiaomi.net:443/artifactory/api/npm/mi-npm/@fontsource/roboto-mono/-/roboto-mono-5.2.9.tgz", {}, "sha512-iIeSyrRGoM15uIWqXslW1K9UFnUYfnCFNrNoWjXE0huO1L+hM0Jst0KNLuRc7P21xPpGL0bZouzYSX0Em9eyWg=="],
@@ -88,10 +83,6 @@
     "@jridgewell/sourcemap-codec": ["@jridgewell/sourcemap-codec@1.5.5", "https://pkgs.d.xiaomi.net:443/artifactory/api/npm/mi-npm/@jridgewell/sourcemap-codec/-/sourcemap-codec-1.5.5.tgz", {}, "sha512-cYQ9310grqxueWbl+WuIUIaiUaDcj7WOq5fVhEljNVgRfOUhY9fy2zTvfoqWsnebh8Sl70VScFbICvJnLKB0Og=="],
 
     "@jridgewell/trace-mapping": ["@jridgewell/trace-mapping@0.3.31", "https://pkgs.d.xiaomi.net:443/artifactory/api/npm/mi-npm/@jridgewell/trace-mapping/-/trace-mapping-0.3.31.tgz", { "dependencies": { "@jridgewell/resolve-uri": "^3.1.0", "@jridgewell/sourcemap-codec": "^1.4.14" } }, "sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw=="],
-
-    "@monaco-editor/loader": ["@monaco-editor/loader@1.7.0", "https://pkgs.d.xiaomi.net:443/artifactory/api/npm/mi-npm/@monaco-editor/loader/-/loader-1.7.0.tgz", { "dependencies": { "state-local": "^1.0.6" } }, "sha512-gIwR1HrJrrx+vfyOhYmCZ0/JcWqG5kbfG7+d3f/C1LXk2EvzAbHSg3MQ5lO2sMlo9izoAZ04shohfKLVT6crVA=="],
-
-    "@monaco-editor/react": ["@monaco-editor/react@4.7.0", "https://pkgs.d.xiaomi.net:443/artifactory/api/npm/mi-npm/@monaco-editor/react/-/react-4.7.0.tgz", { "dependencies": { "@monaco-editor/loader": "^1.5.0" }, "peerDependencies": { "monaco-editor": ">= 0.25.0 < 1", "react": "^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0", "react-dom": "^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0" } }, "sha512-cyzXQCtO47ydzxpQtCGSQGOC8Gk3ZUeBXFAxD+CWXYFo5OqZyZUonFl0DwUlTyAfRHntBfw2p3w4s9R6oe1eCA=="],
 
     "@napi-rs/wasm-runtime": ["@napi-rs/wasm-runtime@1.1.4", "https://pkgs.d.xiaomi.net:443/artifactory/api/npm/mi-npm/@napi-rs/wasm-runtime/-/wasm-runtime-1.1.4.tgz", { "dependencies": { "@tybys/wasm-util": "^0.10.1" }, "peerDependencies": { "@emnapi/core": "^1.7.1", "@emnapi/runtime": "^1.7.1" } }, "sha512-3NQNNgA1YSlJb/kMH1ildASP9HW7/7kYnRI2szWJaofaS1hWmbGI4H+d3+22aGzXXN9IJ+n+GiFVcGipJP18ow=="],
 
@@ -231,8 +222,6 @@
 
     "@types/react-dom": ["@types/react-dom@19.2.3", "https://pkgs.d.xiaomi.net:443/artifactory/api/npm/mi-npm/@types/react-dom/-/react-dom-19.2.3.tgz", { "peerDependencies": { "@types/react": "^19.2.0" } }, "sha512-jp2L/eY6fn+KgVVQAOqYItbF0VY/YApe5Mz2F0aykSO8gx31bYCZyvSeYxCHKvzHG5eZjc+zyaS5BrBWya2+kQ=="],
 
-    "@types/trusted-types": ["@types/trusted-types@2.0.7", "https://pkgs.d.xiaomi.net:443/artifactory/api/npm/mi-npm/@types/trusted-types/-/trusted-types-2.0.7.tgz", {}, "sha512-ScaPdn1dQczgbl0QFTeTOmVHFULt394XJgOQNoyVhZ6r2vLnMLJfBPd53SB52T/3G36VI1/g2MZaX0cwDuXsfw=="],
-
     "@vitejs/plugin-react": ["@vitejs/plugin-react@6.0.2", "https://pkgs.d.xiaomi.net:443/artifactory/api/npm/mi-npm/@vitejs/plugin-react/-/plugin-react-6.0.2.tgz", { "dependencies": { "@rolldown/pluginutils": "^1.0.0" }, "peerDependencies": { "@rolldown/plugin-babel": "^0.1.7 || ^0.2.0", "babel-plugin-react-compiler": "^1.0.0", "vite": "^8.0.0" }, "optionalPeers": ["@rolldown/plugin-babel", "babel-plugin-react-compiler"] }, "sha512-DlSMqo4WhThw4vB8Mpn0Woe9J+Jfq1geJ61AKW0QEgLzGMNwtIMdxbDUzLxcun8W7NbJO0e2Jg/Nxm3cCSVzzg=="],
 
     "ag-charts-types": ["ag-charts-types@13.3.1", "https://pkgs.d.xiaomi.net:443/artifactory/api/npm/mi-npm/ag-charts-types/-/ag-charts-types-13.3.1.tgz", {}, "sha512-m37eUe4g//swvGh8PWMlYQH3gknjSsPeW4sQwBhM3/auGAHmN0wvxEWlrdAn98pBPg4HoKbtOy+yf7gPCYsnvQ=="],
@@ -252,8 +241,6 @@
     "detect-libc": ["detect-libc@2.1.2", "https://pkgs.d.xiaomi.net:443/artifactory/api/npm/mi-npm/detect-libc/-/detect-libc-2.1.2.tgz", {}, "sha512-Btj2BOOO83o3WyH59e8MgXsxEQVcarkUOpEYrubB0urwnN10yQ364rsiByU11nZlqWYZm05i/of7io4mzihBtQ=="],
 
     "detect-node-es": ["detect-node-es@1.1.0", "https://pkgs.d.xiaomi.net:443/artifactory/api/npm/mi-npm/detect-node-es/-/detect-node-es-1.1.0.tgz", {}, "sha512-ypdmJU/TbBby2Dxibuv7ZLW3Bs1QEmM7nHjEANfohJLvE0XVujisn1qPJcZxg+qDucsr+bP6fLD1rPS3AhJ7EQ=="],
-
-    "dompurify": ["dompurify@3.2.7", "https://pkgs.d.xiaomi.net:443/artifactory/api/npm/mi-npm/dompurify/-/dompurify-3.2.7.tgz", { "optionalDependencies": { "@types/trusted-types": "^2.0.7" } }, "sha512-WhL/YuveyGXJaerVlMYGWhvQswa7myDG17P7Vu65EWC05o8vfeNbvNf4d/BOvH99+ZW+LlQsc1GDKMa1vNK6dw=="],
 
     "echarts": ["echarts@6.1.0", "https://pkgs.d.xiaomi.net:443/artifactory/api/npm/mi-npm/echarts/-/echarts-6.1.0.tgz", { "dependencies": { "tslib": "2.3.0", "zrender": "6.1.0" } }, "sha512-q0yaFPggC9FUdsWH4blavRWFmxdrIodbkoKNAjJudAI6CA9gNPxHtV2RcZNEepZVlk4yvBYkOkbk6HIVpIyHZA=="],
 
@@ -301,10 +288,6 @@
 
     "magic-string": ["magic-string@0.30.21", "https://pkgs.d.xiaomi.net:443/artifactory/api/npm/mi-npm/magic-string/-/magic-string-0.30.21.tgz", { "dependencies": { "@jridgewell/sourcemap-codec": "^1.5.5" } }, "sha512-vd2F4YUyEXKGcLHoq+TEyCjxueSeHnFxyyjNp80yg0XV4vUhnDer/lvvlqM/arB5bXQN5K2/3oinyCRyx8T2CQ=="],
 
-    "marked": ["marked@14.0.0", "https://pkgs.d.xiaomi.net:443/artifactory/api/npm/mi-npm/marked/-/marked-14.0.0.tgz", { "bin": { "marked": "bin/marked.js" } }, "sha512-uIj4+faQ+MgHgwUW1l2PsPglZLOLOT1uErt06dAPtx2kjteLAkbsd/0FiYg/MGS+i7ZKLb7w2WClxHkzOOuryQ=="],
-
-    "monaco-editor": ["monaco-editor@0.55.1", "https://pkgs.d.xiaomi.net:443/artifactory/api/npm/mi-npm/monaco-editor/-/monaco-editor-0.55.1.tgz", { "dependencies": { "dompurify": "3.2.7", "marked": "14.0.0" } }, "sha512-jz4x+TJNFHwHtwuV9vA9rMujcZRb0CEilTEwG2rRSpe/A7Jdkuj8xPKttCgOh+v/lkHy7HsZ64oj+q3xoAFl9A=="],
-
     "nanoid": ["nanoid@3.3.12", "https://pkgs.d.xiaomi.net:443/artifactory/api/npm/mi-npm/nanoid/-/nanoid-3.3.12.tgz", { "bin": { "nanoid": "bin/nanoid.cjs" } }, "sha512-ZB9RH/39qpq5Vu6Y+NmUaFhQR6pp+M2Xt76XBnEwDaGcVAqhlvxrl3B2bKS5D3NH3QR76v3aSrKaF/Kiy7lEtQ=="],
 
     "object-assign": ["object-assign@4.1.1", "https://pkgs.d.xiaomi.net:443/artifactory/api/npm/mi-npm/object-assign/-/object-assign-4.1.1.tgz", {}, "sha512-rJgTQnkUnH1sFw8yT6VSU3zD3sWmu6sZhIseY8VX+GRu3P6F7Fu+JNDoXfklElbLJSnc3FUQHVe4cU5hj+BcUg=="],
@@ -334,8 +317,6 @@
     "scheduler": ["scheduler@0.27.0", "https://pkgs.d.xiaomi.net:443/artifactory/api/npm/mi-npm/scheduler/-/scheduler-0.27.0.tgz", {}, "sha512-eNv+WrVbKu1f3vbYJT/xtiF5syA5HPIMtf9IgY/nKg0sWqzAUEvqY/xm7OcZc/qafLx/iO9FgOmeSAp4v5ti/Q=="],
 
     "source-map-js": ["source-map-js@1.2.1", "https://pkgs.d.xiaomi.net:443/artifactory/api/npm/mi-npm/source-map-js/-/source-map-js-1.2.1.tgz", {}, "sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA=="],
-
-    "state-local": ["state-local@1.0.7", "https://pkgs.d.xiaomi.net:443/artifactory/api/npm/mi-npm/state-local/-/state-local-1.0.7.tgz", {}, "sha512-HTEHMNieakEnoe33shBYcZ7NX83ACUjCu8c40iOGEZsngj9zRnkqS9j1pqQPXwobB0ZcVTk27REb7COQ0UR59w=="],
 
     "tailwind-merge": ["tailwind-merge@3.6.0", "https://pkgs.d.xiaomi.net:443/artifactory/api/npm/mi-npm/tailwind-merge/-/tailwind-merge-3.6.0.tgz", {}, "sha512-uxL7qAVQriqRQPAyK3pj66VqskWqoZ37PW94jwOTwNfq/z9oyu1V+eqrZqtR2+fCiXdYOZe/Modt8GtvqNzu+w=="],
 

@@ -1,6 +1,6 @@
 # 前端目录规范
 
-本项目使用 React、TypeScript、Vite、Tailwind CSS、shadcn/ui、AG Grid、ECharts、Monaco、TanStack Query 和 Zustand。当前产品是一个 RN Bundle 管理后台，业务模块以页面为主要组织单位，因此采用 `src/pages/<page>` 作为业务代码默认归属。
+本项目使用 React、TypeScript、Vite、Tailwind CSS、shadcn/ui、AG Grid、ECharts、TanStack Query 和 Zustand。当前产品是一个 RN Bundle 管理后台，业务模块以页面为主要组织单位，因此采用 `src/pages/<page>` 作为业务代码默认归属。
 
 ## 目录结构
 
@@ -59,7 +59,7 @@ pages/applications/
 ```
 
 - `api/`：放请求函数、TanStack Query key、响应适配，不直接操作 UI 状态。
-- `components/`：放页面内专属组件，可以组合 shadcn/ui、AG Grid、ECharts、Monaco。
+- `components/`：放页面内专属组件，可以组合 shadcn/ui、AG Grid、ECharts。
 - `hooks/`：放页面专属 hook。跨页面复用前不要移动到全局 `hooks/`。
 - `model/`：放页面内 Zustand store、派生计算、状态转换。
 - `types.ts`：放页面领域类型。
@@ -90,7 +90,7 @@ pages/applications/
 
 - Tailwind utility 是默认样式方案。
 - 主题 token、CSS 变量、基础 reset 只放 `src/index.css`。
-- 字体使用 Google 开源字体自托管方案：UI 使用 `Roboto Flex Variable + Noto Sans SC Variable`，代码/等宽文本使用 `Roboto Mono`，通过 Fontsource 包在 `src/main.tsx` 引入。
+- 字体使用 Google 开源字体自托管方案：UI 使用自托管 `Roboto Flex Variable`，中文回退到系统字体 `PingFang SC / Microsoft YaHei`，代码/等宽文本使用 `Roboto Mono`，通过 Fontsource 包在 `src/main.tsx` 引入。
 - 不新增全局 CSS 文件，除非是第三方库必须要求，并在引入处说明用途。
 - shadcn/ui 组件可按项目主题微调，但不得塞入业务文案或业务状态。
 - 业务和布局代码优先使用 `src/components/ui` 中的 shadcn/ui 原子组件；已有对应组件时，不直接写原生 `button`、`input`、`select`、`textarea`、`checkbox` 等交互控件。
@@ -102,7 +102,7 @@ pages/applications/
 - 使用 Biome 统一格式化与基础 lint。
 - 使用 TypeScript 严格模式，避免 `any`；确需使用时必须在附近解释边界原因。
 - 新增依赖前说明用途，优先复用现有栈。
-- AG Grid、ECharts、Monaco 的初始化逻辑应封装在页面组件或专用适配器内。
+- AG Grid 与 ECharts 的初始化逻辑应封装在页面组件或专用适配器内。
 
 ## AI 开发流程
 

@@ -8,6 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { type MiCarEnvironmentCode, miCarEnvironmentFilterOptions } from "@/types/environments";
 
 import { BuildTrendChart } from "./components/BuildTrendChart";
 import { MetricOverview } from "./components/MetricOverview";
@@ -79,16 +80,18 @@ function DashboardContextControls() {
 
       <Select
         value={environment}
-        onValueChange={(value) => setEnvironment(value as "prod" | "pre" | "test")}
+        onValueChange={(value) => setEnvironment(value as MiCarEnvironmentCode)}
       >
         <SelectTrigger className="h-10 shrink-0 gap-2 border-slate-200 bg-white px-4 font-medium text-slate-700 shadow-sm">
           <span>环境:</span>
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="prod">prod</SelectItem>
-          <SelectItem value="pre">pre</SelectItem>
-          <SelectItem value="test">test</SelectItem>
+          {miCarEnvironmentFilterOptions.map((option) => (
+            <SelectItem key={option.value} value={option.value}>
+              {option.label}
+            </SelectItem>
+          ))}
         </SelectContent>
       </Select>
     </div>

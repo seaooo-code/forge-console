@@ -1,4 +1,6 @@
-export type CombinationEnvironment = "dev" | "pre" | "prod" | "test";
+import type { MiCarEnvironmentCode } from "@/types/environments";
+
+export type CombinationEnvironment = MiCarEnvironmentCode;
 
 export type CombinationStatus = "历史版本" | "已回滚" | "滚动更新" | "运行中";
 

@@ -1,8 +1,7 @@
-import type { EChartsOption } from "echarts";
-import * as echarts from "echarts";
 import { useEffect, useMemo, useRef } from "react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { type EChartsOption, echarts } from "@/lib/echarts";
 
 import type { BuildTrendPoint } from "../types";
 
@@ -22,19 +21,6 @@ export function BuildTrendChart({ data }: BuildTrendChartProps) {
         left: 20,
         right: 18,
         top: 24,
-      },
-      legend: {
-        itemHeight: 8,
-        itemWidth: 8,
-        right: 8,
-        textStyle: {
-          color: "#64748b",
-          fontSize: 12,
-        },
-        top: 0,
-      },
-      tooltip: {
-        trigger: "axis",
       },
       xAxis: {
         axisLabel: {
@@ -108,10 +94,20 @@ export function BuildTrendChart({ data }: BuildTrendChartProps) {
 
   return (
     <Card className="rounded-lg py-0 shadow-none">
-      <CardHeader className="h-12 border-b px-4 py-0">
+      <CardHeader className="flex h-12 flex-row items-center justify-between border-b px-4 py-0">
         <CardTitle className="flex h-full items-center text-slate-900 text-sm">
           构建趋势（近 7 天）
         </CardTitle>
+        <div className="flex items-center gap-3 font-medium text-slate-500 text-xs">
+          <span className="inline-flex items-center gap-1.5">
+            <span className="size-2 rounded-full bg-blue-600" />
+            构建数
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="size-2 rounded-full bg-cyan-500" />
+            成功数
+          </span>
+        </div>
       </CardHeader>
       <CardContent className="px-4 py-4">
         <div ref={chartRef} className="h-52 w-full" />

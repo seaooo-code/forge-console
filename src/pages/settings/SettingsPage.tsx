@@ -15,8 +15,8 @@ import {
   UsersRound,
 } from "lucide-react";
 import { Fragment, type ReactNode, useMemo } from "react";
-
-import { consoleGridTheme } from "@/components/common/ConsolePage";
+import { consoleGridTheme } from "@/components/common/console-grid-theme";
+import { EnvironmentBadge } from "@/components/common/EnvironmentBadge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -49,13 +49,6 @@ const navIconMap: Record<string, LucideIcon> = {
 const statusClass: Record<MemberStatus, string> = {
   停用: "border-slate-200 bg-slate-100 text-slate-600",
   启用: "border-emerald-200 bg-emerald-50 text-emerald-700",
-};
-
-const envClass: Record<CdnConfigRecord["environment"], string> = {
-  dev: "border-sky-200 bg-sky-50 text-sky-700",
-  pre: "border-amber-200 bg-amber-50 text-amber-700",
-  prod: "border-red-200 bg-red-50 text-red-600",
-  test: "border-blue-200 bg-blue-50 text-blue-700",
 };
 
 export function SettingsPage({ snapshot }: SettingsPageProps) {
@@ -425,14 +418,7 @@ function CdnConfigItem({ config }: { config: CdnConfigRecord }) {
         </div>
         <div className="mt-1 text-slate-500 text-xs">命中率 {config.hitRate}</div>
       </div>
-      <span
-        className={cn(
-          "inline-flex h-6 shrink-0 items-center rounded border px-2 font-semibold text-xs leading-none",
-          envClass[config.environment],
-        )}
-      >
-        {config.environment}
-      </span>
+      <EnvironmentBadge className="shrink-0" environment={config.environment} />
     </div>
   );
 }
