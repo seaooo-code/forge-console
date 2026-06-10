@@ -2,45 +2,24 @@ import { create } from "zustand";
 
 import type { AuthSession } from "@/types/auth";
 
-const authSessionStorageKey = "forge-console.auth-session";
-
 type AuthState = {
+  isSessionLoading: boolean;
   session: AuthSession | null;
+  setSessionLoading: (isSessionLoading: boolean) => void;
   setSession: (session: AuthSession) => void;
   clearSession: () => void;
 };
 
 export const useAuthStore = create<AuthState>((set) => ({
-  session: readStoredSession(),
+  isSessionLoading: true,
+  session: null,
+  setSessionLoading: (isSessionLoading) => set({ isSessionLoading }),
   setSession: (session) => {
-    writeStoredSession(session);
-    set({ session });
+    window.localStorage.removeItem("forge-console.auth-session");
+    set({ isSessionLoading: false, session });
   },
   clearSession: () => {
-    window.localStorage.removeItem(authSessionStorageKey);
-    set({ session: null });
+    window.localStorage.removeItem("forge-console.auth-session");
+    set({ isSessionLoading: false, session: null });
   },
 }));
-
-function readStoredSession(): AuthSession | null {
-  try {
-    const rawSession = window.localStorage.getItem(authSessionStorageKey);
-    if (!rawSession) {
-      return null;
-    }
-
-    const session = JSON.parse(rawSession) as Partial<AuthSession>;
-    if (!session.user?.unionId) {
-      return null;
-    }
-
-    return session as AuthSession;
-  } catch {
-    window.localStorage.removeItem(authSessionStorageKey);
-    return null;
-  }
-}
-
-function writeStoredSession(session: AuthSession) {
-  window.localStorage.setItem(authSessionStorageKey, JSON.stringify(session));
-}

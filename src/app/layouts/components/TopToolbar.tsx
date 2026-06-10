@@ -2,6 +2,7 @@ import { Bell, CircleHelp, LogOut, RefreshCw, Search, SlidersHorizontal } from "
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { logoutAuthSession } from "@/pages/auth/api/feishu-auth";
 import { useAuthStore } from "@/store/use-auth-store";
 
 type TopToolbarProps = {
@@ -18,9 +19,13 @@ export function TopToolbar({ isFetching, onRefresh }: TopToolbarProps) {
   const avatarURL = user?.avatarThumb || user?.avatarUrl || "";
   const initials = getInitials(displayName);
 
-  const handleLogout = () => {
-    clearSession();
-    window.dispatchEvent(new PopStateEvent("popstate"));
+  const handleLogout = async () => {
+    try {
+      await logoutAuthSession();
+    } finally {
+      clearSession();
+      window.dispatchEvent(new PopStateEvent("popstate"));
+    }
   };
 
   return (

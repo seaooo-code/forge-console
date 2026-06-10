@@ -6,10 +6,50 @@ const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8080"
 );
 const authRedirectStorageKey = "forge-console.auth-redirect-path";
 const authorizationRequests = new Map<string, Promise<AuthSession>>();
+let sessionRequest: Promise<AuthSession | null> | null = null;
 
 export function beginFeishuAuthorization(redirectPath: string) {
   window.sessionStorage.setItem(authRedirectStorageKey, normalizeRedirectPath(redirectPath));
   window.location.assign(`${apiBaseUrl}/api/v1/auth/feishu/authorize`);
+}
+
+export async function fetchAuthSession(): Promise<AuthSession | null> {
+  if (sessionRequest) {
+    return sessionRequest;
+  }
+
+  sessionRequest = requestAuthSession().finally(() => {
+    sessionRequest = null;
+  });
+  return sessionRequest;
+}
+
+async function requestAuthSession(): Promise<AuthSession | null> {
+  const response = await fetch(`${apiBaseUrl}/api/v1/auth/session`, {
+    credentials: "include",
+  });
+
+  if (response.status === 401) {
+    return null;
+  }
+  if (!response.ok) {
+    const errorMessage = await readErrorMessage(response);
+    throw new Error(errorMessage || `读取登录态失败：${response.status}`);
+  }
+
+  return toAuthSession((await response.json()) as FeishuAuthResponse);
+}
+
+export async function logoutAuthSession() {
+  const response = await fetch(`${apiBaseUrl}/api/v1/auth/logout`, {
+    credentials: "include",
+    method: "POST",
+  });
+
+  if (!response.ok && response.status !== 401) {
+    const errorMessage = await readErrorMessage(response);
+    throw new Error(errorMessage || `退出登录失败：${response.status}`);
+  }
 }
 
 export async function completeFeishuAuthorization(
@@ -43,6 +83,10 @@ async function exchangeFeishuAuthorization(code: string, state: string): Promise
 
   const payload = (await response.json()) as FeishuAuthResponse;
 
+  return toAuthSession(payload);
+}
+
+function toAuthSession(payload: FeishuAuthResponse): AuthSession {
   return {
     authorizedAt: new Date().toISOString(),
     token: payload.token,
