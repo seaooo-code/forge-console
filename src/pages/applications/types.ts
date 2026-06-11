@@ -1,4 +1,5 @@
 export type ApplicationStatus = "运行中" | "维护中" | "已下线";
+export type ApplicationStatusCode = "running" | "maintenance" | "offline";
 
 export type HostApplication = {
   id: string;
@@ -6,6 +7,9 @@ export type HostApplication = {
   slug: string;
   platform: string;
   owner: string;
+  ownerEmail: string;
+  ownerAvatarUrl: string;
+  ownerDepartmentIds: string[];
   moduleCount: number;
   environmentCount: number;
   createdAt: string;
@@ -67,11 +71,10 @@ export type ApplicationDetail = {
   slug: string;
   name: string;
   description: string;
-  repositoryGroup: string;
-  ownerTeam: string;
-  packageName: string;
-  bundleNamespace: string;
-  releasePolicy: string;
+  owner: string;
+  ownerEmail: string;
+  ownerAvatarUrl: string;
+  ownerDepartmentIds: string[];
   metrics: ApplicationDetailMetric[];
   environments: ApplicationEnvironmentRecord[];
   modules: ApplicationModuleRecord[];
@@ -90,4 +93,52 @@ export type ApplicationsSnapshot = {
   applications: HostApplication[];
   details: Record<string, ApplicationDetail>;
   summary: ApplicationSummary;
+};
+
+export type ApplicationEnvironmentInput = {
+  environment: ApplicationEnvironmentRecord["environment"];
+};
+
+export type ApplicationMemberInput = {
+  name: string;
+  role: ApplicationMemberRecord["role"];
+  team: string;
+};
+
+export type ApplicationOption = {
+  label: string;
+  value: string;
+};
+
+export type ApplicationOptions = {
+  applicationStatuses: ApplicationOption[];
+  environments: ApplicationOption[];
+  owners: ApplicationOption[];
+  platforms: ApplicationOption[];
+};
+
+export type FeishuUserSearchResult = {
+  id: string;
+  unionId: string;
+  openId: string;
+  userId: string;
+  name: string;
+  enName: string;
+  avatarUrl: string;
+  email: string;
+  mobile: string;
+  departmentIds: string[];
+};
+
+export type ApplicationMutationInput = {
+  slug?: string;
+  name: string;
+  platform: string;
+  owner: string;
+  ownerEmail: string;
+  ownerAvatarUrl: string;
+  ownerDepartmentIds: string[];
+  description: string;
+  status: ApplicationStatusCode;
+  environments: ApplicationEnvironmentInput[];
 };

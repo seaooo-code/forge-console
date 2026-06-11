@@ -4,24 +4,23 @@ import {
   ArrowLeft,
   Boxes,
   CircleAlert,
-  GitBranch,
-  Layers3,
   type LucideIcon,
   MonitorSmartphone,
   PackageCheck,
+  PenLine,
   RadioTower,
-  ShieldCheck,
   Smartphone,
-  UserRound,
+  Trash2,
 } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { consoleGridTheme } from "@/components/common/console-grid-theme";
 import { EnvironmentBadge } from "@/components/common/EnvironmentBadge";
-import { MockCard as Card, MockSurface } from "@/components/common/MockSurface";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
+import { type ApplicationDetailAPIResponse, deleteApplication } from "./api/applications-snapshot";
 import type {
   ApplicationDetailMetric,
   ApplicationEnvironmentRecord,
@@ -36,6 +35,7 @@ type ApplicationDetailPageProps = {
   applicationSlug: string;
   isFetching: boolean;
   onBack: () => void;
+  onEditApplication: (applicationSlug: string) => void;
   snapshot: ApplicationsSnapshot;
 };
 
@@ -80,10 +80,16 @@ export function ApplicationDetailPage({
   applicationSlug,
   isFetching,
   onBack,
+  onEditApplication,
   snapshot,
 }: ApplicationDetailPageProps) {
-  const application = snapshot.applications.find((item) => item.slug === applicationSlug);
-  const detail = snapshot.details[applicationSlug];
+  const [overrideDetail, setOverrideDetail] = useState<ApplicationDetailAPIResponse | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [actionError, setActionError] = useState("");
+  const application =
+    overrideDetail?.application ??
+    snapshot.applications.find((item) => item.slug === applicationSlug);
+  const detail = overrideDetail?.detail ?? snapshot.details[applicationSlug];
 
   const environmentColumnDefs = useMemo<ColDef<ApplicationEnvironmentRecord>[]>(
     () => [
@@ -178,6 +184,24 @@ export function ApplicationDetailPage({
     return <ApplicationDetailFallback isFetching={isFetching} onBack={onBack} />;
   }
 
+  const handleDeleteApplication = async () => {
+    if (!window.confirm("确认下线该应用？下线后仍可在列表和详情中查看。")) {
+      return;
+    }
+
+    setIsDeleting(true);
+    setActionError("");
+
+    try {
+      const payload = await deleteApplication(application.slug);
+      setOverrideDetail(payload);
+    } catch (_error) {
+      setActionError("下线应用失败，请稍后重试");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <>
       <div className="border-slate-200 border-b bg-white px-6 py-5">
@@ -214,11 +238,41 @@ export function ApplicationDetailPage({
             <p className="mt-2 text-slate-600 text-sm">{detail.description}</p>
           </div>
 
-          <div className="grid min-w-0 gap-2 text-sm md:grid-cols-2 xl:w-150">
-            <InfoPill icon={MonitorSmartphone} label="平台" value={application.platform} />
-            <InfoPill icon={UserRound} label="负责人" value={application.owner} />
-            <InfoPill icon={PackageCheck} label="App Key" value={detail.appKey} />
-            <InfoPill icon={ShieldCheck} label="发布策略" value={detail.releasePolicy} />
+          <div className="space-y-3 xl:w-150">
+            <div className="grid min-w-0 gap-2 text-sm md:grid-cols-2">
+              <InfoPill icon={MonitorSmartphone} label="平台" value={application.platform} />
+              <OwnerInfoPill
+                avatarUrl={application.ownerAvatarUrl || detail.ownerAvatarUrl}
+                email={application.ownerEmail || detail.ownerEmail}
+                name={application.owner || detail.owner}
+              />
+              <InfoPill icon={PackageCheck} label="App Key" value={detail.appKey} />
+            </div>
+            <div className="flex flex-wrap justify-end gap-2">
+              <Button
+                variant="outline"
+                type="button"
+                onClick={() => onEditApplication(application.slug)}
+              >
+                <PenLine className="size-4" />
+                编辑配置
+              </Button>
+              <Button
+                variant="outline"
+                type="button"
+                className="border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                disabled={isDeleting || application.status === "已下线"}
+                onClick={handleDeleteApplication}
+              >
+                <Trash2 className="size-4" />
+                {isDeleting ? "下线中" : "下线应用"}
+              </Button>
+            </div>
+            {actionError ? (
+              <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-rose-600 text-sm">
+                {actionError}
+              </div>
+            ) : null}
           </div>
         </div>
       </div>
@@ -236,10 +290,7 @@ export function ApplicationDetailPage({
               应用接入配置
             </div>
             <div className="grid gap-3 p-4 md:grid-cols-2">
-              <ConfigItem icon={GitBranch} label="仓库组" value={detail.repositoryGroup} />
-              <ConfigItem icon={Layers3} label="Bundle Namespace" value={detail.bundleNamespace} />
-              <ConfigItem icon={Smartphone} label="包名" value={detail.packageName} />
-              <ConfigItem icon={UserRound} label="归属团队" value={detail.ownerTeam} />
+              <ConfigItem icon={PackageCheck} label="App Key" value={detail.appKey} />
             </div>
           </Card>
 
@@ -258,10 +309,7 @@ export function ApplicationDetailPage({
           </Card>
         </section>
 
-        <MockSurface
-          as="section"
-          className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm"
-        >
+        <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
           <TableHeader title="环境绑定" description="宿主应用已启用环境与当前 Combination" />
           <AgGridReact<ApplicationEnvironmentRecord>
             rowData={detail.environments}
@@ -275,45 +323,53 @@ export function ApplicationDetailPage({
             suppressContextMenu
             getRowId={({ data }) => data.id}
           />
-        </MockSurface>
+        </section>
 
-        <MockSurface
-          as="section"
-          className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm"
-        >
+        <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
           <TableHeader title="接入模块" description="当前应用关联的 RN Bundle 模块" />
-          <AgGridReact<ApplicationModuleRecord>
-            rowData={detail.modules}
-            columnDefs={moduleColumnDefs}
-            defaultColDef={defaultColDef}
-            domLayout="autoHeight"
-            headerHeight={46}
-            rowHeight={58}
-            theme={consoleGridTheme}
-            suppressCellFocus
-            suppressContextMenu
-            getRowId={({ data }) => data.id}
-          />
-        </MockSurface>
+          {detail.modules.length > 0 ? (
+            <AgGridReact<ApplicationModuleRecord>
+              rowData={detail.modules}
+              columnDefs={moduleColumnDefs}
+              defaultColDef={defaultColDef}
+              domLayout="autoHeight"
+              headerHeight={46}
+              rowHeight={58}
+              theme={consoleGridTheme}
+              suppressCellFocus
+              suppressContextMenu
+              getRowId={({ data }) => data.id}
+            />
+          ) : (
+            <TodoEmptyState
+              title="模块实体待接入"
+              description="TODO: 接入模块实体后展示真实模块列表"
+            />
+          )}
+        </section>
 
-        <MockSurface
-          as="section"
-          className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm"
-        >
+        <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
           <TableHeader title="最近流水线" description="应用维度最近 Pipeline Run" />
-          <AgGridReact<ApplicationPipelineRecord>
-            rowData={detail.pipelines}
-            columnDefs={pipelineColumnDefs}
-            defaultColDef={defaultColDef}
-            domLayout="autoHeight"
-            headerHeight={46}
-            rowHeight={54}
-            theme={consoleGridTheme}
-            suppressCellFocus
-            suppressContextMenu
-            getRowId={({ data }) => data.id}
-          />
-        </MockSurface>
+          {detail.pipelines.length > 0 ? (
+            <AgGridReact<ApplicationPipelineRecord>
+              rowData={detail.pipelines}
+              columnDefs={pipelineColumnDefs}
+              defaultColDef={defaultColDef}
+              domLayout="autoHeight"
+              headerHeight={46}
+              rowHeight={54}
+              theme={consoleGridTheme}
+              suppressCellFocus
+              suppressContextMenu
+              getRowId={({ data }) => data.id}
+            />
+          ) : (
+            <TodoEmptyState
+              title="流水线实体待接入"
+              description="TODO: 接入流水线实体后展示真实 Pipeline Run"
+            />
+          )}
+        </section>
       </div>
     </>
   );
@@ -336,6 +392,51 @@ function InfoPill({
         <div className="truncate font-semibold text-slate-800 text-sm">{value}</div>
       </div>
     </div>
+  );
+}
+
+function OwnerInfoPill({
+  avatarUrl,
+  email,
+  name,
+}: {
+  avatarUrl: string;
+  email: string;
+  name: string;
+}) {
+  return (
+    <div className="flex min-w-0 items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+      <OwnerAvatar avatarUrl={avatarUrl} email={email} name={name} />
+      <div className="min-w-0">
+        <div className="text-slate-500 text-xs">负责人</div>
+        <div className="truncate font-semibold text-slate-800 text-sm">{name || "-"}</div>
+        {email ? <div className="truncate text-slate-500 text-xs">{email}</div> : null}
+      </div>
+    </div>
+  );
+}
+
+function OwnerAvatar({
+  avatarUrl,
+  email,
+  name,
+}: {
+  avatarUrl: string;
+  email: string;
+  name: string;
+}) {
+  const fallback = name || email || "?";
+
+  if (avatarUrl) {
+    return (
+      <img src={avatarUrl} alt={fallback} className="size-8 shrink-0 rounded-full object-cover" />
+    );
+  }
+
+  return (
+    <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-rose-500 font-semibold text-white text-xs">
+      {fallback.slice(0, 1).toUpperCase()}
+    </span>
   );
 }
 
@@ -403,6 +504,17 @@ function TableHeader({ description, title }: { description: string; title: strin
       <div>
         <div className="font-semibold text-slate-900 text-sm">{title}</div>
         <div className="text-slate-500 text-xs">{description}</div>
+      </div>
+    </div>
+  );
+}
+
+function TodoEmptyState({ description, title }: { description: string; title: string }) {
+  return (
+    <div className="flex min-h-28 items-center justify-center border-slate-100 border-t bg-slate-50 px-4 py-6">
+      <div className="text-center">
+        <div className="font-semibold text-slate-800 text-sm">{title}</div>
+        <div className="mt-1 text-slate-500 text-xs">{description}</div>
       </div>
     </div>
   );
@@ -540,9 +652,7 @@ function ApplicationDetailFallback({
             <CircleAlert className="mt-0.5 size-5 shrink-0 text-amber-500" />
             <div>
               <div className="font-semibold text-slate-900">未找到应用详情</div>
-              <div className="mt-1 text-slate-500 text-sm">
-                当前 mock 数据中没有对应的宿主应用。
-              </div>
+              <div className="mt-1 text-slate-500 text-sm">当前接口没有返回对应的宿主应用。</div>
             </div>
           </div>
         )}

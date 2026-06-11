@@ -12,6 +12,7 @@ import {
 
 import { navGroups } from "@/app/navigation";
 import { Card } from "@/components/ui/card";
+import { useApplicationOptionsStore } from "@/store/use-application-options-store";
 import { type MiCarEnvironmentCode, miCarEnvironmentCodes } from "@/types/environments";
 
 import { AppSidebar } from "./components/AppSidebar";
@@ -237,6 +238,9 @@ const staticPageRoutes: Record<string, PageRouteConfig> = {
         <ApplicationsPage
           applications={applicationsSnapshot.applications}
           isFetching={isFetching}
+          onConfigureApplication={(applicationSlug: string) =>
+            navigateTo(`/apps/${applicationSlug}/edit`)
+          }
           onCreateApplication={() => navigateTo("/apps/new")}
           onOpenApplication={(applicationSlug: string) => navigateTo(`/apps/${applicationSlug}`)}
           onRefresh={refetch}
@@ -329,7 +333,35 @@ function getRouteConfig(path: string): PageRouteConfig {
       emptyData: null,
       queryFn: async () => null,
       queryKey: ["applications-snapshot", "new"],
-      render: (_, { navigateTo }) => <ApplicationCreatePage onBack={() => navigateTo("/apps")} />,
+      render: (_, { navigateTo }) => (
+        <ApplicationCreatePage
+          onBack={() => navigateTo("/apps")}
+          onSaved={(applicationSlug: string) => navigateTo(`/apps/${applicationSlug}`)}
+        />
+      ),
+    };
+  }
+
+  const applicationEditSlug = getApplicationEditSlug(path);
+
+  if (applicationEditSlug) {
+    return {
+      emptyData: emptyApplicationsSnapshot,
+      queryFn: async () =>
+        (
+          await import("@/pages/applications/api/applications-snapshot")
+        ).fetchApplicationDetailSnapshot(applicationEditSlug),
+      queryKey: ["applications-snapshot", "edit", applicationEditSlug],
+      render: (snapshot, { isFetching, navigateTo }) => (
+        <ApplicationCreatePage
+          applicationSlug={applicationEditSlug}
+          isFetching={isFetching}
+          mode="edit"
+          onBack={() => navigateTo(`/apps/${applicationEditSlug}`)}
+          onSaved={(applicationSlug: string) => navigateTo(`/apps/${applicationSlug}`)}
+          snapshot={snapshot}
+        />
+      ),
     };
   }
 
@@ -341,13 +373,14 @@ function getRouteConfig(path: string): PageRouteConfig {
       queryFn: async () =>
         (
           await import("@/pages/applications/api/applications-snapshot")
-        ).fetchApplicationsSnapshot(),
+        ).fetchApplicationDetailSnapshot(applicationSlug),
       queryKey: ["applications-snapshot", "detail", applicationSlug],
       render: (snapshot, { isFetching, navigateTo }) => (
         <ApplicationDetailPage
           applicationSlug={applicationSlug}
           isFetching={isFetching}
           onBack={() => navigateTo("/apps")}
+          onEditApplication={(slug: string) => navigateTo(`/apps/${slug}/edit`)}
           snapshot={snapshot}
         />
       ),
@@ -381,6 +414,10 @@ function getRouteConfig(path: string): PageRouteConfig {
 export function ConsoleLayout() {
   const [routePath, setRoutePath] = useState(getCurrentPath);
   const setActiveNavId = useConsoleLayoutStore((state) => state.setActiveNavId);
+  const applicationOptionsStatus = useApplicationOptionsStore((state) => state.status);
+  const setApplicationOptions = useApplicationOptionsStore((state) => state.setOptions);
+  const setApplicationOptionsError = useApplicationOptionsStore((state) => state.setError);
+  const setApplicationOptionsLoading = useApplicationOptionsStore((state) => state.setLoading);
   const activeNav = useMemo(() => findNavItem(routePath) ?? findNavItem("/"), [routePath]);
   const routeConfig = useMemo(() => getRouteConfig(routePath), [routePath]);
 
@@ -409,6 +446,51 @@ export function ConsoleLayout() {
     setActiveNavId(activeNav.id);
     document.title = `${activeNav.label} · RN Bundle 平台`;
   }, [activeNav, setActiveNavId]);
+
+  useEffect(() => {
+    if (applicationOptionsStatus !== "idle") {
+      return;
+    }
+
+    let disposed = false;
+    const idleWindow = window as Window & {
+      cancelIdleCallback?: (handle: number) => void;
+      requestIdleCallback?: (callback: () => void) => number;
+    };
+
+    const loadOptions = () => {
+      setApplicationOptionsLoading();
+      void import("@/pages/applications/api/applications-snapshot")
+        .then(({ fetchApplicationOptions }) => fetchApplicationOptions())
+        .then((options) => {
+          if (!disposed) {
+            setApplicationOptions(options);
+          }
+        })
+        .catch(() => {
+          if (!disposed) {
+            setApplicationOptionsError("load application options failed");
+          }
+        });
+    };
+
+    const handle =
+      idleWindow.requestIdleCallback?.(loadOptions) ?? window.setTimeout(loadOptions, 0);
+
+    return () => {
+      disposed = true;
+      if (idleWindow.cancelIdleCallback && typeof handle === "number") {
+        idleWindow.cancelIdleCallback(handle);
+        return;
+      }
+      window.clearTimeout(handle);
+    };
+  }, [
+    applicationOptionsStatus,
+    setApplicationOptions,
+    setApplicationOptionsError,
+    setApplicationOptionsLoading,
+  ]);
 
   const handleNavigatePath = useCallback((path: string) => {
     const normalizedPath = normalizePath(path);
@@ -485,6 +567,24 @@ function getApplicationDetailSlug(path: string): string | null {
   const applicationSlug = normalizedPath.slice(prefix.length);
 
   if (applicationSlug === "" || applicationSlug === "new" || applicationSlug.includes("/")) {
+    return null;
+  }
+
+  return applicationSlug;
+}
+
+function getApplicationEditSlug(path: string): string | null {
+  const normalizedPath = normalizePath(path);
+  const prefix = "/apps/";
+  const suffix = "/edit";
+
+  if (!normalizedPath.startsWith(prefix) || !normalizedPath.endsWith(suffix)) {
+    return null;
+  }
+
+  const applicationSlug = normalizedPath.slice(prefix.length, -suffix.length);
+
+  if (applicationSlug === "" || applicationSlug.includes("/")) {
     return null;
   }
 

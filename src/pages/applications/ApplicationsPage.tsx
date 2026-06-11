@@ -5,7 +5,7 @@ import {
   AppWindow,
   ArchiveX,
   CircleDot,
-  Download,
+  LoaderCircle,
   MonitorSmartphone,
   MoreHorizontal,
   Plus,
@@ -14,23 +14,32 @@ import {
   UserRound,
   Wrench,
 } from "lucide-react";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ConsoleFilterSelect,
   ConsoleSearchInput,
   ConsoleTableFooter,
 } from "@/components/common/ConsoleControls";
-import { MockCard as Card, MockSurface } from "@/components/common/MockSurface";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import { themeQuartz } from "@/lib/ag-grid";
 import { cn } from "@/lib/utils";
+import { useApplicationOptionsStore } from "@/store/use-application-options-store";
 
-import type { ApplicationSummary, HostApplication } from "./types";
+import { searchFeishuUsers } from "./api/applications-snapshot";
+import type {
+  ApplicationOption,
+  ApplicationSummary,
+  FeishuUserSearchResult,
+  HostApplication,
+} from "./types";
 
 type ApplicationsPageProps = {
   applications: HostApplication[];
   isFetching: boolean;
+  onConfigureApplication: (applicationSlug: string) => void;
   onCreateApplication: () => void;
   onOpenApplication: (applicationSlug: string) => void;
   onRefresh: () => void;
@@ -42,6 +51,18 @@ const appStatusClass: Record<HostApplication["status"], string> = {
   维护中: "border-amber-200 bg-amber-50 text-amber-700",
   运行中: "border-emerald-200 bg-emerald-50 text-emerald-700",
 };
+
+const fallbackStatusFilterOptions: ApplicationOption[] = [
+  { label: "运行中", value: "running" },
+  { label: "维护中", value: "maintenance" },
+  { label: "已下线", value: "offline" },
+];
+
+const fallbackPlatformFilterOptions: ApplicationOption[] = [
+  { label: "iOS", value: "iOS" },
+  { label: "Android", value: "Android" },
+  { label: "HarmonyOS", value: "HarmonyOS" },
+];
 
 const appGridTheme = themeQuartz.withParams({
   accentColor: "#1677ff",
@@ -70,11 +91,13 @@ const appGridTheme = themeQuartz.withParams({
 export function ApplicationsPage({
   applications,
   isFetching,
+  onConfigureApplication,
   onCreateApplication,
   onOpenApplication,
   onRefresh,
   summary,
 }: ApplicationsPageProps) {
+  const applicationOptions = useApplicationOptionsStore((state) => state.options);
   const stats = useMemo(
     () => [
       {
@@ -86,7 +109,7 @@ export function ApplicationsPage({
         value: summary.total,
       },
       {
-        detail: "75%",
+        detail: percentage(summary.running, summary.total),
         icon: Activity,
         iconClass: "bg-emerald-50 text-emerald-600",
         id: "running",
@@ -94,7 +117,7 @@ export function ApplicationsPage({
         value: summary.running,
       },
       {
-        detail: "25%",
+        detail: percentage(summary.maintenance, summary.total),
         icon: Wrench,
         iconClass: "bg-amber-50 text-amber-600",
         id: "maintenance",
@@ -111,6 +134,18 @@ export function ApplicationsPage({
       },
     ],
     [summary],
+  );
+  const platformFilterOptions = useMemo(
+    () => withAllOption("全部平台", applicationOptions?.platforms ?? fallbackPlatformFilterOptions),
+    [applicationOptions?.platforms],
+  );
+  const statusFilterOptions = useMemo(
+    () =>
+      withAllOption(
+        "全部状态",
+        applicationOptions?.applicationStatuses ?? fallbackStatusFilterOptions,
+      ),
+    [applicationOptions?.applicationStatuses],
   );
 
   const columnDefs = useMemo<ColDef<HostApplication>[]>(
@@ -140,10 +175,11 @@ export function ApplicationsPage({
         minWidth: 210,
       },
       {
+        cellRenderer: OwnerCell,
         field: "owner",
         flex: 0.8,
         headerName: "负责人",
-        minWidth: 130,
+        minWidth: 160,
       },
       {
         field: "moduleCount",
@@ -172,7 +208,7 @@ export function ApplicationsPage({
       },
       {
         cellRenderer: ActionsCell,
-        cellRendererParams: { onOpenApplication },
+        cellRendererParams: { onConfigureApplication, onOpenApplication },
         colId: "actions",
         flex: 0.75,
         headerName: "操作",
@@ -180,7 +216,7 @@ export function ApplicationsPage({
         sortable: false,
       },
     ],
-    [onOpenApplication],
+    [onConfigureApplication, onOpenApplication],
   );
 
   const defaultColDef = useMemo<ColDef<HostApplication>>(
@@ -236,53 +272,28 @@ export function ApplicationsPage({
           })}
         </section>
 
-        <MockSurface
-          as="section"
-          className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm"
-        >
+        <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-3 border-slate-200 border-b px-4 py-3">
             <div className="flex min-w-0 flex-wrap items-center gap-2">
               <ConsoleFilterSelect
                 icon={MonitorSmartphone}
                 label="平台"
                 value="all"
-                options={[
-                  { label: "全部平台", value: "all" },
-                  { label: "iOS / Android", value: "ios-android" },
-                  { label: "Android", value: "android" },
-                ]}
+                options={platformFilterOptions}
               />
               <ConsoleFilterSelect
                 icon={CircleDot}
                 label="状态"
                 value="all"
-                options={[
-                  { label: "全部状态", value: "all" },
-                  { label: "运行中", value: "running" },
-                  { label: "维护中", value: "maintenance" },
-                  { label: "已下线", value: "offline" },
-                ]}
+                options={statusFilterOptions}
               />
-              <ConsoleFilterSelect
-                icon={UserRound}
-                label="负责人"
-                value="all"
-                options={[
-                  { label: "全部负责人", value: "all" },
-                  { label: "li.ming", value: "li.ming" },
-                  { label: "wang.fang", value: "wang.fang" },
-                  { label: "zhao.lei", value: "zhao.lei" },
-                ]}
-              />
+              <OwnerSearchFilter />
               <ConsoleSearchInput />
             </div>
 
             <div className="flex shrink-0 items-center gap-2">
               <Button variant="outline" size="icon" aria-label="刷新应用列表" onClick={onRefresh}>
                 <RefreshCw className={isFetching ? "size-4 animate-spin" : "size-4"} />
-              </Button>
-              <Button variant="outline" size="icon" aria-label="下载应用列表">
-                <Download className="size-4" />
               </Button>
               <Button className="bg-blue-600 hover:bg-blue-700" onClick={onCreateApplication}>
                 <Plus className="size-4" />
@@ -305,10 +316,140 @@ export function ApplicationsPage({
           />
 
           <ConsoleTableFooter total={applications.length} />
-        </MockSurface>
+        </section>
       </div>
     </>
   );
+}
+
+function OwnerSearchFilter() {
+  const [query, setQuery] = useState("");
+  const [selectedUser, setSelectedUser] = useState<FeishuUserSearchResult | null>(null);
+  const [users, setUsers] = useState<FeishuUserSearchResult[]>([]);
+  const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const keyword = query.trim();
+    if (!isOpen || keyword.length < 2) {
+      setUsers([]);
+      setIsLoading(false);
+      return;
+    }
+
+    let disposed = false;
+    setIsLoading(true);
+    const handle = window.setTimeout(() => {
+      void searchFeishuUsers(keyword)
+        .then((result) => {
+          if (!disposed) {
+            setUsers(result);
+          }
+        })
+        .catch(() => {
+          if (!disposed) {
+            setUsers([]);
+          }
+        })
+        .finally(() => {
+          if (!disposed) {
+            setIsLoading(false);
+          }
+        });
+    }, 280);
+
+    return () => {
+      disposed = true;
+      window.clearTimeout(handle);
+    };
+  }, [isOpen, query]);
+
+  const label = selectedUser ? getFeishuUserDisplayName(selectedUser) : "负责人";
+
+  return (
+    <fieldset
+      className="relative m-0 min-w-0 border-0 p-0"
+      onBlur={() => window.setTimeout(() => setIsOpen(false), 150)}
+    >
+      <Button
+        variant="outline"
+        type="button"
+        className="h-9 min-w-28 justify-start gap-2 border-slate-200 bg-white px-3 font-medium text-slate-600 shadow-sm hover:bg-white hover:text-slate-900"
+        aria-label="负责人筛选"
+        onClick={() => setIsOpen((current) => !current)}
+      >
+        <UserRound className="size-3.5 shrink-0 text-slate-400" />
+        <span className="max-w-24 truncate">{label}</span>
+      </Button>
+
+      {isOpen ? (
+        <div className="absolute z-30 mt-1 w-72 rounded-md border border-slate-200 bg-white p-2 shadow-lg">
+          <Input
+            value={query}
+            placeholder="搜索姓名、邮箱或账号"
+            className="h-8"
+            onChange={(event) => setQuery(event.target.value)}
+            onFocus={() => setIsOpen(true)}
+          />
+          <div className="mt-2 max-h-72 overflow-auto">
+            <Button
+              variant="ghost"
+              type="button"
+              className="h-8 w-full justify-start rounded-sm px-2 font-normal text-slate-600 text-sm"
+              onClick={() => {
+                setSelectedUser(null);
+                setQuery("");
+                setUsers([]);
+                setIsOpen(false);
+              }}
+            >
+              全部负责人
+            </Button>
+            {isLoading ? (
+              <div className="flex h-9 items-center gap-2 px-2 text-slate-500 text-sm">
+                <LoaderCircle className="size-4 animate-spin" />
+                搜索中
+              </div>
+            ) : null}
+            {!isLoading && query.trim().length >= 2 && users.length === 0 ? (
+              <div className="px-2 py-2 text-slate-500 text-sm">未找到匹配人员</div>
+            ) : null}
+            {users.map((user) => {
+              const name = getFeishuUserDisplayName(user);
+
+              return (
+                <Button
+                  key={user.id || user.unionId || user.openId}
+                  variant="ghost"
+                  type="button"
+                  className="h-auto w-full justify-start gap-2 rounded-sm px-2 py-2 text-left font-normal"
+                  onClick={() => {
+                    setSelectedUser(user);
+                    setQuery(name);
+                    setIsOpen(false);
+                  }}
+                >
+                  <OwnerAvatar name={name} src={user.avatarUrl} />
+                  <span className="min-w-0">
+                    <span className="block truncate font-medium text-slate-900 text-sm">
+                      {name}
+                    </span>
+                    {user.email ? (
+                      <span className="block truncate text-slate-500 text-xs">{user.email}</span>
+                    ) : null}
+                  </span>
+                </Button>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
+    </fieldset>
+  );
+}
+
+function getFeishuUserDisplayName(user: FeishuUserSearchResult) {
+  return user.name || user.enName || user.email || "";
 }
 
 function CheckboxHeader() {
@@ -360,10 +501,44 @@ function StatusCell({ value }: ICellRendererParams<HostApplication, HostApplicat
   );
 }
 
+function OwnerCell({ data }: ICellRendererParams<HostApplication>) {
+  if (!data) {
+    return null;
+  }
+
+  const owner = data.owner || "-";
+
+  return (
+    <div className="flex h-full min-w-0 items-center gap-2">
+      <OwnerAvatar name={owner} src={data.ownerAvatarUrl} />
+      <div className="min-w-0">
+        <div className="truncate font-medium text-slate-800 text-sm">{owner}</div>
+        {data.ownerEmail ? (
+          <div className="truncate text-slate-500 text-xs">{data.ownerEmail}</div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function OwnerAvatar({ name, src }: { name: string; src: string }) {
+  if (src) {
+    return <img src={src} alt={name} className="size-7 shrink-0 rounded-full object-cover" />;
+  }
+
+  return (
+    <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-rose-500 font-semibold text-white text-xs">
+      {name.slice(0, 1).toUpperCase()}
+    </span>
+  );
+}
+
 function ActionsCell({
   data,
+  onConfigureApplication,
   onOpenApplication,
 }: ICellRendererParams<HostApplication> & {
+  onConfigureApplication?: (applicationSlug: string) => void;
   onOpenApplication?: (applicationSlug: string) => void;
 }) {
   return (
@@ -384,6 +559,11 @@ function ActionsCell({
         variant="link"
         type="button"
         className="h-auto p-0 text-blue-600 text-xs hover:text-blue-700"
+        onClick={() => {
+          if (data) {
+            onConfigureApplication?.(data.slug);
+          }
+        }}
       >
         配置
       </Button>
@@ -392,4 +572,16 @@ function ActionsCell({
       </Button>
     </div>
   );
+}
+
+function percentage(value: number, total: number) {
+  if (total === 0) {
+    return "0%";
+  }
+
+  return `${Math.round((value / total) * 100)}%`;
+}
+
+function withAllOption(label: string, options: ApplicationOption[]) {
+  return [{ label, value: "all" }, ...options.filter((option) => option.value !== "all")];
 }

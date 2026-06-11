@@ -1,17 +1,15 @@
 import {
   ArrowLeft,
-  Bell,
-  GitBranch,
-  Layers3,
+  CircleAlert,
+  LoaderCircle,
   type LucideIcon,
   MonitorSmartphone,
   PackagePlus,
-  ShieldCheck,
 } from "lucide-react";
-import type { ReactNode } from "react";
+import { type FormEvent, type ReactNode, useEffect, useMemo, useState } from "react";
 
-import { MockCard as Card } from "@/components/common/MockSurface";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import {
@@ -21,14 +19,61 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useApplicationOptionsStore } from "@/store/use-application-options-store";
+
+import {
+  createApplication,
+  searchFeishuUsers,
+  updateApplication,
+} from "./api/applications-snapshot";
+import type {
+  ApplicationDetail,
+  ApplicationEnvironmentInput,
+  ApplicationMutationInput,
+  ApplicationOption,
+  ApplicationStatusCode,
+  ApplicationsSnapshot,
+  FeishuUserSearchResult,
+  HostApplication,
+} from "./types";
 
 type ApplicationCreatePageProps = {
+  applicationSlug?: string;
+  isFetching?: boolean;
+  mode?: "create" | "edit";
   onBack: () => void;
+  onSaved?: (applicationSlug: string) => void;
+  snapshot?: ApplicationsSnapshot | null;
 };
 
-const platformOptions = ["iOS", "Android", "HarmonyOS", "Android TV"];
+type EnvironmentCode = ApplicationEnvironmentInput["environment"];
 
-const environmentOptions = [
+type EnvironmentFormState = Record<EnvironmentCode, boolean>;
+
+type ApplicationFormState = {
+  description: string;
+  environments: EnvironmentFormState;
+  name: string;
+  owner: string;
+  ownerAvatarUrl: string;
+  ownerDepartmentIds: string[];
+  ownerEmail: string;
+  platforms: string[];
+  slug: string;
+  status: ApplicationStatusCode;
+};
+
+type ApplicationTextField = "description" | "name" | "owner" | "slug" | "status";
+
+type OwnerDisplayUser = Pick<FeishuUserSearchResult, "avatarUrl" | "email" | "enName" | "name">;
+
+const fallbackPlatformOptions: ApplicationOption[] = [
+  { label: "iOS", value: "iOS" },
+  { label: "Android", value: "Android" },
+  { label: "HarmonyOS", value: "HarmonyOS" },
+];
+
+const fallbackEnvironmentOptions: ApplicationOption[] = [
   { label: "dev", value: "dev" },
   { label: "staging", value: "staging" },
   { label: "preview", value: "preview" },
@@ -36,9 +81,185 @@ const environmentOptions = [
   { label: "product", value: "product" },
 ];
 
-export function ApplicationCreatePage({ onBack }: ApplicationCreatePageProps) {
+const fallbackStatusOptions: ApplicationOption[] = [
+  { label: "运行中", value: "running" },
+  { label: "维护中", value: "maintenance" },
+  { label: "已下线", value: "offline" },
+];
+
+export function ApplicationCreatePage({
+  applicationSlug,
+  isFetching = false,
+  mode = "create",
+  onBack,
+  onSaved,
+  snapshot,
+}: ApplicationCreatePageProps) {
+  const isEditMode = mode === "edit";
+  const application = applicationSlug
+    ? snapshot?.applications.find((item) => item.slug === applicationSlug)
+    : undefined;
+  const detail = applicationSlug ? snapshot?.details[applicationSlug] : undefined;
+  const initialForm = useMemo(
+    () => buildInitialForm(isEditMode ? detail : undefined, application),
+    [application, detail, isEditMode],
+  );
+  const applicationOptions = useApplicationOptionsStore((state) => state.options);
+  const platformOptions = applicationOptions?.platforms ?? fallbackPlatformOptions;
+  const statusOptions = applicationOptions?.applicationStatuses ?? fallbackStatusOptions;
+  const environmentOptions = applicationOptions?.environments ?? fallbackEnvironmentOptions;
+  const [form, setForm] = useState<ApplicationFormState>(initialForm);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formError, setFormError] = useState("");
+  const [ownerSearchResults, setOwnerSearchResults] = useState<FeishuUserSearchResult[]>([]);
+  const [ownerSearchOpen, setOwnerSearchOpen] = useState(false);
+  const [ownerSearchLoading, setOwnerSearchLoading] = useState(false);
+  const [selectedOwner, setSelectedOwner] = useState<OwnerDisplayUser | null>(null);
+
+  useEffect(() => {
+    setForm(initialForm);
+    setSelectedOwner(null);
+  }, [initialForm]);
+
+  useEffect(() => {
+    const query = form.owner.trim();
+    if (!ownerSearchOpen || query.length < 2) {
+      setOwnerSearchResults([]);
+      setOwnerSearchLoading(false);
+      return;
+    }
+
+    let disposed = false;
+    setOwnerSearchLoading(true);
+    const handle = window.setTimeout(() => {
+      void searchFeishuUsers(query)
+        .then((users) => {
+          if (!disposed) {
+            setOwnerSearchResults(users);
+          }
+        })
+        .catch(() => {
+          if (!disposed) {
+            setOwnerSearchResults([]);
+          }
+        })
+        .finally(() => {
+          if (!disposed) {
+            setOwnerSearchLoading(false);
+          }
+        });
+    }, 280);
+
+    return () => {
+      disposed = true;
+      window.clearTimeout(handle);
+    };
+  }, [form.owner, ownerSearchOpen]);
+
+  if (isEditMode && isFetching && !(application && detail)) {
+    return <ApplicationFormLoading onBack={onBack} />;
+  }
+
+  const title = isEditMode ? "编辑应用" : "新建应用";
+  const description = isEditMode
+    ? "维护宿主应用的基础配置和环境接入"
+    : "接入新的宿主应用，初始化 RN Bundle 环境";
+
+  const handleFieldChange = (field: ApplicationTextField, value: string) => {
+    setForm((current) => ({
+      ...current,
+      [field]: value,
+    }));
+  };
+
+  const handleOwnerChange = (value: string) => {
+    setOwnerSearchOpen(true);
+    setSelectedOwner(null);
+    setForm((current) => ({
+      ...current,
+      owner: value,
+      ownerAvatarUrl: "",
+      ownerDepartmentIds: [],
+      ownerEmail: "",
+    }));
+  };
+
+  const handleOwnerSelect = (user: FeishuUserSearchResult) => {
+    const ownerName = getOwnerDisplayName(user);
+    setOwnerSearchOpen(false);
+    setOwnerSearchResults([]);
+    setSelectedOwner({
+      avatarUrl: user.avatarUrl,
+      email: user.email,
+      enName: user.enName,
+      name: ownerName,
+    });
+    setForm((current) => ({
+      ...current,
+      owner: ownerName || current.owner,
+      ownerAvatarUrl: user.avatarUrl,
+      ownerDepartmentIds: user.departmentIds ?? [],
+      ownerEmail: user.email,
+    }));
+  };
+
+  const handleOwnerEdit = () => {
+    setSelectedOwner(null);
+    setOwnerSearchOpen(true);
+  };
+
+  const handlePlatformChange = (platform: string, checked: boolean) => {
+    setForm((current) => ({
+      ...current,
+      platforms: checked
+        ? [...current.platforms, platform]
+        : current.platforms.filter((item) => item !== platform),
+    }));
+  };
+
+  const handleEnvironmentChange = (environment: EnvironmentCode, enabled: boolean) => {
+    setForm((current) => ({
+      ...current,
+      environments: {
+        ...current.environments,
+        [environment]: enabled,
+      },
+    }));
+  };
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const input = buildApplicationInput(form, environmentOptions);
+    if (
+      !input.slug ||
+      !input.name ||
+      !input.platform ||
+      !input.owner ||
+      !input.description ||
+      input.environments.length === 0
+    ) {
+      setFormError("请完整填写基础信息，并至少选择一个平台和一个环境");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setFormError("");
+
+    try {
+      const payload = isEditMode
+        ? await updateApplication(applicationSlug ?? "", input)
+        : await createApplication(input);
+      onSaved?.(payload.application.slug);
+    } catch (_error) {
+      setFormError(isEditMode ? "保存应用失败，请稍后重试" : "创建应用失败，请稍后重试");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
-    <>
+    <form onSubmit={handleSubmit}>
       <div className="border-slate-200 border-b bg-white px-6 py-5">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div>
@@ -56,10 +277,8 @@ export function ApplicationCreatePage({ onBack }: ApplicationCreatePageProps) {
                 <PackagePlus className="size-5" />
               </div>
               <div>
-                <h1 className="font-semibold text-2xl text-slate-950 tracking-tight">新建应用</h1>
-                <p className="mt-2 text-slate-600 text-sm">
-                  接入新的宿主应用，初始化 RN Bundle 环境、模块仓库和发布策略
-                </p>
+                <h1 className="font-semibold text-2xl text-slate-950 tracking-tight">{title}</h1>
+                <p className="mt-2 text-slate-600 text-sm">{description}</p>
               </div>
             </div>
           </div>
@@ -68,152 +287,323 @@ export function ApplicationCreatePage({ onBack }: ApplicationCreatePageProps) {
             <Button variant="outline" type="button" onClick={onBack}>
               取消
             </Button>
-            <Button variant="outline" type="button">
-              保存草稿
-            </Button>
-            <Button type="button" className="bg-blue-600 hover:bg-blue-700">
-              创建应用
+            <Button type="submit" className="bg-blue-600 hover:bg-blue-700" disabled={isSubmitting}>
+              {isSubmitting ? "保存中" : isEditMode ? "保存修改" : "创建应用"}
             </Button>
           </div>
         </div>
+        {formError ? (
+          <div className="mt-4 flex items-start gap-2 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-rose-600 text-sm">
+            <CircleAlert className="mt-0.5 size-4 shrink-0" />
+            {formError}
+          </div>
+        ) : null}
       </div>
 
-      <div className="grid gap-4 px-6 py-5 xl:grid-cols-[1.05fr_0.95fr]">
-        <div className="space-y-4">
-          <Card className="gap-0 rounded-lg border-slate-200 py-0 shadow-sm">
-            <SectionHeader
-              icon={MonitorSmartphone}
-              title="基础信息"
-              description="应用唯一标识、平台和负责人"
-            />
-            <div className="grid gap-4 p-4 md:grid-cols-2">
-              <Field label="应用名称">
-                <Input defaultValue="小米汽车海外版" placeholder="输入应用名称" />
-              </Field>
-              <Field label="应用标识">
-                <Input defaultValue="mi-car-global" placeholder="例如 mi-car-global" />
-              </Field>
-              <Field label="负责人">
-                <Input defaultValue="li.ming" placeholder="输入负责人账号" />
-              </Field>
-              <Field label="归属团队">
-                <Input defaultValue="小米汽车 - RN 平台组" placeholder="输入团队名称" />
-              </Field>
-              <Field label="接入平台" className="md:col-span-2">
-                <div className="grid gap-2 md:grid-cols-4">
+      <div className="px-6 py-5">
+        <Card className="gap-0 rounded-lg border-slate-200 py-0 shadow-sm">
+          <SectionHeader
+            icon={MonitorSmartphone}
+            title="应用接入信息"
+            description="应用唯一标识、平台、负责人和启用环境"
+          />
+          <div className="space-y-5 p-4">
+            <section>
+              <div className="mb-3 flex items-center gap-2">
+                <div className="h-4 w-1 rounded-full bg-blue-500" />
+                <h2 className="font-semibold text-slate-900 text-sm">基础信息</h2>
+              </div>
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-12">
+                <Field label="应用名称" className="xl:col-span-4">
+                  <Input
+                    value={form.name}
+                    placeholder="输入应用名称"
+                    onChange={(event) => handleFieldChange("name", event.target.value)}
+                  />
+                </Field>
+                <Field label="应用标识" className="xl:col-span-4">
+                  <Input
+                    value={form.slug}
+                    disabled={isEditMode}
+                    placeholder="例如 mi-car-global"
+                    onChange={(event) => handleFieldChange("slug", event.target.value)}
+                  />
+                </Field>
+                <Field label="负责人" className="xl:col-span-4">
+                  <div className="relative">
+                    {selectedOwner ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="h-9 w-full justify-start gap-2 px-3 font-normal text-slate-900 hover:bg-white hover:text-slate-900"
+                        onClick={handleOwnerEdit}
+                      >
+                        <OwnerAvatar user={selectedOwner} />
+                        <span className="min-w-0 truncate">
+                          {getOwnerDisplayName(selectedOwner)}
+                        </span>
+                      </Button>
+                    ) : (
+                      <Input
+                        value={form.owner}
+                        placeholder="搜索负责人姓名、邮箱或账号"
+                        onBlur={() => window.setTimeout(() => setOwnerSearchOpen(false), 150)}
+                        onChange={(event) => handleOwnerChange(event.target.value)}
+                        onFocus={() => setOwnerSearchOpen(true)}
+                      />
+                    )}
+                    {ownerSearchOpen && !selectedOwner ? (
+                      <OwnerSearchResults
+                        isLoading={ownerSearchLoading}
+                        onSelect={handleOwnerSelect}
+                        query={form.owner}
+                        users={ownerSearchResults}
+                      />
+                    ) : null}
+                  </div>
+                </Field>
+                <Field label="应用状态" className="xl:col-span-4">
+                  <Select
+                    value={form.status}
+                    onValueChange={(value) =>
+                      handleFieldChange("status", value as ApplicationStatusCode)
+                    }
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {statusOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Field>
+                <Field label="应用描述" className="md:col-span-2 xl:col-span-8">
+                  <Input
+                    value={form.description}
+                    placeholder="输入应用说明"
+                    onChange={(event) => handleFieldChange("description", event.target.value)}
+                  />
+                </Field>
+              </div>
+            </section>
+
+            <section className="border-slate-100 border-t pt-5">
+              <div className="mb-3 flex items-center gap-2">
+                <div className="h-4 w-1 rounded-full bg-emerald-500" />
+                <h2 className="font-semibold text-slate-900 text-sm">接入范围</h2>
+              </div>
+              <Field label="接入平台">
+                <div className="grid gap-2 md:grid-cols-3">
                   {platformOptions.map((platform) => (
                     <CheckOption
-                      key={platform}
-                      checked={platform !== "Android TV"}
-                      label={platform}
+                      key={platform.value}
+                      checked={form.platforms.includes(platform.value)}
+                      label={platform.label}
+                      onCheckedChange={(checked) => handlePlatformChange(platform.value, checked)}
                     />
                   ))}
                 </div>
               </Field>
-            </div>
-          </Card>
-
-          <Card className="gap-0 rounded-lg border-slate-200 py-0 shadow-sm">
-            <SectionHeader
-              icon={GitBranch}
-              title="仓库与命名空间"
-              description="用于拉取模块代码、生成 Bundle 产物和隔离 CDN 路径"
-            />
-            <div className="grid gap-4 p-4 md:grid-cols-2">
-              <Field label="Git 仓库组">
-                <Input defaultValue="git@git.mi.com:mi-car-global-rn" />
-              </Field>
-              <Field label="默认分支">
-                <Input defaultValue="main" />
-              </Field>
-              <Field label="Bundle Namespace">
-                <Input defaultValue="com.xiaomi.micar.global.rn" />
-              </Field>
-              <Field label="包名">
-                <Input defaultValue="com.xiaomi.micar.global" />
-              </Field>
-            </div>
-          </Card>
-        </div>
-
-        <div className="space-y-4">
-          <Card className="gap-0 rounded-lg border-slate-200 py-0 shadow-sm">
-            <SectionHeader
-              icon={Layers3}
-              title="环境接入"
-              description="小米汽车当前支持的五套环境"
-            />
-            <div className="space-y-3 p-4">
-              {environmentOptions.map((environment) => (
-                <div
-                  key={environment.value}
-                  className="flex items-center justify-between gap-3 rounded-md border border-slate-200 bg-slate-50 px-3 py-2.5"
-                >
-                  <CheckOption checked label={environment.label} />
-                  <Select defaultValue={environment.value === "product" ? "approval" : "auto"}>
-                    <SelectTrigger className="h-8 w-32 bg-white text-xs">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="auto">自动部署</SelectItem>
-                      <SelectItem value="approval">审批部署</SelectItem>
-                      <SelectItem value="manual">手动部署</SelectItem>
-                    </SelectContent>
-                  </Select>
+              <Field label="环境接入" className="mt-4">
+                <div className="grid gap-2 md:grid-cols-3 xl:grid-cols-5">
+                  {environmentOptions.map((environment) => (
+                    <CheckOption
+                      key={environment.value}
+                      checked={form.environments[environment.value as EnvironmentCode]}
+                      label={environment.label}
+                      onCheckedChange={(checked) =>
+                        handleEnvironmentChange(environment.value as EnvironmentCode, checked)
+                      }
+                    />
+                  ))}
                 </div>
-              ))}
-            </div>
-          </Card>
-
-          <Card className="gap-0 rounded-lg border-slate-200 py-0 shadow-sm">
-            <SectionHeader
-              icon={ShieldCheck}
-              title="发布策略"
-              description="生产发布、灰度和回滚准入"
-            />
-            <div className="grid gap-4 p-4">
-              <Field label="生产发布准入">
-                <Select defaultValue="approval-gray">
-                  <SelectTrigger className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="approval-gray">审批后灰度</SelectItem>
-                    <SelectItem value="approval-full">审批后全量</SelectItem>
-                    <SelectItem value="blocked">禁止生产发布</SelectItem>
-                  </SelectContent>
-                </Select>
               </Field>
-              <Field label="默认流水线模板">
-                <Select defaultValue="rn-standard">
-                  <SelectTrigger className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="rn-standard">RN Standard Pipeline</SelectItem>
-                    <SelectItem value="vehicle">Vehicle Pipeline</SelectItem>
-                    <SelectItem value="ai">AI Pipeline</SelectItem>
-                  </SelectContent>
-                </Select>
-              </Field>
-            </div>
-          </Card>
-
-          <Card className="gap-0 rounded-lg border-slate-200 py-0 shadow-sm">
-            <SectionHeader
-              icon={Bell}
-              title="通知订阅"
-              description="接入后默认订阅构建、发布和告警通知"
-            />
-            <div className="space-y-2 p-4">
-              <CheckOption checked label="飞书机器人 release-notify" />
-              <CheckOption checked label="钉钉群 RN 平台-发布" />
-              <CheckOption checked label="企业邮件 rn-platform@xiaomi.com" />
-            </div>
-          </Card>
-        </div>
+            </section>
+          </div>
+        </Card>
       </div>
-    </>
+    </form>
+  );
+}
+
+function getOwnerDisplayName(user: OwnerDisplayUser) {
+  return user.name || user.enName || user.email || "";
+}
+
+function getOwnerInitial(user: OwnerDisplayUser) {
+  const name = getOwnerDisplayName(user).trim();
+  return name ? name.slice(0, 1).toUpperCase() : "?";
+}
+
+function buildInitialForm(
+  detail?: ApplicationDetail,
+  application?: HostApplication,
+): ApplicationFormState {
+  const slug = detail?.slug ?? application?.slug ?? "";
+  const platform = application?.platform ?? "";
+
+  return {
+    description: detail?.description ?? "",
+    environments: buildEnvironmentState(detail),
+    name: detail?.name ?? application?.name ?? "",
+    owner: application?.owner ?? "",
+    ownerAvatarUrl: detail?.ownerAvatarUrl ?? application?.ownerAvatarUrl ?? "",
+    ownerDepartmentIds: detail?.ownerDepartmentIds ?? application?.ownerDepartmentIds ?? [],
+    ownerEmail: detail?.ownerEmail ?? application?.ownerEmail ?? "",
+    platforms: platform === "" ? [] : platform.split("/").map((item) => item.trim()),
+    slug,
+    status: toStatusCode(application?.status),
+  };
+}
+
+function buildEnvironmentState(detail?: ApplicationDetail): EnvironmentFormState {
+  const enabledEnvironments = new Map(
+    detail?.environments.map((environment) => [environment.environment, environment]) ?? [],
+  );
+
+  return {
+    dev: detail ? enabledEnvironments.has("dev") : true,
+    staging: detail ? enabledEnvironments.has("staging") : true,
+    preview: detail ? enabledEnvironments.has("preview") : true,
+    preProduct: detail ? enabledEnvironments.has("preProduct") : true,
+    product: detail ? enabledEnvironments.has("product") : true,
+  };
+}
+
+function buildApplicationInput(
+  form: ApplicationFormState,
+  environmentOptions: ApplicationOption[],
+): ApplicationMutationInput {
+  const environments = environmentOptions
+    .filter((environment) => form.environments[environment.value as EnvironmentCode])
+    .map((environment) => ({
+      environment: environment.value as EnvironmentCode,
+    }));
+
+  return {
+    description: form.description.trim(),
+    environments,
+    name: form.name.trim(),
+    owner: form.owner.trim(),
+    ownerAvatarUrl: form.ownerAvatarUrl.trim(),
+    ownerDepartmentIds: form.ownerDepartmentIds,
+    ownerEmail: form.ownerEmail.trim(),
+    platform: form.platforms.join(" / "),
+    slug: form.slug.trim(),
+    status: form.status,
+  };
+}
+
+function toStatusCode(status?: HostApplication["status"]): ApplicationStatusCode {
+  switch (status) {
+    case "维护中":
+      return "maintenance";
+    case "已下线":
+      return "offline";
+    default:
+      return "running";
+  }
+}
+
+function ApplicationFormLoading({ onBack }: { onBack: () => void }) {
+  return (
+    <div className="space-y-4 px-6 py-5">
+      <Button
+        variant="ghost"
+        type="button"
+        className="-ml-2 h-8 gap-2 px-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+        onClick={onBack}
+      >
+        <ArrowLeft className="size-4" />
+        返回应用管理
+      </Button>
+      <Card className="rounded-lg border-slate-200 p-6 shadow-none">
+        <div className="space-y-3">
+          <div className="h-5 w-36 animate-pulse rounded bg-slate-100" />
+          <div className="h-10 w-full animate-pulse rounded bg-slate-100" />
+          <div className="h-40 w-full animate-pulse rounded bg-slate-100" />
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function OwnerSearchResults({
+  isLoading,
+  onSelect,
+  query,
+  users,
+}: {
+  isLoading: boolean;
+  onSelect: (user: FeishuUserSearchResult) => void;
+  query: string;
+  users: FeishuUserSearchResult[];
+}) {
+  if (query.trim().length < 2) {
+    return null;
+  }
+
+  return (
+    <div className="absolute z-20 mt-1 max-h-72 w-full overflow-auto rounded-md border border-slate-200 bg-white py-1 shadow-lg">
+      {isLoading ? (
+        <div className="flex h-10 items-center gap-2 px-3 text-slate-500 text-sm">
+          <LoaderCircle className="size-4 animate-spin" />
+          搜索中
+        </div>
+      ) : null}
+      {!isLoading && users.length === 0 ? (
+        <div className="px-3 py-2 text-slate-500 text-sm">未找到匹配人员</div>
+      ) : null}
+      {users.map((user) => (
+        <Button
+          key={user.id || user.unionId || user.openId}
+          type="button"
+          variant="ghost"
+          className="h-auto w-full justify-start gap-3 rounded-none px-3 py-2 text-left font-normal hover:bg-slate-50"
+          onClick={() => onSelect(user)}
+        >
+          <OwnerAvatar user={user} className="size-8" />
+          <span className="min-w-0 flex-1">
+            <span className="block truncate font-medium text-slate-900 text-sm">
+              {getOwnerDisplayName(user)}
+            </span>
+            {user.email ? (
+              <span className="block truncate text-slate-500 text-xs">{user.email}</span>
+            ) : null}
+          </span>
+        </Button>
+      ))}
+    </div>
+  );
+}
+
+function OwnerAvatar({
+  className = "size-6",
+  user,
+}: {
+  className?: string;
+  user: OwnerDisplayUser;
+}) {
+  if (user.avatarUrl) {
+    return (
+      <img
+        src={user.avatarUrl}
+        alt={getOwnerDisplayName(user)}
+        className={`${className} shrink-0 rounded-full object-cover`}
+      />
+    );
+  }
+
+  return (
+    <span
+      className={`${className} flex shrink-0 items-center justify-center rounded-full bg-rose-500 font-semibold text-white text-xs`}
+    >
+      {getOwnerInitial(user)}
+    </span>
   );
 }
 
@@ -256,10 +646,18 @@ function Field({
   );
 }
 
-function CheckOption({ checked, label }: { checked?: boolean; label: string }) {
+function CheckOption({
+  checked,
+  label,
+  onCheckedChange,
+}: {
+  checked?: boolean;
+  label: string;
+  onCheckedChange?: (checked: boolean) => void;
+}) {
   return (
     <div className="flex h-9 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 text-slate-700 text-sm">
-      <Checkbox defaultChecked={checked} />
+      <Checkbox checked={checked} onCheckedChange={(value) => onCheckedChange?.(value === true)} />
       <span>{label}</span>
     </div>
   );
