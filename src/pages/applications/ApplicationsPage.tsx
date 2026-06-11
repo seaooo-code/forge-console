@@ -136,15 +136,11 @@ export function ApplicationsPage({
     [summary],
   );
   const platformFilterOptions = useMemo(
-    () => withAllOption("全部平台", applicationOptions?.platforms ?? fallbackPlatformFilterOptions),
+    () => applicationOptions?.platforms ?? fallbackPlatformFilterOptions,
     [applicationOptions?.platforms],
   );
   const statusFilterOptions = useMemo(
-    () =>
-      withAllOption(
-        "全部状态",
-        applicationOptions?.applicationStatuses ?? fallbackStatusFilterOptions,
-      ),
+    () => applicationOptions?.applicationStatuses ?? fallbackStatusFilterOptions,
     [applicationOptions?.applicationStatuses],
   );
 
@@ -278,13 +274,13 @@ export function ApplicationsPage({
               <ConsoleFilterSelect
                 icon={MonitorSmartphone}
                 label="平台"
-                value="all"
+                value={platformFilterOptions[0]?.value ?? fallbackPlatformFilterOptions[0].value}
                 options={platformFilterOptions}
               />
               <ConsoleFilterSelect
                 icon={CircleDot}
                 label="状态"
-                value="all"
+                value={statusFilterOptions[0]?.value ?? fallbackStatusFilterOptions[0].value}
                 options={statusFilterOptions}
               />
               <OwnerSearchFilter />
@@ -369,7 +365,14 @@ function OwnerSearchFilter() {
   return (
     <fieldset
       className="relative m-0 min-w-0 border-0 p-0"
-      onBlur={() => window.setTimeout(() => setIsOpen(false), 150)}
+      onBlur={(event) => {
+        const nextTarget = event.relatedTarget;
+        if (nextTarget instanceof Node && event.currentTarget.contains(nextTarget)) {
+          return;
+        }
+
+        window.setTimeout(() => setIsOpen(false), 150);
+      }}
     >
       <Button
         variant="outline"
@@ -392,19 +395,6 @@ function OwnerSearchFilter() {
             onFocus={() => setIsOpen(true)}
           />
           <div className="mt-2 max-h-72 overflow-auto">
-            <Button
-              variant="ghost"
-              type="button"
-              className="h-8 w-full justify-start rounded-sm px-2 font-normal text-slate-600 text-sm"
-              onClick={() => {
-                setSelectedUser(null);
-                setQuery("");
-                setUsers([]);
-                setIsOpen(false);
-              }}
-            >
-              全部负责人
-            </Button>
             {isLoading ? (
               <div className="flex h-9 items-center gap-2 px-2 text-slate-500 text-sm">
                 <LoaderCircle className="size-4 animate-spin" />
@@ -580,8 +570,4 @@ function percentage(value: number, total: number) {
   }
 
   return `${Math.round((value / total) * 100)}%`;
-}
-
-function withAllOption(label: string, options: ApplicationOption[]) {
-  return [{ label, value: "all" }, ...options.filter((option) => option.value !== "all")];
 }
