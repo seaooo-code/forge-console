@@ -15,7 +15,7 @@ export function TopToolbar({ isFetching, onRefresh }: TopToolbarProps) {
   const clearSession = useAuthStore((state) => state.clearSession);
   const user = session?.user;
   const displayName = user?.name || user?.enName || user?.email || user?.unionId || "未登录";
-  const accountLabel = user?.enterpriseEmail || user?.email || user?.tenantKey || "Feishu";
+  const email = user?.enterpriseEmail || user?.email || "";
   const avatarURL = user?.avatarThumb || user?.avatarUrl || "";
   const initials = getInitials(displayName);
 
@@ -65,7 +65,7 @@ export function TopToolbar({ isFetching, onRefresh }: TopToolbarProps) {
             <div className="max-w-36 truncate font-semibold text-slate-800 text-sm">
               {displayName}
             </div>
-            <div className="max-w-42 truncate text-slate-500 text-xs">{accountLabel}</div>
+            {email ? <div className="max-w-42 truncate text-slate-500 text-xs">{email}</div> : null}
           </div>
           <Button variant="ghost" size="icon" aria-label="退出登录" onClick={handleLogout}>
             <LogOut className="size-4" />
