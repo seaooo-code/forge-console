@@ -8,15 +8,16 @@ import {
   LoaderCircle,
   type LucideIcon,
   MonitorSmartphone,
-  MoreHorizontal,
   Plus,
   RefreshCw,
   Smartphone,
+  Trash2,
   UserRound,
   Wrench,
   X,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import {
   ConsoleFilterSelect,
   ConsoleSearchInput,
@@ -46,6 +47,7 @@ type ApplicationsPageProps = {
   onFiltersChange: (filters: ApplicationListFilters) => void;
   onConfigureApplication: (applicationSlug: string) => void;
   onCreateApplication: () => void;
+  onDeleteApplication: (application: HostApplication) => Promise<void>;
   onOpenApplication: (applicationSlug: string) => void;
   onRefresh: () => void;
   summary: ApplicationSummary;
@@ -100,12 +102,20 @@ export function ApplicationsPage({
   onFiltersChange,
   onConfigureApplication,
   onCreateApplication,
+  onDeleteApplication,
   onOpenApplication,
   onRefresh,
   summary,
 }: ApplicationsPageProps) {
   const applicationOptions = useApplicationOptionsStore((state) => state.options);
   const [keywordInput, setKeywordInput] = useState(filters.keyword);
+  const [deleteTarget, setDeleteTarget] = useState<HostApplication | null>(null);
+  const [deleteError, setDeleteError] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+  const handleRequestDeleteApplication = useCallback((application: HostApplication) => {
+    setDeleteTarget(application);
+    setDeleteError("");
+  }, []);
   const updateFilters = useCallback(
     (patch: Partial<ApplicationListFilters>) => {
       onFiltersChange({
@@ -228,15 +238,19 @@ export function ApplicationsPage({
       },
       {
         cellRenderer: ActionsCell,
-        cellRendererParams: { onConfigureApplication, onOpenApplication },
+        cellRendererParams: {
+          onConfigureApplication,
+          onDeleteApplication: handleRequestDeleteApplication,
+          onOpenApplication,
+        },
         colId: "actions",
-        flex: 0.75,
+        flex: 0.85,
         headerName: "操作",
-        minWidth: 132,
+        minWidth: 156,
         sortable: false,
       },
     ],
-    [onConfigureApplication, onOpenApplication],
+    [handleRequestDeleteApplication, onConfigureApplication, onOpenApplication],
   );
 
   const defaultColDef = useMemo<ColDef<HostApplication>>(
@@ -325,7 +339,13 @@ export function ApplicationsPage({
             </div>
 
             <div className="flex shrink-0 items-center gap-2">
-              <Button variant="outline" size="icon" aria-label="刷新应用列表" onClick={onRefresh}>
+              <Button
+                variant="outline"
+                type="button"
+                size="icon"
+                aria-label="刷新应用列表"
+                onClick={onRefresh}
+              >
                 <RefreshCw className={isFetching ? "size-4 animate-spin" : "size-4"} />
               </Button>
               <Button className="bg-blue-600 hover:bg-blue-700" onClick={onCreateApplication}>
@@ -351,6 +371,45 @@ export function ApplicationsPage({
           <ConsoleTableFooter total={applications.length} />
         </section>
       </div>
+      <ConfirmDialog
+        isOpen={deleteTarget !== null}
+        isPending={isDeleting}
+        title="删除应用"
+        description={
+          deleteTarget ? `确认删除「${deleteTarget.name}」？删除后应用将标记为已下线。` : ""
+        }
+        confirmLabel="删除应用"
+        tone="danger"
+        onCancel={() => {
+          if (isDeleting) {
+            return;
+          }
+          setDeleteTarget(null);
+          setDeleteError("");
+        }}
+        onConfirm={async () => {
+          if (!deleteTarget) {
+            return;
+          }
+
+          setIsDeleting(true);
+          setDeleteError("");
+          try {
+            await onDeleteApplication(deleteTarget);
+            setDeleteTarget(null);
+          } catch (_error) {
+            setDeleteError("删除应用失败，请稍后重试");
+          } finally {
+            setIsDeleting(false);
+          }
+        }}
+      >
+        {deleteError ? (
+          <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-rose-600 text-sm">
+            {deleteError}
+          </div>
+        ) : null}
+      </ConfirmDialog>
     </>
   );
 }
@@ -622,13 +681,17 @@ function OwnerAvatar({ name, src }: { name: string; src: string }) {
 function ActionsCell({
   data,
   onConfigureApplication,
+  onDeleteApplication,
   onOpenApplication,
 }: ICellRendererParams<HostApplication> & {
   onConfigureApplication?: (applicationSlug: string) => void;
+  onDeleteApplication?: (application: HostApplication) => void;
   onOpenApplication?: (applicationSlug: string) => void;
 }) {
+  const isDeleted = data?.status === "已下线";
+
   return (
-    <div className="flex h-full items-center gap-2 whitespace-nowrap font-medium text-blue-600 text-xs">
+    <div className="flex h-full items-center gap-3 whitespace-nowrap font-medium text-xs">
       <Button
         variant="link"
         type="button"
@@ -653,8 +716,19 @@ function ActionsCell({
       >
         配置
       </Button>
-      <Button variant="ghost" type="button" size="icon" className="size-6 text-slate-500">
-        <MoreHorizontal className="size-4" />
+      <Button
+        variant="link"
+        type="button"
+        className="h-auto gap-1 p-0 text-rose-600 text-xs hover:text-rose-700 disabled:text-slate-400"
+        disabled={isDeleted}
+        onClick={() => {
+          if (data) {
+            onDeleteApplication?.(data);
+          }
+        }}
+      >
+        <Trash2 className="size-3.5" />
+        删除
       </Button>
     </div>
   );

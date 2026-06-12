@@ -2,6 +2,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   AppWindow,
   Boxes,
+  Database,
   Gauge,
   GitBranch,
   History,
@@ -30,6 +31,7 @@ const navIcons: Record<NavIconName, LucideIcon> = {
   release: Rocket,
   rollback: History,
   settings: Settings,
+  storage: Database,
   task: Workflow,
 };
 

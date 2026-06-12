@@ -20,4 +20,5 @@ export type NavIconName =
   | "release"
   | "rollback"
   | "settings"
+  | "storage"
   | "task";

@@ -1,4 +1,4 @@
-import { type QueryKey, useQuery } from "@tanstack/react-query";
+import { type QueryKey, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   type ComponentType,
   lazy,
@@ -16,7 +16,8 @@ import {
   applicationsSnapshotQueryKey,
   emptyApplicationListFilters,
 } from "@/pages/applications/api/application-list-filters";
-import type { ApplicationListFilters } from "@/pages/applications/types";
+import type { ApplicationListFilters, HostApplication } from "@/pages/applications/types";
+import type { StorageConfigRecord } from "@/pages/storage/types";
 import { useApplicationOptionsStore } from "@/store/use-application-options-store";
 import { type MiCarEnvironmentCode, miCarEnvironmentCodes } from "@/types/environments";
 
@@ -93,6 +94,15 @@ const SettingsPage = lazy(async () => ({
   default: (await import("@/pages/settings/SettingsPage")).SettingsPage as unknown as AnyPage,
 }));
 
+const StoragePage = lazy(async () => ({
+  default: (await import("@/pages/storage/StoragePage")).StoragePage as unknown as AnyPage,
+}));
+
+const StorageCreatePage = lazy(async () => ({
+  default: (await import("@/pages/storage/StorageCreatePage"))
+    .StorageCreatePage as unknown as AnyPage,
+}));
+
 const emptyDashboardSnapshot = {
   buildTrend: [],
   metrics: [],
@@ -116,7 +126,6 @@ const emptyApplicationsSnapshot = {
 const emptyEnvironmentsSnapshot = {
   details: {},
   environments: [],
-  matrix: [],
 };
 
 const emptyModulesSnapshot = {
@@ -208,6 +217,10 @@ const emptySettingsSnapshot = {
   navItems: [],
   notifications: [],
   permissions: [],
+};
+
+const emptyStorageSnapshot = {
+  configurations: [],
 };
 
 type PageRenderOptions = {
@@ -307,11 +320,33 @@ const staticPageRoutes: Record<string, PageRouteConfig> = {
     queryKey: ["settings-snapshot"],
     render: (snapshot) => <SettingsPage snapshot={snapshot} />,
   },
+  "/storage": {
+    emptyData: emptyStorageSnapshot,
+    queryFn: async () =>
+      (await import("@/pages/storage/api/storage-snapshot")).fetchStorageSnapshot(),
+    queryKey: ["storage-snapshot"],
+    render: (snapshot, { navigateTo, refetch }) => (
+      <StoragePage
+        onCreateStorage={() => navigateTo("/storage/new")}
+        onDeleteStorage={async (storage: StorageConfigRecord) => {
+          const { deleteStorageConfiguration } = await import(
+            "@/pages/storage/api/storage-snapshot"
+          );
+          await deleteStorageConfiguration(storage.id);
+          await refetch();
+        }}
+        onEditStorage={(storageId: string) => navigateTo(`/storage/${storageId}/edit`)}
+        snapshot={snapshot}
+      />
+    ),
+  },
 };
 
 function getRouteConfig(
   path: string,
   applicationFilters: ApplicationListFilters,
+  onApplicationsChanged: () => Promise<void>,
+  onStorageChanged: () => Promise<void>,
   onApplicationFiltersChange: (filters: ApplicationListFilters) => void,
 ): PageRouteConfig {
   if (path === "/apps") {
@@ -335,6 +370,14 @@ function getRouteConfig(
               navigateTo(`/apps/${applicationSlug}/edit`)
             }
             onCreateApplication={() => navigateTo("/apps/new")}
+            onDeleteApplication={async (application: HostApplication) => {
+              const { deleteApplication } = await import(
+                "@/pages/applications/api/applications-snapshot"
+              );
+              await deleteApplication(application.slug);
+              await onApplicationsChanged();
+              await refetch();
+            }}
             onOpenApplication={(applicationSlug: string) => navigateTo(`/apps/${applicationSlug}`)}
             onRefresh={refetch}
             summary={applicationsSnapshot.summary}
@@ -352,7 +395,50 @@ function getRouteConfig(
       render: (_, { navigateTo }) => (
         <ApplicationCreatePage
           onBack={() => navigateTo("/apps")}
-          onSaved={(applicationSlug: string) => navigateTo(`/apps/${applicationSlug}`)}
+          onSaved={(applicationSlug: string) => {
+            void onApplicationsChanged().finally(() => navigateTo(`/apps/${applicationSlug}`));
+          }}
+        />
+      ),
+    };
+  }
+
+  if (path === "/storage/new") {
+    return {
+      emptyData: null,
+      queryFn: async () => null,
+      queryKey: ["storage-snapshot", "new"],
+      render: (_, { navigateTo }) => (
+        <StorageCreatePage
+          onBack={() => navigateTo("/storage")}
+          onSaved={() => {
+            void onStorageChanged().finally(() => navigateTo("/storage"));
+          }}
+        />
+      ),
+    };
+  }
+
+  const storageEditId = getStorageEditId(path);
+
+  if (storageEditId) {
+    return {
+      emptyData: emptyStorageSnapshot,
+      queryFn: async () =>
+        (await import("@/pages/storage/api/storage-snapshot")).fetchStorageDetailSnapshot(
+          storageEditId,
+        ),
+      queryKey: ["storage-snapshot", "edit", storageEditId],
+      render: (snapshot, { isFetching, navigateTo }) => (
+        <StorageCreatePage
+          isFetching={isFetching}
+          mode="edit"
+          onBack={() => navigateTo("/storage")}
+          onSaved={() => {
+            void onStorageChanged().finally(() => navigateTo("/storage"));
+          }}
+          snapshot={snapshot}
+          storageId={storageEditId}
         />
       ),
     };
@@ -374,7 +460,9 @@ function getRouteConfig(
           isFetching={isFetching}
           mode="edit"
           onBack={() => navigateTo(`/apps/${applicationEditSlug}`)}
-          onSaved={(applicationSlug: string) => navigateTo(`/apps/${applicationSlug}`)}
+          onSaved={(applicationSlug: string) => {
+            void onApplicationsChanged().finally(() => navigateTo(`/apps/${applicationSlug}`));
+          }}
           snapshot={snapshot}
         />
       ),
@@ -395,6 +483,7 @@ function getRouteConfig(
         <ApplicationDetailPage
           applicationSlug={applicationSlug}
           isFetching={isFetching}
+          onApplicationChanged={onApplicationsChanged}
           onBack={() => navigateTo("/apps")}
           onEditApplication={(slug: string) => navigateTo(`/apps/${slug}/edit`)}
           snapshot={snapshot}
@@ -428,6 +517,7 @@ function getRouteConfig(
 }
 
 export function ConsoleLayout() {
+  const queryClient = useQueryClient();
   const [routePath, setRoutePath] = useState(getCurrentPath);
   const [applicationFilters, setApplicationFilters] = useState<ApplicationListFilters>(
     emptyApplicationListFilters,
@@ -438,9 +528,24 @@ export function ConsoleLayout() {
   const setApplicationOptionsError = useApplicationOptionsStore((state) => state.setError);
   const setApplicationOptionsLoading = useApplicationOptionsStore((state) => state.setLoading);
   const activeNav = useMemo(() => findNavItem(routePath) ?? findNavItem("/"), [routePath]);
+  const handleApplicationsChanged = useCallback(
+    () => queryClient.invalidateQueries({ queryKey: ["applications-snapshot"] }),
+    [queryClient],
+  );
+  const handleStorageChanged = useCallback(
+    () => queryClient.invalidateQueries({ queryKey: ["storage-snapshot"] }),
+    [queryClient],
+  );
   const routeConfig = useMemo(
-    () => getRouteConfig(routePath, applicationFilters, setApplicationFilters),
-    [applicationFilters, routePath],
+    () =>
+      getRouteConfig(
+        routePath,
+        applicationFilters,
+        handleApplicationsChanged,
+        handleStorageChanged,
+        setApplicationFilters,
+      ),
+    [applicationFilters, handleApplicationsChanged, handleStorageChanged, routePath],
   );
 
   const { data, isFetching, refetch } = useQuery({
@@ -611,6 +716,24 @@ function getApplicationEditSlug(path: string): string | null {
   }
 
   return applicationSlug;
+}
+
+function getStorageEditId(path: string): string | null {
+  const normalizedPath = normalizePath(path);
+  const prefix = "/storage/";
+  const suffix = "/edit";
+
+  if (!normalizedPath.startsWith(prefix) || !normalizedPath.endsWith(suffix)) {
+    return null;
+  }
+
+  const storageId = normalizedPath.slice(prefix.length, -suffix.length);
+
+  if (storageId === "" || storageId.includes("/")) {
+    return null;
+  }
+
+  return storageId;
 }
 
 function getEnvironmentDetailId(path: string): MiCarEnvironmentCode | null {

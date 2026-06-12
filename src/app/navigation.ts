@@ -37,6 +37,9 @@ export const navGroups: NavGroup[] = [
   },
   {
     label: "平台",
-    items: [{ id: "settings", label: "系统设置", href: "/settings", icon: "settings" }],
+    items: [
+      { id: "storage", label: "存储管理", href: "/storage", icon: "storage" },
+      { id: "settings", label: "系统设置", href: "/settings", icon: "settings" },
+    ],
   },
 ];

@@ -13,6 +13,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useMemo, useState } from "react";
+import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { consoleGridTheme } from "@/components/common/console-grid-theme";
 import { EnvironmentBadge } from "@/components/common/EnvironmentBadge";
 import { Badge } from "@/components/ui/badge";
@@ -34,6 +35,7 @@ import type {
 type ApplicationDetailPageProps = {
   applicationSlug: string;
   isFetching: boolean;
+  onApplicationChanged: () => Promise<void>;
   onBack: () => void;
   onEditApplication: (applicationSlug: string) => void;
   snapshot: ApplicationsSnapshot;
@@ -79,11 +81,13 @@ const pipelineStatusClass: Record<ApplicationPipelineRecord["status"], string> =
 export function ApplicationDetailPage({
   applicationSlug,
   isFetching,
+  onApplicationChanged,
   onBack,
   onEditApplication,
   snapshot,
 }: ApplicationDetailPageProps) {
   const [overrideDetail, setOverrideDetail] = useState<ApplicationDetailAPIResponse | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [actionError, setActionError] = useState("");
   const application =
@@ -100,8 +104,6 @@ export function ApplicationDetailPage({
         headerName: "环境",
         minWidth: 130,
       },
-      { field: "combination", flex: 1.8, headerName: "当前 Combination", minWidth: 260 },
-      { field: "bundleCount", flex: 0.7, headerName: "Bundle 数", minWidth: 110 },
       { field: "traffic", flex: 0.85, headerName: "流量", minWidth: 120 },
       { field: "updatedAt", flex: 0.8, headerName: "更新", minWidth: 120 },
       {
@@ -185,16 +187,14 @@ export function ApplicationDetailPage({
   }
 
   const handleDeleteApplication = async () => {
-    if (!window.confirm("确认下线该应用？下线后仍可在列表和详情中查看。")) {
-      return;
-    }
-
     setIsDeleting(true);
     setActionError("");
 
     try {
       const payload = await deleteApplication(application.slug);
       setOverrideDetail(payload);
+      setIsDeleteDialogOpen(false);
+      await onApplicationChanged();
     } catch (_error) {
       setActionError("下线应用失败，请稍后重试");
     } finally {
@@ -262,7 +262,10 @@ export function ApplicationDetailPage({
                 type="button"
                 className="border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-700"
                 disabled={isDeleting || application.status === "已下线"}
-                onClick={handleDeleteApplication}
+                onClick={() => {
+                  setActionError("");
+                  setIsDeleteDialogOpen(true);
+                }}
               >
                 <Trash2 className="size-4" />
                 {isDeleting ? "下线中" : "下线应用"}
@@ -276,6 +279,30 @@ export function ApplicationDetailPage({
           </div>
         </div>
       </div>
+      <ConfirmDialog
+        isOpen={isDeleteDialogOpen}
+        isPending={isDeleting}
+        title="下线应用"
+        description={`确认下线「${application.name}」？下线后仍可在列表和详情中查看。`}
+        confirmLabel="下线应用"
+        tone="danger"
+        onCancel={() => {
+          if (isDeleting) {
+            return;
+          }
+          setIsDeleteDialogOpen(false);
+          setActionError("");
+        }}
+        onConfirm={() => {
+          void handleDeleteApplication();
+        }}
+      >
+        {actionError ? (
+          <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-rose-600 text-sm">
+            {actionError}
+          </div>
+        ) : null}
+      </ConfirmDialog>
 
       <div className="space-y-4 px-6 py-5">
         <section className="grid gap-3 xl:grid-cols-4">
@@ -310,7 +337,7 @@ export function ApplicationDetailPage({
         </section>
 
         <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-          <TableHeader title="环境绑定" description="宿主应用已启用环境与当前 Combination" />
+          <TableHeader title="环境绑定" description="宿主应用已启用环境" />
           <AgGridReact<ApplicationEnvironmentRecord>
             rowData={detail.environments}
             columnDefs={environmentColumnDefs}
