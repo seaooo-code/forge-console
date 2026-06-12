@@ -12,6 +12,11 @@ import {
 
 import { navGroups } from "@/app/navigation";
 import { Card } from "@/components/ui/card";
+import {
+  applicationsSnapshotQueryKey,
+  emptyApplicationListFilters,
+} from "@/pages/applications/api/application-list-filters";
+import type { ApplicationListFilters } from "@/pages/applications/types";
 import { useApplicationOptionsStore } from "@/store/use-application-options-store";
 import { type MiCarEnvironmentCode, miCarEnvironmentCodes } from "@/types/environments";
 
@@ -226,29 +231,6 @@ const staticPageRoutes: Record<string, PageRouteConfig> = {
     queryKey: ["dashboard-snapshot"],
     render: (snapshot) => <DashboardPage snapshot={snapshot} />,
   },
-  "/apps": {
-    emptyData: emptyApplicationsSnapshot,
-    queryFn: async () =>
-      (await import("@/pages/applications/api/applications-snapshot")).fetchApplicationsSnapshot(),
-    queryKey: ["applications-snapshot"],
-    render: (snapshot, { isFetching, navigateTo, refetch }) => {
-      const applicationsSnapshot = snapshot as typeof emptyApplicationsSnapshot;
-
-      return (
-        <ApplicationsPage
-          applications={applicationsSnapshot.applications}
-          isFetching={isFetching}
-          onConfigureApplication={(applicationSlug: string) =>
-            navigateTo(`/apps/${applicationSlug}/edit`)
-          }
-          onCreateApplication={() => navigateTo("/apps/new")}
-          onOpenApplication={(applicationSlug: string) => navigateTo(`/apps/${applicationSlug}`)}
-          onRefresh={refetch}
-          summary={applicationsSnapshot.summary}
-        />
-      );
-    },
-  },
   "/environments": {
     emptyData: emptyEnvironmentsSnapshot,
     queryFn: async () =>
@@ -327,7 +309,41 @@ const staticPageRoutes: Record<string, PageRouteConfig> = {
   },
 };
 
-function getRouteConfig(path: string): PageRouteConfig {
+function getRouteConfig(
+  path: string,
+  applicationFilters: ApplicationListFilters,
+  onApplicationFiltersChange: (filters: ApplicationListFilters) => void,
+): PageRouteConfig {
+  if (path === "/apps") {
+    return {
+      emptyData: emptyApplicationsSnapshot,
+      queryFn: async () =>
+        (await import("@/pages/applications/api/applications-snapshot")).fetchApplicationsSnapshot(
+          applicationFilters,
+        ),
+      queryKey: applicationsSnapshotQueryKey(applicationFilters),
+      render: (snapshot, { isFetching, navigateTo, refetch }) => {
+        const applicationsSnapshot = snapshot as typeof emptyApplicationsSnapshot;
+
+        return (
+          <ApplicationsPage
+            applications={applicationsSnapshot.applications}
+            filters={applicationFilters}
+            isFetching={isFetching}
+            onFiltersChange={onApplicationFiltersChange}
+            onConfigureApplication={(applicationSlug: string) =>
+              navigateTo(`/apps/${applicationSlug}/edit`)
+            }
+            onCreateApplication={() => navigateTo("/apps/new")}
+            onOpenApplication={(applicationSlug: string) => navigateTo(`/apps/${applicationSlug}`)}
+            onRefresh={refetch}
+            summary={applicationsSnapshot.summary}
+          />
+        );
+      },
+    };
+  }
+
   if (path === "/apps/new") {
     return {
       emptyData: null,
@@ -413,13 +429,19 @@ function getRouteConfig(path: string): PageRouteConfig {
 
 export function ConsoleLayout() {
   const [routePath, setRoutePath] = useState(getCurrentPath);
+  const [applicationFilters, setApplicationFilters] = useState<ApplicationListFilters>(
+    emptyApplicationListFilters,
+  );
   const setActiveNavId = useConsoleLayoutStore((state) => state.setActiveNavId);
   const applicationOptionsStatus = useApplicationOptionsStore((state) => state.status);
   const setApplicationOptions = useApplicationOptionsStore((state) => state.setOptions);
   const setApplicationOptionsError = useApplicationOptionsStore((state) => state.setError);
   const setApplicationOptionsLoading = useApplicationOptionsStore((state) => state.setLoading);
   const activeNav = useMemo(() => findNavItem(routePath) ?? findNavItem("/"), [routePath]);
-  const routeConfig = useMemo(() => getRouteConfig(routePath), [routePath]);
+  const routeConfig = useMemo(
+    () => getRouteConfig(routePath, applicationFilters, setApplicationFilters),
+    [applicationFilters, routePath],
+  );
 
   const { data, isFetching, refetch } = useQuery({
     queryKey: routeConfig.queryKey,

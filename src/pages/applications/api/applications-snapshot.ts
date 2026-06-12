@@ -1,6 +1,7 @@
 import type {
   ApplicationDetail,
   ApplicationEnvironmentRecord,
+  ApplicationListFilters,
   ApplicationMemberRecord,
   ApplicationMutationInput,
   ApplicationOptions,
@@ -8,8 +9,13 @@ import type {
   FeishuUserSearchResult,
   HostApplication,
 } from "../types";
+import { normalizeApplicationListFilters } from "./application-list-filters";
 
-export const applicationsSnapshotQueryKey = ["applications-snapshot"] as const;
+export {
+  applicationsSnapshotQueryKey,
+  emptyApplicationListFilters,
+  normalizeApplicationListFilters,
+} from "./application-list-filters";
 
 export const applicationDetailQueryKey = (applicationSlug: string) =>
   ["applications-snapshot", "detail", applicationSlug] as const;
@@ -55,8 +61,10 @@ const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8080"
   "",
 );
 
-export async function fetchApplicationsSnapshot(): Promise<ApplicationsSnapshot> {
-  const payload = await fetchJSON<ApplicationsAPIResponse>("/api/v1/applications");
+export async function fetchApplicationsSnapshot(
+  filters?: Partial<ApplicationListFilters>,
+): Promise<ApplicationsSnapshot> {
+  const payload = await fetchJSON<ApplicationsAPIResponse>(buildApplicationsSnapshotPath(filters));
   const applications = payload.applications.map(normalizeApplication);
 
   return {
@@ -186,6 +194,28 @@ function buildAPIErrorMessage(path: string, status: number, payload?: APIErrorPa
     return payload.error;
   }
   return `Request ${path} failed with ${status}`;
+}
+
+function buildApplicationsSnapshotPath(filters?: Partial<ApplicationListFilters>) {
+  const normalizedFilters = normalizeApplicationListFilters(filters);
+  const params = new URLSearchParams();
+
+  if (normalizedFilters.platform) {
+    params.set("platform", normalizedFilters.platform);
+  }
+  if (normalizedFilters.status) {
+    params.set("status", normalizedFilters.status);
+  }
+  if (normalizedFilters.owner) {
+    params.set("owner", normalizedFilters.owner);
+  }
+  if (normalizedFilters.keyword) {
+    params.set("keyword", normalizedFilters.keyword);
+  }
+
+  const query = params.toString();
+
+  return query ? `/api/v1/applications?${query}` : "/api/v1/applications";
 }
 
 function normalizeApplicationDetailPayload(

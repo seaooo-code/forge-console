@@ -6,6 +6,7 @@ import {
   ArchiveX,
   CircleDot,
   LoaderCircle,
+  type LucideIcon,
   MonitorSmartphone,
   MoreHorizontal,
   Plus,
@@ -13,8 +14,9 @@ import {
   Smartphone,
   UserRound,
   Wrench,
+  X,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ConsoleFilterSelect,
   ConsoleSearchInput,
@@ -22,7 +24,6 @@ import {
 } from "@/components/common/ConsoleControls";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { themeQuartz } from "@/lib/ag-grid";
 import { cn } from "@/lib/utils";
@@ -30,7 +31,9 @@ import { useApplicationOptionsStore } from "@/store/use-application-options-stor
 
 import { searchFeishuUsers } from "./api/applications-snapshot";
 import type {
+  ApplicationListFilters,
   ApplicationOption,
+  ApplicationStatusCode,
   ApplicationSummary,
   FeishuUserSearchResult,
   HostApplication,
@@ -38,7 +41,9 @@ import type {
 
 type ApplicationsPageProps = {
   applications: HostApplication[];
+  filters: ApplicationListFilters;
   isFetching: boolean;
+  onFiltersChange: (filters: ApplicationListFilters) => void;
   onConfigureApplication: (applicationSlug: string) => void;
   onCreateApplication: () => void;
   onOpenApplication: (applicationSlug: string) => void;
@@ -90,7 +95,9 @@ const appGridTheme = themeQuartz.withParams({
 
 export function ApplicationsPage({
   applications,
+  filters,
   isFetching,
+  onFiltersChange,
   onConfigureApplication,
   onCreateApplication,
   onOpenApplication,
@@ -98,6 +105,34 @@ export function ApplicationsPage({
   summary,
 }: ApplicationsPageProps) {
   const applicationOptions = useApplicationOptionsStore((state) => state.options);
+  const [keywordInput, setKeywordInput] = useState(filters.keyword);
+  const updateFilters = useCallback(
+    (patch: Partial<ApplicationListFilters>) => {
+      onFiltersChange({
+        ...filters,
+        ...patch,
+      });
+    },
+    [filters, onFiltersChange],
+  );
+
+  useEffect(() => {
+    setKeywordInput(filters.keyword);
+  }, [filters.keyword]);
+
+  useEffect(() => {
+    const nextKeyword = keywordInput.trim();
+    if (nextKeyword === filters.keyword) {
+      return;
+    }
+
+    const handle = window.setTimeout(() => {
+      updateFilters({ keyword: nextKeyword });
+    }, 360);
+
+    return () => window.clearTimeout(handle);
+  }, [filters.keyword, keywordInput, updateFilters]);
+
   const stats = useMemo(
     () => [
       {
@@ -146,17 +181,6 @@ export function ApplicationsPage({
 
   const columnDefs = useMemo<ColDef<HostApplication>[]>(
     () => [
-      {
-        cellRenderer: CheckboxCell,
-        headerComponent: CheckboxHeader,
-        maxWidth: 48,
-        minWidth: 48,
-        pinned: "left",
-        resizable: false,
-        sortable: false,
-        suppressHeaderMenuButton: true,
-        suppressMovable: true,
-      },
       {
         cellRenderer: AppNameCell,
         field: "name",
@@ -271,20 +295,33 @@ export function ApplicationsPage({
         <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-3 border-slate-200 border-b px-4 py-3">
             <div className="flex min-w-0 flex-wrap items-center gap-2">
-              <ConsoleFilterSelect
+              <ClearableFilterSelect
                 icon={MonitorSmartphone}
                 label="平台"
-                value={platformFilterOptions[0]?.value ?? fallbackPlatformFilterOptions[0].value}
+                value={filters.platform}
                 options={platformFilterOptions}
+                clearLabel="清空平台筛选"
+                onClear={() => updateFilters({ platform: "" })}
+                onValueChange={(value) => updateFilters({ platform: value })}
               />
-              <ConsoleFilterSelect
+              <ClearableFilterSelect
                 icon={CircleDot}
                 label="状态"
-                value={statusFilterOptions[0]?.value ?? fallbackStatusFilterOptions[0].value}
+                value={filters.status}
                 options={statusFilterOptions}
+                clearLabel="清空状态筛选"
+                onClear={() => updateFilters({ status: "" })}
+                onValueChange={(value) => updateFilters({ status: value as ApplicationStatusCode })}
               />
-              <OwnerSearchFilter />
-              <ConsoleSearchInput />
+              <OwnerSearchFilter
+                value={filters.owner}
+                onChange={(owner) => updateFilters({ owner })}
+              />
+              <ConsoleSearchInput
+                value={keywordInput}
+                placeholder="搜索应用名称"
+                onChange={setKeywordInput}
+              />
             </div>
 
             <div className="flex shrink-0 items-center gap-2">
@@ -318,12 +355,64 @@ export function ApplicationsPage({
   );
 }
 
-function OwnerSearchFilter() {
-  const [query, setQuery] = useState("");
-  const [selectedUser, setSelectedUser] = useState<FeishuUserSearchResult | null>(null);
+type OwnerSearchFilterProps = {
+  onChange: (owner: string) => void;
+  value: string;
+};
+
+type ClearableFilterSelectProps = {
+  clearLabel: string;
+  icon: LucideIcon;
+  label: string;
+  onClear: () => void;
+  onValueChange: (value: string) => void;
+  options: ApplicationOption[];
+  value: string;
+};
+
+function ClearableFilterSelect({
+  clearLabel,
+  icon,
+  label,
+  onClear,
+  onValueChange,
+  options,
+  value,
+}: ClearableFilterSelectProps) {
+  return (
+    <div className="flex items-center gap-1">
+      <ConsoleFilterSelect
+        icon={icon}
+        label={label}
+        value={value}
+        options={options}
+        onValueChange={onValueChange}
+      />
+      {value ? (
+        <Button
+          variant="outline"
+          type="button"
+          size="icon"
+          className="size-9 shrink-0 border-slate-200 bg-white text-slate-500"
+          aria-label={clearLabel}
+          onClick={onClear}
+        >
+          <X className="size-3.5" />
+        </Button>
+      ) : null}
+    </div>
+  );
+}
+
+function OwnerSearchFilter({ onChange, value }: OwnerSearchFilterProps) {
+  const [query, setQuery] = useState(value);
   const [users, setUsers] = useState<FeishuUserSearchResult[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    setQuery(value);
+  }, [value]);
 
   useEffect(() => {
     const keyword = query.trim();
@@ -360,7 +449,7 @@ function OwnerSearchFilter() {
     };
   }, [isOpen, query]);
 
-  const label = selectedUser ? getFeishuUserDisplayName(selectedUser) : "负责人";
+  const label = value || "负责人";
 
   return (
     <fieldset
@@ -387,13 +476,32 @@ function OwnerSearchFilter() {
 
       {isOpen ? (
         <div className="absolute z-30 mt-1 w-72 rounded-md border border-slate-200 bg-white p-2 shadow-lg">
-          <Input
-            value={query}
-            placeholder="搜索姓名、邮箱或账号"
-            className="h-8"
-            onChange={(event) => setQuery(event.target.value)}
-            onFocus={() => setIsOpen(true)}
-          />
+          <div className="flex items-center gap-2">
+            <Input
+              value={query}
+              placeholder="搜索姓名、邮箱或账号"
+              className="h-8"
+              onChange={(event) => setQuery(event.target.value)}
+              onFocus={() => setIsOpen(true)}
+            />
+            {value ? (
+              <Button
+                variant="outline"
+                type="button"
+                size="icon"
+                className="size-8 shrink-0 border-slate-200 bg-white text-slate-500"
+                aria-label="清空负责人筛选"
+                onClick={() => {
+                  setQuery("");
+                  setUsers([]);
+                  setIsOpen(false);
+                  onChange("");
+                }}
+              >
+                <X className="size-3.5" />
+              </Button>
+            ) : null}
+          </div>
           <div className="mt-2 max-h-72 overflow-auto">
             {isLoading ? (
               <div className="flex h-9 items-center gap-2 px-2 text-slate-500 text-sm">
@@ -414,9 +522,9 @@ function OwnerSearchFilter() {
                   type="button"
                   className="h-auto w-full justify-start gap-2 rounded-sm px-2 py-2 text-left font-normal"
                   onClick={() => {
-                    setSelectedUser(user);
                     setQuery(name);
                     setIsOpen(false);
+                    onChange(name);
                   }}
                 >
                   <OwnerAvatar name={name} src={user.avatarUrl} />
@@ -440,18 +548,6 @@ function OwnerSearchFilter() {
 
 function getFeishuUserDisplayName(user: FeishuUserSearchResult) {
   return user.name || user.enName || user.email || "";
-}
-
-function CheckboxHeader() {
-  return <Checkbox aria-label="选择全部应用" />;
-}
-
-function CheckboxCell() {
-  return (
-    <div className="flex h-full items-center">
-      <Checkbox aria-label="选择应用" />
-    </div>
-  );
 }
 
 function AppNameCell({ data }: ICellRendererParams<HostApplication>) {

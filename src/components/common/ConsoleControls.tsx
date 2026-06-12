@@ -20,13 +20,16 @@ type ConsoleFilterSelectProps = {
   className?: string;
   icon: LucideIcon;
   label: string;
+  onValueChange?: (value: string) => void;
   options: ConsoleFilterOption[];
   value: string;
 };
 
 type ConsoleSearchInputProps = {
   className?: string;
+  onChange?: (value: string) => void;
   placeholder?: string;
+  value?: string;
 };
 
 type ConsoleTableFooterProps = {
@@ -38,11 +41,16 @@ export function ConsoleFilterSelect({
   className,
   icon: Icon,
   label,
+  onValueChange,
   options,
   value,
 }: ConsoleFilterSelectProps) {
   return (
-    <Select defaultValue={value}>
+    <Select
+      defaultValue={onValueChange ? undefined : value}
+      value={onValueChange ? value : undefined}
+      onValueChange={onValueChange}
+    >
       <SelectTrigger
         className={cn(
           "h-9 w-auto min-w-28 gap-2 border-slate-200 bg-white px-3 font-medium text-slate-600 shadow-sm",
@@ -67,7 +75,9 @@ export function ConsoleFilterSelect({
 
 export function ConsoleSearchInput({
   className,
+  onChange,
   placeholder = "搜索...",
+  value,
 }: ConsoleSearchInputProps) {
   return (
     <div
@@ -79,7 +89,9 @@ export function ConsoleSearchInput({
       <Search className="size-4 shrink-0" />
       <Input
         className="h-auto min-w-0 flex-1 border-0 bg-transparent px-0 py-0 text-sm shadow-none placeholder:text-slate-400 focus-visible:ring-0"
+        value={value}
         placeholder={placeholder}
+        onChange={(event) => onChange?.(event.target.value)}
       />
     </div>
   );

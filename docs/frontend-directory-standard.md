@@ -62,6 +62,7 @@ pages/applications/
 - `components/`：放页面内专属组件，可以组合 shadcn/ui、AG Grid、ECharts。
 - `hooks/`：放页面专属 hook。跨页面复用前不要移动到全局 `hooks/`。
 - `model/`：放页面内 Zustand store、派生计算、状态转换。
+- 表单类功能统一使用 React Hook Form，表单类型、默认值转换和提交 payload 构造贴近所属页面。
 - `types.ts`：放页面领域类型。
 - `index.ts`：只导出外部需要使用的页面入口、Query key、请求函数和类型，避免外部深层路径依赖。
 
@@ -102,6 +103,7 @@ pages/applications/
 - 使用 Biome 统一格式化与基础 lint。
 - 使用 TypeScript 严格模式，避免 `any`；确需使用时必须在附近解释边界原因。
 - 新增依赖前说明用途，优先复用现有栈。
+- 表单状态、校验、提交态和受控组件适配默认使用 React Hook Form。
 - AG Grid 与 ECharts 的初始化逻辑应封装在页面组件或专用适配器内。
 
 ## AI 开发流程

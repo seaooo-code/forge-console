@@ -5,6 +5,7 @@
 - git 提交信息遵守现有项目要求，中文不超过 50 字。
 - 后续 AI 开发必须先阅读并遵守 `docs/frontend-directory-standard.md`。
 - 新增文件前先判断目录归属；若需要新增顶层目录，先更新目录规范文档。
+- 表单类功能统一使用 React Hook Form，不再手写分散的表单状态。
 - Biome 是本项目唯一格式化与基础 lint 工具，不新增 ESLint/Prettier，除非用户明确要求。
 - 代码改动后至少运行 `bun run lint` 与 `bun run typecheck`；涉及 UI、构建配置或依赖时追加 `bun run build`。
 

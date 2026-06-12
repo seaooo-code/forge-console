@@ -95,6 +95,13 @@ export type ApplicationsSnapshot = {
   summary: ApplicationSummary;
 };
 
+export type ApplicationListFilters = {
+  keyword: string;
+  owner: string;
+  platform: string;
+  status: ApplicationStatusCode | "";
+};
+
 export type ApplicationEnvironmentInput = {
   environment: ApplicationEnvironmentRecord["environment"];
 };

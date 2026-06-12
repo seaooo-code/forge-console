@@ -6,7 +6,8 @@ import {
   MonitorSmartphone,
   PackagePlus,
 } from "lucide-react";
-import { type FormEvent, type ReactNode, useEffect, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
+import { Controller, type FieldPath, useForm, useWatch } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -63,8 +64,6 @@ type ApplicationFormState = {
   status: ApplicationStatusCode;
 };
 
-type ApplicationTextField = "description" | "name" | "owner" | "slug" | "status";
-
 type OwnerDisplayUser = Pick<FeishuUserSearchResult, "avatarUrl" | "email" | "enName" | "name">;
 
 const fallbackPlatformOptions: ApplicationOption[] = [
@@ -108,8 +107,22 @@ export function ApplicationCreatePage({
   const platformOptions = applicationOptions?.platforms ?? fallbackPlatformOptions;
   const statusOptions = applicationOptions?.applicationStatuses ?? fallbackStatusOptions;
   const environmentOptions = applicationOptions?.environments ?? fallbackEnvironmentOptions;
-  const [form, setForm] = useState<ApplicationFormState>(initialForm);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const {
+    control,
+    formState: { isSubmitting },
+    getValues,
+    handleSubmit,
+    register,
+    reset,
+    setValue,
+  } = useForm<ApplicationFormState>({
+    defaultValues: initialForm,
+  });
+  const ownerQuery = useWatch({
+    control,
+    defaultValue: initialForm.owner,
+    name: "owner",
+  });
   const [formError, setFormError] = useState("");
   const [ownerSearchResults, setOwnerSearchResults] = useState<FeishuUserSearchResult[]>([]);
   const [ownerSearchOpen, setOwnerSearchOpen] = useState(false);
@@ -117,12 +130,14 @@ export function ApplicationCreatePage({
   const [selectedOwner, setSelectedOwner] = useState<OwnerDisplayUser | null>(null);
 
   useEffect(() => {
-    setForm(initialForm);
+    reset(initialForm);
+    setFormError("");
+    setOwnerSearchOpen(false);
     setSelectedOwner(null);
-  }, [initialForm]);
+  }, [initialForm, reset]);
 
   useEffect(() => {
-    const query = form.owner.trim();
+    const query = ownerQuery.trim();
     if (!ownerSearchOpen || query.length < 2) {
       setOwnerSearchResults([]);
       setOwnerSearchLoading(false);
@@ -154,7 +169,7 @@ export function ApplicationCreatePage({
       disposed = true;
       window.clearTimeout(handle);
     };
-  }, [form.owner, ownerSearchOpen]);
+  }, [ownerQuery, ownerSearchOpen]);
 
   if (isEditMode && isFetching && !(application && detail)) {
     return <ApplicationFormLoading onBack={onBack} />;
@@ -165,23 +180,13 @@ export function ApplicationCreatePage({
     ? "维护宿主应用的基础配置和环境接入"
     : "接入新的宿主应用，初始化 RN Bundle 环境";
 
-  const handleFieldChange = (field: ApplicationTextField, value: string) => {
-    setForm((current) => ({
-      ...current,
-      [field]: value,
-    }));
-  };
-
   const handleOwnerChange = (value: string) => {
     setOwnerSearchOpen(true);
     setSelectedOwner(null);
-    setForm((current) => ({
-      ...current,
-      owner: value,
-      ownerAvatarUrl: "",
-      ownerDepartmentIds: [],
-      ownerEmail: "",
-    }));
+    setValue("owner", value, { shouldDirty: true, shouldTouch: true });
+    setValue("ownerAvatarUrl", "", { shouldDirty: true });
+    setValue("ownerDepartmentIds", [], { shouldDirty: true });
+    setValue("ownerEmail", "", { shouldDirty: true });
   };
 
   const handleOwnerSelect = (user: FeishuUserSearchResult) => {
@@ -194,13 +199,10 @@ export function ApplicationCreatePage({
       enName: user.enName,
       name: ownerName,
     });
-    setForm((current) => ({
-      ...current,
-      owner: ownerName || current.owner,
-      ownerAvatarUrl: user.avatarUrl,
-      ownerDepartmentIds: user.departmentIds ?? [],
-      ownerEmail: user.email,
-    }));
+    setValue("owner", ownerName || getValues("owner"), { shouldDirty: true, shouldTouch: true });
+    setValue("ownerAvatarUrl", user.avatarUrl, { shouldDirty: true });
+    setValue("ownerDepartmentIds", user.departmentIds ?? [], { shouldDirty: true });
+    setValue("ownerEmail", user.email, { shouldDirty: true });
   };
 
   const handleOwnerEdit = () => {
@@ -208,28 +210,7 @@ export function ApplicationCreatePage({
     setOwnerSearchOpen(true);
   };
 
-  const handlePlatformChange = (platform: string, checked: boolean) => {
-    setForm((current) => ({
-      ...current,
-      platforms: checked
-        ? [...current.platforms, platform]
-        : current.platforms.filter((item) => item !== platform),
-    }));
-  };
-
-  const handleEnvironmentChange = (environment: EnvironmentCode, enabled: boolean) => {
-    setForm((current) => ({
-      ...current,
-      environments: {
-        ...current.environments,
-        [environment]: enabled,
-      },
-    }));
-  };
-
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
+  const handleFormSubmit = async (form: ApplicationFormState) => {
     const input = buildApplicationInput(form, environmentOptions);
     if (
       !input.slug ||
@@ -243,7 +224,6 @@ export function ApplicationCreatePage({
       return;
     }
 
-    setIsSubmitting(true);
     setFormError("");
 
     try {
@@ -253,13 +233,11 @@ export function ApplicationCreatePage({
       onSaved?.(payload.application.slug);
     } catch (_error) {
       setFormError(isEditMode ? "保存应用失败，请稍后重试" : "创建应用失败，请稍后重试");
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit(handleFormSubmit)}>
       <div className="border-slate-200 border-b bg-white px-6 py-5">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div>
@@ -315,18 +293,15 @@ export function ApplicationCreatePage({
               </div>
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-12">
                 <Field label="应用名称" className="xl:col-span-4">
-                  <Input
-                    value={form.name}
-                    placeholder="输入应用名称"
-                    onChange={(event) => handleFieldChange("name", event.target.value)}
-                  />
+                  <Input placeholder="输入应用名称" {...register("name")} />
                 </Field>
                 <Field label="应用标识" className="xl:col-span-4">
                   <Input
-                    value={form.slug}
-                    disabled={isEditMode}
+                    aria-disabled={isEditMode}
+                    className={isEditMode ? "cursor-not-allowed opacity-50" : undefined}
                     placeholder="例如 mi-car-global"
-                    onChange={(event) => handleFieldChange("slug", event.target.value)}
+                    readOnly={isEditMode}
+                    {...register("slug")}
                   />
                 </Field>
                 <Field label="负责人" className="xl:col-span-4">
@@ -344,49 +319,60 @@ export function ApplicationCreatePage({
                         </span>
                       </Button>
                     ) : (
-                      <Input
-                        value={form.owner}
-                        placeholder="搜索负责人姓名、邮箱或账号"
-                        onBlur={() => window.setTimeout(() => setOwnerSearchOpen(false), 150)}
-                        onChange={(event) => handleOwnerChange(event.target.value)}
-                        onFocus={() => setOwnerSearchOpen(true)}
+                      <Controller
+                        control={control}
+                        name="owner"
+                        render={({ field }) => (
+                          <Input
+                            name={field.name}
+                            ref={field.ref}
+                            value={field.value}
+                            placeholder="搜索负责人姓名、邮箱或账号"
+                            onBlur={() => {
+                              field.onBlur();
+                              window.setTimeout(() => setOwnerSearchOpen(false), 150);
+                            }}
+                            onChange={(event) => handleOwnerChange(event.target.value)}
+                            onFocus={() => setOwnerSearchOpen(true)}
+                          />
+                        )}
                       />
                     )}
                     {ownerSearchOpen && !selectedOwner ? (
                       <OwnerSearchResults
                         isLoading={ownerSearchLoading}
                         onSelect={handleOwnerSelect}
-                        query={form.owner}
+                        query={ownerQuery}
                         users={ownerSearchResults}
                       />
                     ) : null}
                   </div>
                 </Field>
                 <Field label="应用状态" className="xl:col-span-4">
-                  <Select
-                    value={form.status}
-                    onValueChange={(value) =>
-                      handleFieldChange("status", value as ApplicationStatusCode)
-                    }
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {statusOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Controller
+                    control={control}
+                    name="status"
+                    render={({ field }) => (
+                      <Select
+                        value={field.value}
+                        onValueChange={(value) => field.onChange(value as ApplicationStatusCode)}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {statusOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
                 </Field>
                 <Field label="应用描述" className="md:col-span-2 xl:col-span-8">
-                  <Input
-                    value={form.description}
-                    placeholder="输入应用说明"
-                    onChange={(event) => handleFieldChange("description", event.target.value)}
-                  />
+                  <Input placeholder="输入应用说明" {...register("description")} />
                 </Field>
               </div>
             </section>
@@ -397,27 +383,47 @@ export function ApplicationCreatePage({
                 <h2 className="font-semibold text-slate-900 text-sm">接入范围</h2>
               </div>
               <Field label="接入平台">
-                <div className="grid gap-2 md:grid-cols-3">
-                  {platformOptions.map((platform) => (
-                    <CheckOption
-                      key={platform.value}
-                      checked={form.platforms.includes(platform.value)}
-                      label={platform.label}
-                      onCheckedChange={(checked) => handlePlatformChange(platform.value, checked)}
-                    />
-                  ))}
-                </div>
+                <Controller
+                  control={control}
+                  name="platforms"
+                  render={({ field }) => (
+                    <div className="grid gap-2 md:grid-cols-3">
+                      {platformOptions.map((platform) => {
+                        const selectedPlatforms = field.value ?? [];
+
+                        return (
+                          <CheckOption
+                            key={platform.value}
+                            checked={selectedPlatforms.includes(platform.value)}
+                            label={platform.label}
+                            onCheckedChange={(checked) =>
+                              field.onChange(
+                                checked
+                                  ? Array.from(new Set([...selectedPlatforms, platform.value]))
+                                  : selectedPlatforms.filter((item) => item !== platform.value),
+                              )
+                            }
+                          />
+                        );
+                      })}
+                    </div>
+                  )}
+                />
               </Field>
               <Field label="环境接入" className="mt-4">
                 <div className="grid gap-2 md:grid-cols-3 xl:grid-cols-5">
                   {environmentOptions.map((environment) => (
-                    <CheckOption
+                    <Controller
                       key={environment.value}
-                      checked={form.environments[environment.value as EnvironmentCode]}
-                      label={environment.label}
-                      onCheckedChange={(checked) =>
-                        handleEnvironmentChange(environment.value as EnvironmentCode, checked)
-                      }
+                      control={control}
+                      name={toEnvironmentFieldPath(environment.value)}
+                      render={({ field }) => (
+                        <CheckOption
+                          checked={Boolean(field.value)}
+                          label={environment.label}
+                          onCheckedChange={field.onChange}
+                        />
+                      )}
                     />
                   ))}
                 </div>
@@ -428,6 +434,10 @@ export function ApplicationCreatePage({
       </div>
     </form>
   );
+}
+
+function toEnvironmentFieldPath(environment: string) {
+  return `environments.${environment}` as FieldPath<ApplicationFormState>;
 }
 
 function getOwnerDisplayName(user: OwnerDisplayUser) {
