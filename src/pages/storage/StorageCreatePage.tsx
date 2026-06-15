@@ -26,11 +26,11 @@ import { storageEditQueryKey, storageSnapshotQueryKey } from "./api/storage-quer
 import {
   createStorageConfiguration,
   fetchStorageDetailSnapshot,
-  storageAdapterOptions,
   testStorageConfiguration,
   updateStorageConfiguration,
 } from "./api/storage-snapshot";
-import type { StorageMutationInput } from "./types";
+import { defaultForm, storageAdapterOptions } from "./constants";
+import type { StorageFormState, StorageMutationInput } from "./types";
 
 type StorageCreatePageProps = {
   mode?: "create" | "edit";
@@ -39,33 +39,7 @@ type StorageCreatePageProps = {
   storageId?: string;
 };
 
-type StorageFormState = {
-  accessKeyId: string;
-  adapter: StorageAdapter;
-  bucket: string;
-  endpoint: string;
-  name: string;
-  owner: string;
-  publicBaseUrl: string;
-  region: string;
-  secretAccessKey: string;
-  status: StorageStatus;
-};
-
 type StorageTestStatus = "idle" | "testing" | "passed" | "failed";
-
-const defaultForm: StorageFormState = {
-  accessKeyId: "",
-  adapter: "S3",
-  bucket: "",
-  endpoint: "",
-  name: "",
-  owner: "rn-platform",
-  publicBaseUrl: "",
-  region: "",
-  secretAccessKey: "",
-  status: "正常",
-};
 
 export function StorageCreatePage({
   mode = "create",

@@ -20,24 +20,15 @@ import { consoleGridTheme } from "@/components/common/console-grid-theme";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import type { StorageAdapter, StorageConfigRecord, StorageStatus } from "@/types/storage";
+import type { StorageConfigRecord, StorageStatus } from "@/types/storage";
 
 import { storageSnapshotQueryKey } from "./api/storage-query-keys";
 import { deleteStorageConfiguration } from "./api/storage-snapshot";
+import { adapterToneClass, statusClass } from "./constants";
 
 type StoragePageProps = {
   onCreateStorage: () => void;
   onEditStorage: (storageId: string) => void;
-};
-
-const adapterToneClass: Record<StorageAdapter, string> = {
-  S3: "bg-blue-600 text-white",
-};
-
-const statusClass: Record<StorageStatus, string> = {
-  已停用: "border-slate-200 bg-slate-50 text-slate-600",
-  异常: "border-red-200 bg-red-50 text-red-600",
-  正常: "border-emerald-200 bg-emerald-50 text-emerald-700",
 };
 
 export function StoragePage({ onCreateStorage, onEditStorage }: StoragePageProps) {

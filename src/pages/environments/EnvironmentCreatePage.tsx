@@ -26,8 +26,10 @@ import {
   fetchEnvironmentDetailSnapshot,
   updateEnvironment,
 } from "./api/environments-snapshot";
+import { defaultForm, statusOptions, toneOptions } from "./constants";
 import type {
   EnvironmentCardTone,
+  EnvironmentFormState,
   EnvironmentMutationInput,
   EnvironmentStatusCode,
   RuntimeEnvironment,
@@ -39,37 +41,6 @@ type EnvironmentCreatePageProps = {
   onBack: () => void;
   onSaved?: (environmentId: string) => void;
 };
-
-type EnvironmentFormState = {
-  code: string;
-  description: string;
-  name: string;
-  status: EnvironmentStatusCode;
-  storageConfigurationId: string;
-  tone: EnvironmentCardTone;
-};
-
-const defaultForm: EnvironmentFormState = {
-  code: "",
-  description: "",
-  name: "",
-  status: "healthy",
-  storageConfigurationId: "",
-  tone: "blue",
-};
-
-const statusOptions: Array<{ label: string; value: EnvironmentStatusCode }> = [
-  { label: "健康", value: "healthy" },
-  { label: "灰度中", value: "gray" },
-];
-
-const toneOptions: Array<{ label: string; value: EnvironmentCardTone }> = [
-  { label: "蓝色", value: "blue" },
-  { label: "天蓝", value: "sky" },
-  { label: "绿色", value: "emerald" },
-  { label: "琥珀", value: "amber" },
-  { label: "玫红", value: "rose" },
-];
 
 export function EnvironmentCreatePage({
   environmentId,

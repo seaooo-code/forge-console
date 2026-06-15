@@ -5,45 +5,14 @@ import { useMemo } from "react";
 import { MockCard as Card } from "@/components/common/MockSurface";
 import { Button } from "@/components/ui/button";
 import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { themeQuartz } from "@/lib/ag-grid";
 import { cn } from "@/lib/utils";
 
+import { dashboardSummaryGridTheme, recentTaskStatusClass } from "../constants";
 import type { DevTask } from "../types";
 
 type RecentTasksTableProps = {
   tasks: DevTask[];
 };
-
-const taskStatusClass: Record<DevTask["status"], string> = {
-  dev: "bg-sky-100 text-sky-700",
-  done: "bg-emerald-100 text-emerald-700",
-  review: "bg-violet-100 text-violet-700",
-  test: "bg-amber-100 text-amber-700",
-};
-
-const summaryGridTheme = themeQuartz.withParams({
-  accentColor: "#1677ff",
-  backgroundColor: "#ffffff",
-  borderColor: "#eef2f7",
-  borderRadius: 0,
-  browserColorScheme: "light",
-  columnBorder: false,
-  fontFamily:
-    '"Roboto Flex Variable", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif',
-  fontSize: 13,
-  foregroundColor: "#334155",
-  headerBackgroundColor: "#ffffff",
-  headerFontSize: 12,
-  headerFontWeight: 500,
-  headerTextColor: "#64748b",
-  oddRowBackgroundColor: "#ffffff",
-  rowBorder: { color: "#eef2f7", style: "solid", width: 1 },
-  rowHoverColor: "#f8fafc",
-  selectedRowBackgroundColor: "#eff6ff",
-  spacing: 6,
-  wrapperBorder: false,
-  wrapperBorderRadius: 0,
-});
 
 export function RecentTasksTable({ tasks }: RecentTasksTableProps) {
   const columnDefs = useMemo<ColDef<DevTask>[]>(
@@ -78,7 +47,7 @@ export function RecentTasksTable({ tasks }: RecentTasksTableProps) {
             <span
               className={cn(
                 "inline-flex rounded px-2 py-0.5 font-medium text-xs",
-                taskStatusClass[value],
+                recentTaskStatusClass[value],
               )}
             >
               {value}
@@ -123,7 +92,7 @@ export function RecentTasksTable({ tasks }: RecentTasksTableProps) {
           domLayout="autoHeight"
           headerHeight={40}
           rowHeight={44}
-          theme={summaryGridTheme}
+          theme={dashboardSummaryGridTheme}
           suppressCellFocus
           suppressContextMenu
           getRowId={({ data }) => data.id}

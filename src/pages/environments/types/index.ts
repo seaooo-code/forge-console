@@ -32,3 +32,12 @@ export type EnvironmentMutationInput = {
   storageConfigurationId: string;
   tone: EnvironmentCardTone;
 };
+
+export type EnvironmentFormState = {
+  code: string;
+  description: string;
+  name: string;
+  status: EnvironmentStatusCode;
+  storageConfigurationId: string;
+  tone: EnvironmentCardTone;
+};

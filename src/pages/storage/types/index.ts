@@ -22,3 +22,16 @@ export type StorageTestResult = {
   ok: boolean;
   testedAt: string;
 };
+
+export type StorageFormState = {
+  accessKeyId: string;
+  adapter: StorageAdapter;
+  bucket: string;
+  endpoint: string;
+  name: string;
+  owner: string;
+  publicBaseUrl: string;
+  region: string;
+  secretAccessKey: string;
+  status: StorageStatus;
+};

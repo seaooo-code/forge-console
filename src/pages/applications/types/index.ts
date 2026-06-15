@@ -97,6 +97,19 @@ export type ApplicationsSnapshot = {
   summary: ApplicationSummary;
 };
 
+export type ApplicationDeleteDependency = {
+  id: string;
+  name: string;
+  type: string;
+  description?: string;
+};
+
+export type ApplicationDeleteCheck = {
+  deletable: boolean;
+  dependencies: ApplicationDeleteDependency[];
+  message?: string;
+};
+
 export type ApplicationListFilters = {
   keyword: string;
   owner: string;

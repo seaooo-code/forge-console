@@ -1,14 +1,7 @@
 import type { StorageConfigRecord, StorageSnapshot } from "@/types/storage";
-import type { StorageAdapterOption, StorageMutationInput, StorageTestResult } from "../types";
+import type { StorageMutationInput, StorageTestResult } from "../types";
 
 export { storageEditQueryKey, storageSnapshotQueryKey } from "./storage-query-keys";
-
-export const storageAdapterOptions: StorageAdapterOption[] = [
-  {
-    label: "S3",
-    value: "S3",
-  },
-];
 
 type StorageConfigurationAPIResponse = {
   configuration: StorageConfigRecord;

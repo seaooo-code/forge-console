@@ -6,44 +6,14 @@ import { EnvironmentBadge } from "@/components/common/EnvironmentBadge";
 import { MockCard as Card } from "@/components/common/MockSurface";
 import { Button } from "@/components/ui/button";
 import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { themeQuartz } from "@/lib/ag-grid";
 import { cn } from "@/lib/utils";
 
+import { dashboardSummaryGridTheme, recentReleaseStatusClass } from "../constants";
 import type { ReleaseRecord } from "../types";
 
 type RecentReleasesTableProps = {
   releases: ReleaseRecord[];
 };
-
-const releaseStatusClass: Record<ReleaseRecord["status"], string> = {
-  已回滚: "bg-red-100 text-red-700",
-  已完成: "bg-emerald-100 text-emerald-700",
-  灰度中: "bg-amber-100 text-amber-700",
-};
-
-const summaryGridTheme = themeQuartz.withParams({
-  accentColor: "#1677ff",
-  backgroundColor: "#ffffff",
-  borderColor: "#eef2f7",
-  borderRadius: 0,
-  browserColorScheme: "light",
-  columnBorder: false,
-  fontFamily:
-    '"Roboto Flex Variable", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif',
-  fontSize: 13,
-  foregroundColor: "#334155",
-  headerBackgroundColor: "#ffffff",
-  headerFontSize: 12,
-  headerFontWeight: 500,
-  headerTextColor: "#64748b",
-  oddRowBackgroundColor: "#ffffff",
-  rowBorder: { color: "#eef2f7", style: "solid", width: 1 },
-  rowHoverColor: "#f8fafc",
-  selectedRowBackgroundColor: "#eff6ff",
-  spacing: 6,
-  wrapperBorder: false,
-  wrapperBorderRadius: 0,
-});
 
 export function RecentReleasesTable({ releases }: RecentReleasesTableProps) {
   const columnDefs = useMemo<ColDef<ReleaseRecord>[]>(
@@ -76,7 +46,7 @@ export function RecentReleasesTable({ releases }: RecentReleasesTableProps) {
             <span
               className={cn(
                 "inline-flex rounded px-2 py-0.5 font-medium text-xs",
-                releaseStatusClass[value],
+                recentReleaseStatusClass[value],
               )}
             >
               {value}
@@ -121,7 +91,7 @@ export function RecentReleasesTable({ releases }: RecentReleasesTableProps) {
           domLayout="autoHeight"
           headerHeight={40}
           rowHeight={44}
-          theme={summaryGridTheme}
+          theme={dashboardSummaryGridTheme}
           suppressCellFocus
           suppressContextMenu
           getRowId={({ data }) => data.id}

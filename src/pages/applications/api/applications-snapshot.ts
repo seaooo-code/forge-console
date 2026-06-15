@@ -1,16 +1,21 @@
+import { applicationStatusLabelByCode } from "../constants";
 import type {
+  ApplicationDeleteCheck,
   ApplicationDetail,
   ApplicationEnvironmentRecord,
   ApplicationListFilters,
   ApplicationMemberRecord,
   ApplicationMutationInput,
   ApplicationOptions,
+  ApplicationStatus,
+  ApplicationStatusCode,
   ApplicationsSnapshot,
   HostApplication,
 } from "../types";
 import { normalizeApplicationListFilters } from "./application-list-filters";
 
 export {
+  applicationDeleteCheckQueryKey,
   applicationDetailQueryKey,
   applicationEditQueryKey,
   applicationsSnapshotQueryKey,
@@ -18,12 +23,21 @@ export {
 } from "./application-list-filters";
 
 type ApplicationsAPIResponse = {
-  applications: HostApplication[];
+  applications: ApplicationAPIRecord[];
   summary: ApplicationsSnapshot["summary"];
 };
 
 export type ApplicationDetailAPIResponse = {
   application: HostApplication;
+  detail: ApplicationDetail;
+};
+
+type ApplicationAPIRecord = Omit<HostApplication, "status"> & {
+  status: ApplicationStatus | ApplicationStatusCode;
+};
+
+type ApplicationDetailRawAPIResponse = {
+  application: ApplicationAPIRecord;
   detail: ApplicationDetail;
 };
 
@@ -71,8 +85,8 @@ export async function fetchApplicationOptions(): Promise<ApplicationOptions> {
 export async function fetchApplicationDetailSnapshot(
   applicationSlug: string,
 ): Promise<ApplicationsSnapshot> {
-  const payload = await fetchJSON<ApplicationDetailAPIResponse>(
-    `/api/v1/applications/${applicationSlug}`,
+  const payload = await fetchJSON<ApplicationDetailRawAPIResponse>(
+    `/api/v1/applications/${encodeURIComponent(applicationSlug)}`,
   );
   const application = normalizeApplication(payload.application);
   const detail = normalizeApplicationDetail(payload.detail);
@@ -95,7 +109,7 @@ export async function createApplication(
   input: ApplicationMutationInput,
 ): Promise<ApplicationDetailAPIResponse> {
   return normalizeApplicationDetailPayload(
-    await fetchJSON<ApplicationDetailAPIResponse>("/api/v1/applications", {
+    await fetchJSON<ApplicationDetailRawAPIResponse>("/api/v1/applications", {
       body: JSON.stringify(input),
       method: "POST",
     }),
@@ -109,21 +123,43 @@ export async function updateApplication(
   const { slug: _slug, ...payload } = input;
 
   return normalizeApplicationDetailPayload(
-    await fetchJSON<ApplicationDetailAPIResponse>(`/api/v1/applications/${applicationSlug}`, {
-      body: JSON.stringify(payload),
-      method: "PATCH",
-    }),
+    await fetchJSON<ApplicationDetailRawAPIResponse>(
+      `/api/v1/applications/${encodeURIComponent(applicationSlug)}`,
+      {
+        body: JSON.stringify(payload),
+        method: "PATCH",
+      },
+    ),
   );
 }
 
-export async function deleteApplication(
+export async function updateApplicationStatus(
   applicationSlug: string,
+  status: ApplicationMutationInput["status"],
 ): Promise<ApplicationDetailAPIResponse> {
   return normalizeApplicationDetailPayload(
-    await fetchJSON<ApplicationDetailAPIResponse>(`/api/v1/applications/${applicationSlug}`, {
-      method: "DELETE",
-    }),
+    await fetchJSON<ApplicationDetailRawAPIResponse>(
+      `/api/v1/applications/${encodeURIComponent(applicationSlug)}/status`,
+      {
+        body: JSON.stringify({ status }),
+        method: "PATCH",
+      },
+    ),
   );
+}
+
+export async function fetchApplicationDeleteCheck(
+  applicationSlug: string,
+): Promise<ApplicationDeleteCheck> {
+  return fetchJSON<ApplicationDeleteCheck>(
+    `/api/v1/applications/${encodeURIComponent(applicationSlug)}/delete-check`,
+  );
+}
+
+export async function deleteApplication(applicationSlug: string): Promise<void> {
+  await fetchJSON<void>(`/api/v1/applications/${encodeURIComponent(applicationSlug)}`, {
+    method: "DELETE",
+  });
 }
 
 async function fetchJSON<T>(path: string, init?: RequestInit): Promise<T> {
@@ -141,6 +177,13 @@ async function fetchJSON<T>(path: string, init?: RequestInit): Promise<T> {
   if (!response.ok) {
     const payload = await readErrorPayload(response);
     throw new ForgeAPIError(path, response.status, payload);
+  }
+
+  if (
+    response.status === 204 ||
+    !response.headers.get("content-type")?.includes("application/json")
+  ) {
+    return undefined as T;
   }
 
   return response.json() as Promise<T>;
@@ -194,7 +237,7 @@ function buildApplicationsSnapshotPath(filters?: Partial<ApplicationListFilters>
 }
 
 function normalizeApplicationDetailPayload(
-  payload: ApplicationDetailAPIResponse,
+  payload: ApplicationDetailRawAPIResponse,
 ): ApplicationDetailAPIResponse {
   const application = normalizeApplication(payload.application);
 
@@ -204,10 +247,16 @@ function normalizeApplicationDetailPayload(
   };
 }
 
-function normalizeApplication(application: HostApplication): HostApplication {
+function normalizeApplication(application: ApplicationAPIRecord): HostApplication {
   return {
     ...application,
     createdAt: formatDate(application.createdAt),
+    status:
+      application.status === "running" ||
+      application.status === "maintenance" ||
+      application.status === "offline"
+        ? applicationStatusLabelByCode[application.status]
+        : application.status,
   };
 }
 

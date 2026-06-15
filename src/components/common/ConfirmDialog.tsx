@@ -8,6 +8,7 @@ type ConfirmDialogProps = {
   children?: ReactNode;
   confirmLabel: string;
   description: string;
+  isConfirmDisabled?: boolean;
   isOpen: boolean;
   isPending?: boolean;
   onCancel: () => void;
@@ -21,6 +22,7 @@ export function ConfirmDialog({
   children,
   confirmLabel,
   description,
+  isConfirmDisabled = false,
   isOpen,
   isPending = false,
   onCancel,
@@ -57,7 +59,7 @@ export function ConfirmDialog({
           </Button>
           <Button
             type="button"
-            disabled={isPending}
+            disabled={isPending || isConfirmDisabled}
             className={cn(
               tone === "danger"
                 ? "bg-rose-600 text-white hover:bg-rose-700"

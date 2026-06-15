@@ -28,14 +28,8 @@ import { cn } from "@/lib/utils";
 import { miCarEnvironmentFilterOptions } from "@/types/environments";
 
 import { fetchBundlesSnapshot } from "./api/bundles-snapshot";
+import { bundleStatusClass } from "./constants";
 import type { BundleEnvironment, BundleRecord, BundleStatus } from "./types";
-
-const bundleStatusClass: Record<BundleStatus, string> = {
-  已发布: "border-emerald-200 bg-emerald-50 text-emerald-700",
-  已归档: "border-slate-200 bg-slate-50 text-slate-600",
-  已驳回: "border-red-200 bg-red-50 text-red-600",
-  草稿: "border-sky-200 bg-sky-50 text-sky-700",
-};
 
 export function BundlesPage() {
   const { data: snapshot } = useQuery({

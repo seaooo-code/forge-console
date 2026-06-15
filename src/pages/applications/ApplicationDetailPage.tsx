@@ -2,6 +2,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ColDef, ICellRendererParams } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 import {
+  Activity,
+  ArchiveX,
   ArrowLeft,
   Boxes,
   CircleAlert,
@@ -11,7 +13,6 @@ import {
   PenLine,
   RadioTower,
   Smartphone,
-  Trash2,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
@@ -28,8 +29,8 @@ import {
 } from "./api/application-list-filters";
 import {
   type ApplicationDetailAPIResponse,
-  deleteApplication,
   fetchApplicationDetailSnapshot,
+  updateApplicationStatus,
 } from "./api/applications-snapshot";
 import {
   applicationEnvironmentStatusClass,
@@ -45,6 +46,7 @@ import type {
   ApplicationMemberRecord,
   ApplicationModuleRecord,
   ApplicationPipelineRecord,
+  ApplicationStatusCode,
 } from "./types";
 
 type ApplicationDetailPageProps = {
@@ -64,8 +66,8 @@ export function ApplicationDetailPage({
     queryKey: applicationDetailQueryKey(applicationSlug),
   });
   const [overrideDetail, setOverrideDetail] = useState<ApplicationDetailAPIResponse | null>(null);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [actionError, setActionError] = useState("");
   const application =
     overrideDetail?.application ??
@@ -163,19 +165,25 @@ export function ApplicationDetailPage({
     return <ApplicationDetailFallback isFetching={isFetching} onBack={onBack} />;
   }
 
-  const handleDeleteApplication = async () => {
-    setIsDeleting(true);
+  const statusActionLabel = application.status === "已下线" ? "上线" : "下线";
+  const nextStatus: ApplicationStatusCode = application.status === "已下线" ? "running" : "offline";
+  const StatusActionIcon = application.status === "已下线" ? Activity : ArchiveX;
+
+  const handleUpdateApplicationStatus = async () => {
+    setIsUpdatingStatus(true);
     setActionError("");
 
     try {
-      const payload = await deleteApplication(application.slug);
+      const payload = await updateApplicationStatus(application.slug, nextStatus);
       setOverrideDetail(payload);
-      setIsDeleteDialogOpen(false);
+      setIsStatusDialogOpen(false);
       await queryClient.invalidateQueries({ queryKey: applicationsRootQueryKey });
-    } catch (_error) {
-      setActionError("下线应用失败，请稍后重试");
+    } catch (error) {
+      setActionError(
+        error instanceof Error ? error.message : `${statusActionLabel}应用失败，请稍后重试`,
+      );
     } finally {
-      setIsDeleting(false);
+      setIsUpdatingStatus(false);
     }
   };
 
@@ -237,15 +245,19 @@ export function ApplicationDetailPage({
               <Button
                 variant="outline"
                 type="button"
-                className="border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-700"
-                disabled={isDeleting || application.status === "已下线"}
+                className={cn(
+                  nextStatus === "offline"
+                    ? "border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                    : "border-emerald-200 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700",
+                )}
+                disabled={isUpdatingStatus}
                 onClick={() => {
                   setActionError("");
-                  setIsDeleteDialogOpen(true);
+                  setIsStatusDialogOpen(true);
                 }}
               >
-                <Trash2 className="size-4" />
-                {isDeleting ? "下线中" : "下线应用"}
+                <StatusActionIcon className="size-4" />
+                {isUpdatingStatus ? "处理中" : `${statusActionLabel}应用`}
               </Button>
             </div>
             {actionError ? (
@@ -257,21 +269,21 @@ export function ApplicationDetailPage({
         </div>
       </div>
       <ConfirmDialog
-        isOpen={isDeleteDialogOpen}
-        isPending={isDeleting}
-        title="下线应用"
-        description={`确认下线「${application.name}」？下线后仍可在列表和详情中查看。`}
-        confirmLabel="下线应用"
-        tone="danger"
+        isOpen={isStatusDialogOpen}
+        isPending={isUpdatingStatus}
+        title={`${statusActionLabel}应用`}
+        description={`确认${statusActionLabel}「${application.name}」？应用状态将更新为${nextStatus === "running" ? "运行中" : "已下线"}。`}
+        confirmLabel={`${statusActionLabel}应用`}
+        tone={nextStatus === "offline" ? "danger" : "default"}
         onCancel={() => {
-          if (isDeleting) {
+          if (isUpdatingStatus) {
             return;
           }
-          setIsDeleteDialogOpen(false);
+          setIsStatusDialogOpen(false);
           setActionError("");
         }}
         onConfirm={() => {
-          void handleDeleteApplication();
+          void handleUpdateApplicationStatus();
         }}
       >
         {actionError ? (

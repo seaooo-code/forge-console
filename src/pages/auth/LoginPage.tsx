@@ -4,6 +4,8 @@ import { beginFeishuAuthorization } from "@/api/feishu-auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
+import { loginStats } from "./constants";
+
 type LoginPageProps = {
   redirectPath: string;
 };
@@ -76,9 +78,3 @@ export function LoginPage({ redirectPath }: LoginPageProps) {
     </main>
   );
 }
-
-const loginStats = [
-  { label: "环境", value: "5" },
-  { label: "核心模块", value: "12" },
-  { label: "发布链路", value: "稳定" },
-];

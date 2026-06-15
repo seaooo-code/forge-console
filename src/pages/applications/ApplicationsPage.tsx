@@ -31,8 +31,16 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import type { FeishuUserSearchResult } from "@/types/feishu";
 
-import { applicationsSnapshotQueryKey } from "./api/application-list-filters";
-import { deleteApplication, fetchApplicationsSnapshot } from "./api/applications-snapshot";
+import {
+  applicationDeleteCheckQueryKey,
+  applicationsSnapshotQueryKey,
+} from "./api/application-list-filters";
+import {
+  deleteApplication,
+  fetchApplicationDeleteCheck,
+  fetchApplicationsSnapshot,
+  updateApplicationStatus,
+} from "./api/applications-snapshot";
 import {
   applicationStatusClass,
   applicationsGridTheme,
@@ -69,9 +77,27 @@ export function ApplicationsPage({
   });
   const { data: applicationOptions } = useApplicationOptions();
   const [keywordInput, setKeywordInput] = useState(filters.keyword);
+  const [statusActionTarget, setStatusActionTarget] = useState<HostApplication | null>(null);
+  const [statusActionError, setStatusActionError] = useState("");
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<HostApplication | null>(null);
   const [deleteError, setDeleteError] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
+  const deleteTargetSlug = deleteTarget?.slug;
+  const {
+    data: deleteCheck,
+    isError: isDeleteCheckError,
+    isFetching: isCheckingDelete,
+  } = useQuery({
+    enabled: deleteTargetSlug !== undefined,
+    queryFn: () => fetchApplicationDeleteCheck(deleteTargetSlug ?? ""),
+    queryKey: applicationDeleteCheckQueryKey(deleteTargetSlug),
+    retry: false,
+  });
+  const handleRequestUpdateApplicationStatus = useCallback((application: HostApplication) => {
+    setStatusActionTarget(application);
+    setStatusActionError("");
+  }, []);
   const handleRequestDeleteApplication = useCallback((application: HostApplication) => {
     setDeleteTarget(application);
     setDeleteError("");
@@ -206,16 +232,22 @@ export function ApplicationsPage({
         cellRendererParams: {
           onConfigureApplication,
           onDeleteApplication: handleRequestDeleteApplication,
+          onUpdateApplicationStatus: handleRequestUpdateApplicationStatus,
           onOpenApplication,
         },
         colId: "actions",
-        flex: 0.85,
+        flex: 1.05,
         headerName: "操作",
-        minWidth: 156,
+        minWidth: 196,
         sortable: false,
       },
     ],
-    [handleRequestDeleteApplication, onConfigureApplication, onOpenApplication],
+    [
+      handleRequestDeleteApplication,
+      handleRequestUpdateApplicationStatus,
+      onConfigureApplication,
+      onOpenApplication,
+    ],
   );
 
   const defaultColDef = useMemo<ColDef<HostApplication>>(
@@ -238,6 +270,9 @@ export function ApplicationsPage({
   }
 
   const { applications } = snapshot;
+  const statusActionLabel = statusActionTarget?.status === "已下线" ? "上线" : "下线";
+  const nextStatus: ApplicationStatusCode =
+    statusActionTarget?.status === "已下线" ? "running" : "offline";
 
   return (
     <>
@@ -345,11 +380,60 @@ export function ApplicationsPage({
         </section>
       </div>
       <ConfirmDialog
+        isOpen={statusActionTarget !== null}
+        isPending={isUpdatingStatus}
+        title={`${statusActionLabel}应用`}
+        description={
+          statusActionTarget
+            ? `确认${statusActionLabel}「${statusActionTarget.name}」？应用状态将更新为${nextStatus === "running" ? "运行中" : "已下线"}。`
+            : ""
+        }
+        confirmLabel={`${statusActionLabel}应用`}
+        tone={nextStatus === "offline" ? "danger" : "default"}
+        onCancel={() => {
+          if (isUpdatingStatus) {
+            return;
+          }
+          setStatusActionTarget(null);
+          setStatusActionError("");
+        }}
+        onConfirm={async () => {
+          if (!statusActionTarget) {
+            return;
+          }
+
+          setIsUpdatingStatus(true);
+          setStatusActionError("");
+          try {
+            await updateApplicationStatus(statusActionTarget.slug, nextStatus);
+            await queryClient.invalidateQueries({ queryKey: applicationsSnapshotQueryKey() });
+            setStatusActionTarget(null);
+          } catch (error) {
+            setStatusActionError(
+              error instanceof Error ? error.message : `${statusActionLabel}应用失败，请稍后重试`,
+            );
+          } finally {
+            setIsUpdatingStatus(false);
+          }
+        }}
+      >
+        {statusActionError ? (
+          <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-rose-600 text-sm">
+            {statusActionError}
+          </div>
+        ) : null}
+      </ConfirmDialog>
+      <ConfirmDialog
         isOpen={deleteTarget !== null}
         isPending={isDeleting}
+        isConfirmDisabled={
+          isCheckingDelete || isDeleteCheckError || deleteCheck?.deletable !== true
+        }
         title="删除应用"
         description={
-          deleteTarget ? `确认删除「${deleteTarget.name}」？删除后应用将标记为已下线。` : ""
+          deleteTarget
+            ? `确认删除「${deleteTarget.name}」？删除前会检查依赖，检查通过后将彻底删除。`
+            : ""
         }
         confirmLabel="删除应用"
         tone="danger"
@@ -361,7 +445,7 @@ export function ApplicationsPage({
           setDeleteError("");
         }}
         onConfirm={async () => {
-          if (!deleteTarget) {
+          if (!deleteTarget || deleteCheck?.deletable !== true) {
             return;
           }
 
@@ -371,13 +455,55 @@ export function ApplicationsPage({
             await deleteApplication(deleteTarget.slug);
             await queryClient.invalidateQueries({ queryKey: applicationsSnapshotQueryKey() });
             setDeleteTarget(null);
-          } catch (_error) {
-            setDeleteError("删除应用失败，请稍后重试");
+          } catch (error) {
+            setDeleteError(error instanceof Error ? error.message : "删除应用失败，请稍后重试");
           } finally {
             setIsDeleting(false);
           }
         }}
       >
+        {isCheckingDelete ? (
+          <div className="rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-blue-700 text-sm">
+            正在检查应用依赖
+          </div>
+        ) : null}
+        {isDeleteCheckError ? (
+          <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-rose-600 text-sm">
+            依赖检查失败，请稍后重试
+          </div>
+        ) : null}
+        {deleteCheck?.message ? (
+          <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-slate-600 text-sm">
+            {deleteCheck.message}
+          </div>
+        ) : null}
+        {deleteCheck && deleteCheck.dependencies.length > 0 ? (
+          <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-amber-700 text-sm">
+            <div className="font-medium">存在依赖，不能删除</div>
+            <div className="mt-2 space-y-1">
+              {deleteCheck.dependencies.map((dependency) => (
+                <div key={dependency.id} className="flex min-w-0 items-start gap-2">
+                  <span className="shrink-0 rounded bg-amber-100 px-1.5 py-0.5 font-medium text-amber-800 text-xs">
+                    {dependency.type}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate">{dependency.name}</span>
+                    {dependency.description ? (
+                      <span className="block truncate text-amber-600 text-xs">
+                        {dependency.description}
+                      </span>
+                    ) : null}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
+        {deleteCheck?.deletable && deleteCheck.dependencies.length === 0 ? (
+          <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-emerald-700 text-sm">
+            依赖检查通过，确认后将彻底删除。
+          </div>
+        ) : null}
         {deleteError ? (
           <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-rose-600 text-sm">
             {deleteError}
@@ -676,15 +802,18 @@ function ActionsCell({
   onConfigureApplication,
   onDeleteApplication,
   onOpenApplication,
+  onUpdateApplicationStatus,
 }: ICellRendererParams<HostApplication> & {
   onConfigureApplication?: (applicationSlug: string) => void;
   onDeleteApplication?: (application: HostApplication) => void;
   onOpenApplication?: (applicationSlug: string) => void;
+  onUpdateApplicationStatus?: (application: HostApplication) => void;
 }) {
-  const isDeleted = data?.status === "已下线";
+  const isOffline = data?.status === "已下线";
+  const StatusActionIcon = isOffline ? Activity : ArchiveX;
 
   return (
-    <div className="flex h-full items-center gap-3 whitespace-nowrap font-medium text-xs">
+    <div className="flex h-full items-center gap-2 whitespace-nowrap font-medium text-xs">
       <Button
         variant="link"
         type="button"
@@ -712,8 +841,25 @@ function ActionsCell({
       <Button
         variant="link"
         type="button"
+        className={cn(
+          "h-auto gap-1 p-0 text-xs",
+          isOffline
+            ? "text-emerald-600 hover:text-emerald-700"
+            : "text-slate-600 hover:text-slate-800",
+        )}
+        onClick={() => {
+          if (data) {
+            onUpdateApplicationStatus?.(data);
+          }
+        }}
+      >
+        <StatusActionIcon className="size-3.5" />
+        {isOffline ? "上线" : "下线"}
+      </Button>
+      <Button
+        variant="link"
+        type="button"
         className="h-auto gap-1 p-0 text-rose-600 text-xs hover:text-rose-700 disabled:text-slate-400"
-        disabled={isDeleted}
         onClick={() => {
           if (data) {
             onDeleteApplication?.(data);

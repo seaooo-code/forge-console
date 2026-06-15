@@ -22,6 +22,12 @@ export const applicationStatusCodeByLabel: Record<ApplicationStatus, Application
   运行中: "running",
 };
 
+export const applicationStatusLabelByCode: Record<ApplicationStatusCode, ApplicationStatus> = {
+  maintenance: "维护中",
+  offline: "已下线",
+  running: "运行中",
+};
+
 export const emptyApplicationListFilters: ApplicationListFilters = {
   keyword: "",
   owner: "",

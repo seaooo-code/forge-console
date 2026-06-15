@@ -20,6 +20,9 @@ export const applicationDetailQueryKey = (applicationSlug: string | undefined) =
 export const applicationEditQueryKey = (applicationSlug: string | undefined) =>
   [...applicationsRootQueryKey, "edit", applicationSlug] as const;
 
+export const applicationDeleteCheckQueryKey = (applicationSlug: string | undefined) =>
+  [...applicationsRootQueryKey, "delete-check", applicationSlug] as const;
+
 export function normalizeApplicationListFilters(
   filters?: Partial<ApplicationListFilters>,
 ): ApplicationListFilters {

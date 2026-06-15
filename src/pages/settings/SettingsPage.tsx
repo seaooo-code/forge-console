@@ -1,20 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import type { ColDef, ICellRendererParams } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
-import {
-  Bell,
-  ChevronRight,
-  Cloud,
-  Database,
-  GitBranch,
-  KeyRound,
-  LockKeyhole,
-  type LucideIcon,
-  Server,
-  ShieldCheck,
-  UserCog,
-  UsersRound,
-} from "lucide-react";
+import { Bell, ChevronRight, type LucideIcon, Server, UserCog } from "lucide-react";
 import { Fragment, type ReactNode, useMemo } from "react";
 import { consoleGridTheme } from "@/components/common/console-grid-theme";
 import { EnvironmentBadge } from "@/components/common/EnvironmentBadge";
@@ -23,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 import { fetchSettingsSnapshot } from "./api/settings-snapshot";
+import { navIconMap, statusClass } from "./constants";
 import type {
   CdnConfigRecord,
   MemberRecord,
@@ -31,22 +19,6 @@ import type {
   PermissionMatrixRecord,
   SettingsNavItem,
 } from "./types";
-
-const navIconMap: Record<string, LucideIcon> = {
-  cdn: Cloud,
-  notice: Bell,
-  permissions: LockKeyhole,
-  pipelines: GitBranch,
-  roles: ShieldCheck,
-  sign: KeyRound,
-  storage: Database,
-  users: UsersRound,
-};
-
-const statusClass: Record<MemberStatus, string> = {
-  停用: "border-slate-200 bg-slate-100 text-slate-600",
-  启用: "border-emerald-200 bg-emerald-50 text-emerald-700",
-};
 
 export function SettingsPage() {
   const { data: snapshot } = useQuery({

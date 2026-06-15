@@ -1,15 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import type { ColDef, ICellRendererParams } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
-import {
-  AlertTriangle,
-  type LucideIcon,
-  Pause,
-  RadioTower,
-  RotateCcw,
-  ShieldCheck,
-  UsersRound,
-} from "lucide-react";
+import { Pause, RadioTower, RotateCcw } from "lucide-react";
 import { useEffect, useMemo, useRef } from "react";
 
 import { consoleGridTheme } from "@/components/common/console-grid-theme";
@@ -19,34 +11,8 @@ import { type EChartsOption, echarts } from "@/lib/echarts";
 import { cn } from "@/lib/utils";
 
 import { fetchGraySnapshot } from "./api/gray-snapshot";
+import { actionClass, graySteps, statusClass, summaryIconClass, summaryIconMap } from "./constants";
 import type { GrayHistoryRecord, GrayRollout, GrayStatus, GraySummaryItem } from "./types";
-
-const graySteps = [1, 5, 10, 20, 50, 100];
-
-const statusClass: Record<GrayStatus, string> = {
-  已全量: "border-emerald-200 bg-emerald-50 text-emerald-700",
-  推进中: "border-amber-200 bg-amber-50 text-amber-700",
-};
-
-const actionClass: Record<GrayHistoryRecord["action"], string> = {
-  全量: "border-emerald-200 bg-emerald-50 text-emerald-700",
-  回滚: "border-red-200 bg-red-50 text-red-600",
-  推进: "border-blue-200 bg-blue-50 text-blue-700",
-};
-
-const summaryIconMap: Record<string, LucideIcon> = {
-  active: RadioTower,
-  alerts: AlertTriangle,
-  health: ShieldCheck,
-  users: UsersRound,
-};
-
-const summaryIconClass: Record<string, string> = {
-  active: "bg-blue-50 text-blue-600",
-  alerts: "bg-red-50 text-red-600",
-  health: "bg-emerald-50 text-emerald-600",
-  users: "bg-violet-50 text-violet-600",
-};
 
 export function GrayPage() {
   const { data: snapshot } = useQuery({

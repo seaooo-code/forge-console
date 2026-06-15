@@ -10,12 +10,11 @@ import {
   GitBranch,
   GitFork,
   Layers3,
-  MoreHorizontal,
   Package,
+  Pencil,
   Plus,
   RefreshCw,
   UserRound,
-  Workflow,
 } from "lucide-react";
 import { useMemo } from "react";
 
@@ -30,23 +29,23 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 
-import { fetchModulesSnapshot } from "./api/modules-snapshot";
+import { fetchModulesSnapshot, modulesSnapshotQueryKey } from "./api/modules-snapshot";
+import { kindClass, statusClass } from "./constants";
 import type { ModuleRecord, ModuleStatus } from "./types";
 
-const statusClass: Record<ModuleStatus, string> = {
-  冻结: "border-slate-200 bg-slate-50 text-slate-600",
-  活跃: "border-emerald-200 bg-emerald-50 text-emerald-700",
+type ModulesPageProps = {
+  onCreateModule: () => void;
+  onEditModule: (moduleId: string) => void;
 };
 
-const kindClass: Record<ModuleRecord["kind"], string> = {
-  Common: "border-amber-200 bg-amber-50 text-amber-700",
-  Feature: "border-sky-200 bg-sky-50 text-sky-700",
+type ModuleActionsCellParams = {
+  onEditModule: (moduleId: string) => void;
 };
 
-export function ModulesPage() {
+export function ModulesPage({ onCreateModule, onEditModule }: ModulesPageProps) {
   const { data: snapshot } = useQuery({
     queryFn: fetchModulesSnapshot,
-    queryKey: ["modules-snapshot"],
+    queryKey: modulesSnapshotQueryKey,
   });
 
   const stats = useMemo(
@@ -123,6 +122,12 @@ export function ModulesPage() {
         minWidth: 110,
       },
       {
+        field: "applicationName",
+        flex: 0.8,
+        headerName: "关联应用",
+        minWidth: 130,
+      },
+      {
         cellRenderer: RepositoryCell,
         field: "repository",
         flex: 1.55,
@@ -130,20 +135,6 @@ export function ModulesPage() {
         minWidth: 260,
       },
       { field: "owner", flex: 0.75, headerName: "负责人", minWidth: 110 },
-      {
-        field: "defaultPipeline",
-        flex: 0.8,
-        headerName: "默认流水线",
-        minWidth: 130,
-        wrapText: true,
-      },
-      {
-        cellRenderer: VersionCell,
-        field: "productionVersion",
-        flex: 0.7,
-        headerName: "线上版本",
-        minWidth: 105,
-      },
       {
         cellRenderer: StatusCell,
         field: "status",
@@ -153,14 +144,17 @@ export function ModulesPage() {
       },
       {
         cellRenderer: ActionsCell,
+        cellRendererParams: {
+          onEditModule,
+        },
         colId: "actions",
-        flex: 0.9,
+        flex: 0.82,
         headerName: "操作",
-        minWidth: 150,
+        minWidth: 138,
         sortable: false,
       },
     ],
-    [],
+    [onEditModule],
   );
 
   const defaultColDef = useMemo<ColDef<ModuleRecord>>(
@@ -187,7 +181,7 @@ export function ModulesPage() {
       <div className="border-slate-200 border-b bg-white px-6 py-5">
         <div>
           <h1 className="font-semibold text-2xl text-slate-950 tracking-tight">模块管理</h1>
-          <p className="mt-2 text-slate-600 text-sm">管理 RN 模块仓库、流水线模板与 Bundle 产物</p>
+          <p className="mt-2 text-slate-600 text-sm">管理 RN 模块仓库与 Bundle 产物</p>
         </div>
       </div>
 
@@ -257,17 +251,6 @@ export function ModulesPage() {
                   { label: "zhao.lei", value: "zhao.lei" },
                 ]}
               />
-              <ConsoleFilterSelect
-                icon={Workflow}
-                label="流水线模板"
-                value="all"
-                options={[
-                  { label: "全部流水线模板", value: "all" },
-                  { label: "RN Standard Pipeline", value: "rn" },
-                  { label: "Vehicle Pipeline", value: "vehicle" },
-                  { label: "AI Pipeline", value: "ai" },
-                ]}
-              />
               <ConsoleSearchInput />
             </div>
 
@@ -278,7 +261,11 @@ export function ModulesPage() {
               <Button variant="outline" size="icon" aria-label="下载模块列表">
                 <Download className="size-4" />
               </Button>
-              <Button className="bg-blue-600 hover:bg-blue-700">
+              <Button
+                type="button"
+                className="bg-blue-600 hover:bg-blue-700"
+                onClick={onCreateModule}
+              >
                 <Plus className="size-4" />
                 新建模块
               </Button>
@@ -372,14 +359,6 @@ function RepositoryCell({ value }: ICellRendererParams<ModuleRecord, string>) {
   );
 }
 
-function VersionCell({ value }: ICellRendererParams<ModuleRecord, string>) {
-  return value ? (
-    <span className="inline-flex h-6 items-center rounded border border-emerald-200 bg-emerald-50 px-2 font-mono font-semibold text-emerald-700 text-xs leading-none">
-      {value}
-    </span>
-  ) : null;
-}
-
 function StatusCell({ value }: ICellRendererParams<ModuleRecord, ModuleStatus>) {
   if (!value) {
     return null;
@@ -397,7 +376,14 @@ function StatusCell({ value }: ICellRendererParams<ModuleRecord, ModuleStatus>) 
   );
 }
 
-function ActionsCell() {
+function ActionsCell({
+  data,
+  onEditModule,
+}: ICellRendererParams<ModuleRecord> & ModuleActionsCellParams) {
+  if (!data) {
+    return null;
+  }
+
   return (
     <div className="flex h-full items-center gap-2 whitespace-nowrap font-medium text-blue-600 text-xs">
       <Button
@@ -417,12 +403,11 @@ function ActionsCell() {
       <Button
         variant="link"
         type="button"
-        className="h-auto p-0 text-blue-600 text-xs hover:text-blue-700"
+        className="h-auto gap-1 p-0 text-blue-600 text-xs hover:text-blue-700"
+        onClick={() => onEditModule(data.id)}
       >
-        流水线
-      </Button>
-      <Button variant="ghost" type="button" size="icon" className="size-6 text-slate-500">
-        <MoreHorizontal className="size-4" />
+        <Pencil className="size-3.5" />
+        编辑
       </Button>
     </div>
   );

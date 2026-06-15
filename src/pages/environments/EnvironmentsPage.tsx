@@ -7,24 +7,12 @@ import { cn } from "@/lib/utils";
 
 import { environmentsSnapshotQueryKey } from "./api/environment-query-keys";
 import { fetchEnvironmentsSnapshot } from "./api/environments-snapshot";
-import type { EnvironmentCardTone, EnvironmentStatus, RuntimeEnvironment } from "./types";
+import { environmentToneClass, statusClass } from "./constants";
+import type { RuntimeEnvironment } from "./types";
 
 type EnvironmentsPageProps = {
   onCreateEnvironment: () => void;
   onEditEnvironment: (environmentId: string) => void;
-};
-
-const environmentToneClass: Record<EnvironmentCardTone, string> = {
-  amber: "border-t-amber-500",
-  blue: "border-t-blue-500",
-  emerald: "border-t-emerald-500",
-  rose: "border-t-rose-500",
-  sky: "border-t-sky-500",
-};
-
-const statusClass: Record<EnvironmentStatus, string> = {
-  健康: "border-emerald-200 bg-emerald-50 text-emerald-700",
-  灰度中: "border-amber-200 bg-amber-50 text-amber-700",
 };
 
 export function EnvironmentsPage({

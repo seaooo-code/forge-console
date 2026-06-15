@@ -28,6 +28,10 @@ const CombinationsPage = lazy(async () => ({
   default: (await import("@/pages/combinations")).CombinationsPage,
 }));
 
+const CodeSourcesPage = lazy(async () => ({
+  default: (await import("@/pages/code-sources")).CodeSourcesPage,
+}));
+
 const DashboardPage = lazy(async () => ({
   default: (await import("@/pages/dashboard")).DashboardPage,
 }));
@@ -50,6 +54,10 @@ const GrayPage = lazy(async () => ({
 
 const ModulesPage = lazy(async () => ({
   default: (await import("@/pages/modules")).ModulesPage,
+}));
+
+const ModuleCreatePage = lazy(async () => ({
+  default: (await import("@/pages/modules")).ModuleCreatePage,
 }));
 
 const PipelinesPage = lazy(async () => ({
@@ -160,7 +168,9 @@ function ConsoleRoutes() {
         <Route path="apps/new" element={<ApplicationCreateRoute />} />
         <Route path="apps/:applicationSlug/edit" element={<ApplicationEditRoute />} />
         <Route path="apps/:applicationSlug" element={<ApplicationDetailRoute />} />
-        <Route path="modules" element={<ModulesPage />} />
+        <Route path="modules" element={<ModulesRoute />} />
+        <Route path="modules/new" element={<ModuleCreateRoute />} />
+        <Route path="modules/:moduleId/edit" element={<ModuleEditRoute />} />
         <Route path="dev-tasks" element={<DevTasksPage />} />
         <Route path="pipelines" element={<PipelinesPage />} />
         <Route path="bundles" element={<BundlesPage />} />
@@ -168,6 +178,7 @@ function ConsoleRoutes() {
         <Route path="releases" element={<ReleasesPage />} />
         <Route path="gray" element={<GrayPage />} />
         <Route path="rollback" element={<RollbackPage />} />
+        <Route path="code-sources" element={<CodeSourcesPage />} />
         <Route path="storage" element={<StorageRoute />} />
         <Route path="storage/new" element={<StorageCreateRoute />} />
         <Route path="storage/:storageId/edit" element={<StorageEditRoute />} />
@@ -243,6 +254,43 @@ function ApplicationDetailRoute() {
       applicationSlug={applicationSlug}
       onBack={() => navigate("/apps")}
       onEditApplication={(slug: string) => navigate(`/apps/${encodeURIComponent(slug)}/edit`)}
+    />
+  );
+}
+
+function ModulesRoute() {
+  const navigate = useNavigate();
+
+  return (
+    <ModulesPage
+      onCreateModule={() => navigate("/modules/new")}
+      onEditModule={(moduleId: string) => navigate(`/modules/${encodeURIComponent(moduleId)}/edit`)}
+    />
+  );
+}
+
+function ModuleCreateRoute() {
+  const navigate = useNavigate();
+
+  return (
+    <ModuleCreatePage onBack={() => navigate("/modules")} onSaved={() => navigate("/modules")} />
+  );
+}
+
+function ModuleEditRoute() {
+  const navigate = useNavigate();
+  const { moduleId } = useParams<{ moduleId: string }>();
+
+  if (!moduleId) {
+    return <Navigate to="/modules" replace />;
+  }
+
+  return (
+    <ModuleCreatePage
+      mode="edit"
+      moduleId={moduleId}
+      onBack={() => navigate("/modules")}
+      onSaved={() => navigate("/modules")}
     />
   );
 }

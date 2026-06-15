@@ -1,29 +1,9 @@
-import type { LucideIcon } from "lucide-react";
-import { AppWindow, Boxes, GitBranch, Package, Rocket, Workflow } from "lucide-react";
-
 import { MockCard as Card } from "@/components/common/MockSurface";
 import { CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
-import type { MetricIconName, SummaryMetric } from "../types";
-
-const metricIcons: Record<MetricIconName, LucideIcon> = {
-  app: AppWindow,
-  bundle: Package,
-  module: Boxes,
-  pipeline: GitBranch,
-  release: Rocket,
-  task: Workflow,
-};
-
-const iconToneClass: Record<SummaryMetric["iconTone"], string> = {
-  amber: "bg-amber-100 text-amber-600",
-  blue: "bg-blue-100 text-blue-600",
-  cyan: "bg-cyan-100 text-cyan-600",
-  green: "bg-emerald-100 text-emerald-600",
-  red: "bg-red-100 text-red-600",
-  sky: "bg-sky-100 text-sky-600",
-};
+import { metricIcons, metricIconToneClass } from "../constants";
+import type { SummaryMetric } from "../types";
 
 type MetricOverviewProps = {
   metrics: SummaryMetric[];
@@ -42,7 +22,7 @@ export function MetricOverview({ metrics }: MetricOverviewProps) {
                 <div
                   className={cn(
                     "flex size-9 items-center justify-center rounded-lg",
-                    iconToneClass[metric.iconTone],
+                    metricIconToneClass[metric.iconTone],
                   )}
                 >
                   <Icon className="size-4" />

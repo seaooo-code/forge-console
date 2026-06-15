@@ -34,21 +34,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 
 import { fetchPipelinesSnapshot } from "./api/pipelines-snapshot";
-import type { PipelineRecord, PipelineStatus, PipelineStepStatus } from "./types";
-
-const runStatusClass: Record<PipelineStatus, string> = {
-  canceled: "border-slate-200 bg-slate-50 text-slate-600",
-  failed: "border-red-200 bg-red-50 text-red-600",
-  queued: "border-amber-200 bg-amber-50 text-amber-700",
-  running: "border-sky-200 bg-sky-50 text-sky-700",
-  success: "border-emerald-200 bg-emerald-50 text-emerald-700",
-};
-
-const stepClass: Record<PipelineStepStatus, string> = {
-  done: "border-emerald-600 bg-emerald-600 text-white",
-  pending: "border-slate-200 bg-slate-100 text-slate-400",
-  running: "border-blue-600 bg-blue-600 text-white",
-};
+import { runStatusClass, stepClass } from "./constants";
+import type { PipelineRecord, PipelineStatus } from "./types";
 
 export function PipelinesPage() {
   const { data: snapshot } = useQuery({

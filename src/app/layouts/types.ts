@@ -13,6 +13,7 @@ export type NavGroup = {
 export type NavIconName =
   | "app"
   | "bundle"
+  | "codeSource"
   | "dashboard"
   | "environment"
   | "module"

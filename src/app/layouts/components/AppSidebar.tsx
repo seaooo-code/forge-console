@@ -5,6 +5,7 @@ import {
   Database,
   Gauge,
   GitBranch,
+  GitFork,
   History,
   Layers3,
   Moon,
@@ -24,6 +25,7 @@ import type { NavGroup, NavIconName, NavItem } from "../types";
 const navIcons: Record<NavIconName, LucideIcon> = {
   app: AppWindow,
   bundle: Package,
+  codeSource: GitFork,
   dashboard: Gauge,
   environment: Layers3,
   module: Boxes,
