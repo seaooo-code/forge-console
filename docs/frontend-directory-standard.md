@@ -13,19 +13,23 @@ src/
     <page>/
       api/                # 页面请求函数、Query key、数据适配
       components/         # 页面内专属组件
-      hooks/              # 页面内专属 hook
+      constants/index.ts  # 页面业务常量，必要时再拆分
+      hooks/index.ts      # 页面内专属 hook，必要时再拆分
       model/              # 页面内 Zustand store、派生状态
-      *-route-config.tsx  # 页面路由装配：查询、渲染、导航回调、页面级 mutation
+      types/index.ts      # 页面领域类型与页面内复杂类型，必要时再拆分
+      utils/index.ts      # 页面业务纯函数工具，必要时再拆分
       <Page>.tsx          # 页面入口组件
-      types.ts            # 页面领域类型
       index.ts            # 页面公开出口
   components/
     ui/                   # shadcn/ui 原子组件，只保留无业务语义的基础 UI
     common/               # 跨页面复用的轻业务组件
+  api/                    # 两个及以上页面复用的请求函数、API 适配
+  constants/              # 两个及以上页面复用的业务常量
   hooks/                  # 真正全局复用的 hook
   lib/                    # 全局基础设施：query client、工具函数、适配器
   store/                  # 真正跨页面的全局 store
   types/                  # 全局共享类型
+  utils/                  # 两个及以上页面复用的业务纯函数
   assets/                 # 静态资源
   index.css               # Tailwind v4 入口、主题 token、全局基础样式
   main.tsx                # React 挂载入口，只做启动
@@ -34,15 +38,19 @@ src/
 ## 分层规则
 
 - `src/main.tsx` 只负责创建 React root 并渲染 `src/app`，不写业务 UI。
-- `src/app` 负责 Query Provider、全局布局、路由和模块装配，不放具体页面 UI。
+- `src/app` 负责 Query Provider、React Router、全局布局和模块装配，不放具体页面 UI。
 - `src/app/layouts` 放后台壳层、侧边栏、顶部栏、导航配置、壳层状态等跨页面结构。
-- 页面专属路由装配优先下沉到 `src/pages/<page>/*-route-config.tsx`，由页面公开出口暴露给 `app/layouts`；`app/layouts` 不直接组装页面内部 API、领域类型和页面级 mutation。
+- 页面路由统一交给 React Router；页面参数读取、跳转和嵌套路由使用 React Router 能力，不新增 `*-route-config.tsx` 或自定义路由配置层。
 - `src/pages/<page>` 是页面业务默认落点。新增后台页面、页面级面板、表格、图表、编辑器配置，优先放这里。
 - `src/pages/<page>/components` 只放该页面专属组件。两个及以上页面复用后，再移动到 `src/components/common`。
 - `src/components/ui` 只放 shadcn/ui 组件。这里的组件不得引用 `pages`、`app`、业务 store 或请求函数。
+- `src/api` 只放两个及以上页面复用的请求函数、API 适配和跨页面 Query key；页面专属请求继续放页面 `api/`。
+- `src/constants` 只放两个及以上页面复用的业务常量；页面专属常量继续放页面 `constants/index.ts`。
+- `src/hooks` 只放两个及以上页面复用的 hook；页面专属 hook 继续放页面 `hooks/index.ts`。
 - `src/lib` 只放无业务语义的基础设施，例如 `queryClient`、`cn`、日期/数字通用格式化。
 - `src/store` 只放跨多个页面的全局状态。页面内状态放 `src/pages/<page>/model`。
-- `src/types` 只放跨多个页面的共享类型。页面内类型放 `src/pages/<page>/types.ts`。
+- `src/types` 只放跨多个页面的共享类型。页面内类型放 `src/pages/<page>/types/index.ts`，优先只维护一个 `index.ts`，确实变复杂后再拆文件。
+- `src/utils` 只放两个及以上页面复用的业务纯函数；页面专属纯函数继续放页面 `utils/index.ts`。
 
 ## 页面内部约定
 
@@ -54,41 +62,46 @@ pages/applications/
   components/
     ApplicationsGrid.tsx
     ApplicationsToolbar.tsx
+  constants/index.ts
+  hooks/index.ts
   model/use-applications-store.ts
+  types/index.ts
+  utils/index.ts
   ApplicationsPage.tsx
-  types.ts
   index.ts
 ```
 
 - `api/`：放请求函数、TanStack Query key、响应适配，不直接操作 UI 状态。
-- `*-route-config.tsx`：放该页面的路由级容器逻辑，包括 `queryFn`、`queryKey`、页面组件懒加载、导航回调和页面级 mutation 后刷新。
+- 页面组件负责所属页面的接口请求、Query key 使用和页面级 mutation；跨页面路由装配只通过 React Router 连接页面公开出口。
 - `components/`：放页面内专属组件，可以组合 shadcn/ui、AG Grid、ECharts。
-- `hooks/`：放页面专属 hook。跨页面复用前不要移动到全局 `hooks/`。
+- `constants/index.ts`：放页面业务常量，优先只用一个 `index.ts`，需要拆成多文件时再拆。
+- `hooks/index.ts`：放页面专属 hook，优先只用一个 `index.ts`，需要拆成多文件时再拆。跨页面复用前不要移动到全局 `hooks/`。
 - `model/`：放页面内 Zustand store、派生计算、状态转换。
 - 表单类功能统一使用 React Hook Form，表单类型、默认值转换和提交 payload 构造贴近所属页面。
-- `types.ts`：放页面领域类型。
+- `types/index.ts`：放页面领域类型与页面内复杂类型，优先只用一个 `index.ts`，需要拆成多文件时再拆。
+- `utils/index.ts`：放页面业务纯函数工具，优先只用一个 `index.ts`，需要拆成多文件时再拆。
 - `index.ts`：只导出外部需要使用的页面入口、Query key、请求函数和类型，避免外部深层路径依赖。
 
 ## 命名约定
 
 - React 组件文件使用 `PascalCase.tsx`，例如 `ApplicationsPage.tsx`。
 - 页面入口组件使用 `<PageName>Page.tsx`，例如 `DashboardPage.tsx`、`ApplicationsPage.tsx`。
-- hook 文件使用 `use-*.ts` 或 `use-*.tsx`，导出名使用 `useXxx`。
+- hook 导出名使用 `useXxx`；`hooks/` 目录优先只放一个 `index.ts`，需要拆成多文件时再拆。
 - Zustand store 文件使用 `use-*-store.ts`，导出名使用 `useXxxStore`。
 - 请求与数据适配文件使用页面业务名，例如 `applications-snapshot.ts`、`dashboard-snapshot.ts`。
-- 类型集中到 `types.ts`；常量集中到 `constants.ts`；纯函数工具使用 `*.utils.ts`。
+- 类型集中到 `types/index.ts`；常量集中到 `constants/index.ts`；hook 集中到 `hooks/index.ts`；纯函数工具集中到 `utils/index.ts`。`types/`、`constants/`、`hooks/` 和 `utils/` 目录优先只放一个 `index.ts`，需要拆成多文件时再拆。
 - 组件默认使用具名导出，入口文件可以按框架需要例外。
 
 ## 依赖与引用边界
 
 - 允许：`app -> pages -> components/ui -> lib`。
-- 允许：`app/layouts` 引用页面的 `index.ts` 公开出口来做路由装配，不直接深层引用页面内部组件。
+- 允许：`app` 引用页面的 `index.ts` 公开出口来装配 React Router，不直接深层引用页面内部组件。
 - 允许：页面内部互相引用自己的 `api/components/hooks/model/types`。
-- 允许：页面之间通过对方 `index.ts` 暴露的公开 API 引用。
+- 允许：页面之间通过对方 `index.ts` 暴露的公开 API 引用；当同一请求、工具函数、类型、hook 或常量被两个及以上页面复用时，移动到 `src/api`、`src/utils`、`src/types`、`src/hooks`、`src/constants` 等对应目录。
 - 禁止：`components/ui` 引用 `pages`、`app`、业务 store 或请求函数。
 - 禁止：页面之间互相深层引用，例如 `@/pages/a/components/X`。
 - 禁止：在组件中直接散落 fetch 细节；请求入口应放在页面的 `api/`。
-- 禁止：为了方便把单页面代码放进全局 `lib`、`hooks`、`store`。
+- 禁止：为了方便把单页面代码放进全局 `api`、`constants`、`hooks`、`lib`、`store`、`types`、`utils`。
 
 ## 样式规范
 

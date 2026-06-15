@@ -1,2 +1,2 @@
-export { getRollbackRouteConfig } from "./rollback-route-config";
+export { RollbackPage } from "./RollbackPage";
 export type { RollbackSnapshot } from "./types";

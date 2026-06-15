@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query";
 import type { ColDef, ICellRendererParams } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 import {
@@ -21,6 +22,7 @@ import { MockCard as Card, MockSurface } from "@/components/common/MockSurface";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
+import { fetchSettingsSnapshot } from "./api/settings-snapshot";
 import type {
   CdnConfigRecord,
   MemberRecord,
@@ -28,12 +30,7 @@ import type {
   NotificationChannelRecord,
   PermissionMatrixRecord,
   SettingsNavItem,
-  SettingsSnapshot,
 } from "./types";
-
-type SettingsPageProps = {
-  snapshot: SettingsSnapshot;
-};
 
 const navIconMap: Record<string, LucideIcon> = {
   cdn: Cloud,
@@ -51,7 +48,11 @@ const statusClass: Record<MemberStatus, string> = {
   启用: "border-emerald-200 bg-emerald-50 text-emerald-700",
 };
 
-export function SettingsPage({ snapshot }: SettingsPageProps) {
+export function SettingsPage() {
+  const { data: snapshot } = useQuery({
+    queryFn: fetchSettingsSnapshot,
+    queryKey: ["settings-snapshot"],
+  });
   const memberColumnDefs = useMemo<ColDef<MemberRecord>[]>(
     () => [
       {
@@ -187,6 +188,10 @@ export function SettingsPage({ snapshot }: SettingsPageProps) {
     }),
     [],
   );
+
+  if (!snapshot) {
+    return null;
+  }
 
   return (
     <>

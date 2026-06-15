@@ -28,3 +28,8 @@ export type AuthSession = {
   token: AuthTokenMeta;
   user: AuthUser;
 };
+
+export type FeishuAuthResponse = {
+  token: AuthTokenMeta;
+  user: AuthUser;
+};

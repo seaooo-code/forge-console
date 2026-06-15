@@ -1,4 +1,4 @@
-import type { AuthSession, FeishuAuthResponse } from "../types";
+import type { AuthSession, FeishuAuthResponse } from "@/types/auth";
 
 const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8080").replace(
   /\/+$/,

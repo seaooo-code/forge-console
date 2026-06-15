@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query";
 import type { ColDef, ICellRendererParams } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 import {
@@ -32,16 +33,8 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 
-import type {
-  PipelineRecord,
-  PipelineStatus,
-  PipelineStepStatus,
-  PipelinesSnapshot,
-} from "./types";
-
-type PipelinesPageProps = {
-  snapshot: PipelinesSnapshot;
-};
+import { fetchPipelinesSnapshot } from "./api/pipelines-snapshot";
+import type { PipelineRecord, PipelineStatus, PipelineStepStatus } from "./types";
 
 const runStatusClass: Record<PipelineStatus, string> = {
   canceled: "border-slate-200 bg-slate-50 text-slate-600",
@@ -57,7 +50,11 @@ const stepClass: Record<PipelineStepStatus, string> = {
   running: "border-blue-600 bg-blue-600 text-white",
 };
 
-export function PipelinesPage({ snapshot }: PipelinesPageProps) {
+export function PipelinesPage() {
+  const { data: snapshot } = useQuery({
+    queryFn: fetchPipelinesSnapshot,
+    queryKey: ["pipelines-snapshot"],
+  });
   const stats = useMemo(
     () => [
       {
@@ -197,6 +194,10 @@ export function PipelinesPage({ snapshot }: PipelinesPageProps) {
     }),
     [],
   );
+
+  if (!snapshot) {
+    return null;
+  }
 
   return (
     <>

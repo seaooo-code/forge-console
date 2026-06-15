@@ -1,2 +1,2 @@
-export { getCombinationsRouteConfig } from "./combinations-route-config";
+export { CombinationsPage } from "./CombinationsPage";
 export type { CombinationsSnapshot } from "./types";

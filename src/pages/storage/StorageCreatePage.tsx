@@ -1,3 +1,4 @@
+import { skipToken, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
   CheckCircle2,
@@ -8,7 +9,7 @@ import {
 } from "lucide-react";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
-
+import { searchFeishuUsers } from "@/api/feishu-user-search";
 import { OwnerPicker } from "@/components/common/OwnerPicker";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -20,28 +21,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { searchFeishuUsers } from "@/pages/applications";
-
+import type { StorageAdapter, StorageConfigRecord, StorageStatus } from "@/types/storage";
+import { storageEditQueryKey, storageSnapshotQueryKey } from "./api/storage-query-keys";
 import {
   createStorageConfiguration,
+  fetchStorageDetailSnapshot,
   storageAdapterOptions,
   testStorageConfiguration,
   updateStorageConfiguration,
 } from "./api/storage-snapshot";
-import type {
-  StorageAdapter,
-  StorageConfigRecord,
-  StorageMutationInput,
-  StorageSnapshot,
-  StorageStatus,
-} from "./types";
+import type { StorageMutationInput } from "./types";
 
 type StorageCreatePageProps = {
-  isFetching?: boolean;
   mode?: "create" | "edit";
   onBack: () => void;
   onSaved?: (storageId: string) => void;
-  snapshot?: StorageSnapshot | null;
   storageId?: string;
 };
 
@@ -74,14 +68,18 @@ const defaultForm: StorageFormState = {
 };
 
 export function StorageCreatePage({
-  isFetching = false,
   mode = "create",
   onBack,
   onSaved,
-  snapshot,
   storageId,
 }: StorageCreatePageProps) {
+  const queryClient = useQueryClient();
   const isEditMode = mode === "edit";
+  const editStorageId = isEditMode ? storageId : undefined;
+  const { data: snapshot, isFetching } = useQuery({
+    queryFn: editStorageId ? () => fetchStorageDetailSnapshot(editStorageId) : skipToken,
+    queryKey: storageEditQueryKey(editStorageId),
+  });
   const storageConfig = storageId
     ? snapshot?.configurations.find((configuration) => configuration.id === storageId)
     : undefined;
@@ -148,9 +146,15 @@ export function StorageCreatePage({
     setFormError("");
 
     try {
+      if (isEditMode && !storageId) {
+        setFormError("存储配置路径无效");
+        return;
+      }
+
       const record = isEditMode
-        ? await updateStorageConfiguration(storageId ?? "", input)
+        ? await updateExistingStorageConfiguration(storageId, input)
         : await createStorageConfiguration(input);
+      await queryClient.invalidateQueries({ queryKey: storageSnapshotQueryKey });
       onSaved?.(record.id);
     } catch (_error) {
       setFormError(isEditMode ? "保存存储配置失败，请稍后重试" : "创建存储配置失败，请稍后重试");
@@ -355,6 +359,17 @@ export function StorageCreatePage({
       </div>
     </form>
   );
+}
+
+async function updateExistingStorageConfiguration(
+  storageId: string | undefined,
+  input: StorageMutationInput,
+) {
+  if (!storageId) {
+    throw new Error("Storage id is required");
+  }
+
+  return updateStorageConfiguration(storageId, input);
 }
 
 function Field({

@@ -1,9 +1,8 @@
 import { ArrowRight, ShieldCheck } from "lucide-react";
 
+import { beginFeishuAuthorization } from "@/api/feishu-auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-import { beginFeishuAuthorization } from "./api/feishu-auth";
 
 type LoginPageProps = {
   redirectPath: string;

@@ -1,2 +1,2 @@
-export { getBundlesRouteConfig } from "./bundles-route-config";
+export { BundlesPage } from "./BundlesPage";
 export type { BundlesSnapshot } from "./types";

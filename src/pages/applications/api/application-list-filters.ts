@@ -1,27 +1,24 @@
 import type { ApplicationListFilters } from "../types";
 
-export const emptyApplicationListFilters: ApplicationListFilters = {
-  keyword: "",
-  owner: "",
-  platform: "",
-  status: "",
-};
+export const applicationsRootQueryKey = ["applications-snapshot"] as const;
+
+export const applicationOptionsQueryKey = [...applicationsRootQueryKey, "options"] as const;
 
 export const applicationsSnapshotQueryKey = (filters?: Partial<ApplicationListFilters>) => {
   const normalizedFilters = normalizeApplicationListFilters(filters);
 
   if (!hasApplicationListFilters(normalizedFilters)) {
-    return ["applications-snapshot"] as const;
+    return applicationsRootQueryKey;
   }
 
-  return ["applications-snapshot", normalizedFilters] as const;
+  return [...applicationsRootQueryKey, normalizedFilters] as const;
 };
 
-export const applicationDetailQueryKey = (applicationSlug: string) =>
-  ["applications-snapshot", "detail", applicationSlug] as const;
+export const applicationDetailQueryKey = (applicationSlug: string | undefined) =>
+  [...applicationsRootQueryKey, "detail", applicationSlug] as const;
 
-export const applicationEditQueryKey = (applicationSlug: string) =>
-  ["applications-snapshot", "edit", applicationSlug] as const;
+export const applicationEditQueryKey = (applicationSlug: string | undefined) =>
+  [...applicationsRootQueryKey, "edit", applicationSlug] as const;
 
 export function normalizeApplicationListFilters(
   filters?: Partial<ApplicationListFilters>,

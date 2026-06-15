@@ -8,14 +8,12 @@ export type EnvironmentCardTone = "amber" | "blue" | "emerald" | "rose" | "sky";
 
 export type RuntimeEnvironment = {
   id: EnvironmentCode;
-  code: string;
   name: string;
   status: EnvironmentStatus;
   tone: EnvironmentCardTone;
   description: string;
   storageConfigurationId: string;
   storageConfigurationName: string;
-  traffic: string;
   updatedAt: string;
 };
 
@@ -30,9 +28,7 @@ export type EnvironmentMutationInput = {
   code: string;
   description: string;
   name: string;
-  shortCode: string;
   status: EnvironmentStatusCode;
   storageConfigurationId: string;
   tone: EnvironmentCardTone;
-  trafficLabel: string;
 };

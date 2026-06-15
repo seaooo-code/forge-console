@@ -1,2 +1,2 @@
-export { getDevTasksRouteConfig } from "./dev-tasks-route-config";
+export { DevTasksPage } from "./DevTasksPage";
 export type { DevTasksSnapshot } from "./types";

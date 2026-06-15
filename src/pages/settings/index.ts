@@ -1,2 +1,2 @@
-export { getSettingsRouteConfig } from "./settings-route-config";
+export { SettingsPage } from "./SettingsPage";
 export type { SettingsSnapshot } from "./types";

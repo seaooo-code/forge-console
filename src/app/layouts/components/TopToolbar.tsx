@@ -1,22 +1,24 @@
-import { Bell, CircleHelp, LogOut, RefreshCw, Search, SlidersHorizontal } from "lucide-react";
+import { Bell, CircleHelp, LogOut, Search, SlidersHorizontal } from "lucide-react";
+import { useNavigate } from "react-router";
 
+import { logoutAuthSession } from "@/api/feishu-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { logoutAuthSession } from "@/pages/auth/api/feishu-auth";
 import { useAuthStore } from "@/store/use-auth-store";
 
-type TopToolbarProps = {
-  isFetching: boolean;
-  onRefresh: () => void;
-};
-
-export function TopToolbar({ isFetching, onRefresh }: TopToolbarProps) {
+export function TopToolbar() {
+  const navigate = useNavigate();
   const session = useAuthStore((state) => state.session);
   const clearSession = useAuthStore((state) => state.clearSession);
   const user = session?.user;
-  const displayName = user?.name || user?.enName || user?.email || user?.unionId || "未登录";
-  const email = user?.enterpriseEmail || user?.email || "";
-  const avatarURL = user?.avatarThumb || user?.avatarUrl || "";
+
+  if (!user) {
+    return null;
+  }
+
+  const displayName = user.name;
+  const email = user.enterpriseEmail;
+  const avatarURL = user.avatarThumb;
   const initials = getInitials(displayName);
 
   const handleLogout = async () => {
@@ -24,7 +26,7 @@ export function TopToolbar({ isFetching, onRefresh }: TopToolbarProps) {
       await logoutAuthSession();
     } finally {
       clearSession();
-      window.dispatchEvent(new PopStateEvent("popstate"));
+      navigate("/login", { replace: true });
     }
   };
 
@@ -49,9 +51,6 @@ export function TopToolbar({ isFetching, onRefresh }: TopToolbarProps) {
         </Button>
         <Button variant="ghost" size="icon" aria-label="通知">
           <Bell className="size-4" />
-        </Button>
-        <Button variant="outline" size="icon" aria-label="刷新" onClick={onRefresh}>
-          <RefreshCw className={isFetching ? "size-4 animate-spin" : "size-4"} />
         </Button>
         <div className="flex items-center gap-2 pl-2">
           <div className="flex size-9 items-center justify-center overflow-hidden rounded-full bg-slate-900 font-semibold text-white text-sm">

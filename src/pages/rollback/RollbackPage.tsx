@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query";
 import type { ColDef, ICellRendererParams } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 import {
@@ -17,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { miCarEnvironmentShortLabels } from "@/types/environments";
 
+import { fetchRollbackSnapshot } from "./api/rollback-snapshot";
 import type {
   RollbackCombinationStatus,
   RollbackEnvironment,
@@ -24,12 +26,7 @@ import type {
   RollbackHistoryCombination,
   RollbackRecord,
   RollbackRisk,
-  RollbackSnapshot,
 } from "./types";
-
-type RollbackPageProps = {
-  snapshot: RollbackSnapshot;
-};
 
 const riskClass: Record<RollbackRisk, string> = {
   low: "border-emerald-200 bg-emerald-50 text-emerald-700",
@@ -42,7 +39,11 @@ const statusClass: Record<RollbackCombinationStatus, string> = {
   运行中: "border-sky-200 bg-sky-50 text-sky-700",
 };
 
-export function RollbackPage({ snapshot }: RollbackPageProps) {
+export function RollbackPage() {
+  const { data: snapshot } = useQuery({
+    queryFn: fetchRollbackSnapshot,
+    queryKey: ["rollback-snapshot"],
+  });
   const columnDefs = useMemo<ColDef<RollbackRecord>[]>(
     () => [
       {
@@ -108,6 +109,10 @@ export function RollbackPage({ snapshot }: RollbackPageProps) {
     }),
     [],
   );
+
+  if (!snapshot) {
+    return null;
+  }
 
   return (
     <>

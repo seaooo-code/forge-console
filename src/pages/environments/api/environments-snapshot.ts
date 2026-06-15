@@ -1,3 +1,4 @@
+import type { StorageConfigRecord, StorageSnapshot } from "@/types/storage";
 import type {
   EnvironmentCode,
   EnvironmentDetail,
@@ -6,7 +7,11 @@ import type {
   RuntimeEnvironment,
 } from "../types";
 
-export { environmentsSnapshotQueryKey } from "./environment-query-keys";
+export {
+  environmentEditQueryKey,
+  environmentStorageOptionsQueryKey,
+  environmentsSnapshotQueryKey,
+} from "./environment-query-keys";
 
 type EnvironmentsAPIResponse = {
   environments: RuntimeEnvironment[];
@@ -14,6 +19,10 @@ type EnvironmentsAPIResponse = {
 
 type EnvironmentDetailAPIResponse = {
   environment: RuntimeEnvironment;
+};
+
+type StorageConfigurationsAPIResponse = {
+  configurations: StorageConfigRecord[];
 };
 
 type APIErrorPayload = {
@@ -47,6 +56,32 @@ export async function fetchEnvironmentsSnapshot(): Promise<EnvironmentsSnapshot>
   };
 }
 
+export async function fetchEnvironmentDetailSnapshot(
+  environmentId: string,
+): Promise<EnvironmentsSnapshot> {
+  const payload = await fetchJSON<EnvironmentDetailAPIResponse>(
+    `/api/v1/environments/${encodeURIComponent(environmentId)}`,
+  );
+  const environment = normalizeEnvironment(payload.environment);
+
+  return {
+    details: {
+      [environment.id]: environment,
+    },
+    environments: [environment],
+  };
+}
+
+export async function fetchEnvironmentStorageSnapshot(): Promise<StorageSnapshot> {
+  const payload = await fetchJSON<StorageConfigurationsAPIResponse>(
+    "/api/v1/storage/configurations",
+  );
+
+  return {
+    configurations: payload.configurations,
+  };
+}
+
 export async function createEnvironment(
   input: EnvironmentMutationInput,
 ): Promise<RuntimeEnvironment> {
@@ -54,6 +89,21 @@ export async function createEnvironment(
     body: JSON.stringify(input),
     method: "POST",
   });
+
+  return normalizeEnvironment(payload.environment);
+}
+
+export async function updateEnvironment(
+  environmentId: string,
+  input: EnvironmentMutationInput,
+): Promise<RuntimeEnvironment> {
+  const payload = await fetchJSON<EnvironmentDetailAPIResponse>(
+    `/api/v1/environments/${encodeURIComponent(environmentId)}`,
+    {
+      body: JSON.stringify(input),
+      method: "PATCH",
+    },
+  );
 
   return normalizeEnvironment(payload.environment);
 }
@@ -82,8 +132,6 @@ function normalizeEnvironment(environment: RuntimeEnvironment): RuntimeEnvironme
   return {
     ...environment,
     id: String(environment.id),
-    storageConfigurationId: environment.storageConfigurationId ?? "",
-    storageConfigurationName: environment.storageConfigurationName ?? "",
     updatedAt: formatUpdatedAt(environment.updatedAt),
   };
 }

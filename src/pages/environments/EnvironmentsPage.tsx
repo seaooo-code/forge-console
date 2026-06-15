@@ -1,19 +1,17 @@
-import { Clock3, Database, type LucideIcon, Plus, Server, Waves } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Clock3, Database, type LucideIcon, Pencil, Plus, Server } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
-import type {
-  EnvironmentCardTone,
-  EnvironmentStatus,
-  EnvironmentsSnapshot,
-  RuntimeEnvironment,
-} from "./types";
+import { environmentsSnapshotQueryKey } from "./api/environment-query-keys";
+import { fetchEnvironmentsSnapshot } from "./api/environments-snapshot";
+import type { EnvironmentCardTone, EnvironmentStatus, RuntimeEnvironment } from "./types";
 
 type EnvironmentsPageProps = {
   onCreateEnvironment: () => void;
-  snapshot: EnvironmentsSnapshot;
+  onEditEnvironment: (environmentId: string) => void;
 };
 
 const environmentToneClass: Record<EnvironmentCardTone, string> = {
@@ -29,16 +27,26 @@ const statusClass: Record<EnvironmentStatus, string> = {
   灰度中: "border-amber-200 bg-amber-50 text-amber-700",
 };
 
-export function EnvironmentsPage({ onCreateEnvironment, snapshot }: EnvironmentsPageProps) {
+export function EnvironmentsPage({
+  onCreateEnvironment,
+  onEditEnvironment,
+}: EnvironmentsPageProps) {
+  const { data: snapshot } = useQuery({
+    queryFn: fetchEnvironmentsSnapshot,
+    queryKey: environmentsSnapshotQueryKey,
+  });
+
+  if (!snapshot) {
+    return <EnvironmentsPageLoading />;
+  }
+
   return (
     <>
       <div className="border-slate-200 border-b bg-white px-6 py-5">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div>
             <h1 className="font-semibold text-2xl text-slate-950 tracking-tight">环境管理</h1>
-            <p className="mt-2 text-slate-600 text-sm">
-              管理运行环境、流量标识和对应的对象存储配置
-            </p>
+            <p className="mt-2 text-slate-600 text-sm">管理运行环境和对应的对象存储配置</p>
           </div>
           <Button
             type="button"
@@ -58,7 +66,11 @@ export function EnvironmentsPage({ onCreateEnvironment, snapshot }: Environments
 
         <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           {snapshot.environments.map((environment) => (
-            <EnvironmentCard key={environment.id} environment={environment} />
+            <EnvironmentCard
+              key={environment.id}
+              environment={environment}
+              onEditEnvironment={onEditEnvironment}
+            />
           ))}
         </section>
       </div>
@@ -66,7 +78,31 @@ export function EnvironmentsPage({ onCreateEnvironment, snapshot }: Environments
   );
 }
 
-function EnvironmentCard({ environment }: { environment: RuntimeEnvironment }) {
+function EnvironmentsPageLoading() {
+  return (
+    <>
+      <div className="border-slate-200 border-b bg-white px-6 py-5">
+        <h1 className="font-semibold text-2xl text-slate-950 tracking-tight">环境管理</h1>
+        <p className="mt-2 text-slate-600 text-sm">管理运行环境和对应的对象存储配置</p>
+      </div>
+      <div className="space-y-4 px-6 py-5">
+        <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          {["one", "two", "three", "four"].map((item) => (
+            <Card key={item} className="h-52 animate-pulse rounded-lg bg-white shadow-none" />
+          ))}
+        </section>
+      </div>
+    </>
+  );
+}
+
+function EnvironmentCard({
+  environment,
+  onEditEnvironment,
+}: {
+  environment: RuntimeEnvironment;
+  onEditEnvironment: (environmentId: string) => void;
+}) {
   return (
     <Card
       className={cn(
@@ -81,7 +117,7 @@ function EnvironmentCard({ environment }: { environment: RuntimeEnvironment }) {
           </div>
           <div className="min-w-0">
             <div className="font-semibold text-slate-900 text-sm">{environment.name}</div>
-            <div className="font-mono text-slate-500 text-xs">{environment.code}</div>
+            <div className="font-mono text-slate-500 text-xs">{environment.id}</div>
           </div>
         </div>
         <span
@@ -96,16 +132,22 @@ function EnvironmentCard({ environment }: { environment: RuntimeEnvironment }) {
 
       <p className="min-h-10 text-slate-600 text-sm leading-5">{environment.description}</p>
 
-      <div className="grid grid-cols-2 gap-3 text-xs">
-        <InfoMetric icon={Waves} label="流量" value={environment.traffic} />
-        <InfoMetric icon={Clock3} label="更新" value={environment.updatedAt} />
-      </div>
+      <InfoMetric icon={Clock3} label="更新" value={environment.updatedAt} />
 
-      <InfoMetric
-        icon={Database}
-        label="存储配置"
-        value={environment.storageConfigurationName || environment.storageConfigurationId}
-      />
+      <InfoMetric icon={Database} label="存储配置" value={environment.storageConfigurationName} />
+
+      <div className="flex justify-end border-slate-100 border-t pt-1">
+        <Button
+          variant="ghost"
+          type="button"
+          size="icon"
+          className="size-8 text-slate-500 hover:text-blue-600"
+          aria-label="编辑环境"
+          onClick={() => onEditEnvironment(environment.id)}
+        >
+          <Pencil className="size-4" />
+        </Button>
+      </div>
     </Card>
   );
 }

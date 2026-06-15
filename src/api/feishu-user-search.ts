@@ -1,4 +1,4 @@
-import type { FeishuUserSearchResult } from "../types";
+import type { FeishuUserSearchResult } from "@/types/feishu";
 
 type FeishuUserSearchAPIResponse = {
   users: FeishuUserSearchResult[];
@@ -37,10 +37,7 @@ export async function searchFeishuUsers(query: string): Promise<FeishuUserSearch
     `/api/v1/feishu/users/search?${params.toString()}`,
   );
 
-  return payload.users.map((user) => ({
-    ...user,
-    departmentIds: user.departmentIds ?? [],
-  }));
+  return payload.users;
 }
 
 async function fetchJSON<T>(path: string): Promise<T> {

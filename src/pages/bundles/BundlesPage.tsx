@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query";
 import type { ColDef, ICellRendererParams } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 import {
@@ -26,11 +27,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { miCarEnvironmentFilterOptions } from "@/types/environments";
 
-import type { BundleEnvironment, BundleRecord, BundleStatus, BundlesSnapshot } from "./types";
-
-type BundlesPageProps = {
-  snapshot: BundlesSnapshot;
-};
+import { fetchBundlesSnapshot } from "./api/bundles-snapshot";
+import type { BundleEnvironment, BundleRecord, BundleStatus } from "./types";
 
 const bundleStatusClass: Record<BundleStatus, string> = {
   已发布: "border-emerald-200 bg-emerald-50 text-emerald-700",
@@ -39,7 +37,11 @@ const bundleStatusClass: Record<BundleStatus, string> = {
   草稿: "border-sky-200 bg-sky-50 text-sky-700",
 };
 
-export function BundlesPage({ snapshot }: BundlesPageProps) {
+export function BundlesPage() {
+  const { data: snapshot } = useQuery({
+    queryFn: fetchBundlesSnapshot,
+    queryKey: ["bundles-snapshot"],
+  });
   const stats = useMemo(
     () => [
       {
@@ -176,6 +178,10 @@ export function BundlesPage({ snapshot }: BundlesPageProps) {
     }),
     [],
   );
+
+  if (!snapshot) {
+    return null;
+  }
 
   return (
     <>

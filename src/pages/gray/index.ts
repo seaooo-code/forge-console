@@ -1,2 +1,2 @@
-export { getGrayRouteConfig } from "./gray-route-config";
+export { GrayPage } from "./GrayPage";
 export type { GraySnapshot } from "./types";

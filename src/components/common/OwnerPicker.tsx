@@ -6,14 +6,11 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 export type OwnerSearchUser = {
-  avatarUrl?: string;
-  email?: string;
-  enName?: string;
-  id?: string;
-  name?: string;
-  openId?: string;
-  unionId?: string;
-  userId?: string;
+  avatarUrl: string;
+  departmentIds: string[];
+  email: string;
+  id: string;
+  name: string;
 };
 
 type OwnerPickerProps<TUser extends OwnerSearchUser> = {
@@ -96,7 +93,7 @@ export function OwnerPicker<TUser extends OwnerSearchUser>({
     setIsOpen(false);
     setUsers([]);
     setSelectedOwner(user);
-    onChange(ownerName || value);
+    onChange(ownerName);
     onSelect?.(user);
   };
 
@@ -167,9 +164,9 @@ function OwnerSearchResults<TUser extends OwnerSearchUser>({
       {!isLoading && users.length === 0 ? (
         <div className="px-3 py-2 text-slate-500 text-sm">未找到匹配人员</div>
       ) : null}
-      {users.map((user, index) => (
+      {users.map((user) => (
         <Button
-          key={getOwnerKey(user, index)}
+          key={getOwnerKey(user)}
           type="button"
           variant="ghost"
           className="h-auto w-full justify-start gap-3 rounded-none px-3 py-2 text-left font-normal hover:bg-slate-50"
@@ -217,16 +214,13 @@ function OwnerAvatar({
 }
 
 function getOwnerDisplayName(user: OwnerSearchUser) {
-  return user.name || user.enName || user.email || "";
+  return user.name;
 }
 
 function getOwnerInitial(user: OwnerSearchUser) {
-  const name = getOwnerDisplayName(user).trim();
-  return name ? name.slice(0, 1).toUpperCase() : "?";
+  return getOwnerDisplayName(user).trim().slice(0, 1).toUpperCase();
 }
 
-function getOwnerKey(user: OwnerSearchUser, index: number) {
-  return (
-    user.id || user.unionId || user.openId || user.userId || `${getOwnerDisplayName(user)}-${index}`
-  );
+function getOwnerKey(user: OwnerSearchUser) {
+  return user.id;
 }

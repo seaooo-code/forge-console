@@ -1,10 +1,5 @@
-import type {
-  StorageAdapterOption,
-  StorageConfigRecord,
-  StorageMutationInput,
-  StorageSnapshot,
-  StorageTestResult,
-} from "../types";
+import type { StorageConfigRecord, StorageSnapshot } from "@/types/storage";
+import type { StorageAdapterOption, StorageMutationInput, StorageTestResult } from "../types";
 
 export { storageEditQueryKey, storageSnapshotQueryKey } from "./storage-query-keys";
 

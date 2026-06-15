@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query";
 import type { ColDef, ICellRendererParams } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 import {
@@ -17,17 +18,8 @@ import { Button } from "@/components/ui/button";
 import { type EChartsOption, echarts } from "@/lib/echarts";
 import { cn } from "@/lib/utils";
 
-import type {
-  GrayHistoryRecord,
-  GrayRollout,
-  GraySnapshot,
-  GrayStatus,
-  GraySummaryItem,
-} from "./types";
-
-type GrayPageProps = {
-  snapshot: GraySnapshot;
-};
+import { fetchGraySnapshot } from "./api/gray-snapshot";
+import type { GrayHistoryRecord, GrayRollout, GrayStatus, GraySummaryItem } from "./types";
 
 const graySteps = [1, 5, 10, 20, 50, 100];
 
@@ -56,7 +48,11 @@ const summaryIconClass: Record<string, string> = {
   users: "bg-violet-50 text-violet-600",
 };
 
-export function GrayPage({ snapshot }: GrayPageProps) {
+export function GrayPage() {
+  const { data: snapshot } = useQuery({
+    queryFn: fetchGraySnapshot,
+    queryKey: ["gray-snapshot"],
+  });
   const columnDefs = useMemo<ColDef<GrayHistoryRecord>[]>(
     () => [
       {
@@ -115,6 +111,10 @@ export function GrayPage({ snapshot }: GrayPageProps) {
     }),
     [],
   );
+
+  if (!snapshot) {
+    return null;
+  }
 
   return (
     <>

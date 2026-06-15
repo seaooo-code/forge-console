@@ -1,3 +1,4 @@
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ColDef, ICellRendererParams } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 import {
@@ -21,79 +22,55 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
-import { type ApplicationDetailAPIResponse, deleteApplication } from "./api/applications-snapshot";
+import {
+  applicationDetailQueryKey,
+  applicationsRootQueryKey,
+} from "./api/application-list-filters";
+import {
+  type ApplicationDetailAPIResponse,
+  deleteApplication,
+  fetchApplicationDetailSnapshot,
+} from "./api/applications-snapshot";
+import {
+  applicationEnvironmentStatusClass,
+  applicationMetricToneClass,
+  applicationModuleKindClass,
+  applicationModuleStatusClass,
+  applicationPipelineStatusClass,
+  applicationStatusClass,
+} from "./constants";
 import type {
   ApplicationDetailMetric,
   ApplicationEnvironmentRecord,
   ApplicationMemberRecord,
   ApplicationModuleRecord,
   ApplicationPipelineRecord,
-  ApplicationStatus,
-  ApplicationsSnapshot,
 } from "./types";
 
 type ApplicationDetailPageProps = {
   applicationSlug: string;
-  isFetching: boolean;
-  onApplicationChanged: () => Promise<void>;
   onBack: () => void;
   onEditApplication: (applicationSlug: string) => void;
-  snapshot: ApplicationsSnapshot;
-};
-
-const appStatusClass: Record<ApplicationStatus, string> = {
-  已下线: "border-slate-200 bg-slate-50 text-slate-600",
-  维护中: "border-amber-200 bg-amber-50 text-amber-700",
-  运行中: "border-emerald-200 bg-emerald-50 text-emerald-700",
-};
-
-const metricToneClass: Record<ApplicationDetailMetric["tone"], string> = {
-  amber: "bg-amber-50 text-amber-600",
-  blue: "bg-blue-50 text-blue-600",
-  emerald: "bg-emerald-50 text-emerald-600",
-  rose: "bg-rose-50 text-rose-600",
-  slate: "bg-slate-100 text-slate-600",
-};
-
-const environmentStatusClass: Record<ApplicationEnvironmentRecord["status"], string> = {
-  健康: "border-emerald-200 bg-emerald-50 text-emerald-700",
-  灰度中: "border-amber-200 bg-amber-50 text-amber-700",
-  维护中: "border-slate-200 bg-slate-50 text-slate-600",
-};
-
-const moduleKindClass: Record<ApplicationModuleRecord["kind"], string> = {
-  Common: "border-amber-200 bg-amber-50 text-amber-700",
-  Feature: "border-sky-200 bg-sky-50 text-sky-700",
-};
-
-const moduleStatusClass: Record<ApplicationModuleRecord["status"], string> = {
-  冻结: "border-slate-200 bg-slate-50 text-slate-600",
-  活跃: "border-emerald-200 bg-emerald-50 text-emerald-700",
-};
-
-const pipelineStatusClass: Record<ApplicationPipelineRecord["status"], string> = {
-  failed: "border-red-200 bg-red-50 text-red-600",
-  queued: "border-slate-200 bg-slate-50 text-slate-600",
-  running: "border-blue-200 bg-blue-50 text-blue-700",
-  success: "border-emerald-200 bg-emerald-50 text-emerald-700",
 };
 
 export function ApplicationDetailPage({
   applicationSlug,
-  isFetching,
-  onApplicationChanged,
   onBack,
   onEditApplication,
-  snapshot,
 }: ApplicationDetailPageProps) {
+  const queryClient = useQueryClient();
+  const { data: snapshot, isFetching } = useQuery({
+    queryFn: () => fetchApplicationDetailSnapshot(applicationSlug),
+    queryKey: applicationDetailQueryKey(applicationSlug),
+  });
   const [overrideDetail, setOverrideDetail] = useState<ApplicationDetailAPIResponse | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [actionError, setActionError] = useState("");
   const application =
     overrideDetail?.application ??
-    snapshot.applications.find((item) => item.slug === applicationSlug);
-  const detail = overrideDetail?.detail ?? snapshot.details[applicationSlug];
+    snapshot?.applications.find((item) => item.slug === applicationSlug);
+  const detail = overrideDetail?.detail ?? snapshot?.details[applicationSlug];
 
   const environmentColumnDefs = useMemo<ColDef<ApplicationEnvironmentRecord>[]>(
     () => [
@@ -194,7 +171,7 @@ export function ApplicationDetailPage({
       const payload = await deleteApplication(application.slug);
       setOverrideDetail(payload);
       setIsDeleteDialogOpen(false);
-      await onApplicationChanged();
+      await queryClient.invalidateQueries({ queryKey: applicationsRootQueryKey });
     } catch (_error) {
       setActionError("下线应用失败，请稍后重试");
     } finally {
@@ -226,7 +203,7 @@ export function ApplicationDetailPage({
               <span
                 className={cn(
                   "inline-flex h-6 items-center rounded border px-2 font-medium text-xs leading-none",
-                  appStatusClass[application.status],
+                  applicationStatusClass[application.status],
                 )}
               >
                 {application.status}
@@ -242,9 +219,9 @@ export function ApplicationDetailPage({
             <div className="grid min-w-0 gap-2 text-sm md:grid-cols-2">
               <InfoPill icon={MonitorSmartphone} label="平台" value={application.platform} />
               <OwnerInfoPill
-                avatarUrl={application.ownerAvatarUrl || detail.ownerAvatarUrl}
-                email={application.ownerEmail || detail.ownerEmail}
-                name={application.owner || detail.owner}
+                avatarUrl={application.ownerAvatarUrl}
+                email={application.ownerEmail}
+                name={application.owner}
               />
               <InfoPill icon={PackageCheck} label="App Key" value={detail.appKey} />
             </div>
@@ -354,48 +331,34 @@ export function ApplicationDetailPage({
 
         <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
           <TableHeader title="接入模块" description="当前应用关联的 RN Bundle 模块" />
-          {detail.modules.length > 0 ? (
-            <AgGridReact<ApplicationModuleRecord>
-              rowData={detail.modules}
-              columnDefs={moduleColumnDefs}
-              defaultColDef={defaultColDef}
-              domLayout="autoHeight"
-              headerHeight={46}
-              rowHeight={58}
-              theme={consoleGridTheme}
-              suppressCellFocus
-              suppressContextMenu
-              getRowId={({ data }) => data.id}
-            />
-          ) : (
-            <TodoEmptyState
-              title="模块实体待接入"
-              description="TODO: 接入模块实体后展示真实模块列表"
-            />
-          )}
+          <AgGridReact<ApplicationModuleRecord>
+            rowData={detail.modules}
+            columnDefs={moduleColumnDefs}
+            defaultColDef={defaultColDef}
+            domLayout="autoHeight"
+            headerHeight={46}
+            rowHeight={58}
+            theme={consoleGridTheme}
+            suppressCellFocus
+            suppressContextMenu
+            getRowId={({ data }) => data.id}
+          />
         </section>
 
         <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
           <TableHeader title="最近流水线" description="应用维度最近 Pipeline Run" />
-          {detail.pipelines.length > 0 ? (
-            <AgGridReact<ApplicationPipelineRecord>
-              rowData={detail.pipelines}
-              columnDefs={pipelineColumnDefs}
-              defaultColDef={defaultColDef}
-              domLayout="autoHeight"
-              headerHeight={46}
-              rowHeight={54}
-              theme={consoleGridTheme}
-              suppressCellFocus
-              suppressContextMenu
-              getRowId={({ data }) => data.id}
-            />
-          ) : (
-            <TodoEmptyState
-              title="流水线实体待接入"
-              description="TODO: 接入流水线实体后展示真实 Pipeline Run"
-            />
-          )}
+          <AgGridReact<ApplicationPipelineRecord>
+            rowData={detail.pipelines}
+            columnDefs={pipelineColumnDefs}
+            defaultColDef={defaultColDef}
+            domLayout="autoHeight"
+            headerHeight={46}
+            rowHeight={54}
+            theme={consoleGridTheme}
+            suppressCellFocus
+            suppressContextMenu
+            getRowId={({ data }) => data.id}
+          />
         </section>
       </div>
     </>
@@ -433,36 +396,24 @@ function OwnerInfoPill({
 }) {
   return (
     <div className="flex min-w-0 items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
-      <OwnerAvatar avatarUrl={avatarUrl} email={email} name={name} />
+      <OwnerAvatar avatarUrl={avatarUrl} name={name} />
       <div className="min-w-0">
         <div className="text-slate-500 text-xs">负责人</div>
-        <div className="truncate font-semibold text-slate-800 text-sm">{name || "-"}</div>
+        <div className="truncate font-semibold text-slate-800 text-sm">{name}</div>
         {email ? <div className="truncate text-slate-500 text-xs">{email}</div> : null}
       </div>
     </div>
   );
 }
 
-function OwnerAvatar({
-  avatarUrl,
-  email,
-  name,
-}: {
-  avatarUrl: string;
-  email: string;
-  name: string;
-}) {
-  const fallback = name || email || "?";
-
+function OwnerAvatar({ avatarUrl, name }: { avatarUrl: string; name: string }) {
   if (avatarUrl) {
-    return (
-      <img src={avatarUrl} alt={fallback} className="size-8 shrink-0 rounded-full object-cover" />
-    );
+    return <img src={avatarUrl} alt={name} className="size-8 shrink-0 rounded-full object-cover" />;
   }
 
   return (
     <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-rose-500 font-semibold text-white text-xs">
-      {fallback.slice(0, 1).toUpperCase()}
+      {name.slice(0, 1).toUpperCase()}
     </span>
   );
 }
@@ -478,7 +429,7 @@ function MetricCard({ metric }: { metric: ApplicationDetailMetric }) {
         <div
           className={cn(
             "flex size-8 items-center justify-center rounded-md",
-            metricToneClass[metric.tone],
+            applicationMetricToneClass[metric.tone],
           )}
         >
           <RadioTower className="size-4" />
@@ -536,17 +487,6 @@ function TableHeader({ description, title }: { description: string; title: strin
   );
 }
 
-function TodoEmptyState({ description, title }: { description: string; title: string }) {
-  return (
-    <div className="flex min-h-28 items-center justify-center border-slate-100 border-t bg-slate-50 px-4 py-6">
-      <div className="text-center">
-        <div className="font-semibold text-slate-800 text-sm">{title}</div>
-        <div className="mt-1 text-slate-500 text-xs">{description}</div>
-      </div>
-    </div>
-  );
-}
-
 function EnvironmentCell({
   value,
 }: ICellRendererParams<ApplicationEnvironmentRecord, ApplicationEnvironmentRecord["environment"]>) {
@@ -568,7 +508,7 @@ function EnvironmentStatusCell({
     <span
       className={cn(
         "inline-flex h-6 items-center rounded border px-2 font-semibold text-xs leading-none",
-        environmentStatusClass[value],
+        applicationEnvironmentStatusClass[value],
       )}
     >
       {value}
@@ -602,7 +542,7 @@ function ModuleKindCell({
     <span
       className={cn(
         "inline-flex h-6 items-center rounded border px-2 font-semibold text-xs leading-none",
-        moduleKindClass[value],
+        applicationModuleKindClass[value],
       )}
     >
       {value}
@@ -621,7 +561,7 @@ function ModuleStatusCell({
     <span
       className={cn(
         "inline-flex h-6 items-center rounded border px-2 font-semibold text-xs leading-none",
-        moduleStatusClass[value],
+        applicationModuleStatusClass[value],
       )}
     >
       {value}
@@ -640,7 +580,7 @@ function PipelineStatusCell({
     <span
       className={cn(
         "inline-flex h-6 items-center rounded border px-2 font-semibold text-xs leading-none",
-        pipelineStatusClass[value],
+        applicationPipelineStatusClass[value],
       )}
     >
       {value}

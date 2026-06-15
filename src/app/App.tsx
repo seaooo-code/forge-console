@@ -1,45 +1,95 @@
-import { useCallback, useEffect, useState } from "react";
+import { lazy, useEffect } from "react";
+import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from "react-router";
 
+import { fetchAuthSession } from "@/api/feishu-auth";
 import { Card } from "@/components/ui/card";
 import { FeishuCallbackPage, LoginPage } from "@/pages/auth";
-import { fetchAuthSession } from "@/pages/auth/api/feishu-auth";
 import { useAuthStore } from "@/store/use-auth-store";
 
-import { ConsoleLayout } from "./layouts/ConsoleLayout";
+import { ConsoleLayout, ConsoleRouteNotFound } from "./layouts/ConsoleLayout";
+
+const ApplicationCreatePage = lazy(async () => ({
+  default: (await import("@/pages/applications")).ApplicationCreatePage,
+}));
+
+const ApplicationDetailPage = lazy(async () => ({
+  default: (await import("@/pages/applications")).ApplicationDetailPage,
+}));
+
+const ApplicationsPage = lazy(async () => ({
+  default: (await import("@/pages/applications")).ApplicationsPage,
+}));
+
+const BundlesPage = lazy(async () => ({
+  default: (await import("@/pages/bundles")).BundlesPage,
+}));
+
+const CombinationsPage = lazy(async () => ({
+  default: (await import("@/pages/combinations")).CombinationsPage,
+}));
+
+const DashboardPage = lazy(async () => ({
+  default: (await import("@/pages/dashboard")).DashboardPage,
+}));
+
+const DevTasksPage = lazy(async () => ({
+  default: (await import("@/pages/dev-tasks")).DevTasksPage,
+}));
+
+const EnvironmentCreatePage = lazy(async () => ({
+  default: (await import("@/pages/environments")).EnvironmentCreatePage,
+}));
+
+const EnvironmentsPage = lazy(async () => ({
+  default: (await import("@/pages/environments")).EnvironmentsPage,
+}));
+
+const GrayPage = lazy(async () => ({
+  default: (await import("@/pages/gray")).GrayPage,
+}));
+
+const ModulesPage = lazy(async () => ({
+  default: (await import("@/pages/modules")).ModulesPage,
+}));
+
+const PipelinesPage = lazy(async () => ({
+  default: (await import("@/pages/pipelines")).PipelinesPage,
+}));
+
+const ReleasesPage = lazy(async () => ({
+  default: (await import("@/pages/releases")).ReleasesPage,
+}));
+
+const RollbackPage = lazy(async () => ({
+  default: (await import("@/pages/rollback")).RollbackPage,
+}));
+
+const SettingsPage = lazy(async () => ({
+  default: (await import("@/pages/settings")).SettingsPage,
+}));
+
+const StorageCreatePage = lazy(async () => ({
+  default: (await import("@/pages/storage")).StorageCreatePage,
+}));
+
+const StoragePage = lazy(async () => ({
+  default: (await import("@/pages/storage")).StoragePage,
+}));
 
 const loginPath = "/login";
 const feishuCallbackPath = "/login/feishu/callback";
 
 export function App() {
+  const location = useLocation();
   const isSessionLoading = useAuthStore((state) => state.isSessionLoading);
   const session = useAuthStore((state) => state.session);
   const clearSession = useAuthStore((state) => state.clearSession);
   const setSession = useAuthStore((state) => state.setSession);
   const setSessionLoading = useAuthStore((state) => state.setSessionLoading);
-  const [routePath, setRoutePath] = useState(getCurrentPath);
+  const routePath = location.pathname;
 
   useEffect(() => {
-    const handlePopstate = () => setRoutePath(getCurrentPath());
-
-    window.addEventListener("popstate", handlePopstate);
-
-    return () => window.removeEventListener("popstate", handlePopstate);
-  }, []);
-
-  const replaceRoute = useCallback((path: string) => {
-    const normalizedPath = normalizePath(path);
-    window.history.replaceState(null, "", normalizedPath);
-    setRoutePath(normalizedPath);
-  }, []);
-
-  useEffect(() => {
-    if (session && isAuthRoute(routePath)) {
-      replaceRoute("/");
-    }
-  }, [replaceRoute, routePath, session]);
-
-  useEffect(() => {
-    if (routePath === feishuCallbackPath || (session && !isAuthRoute(routePath))) {
+    if (routePath === feishuCallbackPath || session) {
       return;
     }
 
@@ -71,7 +121,7 @@ export function App() {
   }, [clearSession, routePath, session, setSession, setSessionLoading]);
 
   if (routePath === feishuCallbackPath) {
-    return <FeishuCallbackPage onComplete={replaceRoute} />;
+    return <FeishuCallbackPage />;
   }
 
   if (isSessionLoading) {
@@ -82,19 +132,11 @@ export function App() {
     return <LoginPage redirectPath={isAuthRoute(routePath) ? "/" : routePath} />;
   }
 
-  return <ConsoleLayout />;
-}
-
-function getCurrentPath() {
-  return normalizePath(window.location.pathname);
-}
-
-function normalizePath(path: string) {
-  if (path === "") {
-    return "/";
+  if (isAuthRoute(routePath)) {
+    return <Navigate to="/" replace />;
   }
 
-  return path.replace(/\/+$/, "") || "/";
+  return <ConsoleRoutes />;
 }
 
 function isAuthRoute(path: string) {
@@ -106,5 +148,182 @@ function SessionLoadingPage() {
     <main className="grid min-h-screen place-items-center bg-slate-50 px-6 text-slate-900">
       <Card className="h-24 w-full max-w-sm animate-pulse rounded-lg border-slate-200 bg-white shadow-sm" />
     </main>
+  );
+}
+
+function ConsoleRoutes() {
+  return (
+    <Routes>
+      <Route element={<ConsoleLayout />}>
+        <Route index element={<DashboardPage />} />
+        <Route path="apps" element={<ApplicationsRoute />} />
+        <Route path="apps/new" element={<ApplicationCreateRoute />} />
+        <Route path="apps/:applicationSlug/edit" element={<ApplicationEditRoute />} />
+        <Route path="apps/:applicationSlug" element={<ApplicationDetailRoute />} />
+        <Route path="modules" element={<ModulesPage />} />
+        <Route path="dev-tasks" element={<DevTasksPage />} />
+        <Route path="pipelines" element={<PipelinesPage />} />
+        <Route path="bundles" element={<BundlesPage />} />
+        <Route path="combinations" element={<CombinationsPage />} />
+        <Route path="releases" element={<ReleasesPage />} />
+        <Route path="gray" element={<GrayPage />} />
+        <Route path="rollback" element={<RollbackPage />} />
+        <Route path="storage" element={<StorageRoute />} />
+        <Route path="storage/new" element={<StorageCreateRoute />} />
+        <Route path="storage/:storageId/edit" element={<StorageEditRoute />} />
+        <Route path="environments" element={<EnvironmentsRoute />} />
+        <Route path="environments/new" element={<EnvironmentCreateRoute />} />
+        <Route path="environments/:environmentId/edit" element={<EnvironmentEditRoute />} />
+        <Route path="settings" element={<SettingsPage />} />
+        <Route path="*" element={<ConsoleRouteNotFound />} />
+      </Route>
+    </Routes>
+  );
+}
+
+function ApplicationsRoute() {
+  const navigate = useNavigate();
+
+  return (
+    <ApplicationsPage
+      onConfigureApplication={(applicationSlug: string) =>
+        navigate(`/apps/${encodeURIComponent(applicationSlug)}/edit`)
+      }
+      onCreateApplication={() => navigate("/apps/new")}
+      onOpenApplication={(applicationSlug: string) =>
+        navigate(`/apps/${encodeURIComponent(applicationSlug)}`)
+      }
+    />
+  );
+}
+
+function ApplicationCreateRoute() {
+  const navigate = useNavigate();
+
+  return (
+    <ApplicationCreatePage
+      onBack={() => navigate("/apps")}
+      onSaved={(applicationSlug: string) =>
+        navigate(`/apps/${encodeURIComponent(applicationSlug)}`)
+      }
+    />
+  );
+}
+
+function ApplicationEditRoute() {
+  const navigate = useNavigate();
+  const { applicationSlug } = useParams<{ applicationSlug: string }>();
+
+  if (!applicationSlug) {
+    return <Navigate to="/apps" replace />;
+  }
+
+  return (
+    <ApplicationCreatePage
+      applicationSlug={applicationSlug}
+      mode="edit"
+      onBack={() => navigate(`/apps/${encodeURIComponent(applicationSlug)}`)}
+      onSaved={(savedApplicationSlug: string) =>
+        navigate(`/apps/${encodeURIComponent(savedApplicationSlug)}`)
+      }
+    />
+  );
+}
+
+function ApplicationDetailRoute() {
+  const navigate = useNavigate();
+  const { applicationSlug } = useParams<{ applicationSlug: string }>();
+
+  if (!applicationSlug) {
+    return <Navigate to="/apps" replace />;
+  }
+
+  return (
+    <ApplicationDetailPage
+      applicationSlug={applicationSlug}
+      onBack={() => navigate("/apps")}
+      onEditApplication={(slug: string) => navigate(`/apps/${encodeURIComponent(slug)}/edit`)}
+    />
+  );
+}
+
+function EnvironmentsRoute() {
+  const navigate = useNavigate();
+
+  return (
+    <EnvironmentsPage
+      onCreateEnvironment={() => navigate("/environments/new")}
+      onEditEnvironment={(environmentId: string) =>
+        navigate(`/environments/${encodeURIComponent(environmentId)}/edit`)
+      }
+    />
+  );
+}
+
+function EnvironmentCreateRoute() {
+  const navigate = useNavigate();
+
+  return (
+    <EnvironmentCreatePage
+      onBack={() => navigate("/environments")}
+      onSaved={() => navigate("/environments")}
+    />
+  );
+}
+
+function EnvironmentEditRoute() {
+  const navigate = useNavigate();
+  const { environmentId } = useParams<{ environmentId: string }>();
+
+  if (!environmentId) {
+    return <Navigate to="/environments" replace />;
+  }
+
+  return (
+    <EnvironmentCreatePage
+      environmentId={environmentId}
+      mode="edit"
+      onBack={() => navigate("/environments")}
+      onSaved={() => navigate("/environments")}
+    />
+  );
+}
+
+function StorageRoute() {
+  const navigate = useNavigate();
+
+  return (
+    <StoragePage
+      onCreateStorage={() => navigate("/storage/new")}
+      onEditStorage={(storageId: string) =>
+        navigate(`/storage/${encodeURIComponent(storageId)}/edit`)
+      }
+    />
+  );
+}
+
+function StorageCreateRoute() {
+  const navigate = useNavigate();
+
+  return (
+    <StorageCreatePage onBack={() => navigate("/storage")} onSaved={() => navigate("/storage")} />
+  );
+}
+
+function StorageEditRoute() {
+  const navigate = useNavigate();
+  const { storageId } = useParams<{ storageId: string }>();
+
+  if (!storageId) {
+    return <Navigate to="/storage" replace />;
+  }
+
+  return (
+    <StorageCreatePage
+      mode="edit"
+      onBack={() => navigate("/storage")}
+      onSaved={() => navigate("/storage")}
+      storageId={storageId}
+    />
   );
 }

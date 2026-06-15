@@ -1,2 +1,2 @@
-export { getPipelinesRouteConfig } from "./pipelines-route-config";
+export { PipelinesPage } from "./PipelinesPage";
 export type { PipelinesSnapshot } from "./types";

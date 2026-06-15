@@ -1,2 +1,2 @@
-export { getReleasesRouteConfig } from "./releases-route-config";
+export { ReleasesPage } from "./ReleasesPage";
 export type { ReleasesSnapshot } from "./types";

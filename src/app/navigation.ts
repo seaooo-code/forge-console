@@ -9,7 +9,6 @@ export const navGroups: NavGroup[] = [
     label: "资源管理",
     items: [
       { id: "apps", label: "应用管理", href: "/apps", icon: "app" },
-      { id: "environments", label: "环境管理", href: "/environments", icon: "environment" },
       { id: "modules", label: "模块管理", href: "/modules", icon: "module" },
     ],
   },
@@ -39,6 +38,7 @@ export const navGroups: NavGroup[] = [
     label: "平台",
     items: [
       { id: "storage", label: "存储管理", href: "/storage", icon: "storage" },
+      { id: "environments", label: "环境管理", href: "/environments", icon: "environment" },
       { id: "settings", label: "系统设置", href: "/settings", icon: "settings" },
     ],
   },

@@ -1,2 +1,2 @@
-export { getStorageRouteConfig } from "./storage-route-config";
-export type { StorageConfigRecord, StorageSnapshot } from "./types";
+export { StorageCreatePage } from "./StorageCreatePage";
+export { StoragePage } from "./StoragePage";

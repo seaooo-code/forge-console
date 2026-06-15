@@ -1,2 +1,2 @@
-export { getModulesRouteConfig } from "./modules-route-config";
+export { ModulesPage } from "./ModulesPage";
 export type { ModulesSnapshot } from "./types";

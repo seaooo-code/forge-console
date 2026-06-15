@@ -1,3 +1,7 @@
+import type { LucideIcon } from "lucide-react";
+import type { ReactNode } from "react";
+import type { FieldPath } from "react-hook-form";
+
 export type ApplicationStatus = "运行中" | "维护中" | "已下线";
 export type ApplicationStatusCode = "running" | "maintenance" | "offline";
 
@@ -122,19 +126,6 @@ export type ApplicationOptions = {
   platforms: ApplicationOption[];
 };
 
-export type FeishuUserSearchResult = {
-  id: string;
-  unionId: string;
-  openId: string;
-  userId: string;
-  name: string;
-  enName: string;
-  avatarUrl: string;
-  email: string;
-  mobile: string;
-  departmentIds: string[];
-};
-
 export type ApplicationMutationInput = {
   slug?: string;
   name: string;
@@ -146,4 +137,57 @@ export type ApplicationMutationInput = {
   description: string;
   status: ApplicationStatusCode;
   environments: ApplicationEnvironmentInput[];
+};
+
+export type ApplicationCreatePageProps = {
+  applicationSlug?: string;
+  mode?: "create" | "edit";
+  onBack: () => void;
+  onSaved?: (applicationSlug: string) => void;
+};
+
+export type EnvironmentCode = ApplicationEnvironmentInput["environment"];
+
+export type EnvironmentFormState = Record<string, boolean>;
+
+export type ApplicationFormState = {
+  description: string;
+  environments: EnvironmentFormState;
+  name: string;
+  owner: string;
+  ownerAvatarUrl: string;
+  ownerDepartmentIds: string[];
+  ownerEmail: string;
+  platforms: string[];
+  slug: string;
+  status: ApplicationStatusCode | "";
+};
+
+export type ApplicationEditFormSource = {
+  application: HostApplication;
+  detail: ApplicationDetail;
+};
+
+export type ApplicationEnvironmentFieldPath = FieldPath<ApplicationFormState>;
+
+export type ApplicationFormFeedbackProps = {
+  onBack: () => void;
+};
+
+export type SectionHeaderProps = {
+  description: string;
+  icon: LucideIcon;
+  title: string;
+};
+
+export type FieldProps = {
+  children: ReactNode;
+  className?: string;
+  label: string;
+};
+
+export type CheckOptionProps = {
+  checked?: boolean;
+  label: string;
+  onCheckedChange?: (checked: boolean) => void;
 };

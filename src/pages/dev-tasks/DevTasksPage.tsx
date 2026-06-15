@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query";
 import type { ColDef, ICellRendererParams } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 import {
@@ -30,17 +31,8 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 
-import type {
-  DevTaskRecord,
-  DevTaskStatus,
-  DevTasksSnapshot,
-  PipelineRunStatus,
-  RelatedModuleStatus,
-} from "./types";
-
-type DevTasksPageProps = {
-  snapshot: DevTasksSnapshot;
-};
+import { fetchDevTasksSnapshot } from "./api/dev-tasks-snapshot";
+import type { DevTaskRecord, DevTaskStatus, PipelineRunStatus, RelatedModuleStatus } from "./types";
 
 const taskStatusClass: Record<DevTaskStatus, string> = {
   已发布: "border-emerald-200 bg-emerald-50 text-emerald-700",
@@ -63,7 +55,11 @@ const pipelineRunClass: Record<PipelineRunStatus, string> = {
   success: "border-emerald-200 bg-emerald-50 text-emerald-700",
 };
 
-export function DevTasksPage({ snapshot }: DevTasksPageProps) {
+export function DevTasksPage() {
+  const { data: snapshot } = useQuery({
+    queryFn: fetchDevTasksSnapshot,
+    queryKey: ["dev-tasks-snapshot"],
+  });
   const stats = useMemo(
     () => [
       { detail: "点击查看", icon: ClipboardList, id: "todo", label: "待开发", value: 18 },
@@ -169,6 +165,10 @@ export function DevTasksPage({ snapshot }: DevTasksPageProps) {
     }),
     [],
   );
+
+  if (!snapshot) {
+    return null;
+  }
 
   return (
     <>

@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query";
 import type { ColDef, ICellRendererParams } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 import {
@@ -29,11 +30,8 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 
-import type { ModuleRecord, ModuleStatus, ModulesSnapshot } from "./types";
-
-type ModulesPageProps = {
-  snapshot: ModulesSnapshot;
-};
+import { fetchModulesSnapshot } from "./api/modules-snapshot";
+import type { ModuleRecord, ModuleStatus } from "./types";
 
 const statusClass: Record<ModuleStatus, string> = {
   冻结: "border-slate-200 bg-slate-50 text-slate-600",
@@ -45,7 +43,12 @@ const kindClass: Record<ModuleRecord["kind"], string> = {
   Feature: "border-sky-200 bg-sky-50 text-sky-700",
 };
 
-export function ModulesPage({ snapshot }: ModulesPageProps) {
+export function ModulesPage() {
+  const { data: snapshot } = useQuery({
+    queryFn: fetchModulesSnapshot,
+    queryKey: ["modules-snapshot"],
+  });
+
   const stats = useMemo(
     () => [
       {
@@ -174,6 +177,10 @@ export function ModulesPage({ snapshot }: ModulesPageProps) {
     }),
     [],
   );
+
+  if (!snapshot) {
+    return null;
+  }
 
   return (
     <>

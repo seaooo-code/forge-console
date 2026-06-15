@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query";
 import type { ColDef, ICellRendererParams } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 import {
@@ -29,17 +30,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { miCarEnvironmentFilterOptions } from "@/types/environments";
 
+import { fetchReleasesSnapshot } from "./api/releases-snapshot";
 import type {
   ReleaseEnvironment,
   ReleaseRecord,
   ReleaseStatus,
-  ReleasesSnapshot,
   ReleaseTimelineStatus,
 } from "./types";
-
-type ReleasesPageProps = {
-  snapshot: ReleasesSnapshot;
-};
 
 const statusClass: Record<ReleaseStatus, string> = {
   已回滚: "border-red-200 bg-red-50 text-red-600",
@@ -54,7 +51,11 @@ const timelineClass: Record<ReleaseTimelineStatus, string> = {
   running: "border-blue-600 bg-white text-blue-600",
 };
 
-export function ReleasesPage({ snapshot }: ReleasesPageProps) {
+export function ReleasesPage() {
+  const { data: snapshot } = useQuery({
+    queryFn: fetchReleasesSnapshot,
+    queryKey: ["releases-snapshot"],
+  });
   const columnDefs = useMemo<ColDef<ReleaseRecord>[]>(
     () => [
       {
@@ -147,6 +148,10 @@ export function ReleasesPage({ snapshot }: ReleasesPageProps) {
     }),
     [],
   );
+
+  if (!snapshot) {
+    return null;
+  }
 
   return (
     <>

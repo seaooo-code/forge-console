@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query";
 import type { ColDef, ICellRendererParams } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 import {
@@ -29,18 +30,14 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { miCarEnvironmentFilterOptions } from "@/types/environments";
 
+import { fetchCombinationsSnapshot } from "./api/combinations-snapshot";
 import type {
   BundleCompositionKind,
   BundleCompositionRecord,
   CombinationEnvironment,
   CombinationRecord,
   CombinationStatus,
-  CombinationsSnapshot,
 } from "./types";
-
-type CombinationsPageProps = {
-  snapshot: CombinationsSnapshot;
-};
 
 const statusClass: Record<CombinationStatus, string> = {
   历史版本: "border-slate-200 bg-slate-50 text-slate-600",
@@ -54,7 +51,11 @@ const bundleKindClass: Record<BundleCompositionKind, string> = {
   Feature: "border-blue-200 bg-blue-50 text-blue-700",
 };
 
-export function CombinationsPage({ snapshot }: CombinationsPageProps) {
+export function CombinationsPage() {
+  const { data: snapshot } = useQuery({
+    queryFn: fetchCombinationsSnapshot,
+    queryKey: ["combinations-snapshot"],
+  });
   const compositionColumnDefs = useMemo<ColDef<BundleCompositionRecord>[]>(
     () => [
       {
@@ -182,6 +183,10 @@ export function CombinationsPage({ snapshot }: CombinationsPageProps) {
     }),
     [],
   );
+
+  if (!snapshot) {
+    return null;
+  }
 
   const featureBundles = snapshot.current.bundles.filter((bundle) => bundle.kind === "Feature");
   const commonBundle = snapshot.current.bundles.find((bundle) => bundle.kind === "Common");

@@ -1,5 +1,6 @@
+import { skipToken, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Layers3, LoaderCircle } from "lucide-react";
-import { type ReactNode, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
@@ -12,38 +13,49 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { StorageConfigRecord, StorageSnapshot } from "@/pages/storage";
+import type { StorageConfigRecord } from "@/types/storage";
 
-import { createEnvironment } from "./api/environments-snapshot";
-import type { EnvironmentCardTone, EnvironmentMutationInput, EnvironmentStatusCode } from "./types";
+import {
+  environmentEditQueryKey,
+  environmentStorageOptionsQueryKey,
+  environmentsSnapshotQueryKey,
+} from "./api/environment-query-keys";
+import {
+  createEnvironment,
+  fetchEnvironmentDetailSnapshot,
+  fetchEnvironmentStorageSnapshot,
+  updateEnvironment,
+} from "./api/environments-snapshot";
+import type {
+  EnvironmentCardTone,
+  EnvironmentMutationInput,
+  EnvironmentStatusCode,
+  RuntimeEnvironment,
+} from "./types";
 
 type EnvironmentCreatePageProps = {
-  isFetching?: boolean;
+  environmentId?: string;
+  mode?: "create" | "edit";
   onBack: () => void;
   onSaved?: (environmentId: string) => void;
-  snapshot?: StorageSnapshot | null;
 };
 
 type EnvironmentFormState = {
   code: string;
   description: string;
   name: string;
-  shortCode: string;
   status: EnvironmentStatusCode;
   storageConfigurationId: string;
   tone: EnvironmentCardTone;
-  trafficLabel: string;
 };
 
 const defaultForm: EnvironmentFormState = {
   code: "",
   description: "",
   name: "",
-  shortCode: "",
   status: "healthy",
   storageConfigurationId: "",
   tone: "blue",
-  trafficLabel: "",
 };
 
 const statusOptions: Array<{ label: string; value: EnvironmentStatusCode }> = [
@@ -60,24 +72,67 @@ const toneOptions: Array<{ label: string; value: EnvironmentCardTone }> = [
 ];
 
 export function EnvironmentCreatePage({
-  isFetching = false,
+  environmentId,
+  mode = "create",
   onBack,
   onSaved,
-  snapshot,
 }: EnvironmentCreatePageProps) {
+  const queryClient = useQueryClient();
+  const isEditMode = mode === "edit";
+  const editEnvironmentId = isEditMode ? environmentId : undefined;
+  const storageOptionsScope = editEnvironmentId ? editEnvironmentId : "new";
+  const { data: environmentSnapshot, isFetching: isEnvironmentFetching } = useQuery({
+    queryFn: editEnvironmentId
+      ? () => fetchEnvironmentDetailSnapshot(editEnvironmentId)
+      : skipToken,
+    queryKey: environmentEditQueryKey(editEnvironmentId),
+  });
+  const { data: storageSnapshot, isFetching: isStorageFetching } = useQuery({
+    queryFn: fetchEnvironmentStorageSnapshot,
+    queryKey: environmentStorageOptionsQueryKey(storageOptionsScope),
+  });
+  const environment = editEnvironmentId
+    ? environmentSnapshot?.details[editEnvironmentId]
+    : undefined;
   const storageConfigurations = useMemo(
-    () => snapshot?.configurations ?? [],
-    [snapshot?.configurations],
+    () => storageSnapshot?.configurations ?? [],
+    [storageSnapshot?.configurations],
+  );
+  const initialForm = useMemo(
+    () => buildInitialForm(isEditMode ? environment : undefined),
+    [environment, isEditMode],
   );
   const {
     control,
     formState: { isSubmitting },
     handleSubmit,
     register,
+    reset,
   } = useForm<EnvironmentFormState>({
-    defaultValues: defaultForm,
+    defaultValues: initialForm,
   });
   const [formError, setFormError] = useState("");
+
+  useEffect(() => {
+    reset(initialForm);
+    setFormError("");
+  }, [initialForm, reset]);
+
+  if (
+    (isEditMode && isEnvironmentFetching && !environment) ||
+    (isStorageFetching && !storageSnapshot)
+  ) {
+    return <EnvironmentFormLoading onBack={onBack} />;
+  }
+
+  if (isEditMode && !isEnvironmentFetching && !environment) {
+    return <EnvironmentFormNotFound onBack={onBack} />;
+  }
+
+  const title = isEditMode ? "编辑环境" : "新建环境";
+  const description = isEditMode
+    ? "维护运行环境的展示信息、状态和存储配置关联"
+    : "创建运行环境，并绑定一个对象存储配置作为 Bundle 分发入口";
 
   const handleFormSubmit = async (form: EnvironmentFormState) => {
     const input = buildEnvironmentInput(form);
@@ -90,10 +145,18 @@ export function EnvironmentCreatePage({
     setFormError("");
 
     try {
-      const environment = await createEnvironment(input);
-      onSaved?.(environment.id);
+      if (isEditMode && !environmentId) {
+        setFormError("环境路径无效");
+        return;
+      }
+
+      const savedEnvironment = isEditMode
+        ? await updateExistingEnvironment(environmentId, input)
+        : await createEnvironment(input);
+      await queryClient.invalidateQueries({ queryKey: environmentsSnapshotQueryKey });
+      onSaved?.(savedEnvironment.id);
     } catch (_error) {
-      setFormError("创建环境失败，请稍后重试");
+      setFormError(isEditMode ? "保存环境失败，请稍后重试" : "创建环境失败，请稍后重试");
     }
   };
 
@@ -116,10 +179,8 @@ export function EnvironmentCreatePage({
                 <Layers3 className="size-5" />
               </div>
               <div>
-                <h1 className="font-semibold text-2xl text-slate-950 tracking-tight">新建环境</h1>
-                <p className="mt-2 text-slate-600 text-sm">
-                  创建运行环境，并绑定一个对象存储配置作为 Bundle 分发入口
-                </p>
+                <h1 className="font-semibold text-2xl text-slate-950 tracking-tight">{title}</h1>
+                <p className="mt-2 text-slate-600 text-sm">{description}</p>
               </div>
             </div>
           </div>
@@ -129,7 +190,7 @@ export function EnvironmentCreatePage({
             </Button>
             <Button type="submit" className="bg-blue-600 hover:bg-blue-700" disabled={isSubmitting}>
               {isSubmitting ? <LoaderCircle className="size-4 animate-spin" /> : null}
-              保存环境
+              {isEditMode ? "保存修改" : "保存环境"}
             </Button>
           </div>
         </div>
@@ -146,10 +207,12 @@ export function EnvironmentCreatePage({
           <FormSectionHeader title="基础信息" description="定义环境唯一标识、名称和运行状态" />
           <div className="grid gap-4 px-5 pb-5 xl:grid-cols-3">
             <Field label="环境 ID" required>
-              <Input placeholder="例如：qa" {...register("code")} />
-            </Field>
-            <Field label="环境短码" required>
-              <Input placeholder="例如：QA" {...register("shortCode")} />
+              <Input
+                readOnly={isEditMode}
+                className={isEditMode ? "bg-slate-50 text-slate-500" : undefined}
+                placeholder="例如：qa"
+                {...register("code")}
+              />
             </Field>
             <Field label="环境名称" required>
               <Input placeholder="例如：QA 环境" {...register("name")} />
@@ -200,9 +263,6 @@ export function EnvironmentCreatePage({
                 )}
               />
             </Field>
-            <Field label="流量标签">
-              <Input placeholder="例如：研发内网 / 10% 灰度" {...register("trafficLabel")} />
-            </Field>
           </div>
         </Card>
 
@@ -217,11 +277,11 @@ export function EnvironmentCreatePage({
                   <Select
                     value={field.value}
                     onValueChange={field.onChange}
-                    disabled={isFetching || storageConfigurations.length === 0}
+                    disabled={isStorageFetching || storageConfigurations.length === 0}
                   >
                     <SelectTrigger className="w-full">
                       <SelectValue
-                        placeholder={isFetching ? "加载存储配置中" : "选择一个存储配置"}
+                        placeholder={isStorageFetching ? "加载存储配置中" : "选择一个存储配置"}
                       />
                     </SelectTrigger>
                     <SelectContent>
@@ -243,6 +303,17 @@ export function EnvironmentCreatePage({
       </div>
     </form>
   );
+}
+
+async function updateExistingEnvironment(
+  environmentId: string | undefined,
+  input: EnvironmentMutationInput,
+) {
+  if (!environmentId) {
+    throw new Error("Environment id is required");
+  }
+
+  return updateEnvironment(environmentId, input);
 }
 
 function Field({
@@ -274,17 +345,80 @@ function FormSectionHeader({ description, title }: { description: string; title:
   );
 }
 
+function EnvironmentFormLoading({ onBack }: { onBack: () => void }) {
+  return (
+    <>
+      <div className="border-slate-200 border-b bg-white px-6 py-5">
+        <Button
+          variant="ghost"
+          type="button"
+          className="-ml-2 mb-3 h-8 gap-2 px-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+          onClick={onBack}
+        >
+          <ArrowLeft className="size-4" />
+          返回环境管理
+        </Button>
+        <div className="h-8 w-40 animate-pulse rounded bg-slate-100" />
+      </div>
+      <div className="space-y-4 px-6 py-5">
+        <Card className="h-48 animate-pulse rounded-lg border-slate-200 bg-white shadow-none" />
+        <Card className="h-48 animate-pulse rounded-lg border-slate-200 bg-white shadow-none" />
+      </div>
+    </>
+  );
+}
+
+function EnvironmentFormNotFound({ onBack }: { onBack: () => void }) {
+  return (
+    <div className="border-slate-200 border-b bg-white px-6 py-5">
+      <Button
+        variant="ghost"
+        type="button"
+        className="-ml-2 mb-3 h-8 gap-2 px-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+        onClick={onBack}
+      >
+        <ArrowLeft className="size-4" />
+        返回环境管理
+      </Button>
+      <h1 className="font-semibold text-2xl text-slate-950 tracking-tight">环境不存在</h1>
+      <p className="mt-2 text-slate-600 text-sm">当前环境可能已被删除或路径无效。</p>
+    </div>
+  );
+}
+
+function buildInitialForm(environment?: RuntimeEnvironment): EnvironmentFormState {
+  if (!environment) {
+    return defaultForm;
+  }
+
+  return {
+    code: environment.id,
+    description: environment.description,
+    name: environment.name,
+    status: toStatusCode(environment.status),
+    storageConfigurationId: environment.storageConfigurationId,
+    tone: environment.tone,
+  };
+}
+
 function buildEnvironmentInput(form: EnvironmentFormState): EnvironmentMutationInput {
   return {
     code: form.code.trim(),
     description: form.description.trim(),
     name: form.name.trim(),
-    shortCode: form.shortCode.trim(),
     status: form.status,
     storageConfigurationId: form.storageConfigurationId,
     tone: form.tone,
-    trafficLabel: form.trafficLabel.trim(),
   };
+}
+
+function toStatusCode(status: RuntimeEnvironment["status"]): EnvironmentStatusCode {
+  switch (status) {
+    case "健康":
+      return "healthy";
+    case "灰度中":
+      return "gray";
+  }
 }
 
 function validateEnvironmentInput(
@@ -295,8 +429,8 @@ function validateEnvironmentInput(
     return "请先在存储管理中新增一个存储配置";
   }
 
-  if (!input.code || !input.shortCode || !input.name || !input.storageConfigurationId) {
-    return "请完整填写环境 ID、环境短码、环境名称和存储配置";
+  if (!input.code || !input.name || !input.storageConfigurationId) {
+    return "请完整填写环境 ID、环境名称和存储配置";
   }
 
   if (!/^[A-Za-z][A-Za-z0-9_-]*$/.test(input.code)) {

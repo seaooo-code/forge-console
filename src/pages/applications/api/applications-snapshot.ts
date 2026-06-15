@@ -14,7 +14,6 @@ export {
   applicationDetailQueryKey,
   applicationEditQueryKey,
   applicationsSnapshotQueryKey,
-  emptyApplicationListFilters,
   normalizeApplicationListFilters,
 } from "./application-list-filters";
 
@@ -209,9 +208,6 @@ function normalizeApplication(application: HostApplication): HostApplication {
   return {
     ...application,
     createdAt: formatDate(application.createdAt),
-    ownerAvatarUrl: application.ownerAvatarUrl ?? "",
-    ownerDepartmentIds: application.ownerDepartmentIds ?? [],
-    ownerEmail: application.ownerEmail ?? "",
   };
 }
 
@@ -220,12 +216,6 @@ function normalizeApplicationDetail(detail: ApplicationDetail): ApplicationDetai
     ...detail,
     environments: detail.environments.map(normalizeApplicationEnvironment),
     members: detail.members.map(normalizeApplicationMember),
-    modules: detail.modules ?? [],
-    owner: detail.owner ?? "",
-    ownerAvatarUrl: detail.ownerAvatarUrl ?? "",
-    ownerDepartmentIds: detail.ownerDepartmentIds ?? [],
-    ownerEmail: detail.ownerEmail ?? "",
-    pipelines: detail.pipelines ?? [],
   };
 }
 
@@ -239,10 +229,7 @@ function normalizeApplicationEnvironment(
 }
 
 function normalizeApplicationMember(member: ApplicationMemberRecord): ApplicationMemberRecord {
-  return {
-    ...member,
-    team: member.team || "-",
-  };
+  return member;
 }
 
 function formatDate(value: string) {

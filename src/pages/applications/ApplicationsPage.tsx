@@ -1,3 +1,4 @@
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ColDef, ICellRendererParams } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 import {
@@ -17,6 +18,7 @@ import {
   X,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { searchFeishuUsers } from "@/api/feishu-user-search";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import {
   ConsoleFilterSelect,
@@ -26,90 +28,46 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { themeQuartz } from "@/lib/ag-grid";
 import { cn } from "@/lib/utils";
-import { useApplicationOptionsStore } from "@/store/use-application-options-store";
+import type { FeishuUserSearchResult } from "@/types/feishu";
 
-import { searchFeishuUsers } from "./api/feishu-user-search";
-import { useEnsureApplicationOptions } from "./hooks/use-application-options";
+import { applicationsSnapshotQueryKey } from "./api/application-list-filters";
+import { deleteApplication, fetchApplicationsSnapshot } from "./api/applications-snapshot";
+import {
+  applicationStatusClass,
+  applicationsGridTheme,
+  emptyApplicationListFilters,
+} from "./constants";
+import { useApplicationOptions } from "./hooks";
 import type {
   ApplicationListFilters,
   ApplicationOption,
   ApplicationStatusCode,
-  ApplicationSummary,
-  FeishuUserSearchResult,
   HostApplication,
 } from "./types";
 
 type ApplicationsPageProps = {
-  applications: HostApplication[];
-  filters: ApplicationListFilters;
-  isFetching: boolean;
-  onFiltersChange: (filters: ApplicationListFilters) => void;
   onConfigureApplication: (applicationSlug: string) => void;
   onCreateApplication: () => void;
-  onDeleteApplication: (application: HostApplication) => Promise<void>;
   onOpenApplication: (applicationSlug: string) => void;
-  onRefresh: () => void;
-  summary: ApplicationSummary;
 };
-
-const appStatusClass: Record<HostApplication["status"], string> = {
-  已下线: "border-slate-200 bg-slate-50 text-slate-600",
-  维护中: "border-amber-200 bg-amber-50 text-amber-700",
-  运行中: "border-emerald-200 bg-emerald-50 text-emerald-700",
-};
-
-const fallbackStatusFilterOptions: ApplicationOption[] = [
-  { label: "运行中", value: "running" },
-  { label: "维护中", value: "maintenance" },
-  { label: "已下线", value: "offline" },
-];
-
-const fallbackPlatformFilterOptions: ApplicationOption[] = [
-  { label: "iOS", value: "iOS" },
-  { label: "Android", value: "Android" },
-  { label: "HarmonyOS", value: "HarmonyOS" },
-];
-
-const appGridTheme = themeQuartz.withParams({
-  accentColor: "#1677ff",
-  backgroundColor: "#ffffff",
-  borderColor: "#e5eaf2",
-  borderRadius: 0,
-  browserColorScheme: "light",
-  columnBorder: false,
-  fontFamily:
-    '"Roboto Flex Variable", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif',
-  fontSize: 13,
-  foregroundColor: "#334155",
-  headerBackgroundColor: "#f8fafc",
-  headerFontSize: 12,
-  headerFontWeight: 600,
-  headerTextColor: "#64748b",
-  oddRowBackgroundColor: "#ffffff",
-  rowBorder: { color: "#e8edf5", style: "solid", width: 1 },
-  rowHoverColor: "#f8fbff",
-  selectedRowBackgroundColor: "#eff6ff",
-  spacing: 7,
-  wrapperBorder: false,
-  wrapperBorderRadius: 0,
-});
 
 export function ApplicationsPage({
-  applications,
-  filters,
-  isFetching,
-  onFiltersChange,
   onConfigureApplication,
   onCreateApplication,
-  onDeleteApplication,
   onOpenApplication,
-  onRefresh,
-  summary,
 }: ApplicationsPageProps) {
-  useEnsureApplicationOptions();
-  const applicationOptions = useApplicationOptionsStore((state) => state.options);
+  const queryClient = useQueryClient();
+  const [filters, setFilters] = useState<ApplicationListFilters>(emptyApplicationListFilters);
+  const {
+    data: snapshot,
+    isFetching,
+    refetch,
+  } = useQuery({
+    queryFn: () => fetchApplicationsSnapshot(filters),
+    queryKey: applicationsSnapshotQueryKey(filters),
+  });
+  const { data: applicationOptions } = useApplicationOptions();
   const [keywordInput, setKeywordInput] = useState(filters.keyword);
   const [deleteTarget, setDeleteTarget] = useState<HostApplication | null>(null);
   const [deleteError, setDeleteError] = useState("");
@@ -120,12 +78,12 @@ export function ApplicationsPage({
   }, []);
   const updateFilters = useCallback(
     (patch: Partial<ApplicationListFilters>) => {
-      onFiltersChange({
+      setFilters({
         ...filters,
         ...patch,
       });
     },
-    [filters, onFiltersChange],
+    [filters],
   );
 
   useEffect(() => {
@@ -145,8 +103,14 @@ export function ApplicationsPage({
     return () => window.clearTimeout(handle);
   }, [filters.keyword, keywordInput, updateFilters]);
 
-  const stats = useMemo(
-    () => [
+  const stats = useMemo(() => {
+    if (!snapshot) {
+      return [];
+    }
+
+    const { summary } = snapshot;
+
+    return [
       {
         detail: "全部启用",
         icon: AppWindow,
@@ -179,15 +143,14 @@ export function ApplicationsPage({
         label: "已下线",
         value: summary.offline,
       },
-    ],
-    [summary],
-  );
+    ];
+  }, [snapshot]);
   const platformFilterOptions = useMemo(
-    () => applicationOptions?.platforms ?? fallbackPlatformFilterOptions,
+    () => applicationOptions?.platforms ?? [],
     [applicationOptions?.platforms],
   );
   const statusFilterOptions = useMemo(
-    () => applicationOptions?.applicationStatuses ?? fallbackStatusFilterOptions,
+    () => applicationOptions?.applicationStatuses ?? [],
     [applicationOptions?.applicationStatuses],
   );
 
@@ -270,6 +233,12 @@ export function ApplicationsPage({
     [],
   );
 
+  if (!snapshot) {
+    return <ApplicationsPageLoading />;
+  }
+
+  const { applications } = snapshot;
+
   return (
     <>
       <div className="border-slate-200 border-b bg-white px-6 py-5">
@@ -346,7 +315,9 @@ export function ApplicationsPage({
                 type="button"
                 size="icon"
                 aria-label="刷新应用列表"
-                onClick={onRefresh}
+                onClick={() => {
+                  void refetch();
+                }}
               >
                 <RefreshCw className={isFetching ? "size-4 animate-spin" : "size-4"} />
               </Button>
@@ -364,7 +335,7 @@ export function ApplicationsPage({
             domLayout="autoHeight"
             headerHeight={44}
             rowHeight={58}
-            theme={appGridTheme}
+            theme={applicationsGridTheme}
             suppressCellFocus
             suppressContextMenu
             getRowId={({ data }) => data.id}
@@ -397,7 +368,8 @@ export function ApplicationsPage({
           setIsDeleting(true);
           setDeleteError("");
           try {
-            await onDeleteApplication(deleteTarget);
+            await deleteApplication(deleteTarget.slug);
+            await queryClient.invalidateQueries({ queryKey: applicationsSnapshotQueryKey() });
             setDeleteTarget(null);
           } catch (_error) {
             setDeleteError("删除应用失败，请稍后重试");
@@ -412,6 +384,25 @@ export function ApplicationsPage({
           </div>
         ) : null}
       </ConfirmDialog>
+    </>
+  );
+}
+
+function ApplicationsPageLoading() {
+  return (
+    <>
+      <div className="border-slate-200 border-b bg-white px-6 py-5">
+        <h1 className="font-semibold text-2xl text-slate-950 tracking-tight">应用管理</h1>
+        <p className="mt-2 text-slate-600 text-sm">管理 RN Bundle 平台接入的所有宿主应用</p>
+      </div>
+      <div className="space-y-4 px-6 py-5">
+        <section className="grid gap-3 xl:grid-cols-4">
+          {["total", "running", "maintenance", "offline"].map((item) => (
+            <Card key={item} className="h-32 animate-pulse rounded-lg bg-white shadow-none" />
+          ))}
+        </section>
+        <Card className="h-96 animate-pulse rounded-lg border-slate-200 bg-white shadow-none" />
+      </div>
     </>
   );
 }
@@ -578,7 +569,7 @@ function OwnerSearchFilter({ onChange, value }: OwnerSearchFilterProps) {
 
               return (
                 <Button
-                  key={user.id || user.unionId || user.openId}
+                  key={user.id}
                   variant="ghost"
                   type="button"
                   className="h-auto w-full justify-start gap-2 rounded-sm px-2 py-2 text-left font-normal"
@@ -608,7 +599,7 @@ function OwnerSearchFilter({ onChange, value }: OwnerSearchFilterProps) {
 }
 
 function getFeishuUserDisplayName(user: FeishuUserSearchResult) {
-  return user.name || user.enName || user.email || "";
+  return user.name;
 }
 
 function AppNameCell({ data }: ICellRendererParams<HostApplication>) {
@@ -639,7 +630,7 @@ function StatusCell({ value }: ICellRendererParams<HostApplication, HostApplicat
       <span
         className={cn(
           "inline-flex h-6 items-center rounded border px-2 font-medium text-xs leading-none",
-          appStatusClass[value],
+          applicationStatusClass[value],
         )}
       >
         {value}
@@ -653,7 +644,7 @@ function OwnerCell({ data }: ICellRendererParams<HostApplication>) {
     return null;
   }
 
-  const owner = data.owner || "-";
+  const owner = data.owner;
 
   return (
     <div className="flex h-full min-w-0 items-center gap-2">

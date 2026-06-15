@@ -1,3 +1,4 @@
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ColDef, ICellRendererParams } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 import {
@@ -17,15 +18,16 @@ import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { ConsoleTableFooter } from "@/components/common/ConsoleControls";
 import { consoleGridTheme } from "@/components/common/console-grid-theme";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import type { StorageAdapter, StorageConfigRecord, StorageStatus } from "@/types/storage";
 
-import type { StorageAdapter, StorageConfigRecord, StorageSnapshot, StorageStatus } from "./types";
+import { storageSnapshotQueryKey } from "./api/storage-query-keys";
+import { deleteStorageConfiguration, fetchStorageSnapshot } from "./api/storage-snapshot";
 
 type StoragePageProps = {
   onCreateStorage: () => void;
-  onDeleteStorage: (storage: StorageConfigRecord) => Promise<void>;
   onEditStorage: (storageId: string) => void;
-  snapshot: StorageSnapshot;
 };
 
 const adapterToneClass: Record<StorageAdapter, string> = {
@@ -38,12 +40,12 @@ const statusClass: Record<StorageStatus, string> = {
   正常: "border-emerald-200 bg-emerald-50 text-emerald-700",
 };
 
-export function StoragePage({
-  onCreateStorage,
-  onDeleteStorage,
-  onEditStorage,
-  snapshot,
-}: StoragePageProps) {
+export function StoragePage({ onCreateStorage, onEditStorage }: StoragePageProps) {
+  const queryClient = useQueryClient();
+  const { data: snapshot } = useQuery({
+    queryFn: fetchStorageSnapshot,
+    queryKey: storageSnapshotQueryKey,
+  });
   const [deleteTarget, setDeleteTarget] = useState<StorageConfigRecord | null>(null);
   const [deleteError, setDeleteError] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
@@ -144,6 +146,10 @@ export function StoragePage({
     [],
   );
 
+  if (!snapshot) {
+    return <StoragePageLoading />;
+  }
+
   return (
     <>
       <div className="border-slate-200 border-b bg-white px-6 py-5">
@@ -220,7 +226,8 @@ export function StoragePage({
           setIsDeleting(true);
           setDeleteError("");
           try {
-            await onDeleteStorage(deleteTarget);
+            await deleteStorageConfiguration(deleteTarget.id);
+            await queryClient.invalidateQueries({ queryKey: storageSnapshotQueryKey });
             setDeleteTarget(null);
           } catch (_error) {
             setDeleteError("删除存储配置失败，请稍后重试");
@@ -235,6 +242,23 @@ export function StoragePage({
           </div>
         ) : null}
       </ConfirmDialog>
+    </>
+  );
+}
+
+function StoragePageLoading() {
+  return (
+    <>
+      <div className="border-slate-200 border-b bg-white px-6 py-5">
+        <div className="text-slate-500 text-xs">平台 / 存储管理</div>
+        <h1 className="mt-2 font-semibold text-2xl text-slate-950 tracking-tight">存储管理</h1>
+        <p className="mt-2 text-slate-600 text-sm">
+          S3-Compatible 对象存储配置，统一管理 Bundle 产物上传与分发入口
+        </p>
+      </div>
+      <div className="px-6 py-5">
+        <Card className="h-96 animate-pulse rounded-lg border-slate-200 bg-white shadow-none" />
+      </div>
     </>
   );
 }

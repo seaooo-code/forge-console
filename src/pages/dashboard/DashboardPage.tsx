@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query";
 import { ChevronDown } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -9,20 +10,24 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { type MiCarEnvironmentCode, miCarEnvironmentFilterOptions } from "@/types/environments";
-
+import { fetchDashboardSnapshot } from "./api/dashboard-snapshot";
 import { BuildTrendChart } from "./components/BuildTrendChart";
 import { MetricOverview } from "./components/MetricOverview";
 import { PipelineSuccessPanel } from "./components/PipelineSuccessPanel";
 import { RecentReleasesTable } from "./components/RecentReleasesTable";
 import { RecentTasksTable } from "./components/RecentTasksTable";
 import { useDashboardContextStore } from "./model/use-dashboard-context-store";
-import type { DashboardSnapshot } from "./types";
 
-type DashboardPageProps = {
-  snapshot: DashboardSnapshot;
-};
+export function DashboardPage() {
+  const { data: snapshot } = useQuery({
+    queryFn: fetchDashboardSnapshot,
+    queryKey: ["dashboard-snapshot"],
+  });
 
-export function DashboardPage({ snapshot }: DashboardPageProps) {
+  if (!snapshot) {
+    return null;
+  }
+
   return (
     <>
       <div className="border-slate-200 border-b bg-white px-6 py-5">
