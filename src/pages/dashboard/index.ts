@@ -1,3 +1,2 @@
-export { dashboardSnapshotQueryKey, fetchDashboardSnapshot } from "./api/dashboard-snapshot";
-export { DashboardPage } from "./DashboardPage";
+export { getDashboardRouteConfig } from "./dashboard-route-config";
 export type { DashboardSnapshot } from "./types";

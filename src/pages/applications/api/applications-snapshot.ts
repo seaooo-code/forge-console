@@ -6,22 +6,17 @@ import type {
   ApplicationMutationInput,
   ApplicationOptions,
   ApplicationsSnapshot,
-  FeishuUserSearchResult,
   HostApplication,
 } from "../types";
 import { normalizeApplicationListFilters } from "./application-list-filters";
 
 export {
+  applicationDetailQueryKey,
+  applicationEditQueryKey,
   applicationsSnapshotQueryKey,
   emptyApplicationListFilters,
   normalizeApplicationListFilters,
 } from "./application-list-filters";
-
-export const applicationDetailQueryKey = (applicationSlug: string) =>
-  ["applications-snapshot", "detail", applicationSlug] as const;
-
-export const applicationEditQueryKey = (applicationSlug: string) =>
-  ["applications-snapshot", "edit", applicationSlug] as const;
 
 type ApplicationsAPIResponse = {
   applications: HostApplication[];
@@ -31,10 +26,6 @@ type ApplicationsAPIResponse = {
 export type ApplicationDetailAPIResponse = {
   application: HostApplication;
   detail: ApplicationDetail;
-};
-
-type FeishuUserSearchAPIResponse = {
-  users: FeishuUserSearchResult[];
 };
 
 type APIErrorPayload = {
@@ -76,21 +67,6 @@ export async function fetchApplicationsSnapshot(
 
 export async function fetchApplicationOptions(): Promise<ApplicationOptions> {
   return fetchJSON<ApplicationOptions>("/api/v1/applications/options");
-}
-
-export async function searchFeishuUsers(query: string): Promise<FeishuUserSearchResult[]> {
-  const params = new URLSearchParams({
-    pageSize: "10",
-    query,
-  });
-  const payload = await fetchJSON<FeishuUserSearchAPIResponse>(
-    `/api/v1/feishu/users/search?${params.toString()}`,
-  );
-
-  return payload.users.map((user) => ({
-    ...user,
-    departmentIds: user.departmentIds ?? [],
-  }));
 }
 
 export async function fetchApplicationDetailSnapshot(

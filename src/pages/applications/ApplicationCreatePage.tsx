@@ -1,14 +1,14 @@
 import {
   ArrowLeft,
   CircleAlert,
-  LoaderCircle,
   type LucideIcon,
   MonitorSmartphone,
   PackagePlus,
 } from "lucide-react";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
-import { Controller, type FieldPath, useForm, useWatch } from "react-hook-form";
+import { Controller, type FieldPath, useForm } from "react-hook-form";
 
+import { OwnerPicker, type OwnerSearchUser } from "@/components/common/OwnerPicker";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -22,11 +22,9 @@ import {
 } from "@/components/ui/select";
 import { useApplicationOptionsStore } from "@/store/use-application-options-store";
 
-import {
-  createApplication,
-  searchFeishuUsers,
-  updateApplication,
-} from "./api/applications-snapshot";
+import { createApplication, updateApplication } from "./api/applications-snapshot";
+import { searchFeishuUsers } from "./api/feishu-user-search";
+import { useEnsureApplicationOptions } from "./hooks/use-application-options";
 import type {
   ApplicationDetail,
   ApplicationEnvironmentInput,
@@ -34,7 +32,6 @@ import type {
   ApplicationOption,
   ApplicationStatusCode,
   ApplicationsSnapshot,
-  FeishuUserSearchResult,
   HostApplication,
 } from "./types";
 
@@ -49,7 +46,7 @@ type ApplicationCreatePageProps = {
 
 type EnvironmentCode = ApplicationEnvironmentInput["environment"];
 
-type EnvironmentFormState = Record<EnvironmentCode, boolean>;
+type EnvironmentFormState = Record<string, boolean>;
 
 type ApplicationFormState = {
   description: string;
@@ -64,21 +61,13 @@ type ApplicationFormState = {
   status: ApplicationStatusCode;
 };
 
-type OwnerDisplayUser = Pick<FeishuUserSearchResult, "avatarUrl" | "email" | "enName" | "name">;
-
 const fallbackPlatformOptions: ApplicationOption[] = [
   { label: "iOS", value: "iOS" },
   { label: "Android", value: "Android" },
   { label: "HarmonyOS", value: "HarmonyOS" },
 ];
 
-const fallbackEnvironmentOptions: ApplicationOption[] = [
-  { label: "dev", value: "dev" },
-  { label: "staging", value: "staging" },
-  { label: "preview", value: "preview" },
-  { label: "preProduct", value: "preProduct" },
-  { label: "product", value: "product" },
-];
+const fallbackEnvironmentOptions: ApplicationOption[] = [];
 
 const fallbackStatusOptions: ApplicationOption[] = [
   { label: "运行中", value: "running" },
@@ -94,23 +83,23 @@ export function ApplicationCreatePage({
   onSaved,
   snapshot,
 }: ApplicationCreatePageProps) {
+  useEnsureApplicationOptions();
   const isEditMode = mode === "edit";
   const application = applicationSlug
     ? snapshot?.applications.find((item) => item.slug === applicationSlug)
     : undefined;
   const detail = applicationSlug ? snapshot?.details[applicationSlug] : undefined;
-  const initialForm = useMemo(
-    () => buildInitialForm(isEditMode ? detail : undefined, application),
-    [application, detail, isEditMode],
-  );
   const applicationOptions = useApplicationOptionsStore((state) => state.options);
   const platformOptions = applicationOptions?.platforms ?? fallbackPlatformOptions;
   const statusOptions = applicationOptions?.applicationStatuses ?? fallbackStatusOptions;
   const environmentOptions = applicationOptions?.environments ?? fallbackEnvironmentOptions;
+  const initialForm = useMemo(
+    () => buildInitialForm(isEditMode ? detail : undefined, application, environmentOptions),
+    [application, detail, environmentOptions, isEditMode],
+  );
   const {
     control,
     formState: { isSubmitting },
-    getValues,
     handleSubmit,
     register,
     reset,
@@ -118,58 +107,12 @@ export function ApplicationCreatePage({
   } = useForm<ApplicationFormState>({
     defaultValues: initialForm,
   });
-  const ownerQuery = useWatch({
-    control,
-    defaultValue: initialForm.owner,
-    name: "owner",
-  });
   const [formError, setFormError] = useState("");
-  const [ownerSearchResults, setOwnerSearchResults] = useState<FeishuUserSearchResult[]>([]);
-  const [ownerSearchOpen, setOwnerSearchOpen] = useState(false);
-  const [ownerSearchLoading, setOwnerSearchLoading] = useState(false);
-  const [selectedOwner, setSelectedOwner] = useState<OwnerDisplayUser | null>(null);
 
   useEffect(() => {
     reset(initialForm);
     setFormError("");
-    setOwnerSearchOpen(false);
-    setSelectedOwner(null);
   }, [initialForm, reset]);
-
-  useEffect(() => {
-    const query = ownerQuery.trim();
-    if (!ownerSearchOpen || query.length < 2) {
-      setOwnerSearchResults([]);
-      setOwnerSearchLoading(false);
-      return;
-    }
-
-    let disposed = false;
-    setOwnerSearchLoading(true);
-    const handle = window.setTimeout(() => {
-      void searchFeishuUsers(query)
-        .then((users) => {
-          if (!disposed) {
-            setOwnerSearchResults(users);
-          }
-        })
-        .catch(() => {
-          if (!disposed) {
-            setOwnerSearchResults([]);
-          }
-        })
-        .finally(() => {
-          if (!disposed) {
-            setOwnerSearchLoading(false);
-          }
-        });
-    }, 280);
-
-    return () => {
-      disposed = true;
-      window.clearTimeout(handle);
-    };
-  }, [ownerQuery, ownerSearchOpen]);
 
   if (isEditMode && isFetching && !(application && detail)) {
     return <ApplicationFormLoading onBack={onBack} />;
@@ -181,33 +124,16 @@ export function ApplicationCreatePage({
     : "接入新的宿主应用，初始化 RN Bundle 环境";
 
   const handleOwnerChange = (value: string) => {
-    setOwnerSearchOpen(true);
-    setSelectedOwner(null);
     setValue("owner", value, { shouldDirty: true, shouldTouch: true });
     setValue("ownerAvatarUrl", "", { shouldDirty: true });
     setValue("ownerDepartmentIds", [], { shouldDirty: true });
     setValue("ownerEmail", "", { shouldDirty: true });
   };
 
-  const handleOwnerSelect = (user: FeishuUserSearchResult) => {
-    const ownerName = getOwnerDisplayName(user);
-    setOwnerSearchOpen(false);
-    setOwnerSearchResults([]);
-    setSelectedOwner({
-      avatarUrl: user.avatarUrl,
-      email: user.email,
-      enName: user.enName,
-      name: ownerName,
-    });
-    setValue("owner", ownerName || getValues("owner"), { shouldDirty: true, shouldTouch: true });
-    setValue("ownerAvatarUrl", user.avatarUrl, { shouldDirty: true });
+  const handleOwnerSelect = (user: OwnerSearchUser & { departmentIds?: string[] }) => {
+    setValue("ownerAvatarUrl", user.avatarUrl ?? "", { shouldDirty: true });
     setValue("ownerDepartmentIds", user.departmentIds ?? [], { shouldDirty: true });
-    setValue("ownerEmail", user.email, { shouldDirty: true });
-  };
-
-  const handleOwnerEdit = () => {
-    setSelectedOwner(null);
-    setOwnerSearchOpen(true);
+    setValue("ownerEmail", user.email ?? "", { shouldDirty: true });
   };
 
   const handleFormSubmit = async (form: ApplicationFormState) => {
@@ -305,48 +231,21 @@ export function ApplicationCreatePage({
                   />
                 </Field>
                 <Field label="负责人" className="xl:col-span-4">
-                  <div className="relative">
-                    {selectedOwner ? (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="h-9 w-full justify-start gap-2 px-3 font-normal text-slate-900 hover:bg-white hover:text-slate-900"
-                        onClick={handleOwnerEdit}
-                      >
-                        <OwnerAvatar user={selectedOwner} />
-                        <span className="min-w-0 truncate">
-                          {getOwnerDisplayName(selectedOwner)}
-                        </span>
-                      </Button>
-                    ) : (
-                      <Controller
-                        control={control}
-                        name="owner"
-                        render={({ field }) => (
-                          <Input
-                            name={field.name}
-                            ref={field.ref}
-                            value={field.value}
-                            placeholder="搜索负责人姓名、邮箱或账号"
-                            onBlur={() => {
-                              field.onBlur();
-                              window.setTimeout(() => setOwnerSearchOpen(false), 150);
-                            }}
-                            onChange={(event) => handleOwnerChange(event.target.value)}
-                            onFocus={() => setOwnerSearchOpen(true)}
-                          />
-                        )}
+                  <Controller
+                    control={control}
+                    name="owner"
+                    render={({ field }) => (
+                      <OwnerPicker
+                        inputName={field.name}
+                        inputRef={field.ref}
+                        value={field.value}
+                        searchUsers={searchFeishuUsers}
+                        onBlur={field.onBlur}
+                        onChange={handleOwnerChange}
+                        onSelect={handleOwnerSelect}
                       />
                     )}
-                    {ownerSearchOpen && !selectedOwner ? (
-                      <OwnerSearchResults
-                        isLoading={ownerSearchLoading}
-                        onSelect={handleOwnerSelect}
-                        query={ownerQuery}
-                        users={ownerSearchResults}
-                      />
-                    ) : null}
-                  </div>
+                  />
                 </Field>
                 <Field label="应用状态" className="xl:col-span-4">
                   <Controller
@@ -440,25 +339,17 @@ function toEnvironmentFieldPath(environment: string) {
   return `environments.${environment}` as FieldPath<ApplicationFormState>;
 }
 
-function getOwnerDisplayName(user: OwnerDisplayUser) {
-  return user.name || user.enName || user.email || "";
-}
-
-function getOwnerInitial(user: OwnerDisplayUser) {
-  const name = getOwnerDisplayName(user).trim();
-  return name ? name.slice(0, 1).toUpperCase() : "?";
-}
-
 function buildInitialForm(
   detail?: ApplicationDetail,
   application?: HostApplication,
+  environmentOptions: ApplicationOption[] = fallbackEnvironmentOptions,
 ): ApplicationFormState {
   const slug = detail?.slug ?? application?.slug ?? "";
   const platform = application?.platform ?? "";
 
   return {
     description: detail?.description ?? "",
-    environments: buildEnvironmentState(detail),
+    environments: buildEnvironmentState(detail, environmentOptions),
     name: detail?.name ?? application?.name ?? "",
     owner: application?.owner ?? "",
     ownerAvatarUrl: detail?.ownerAvatarUrl ?? application?.ownerAvatarUrl ?? "",
@@ -470,18 +361,20 @@ function buildInitialForm(
   };
 }
 
-function buildEnvironmentState(detail?: ApplicationDetail): EnvironmentFormState {
+function buildEnvironmentState(
+  detail?: ApplicationDetail,
+  environmentOptions: ApplicationOption[] = fallbackEnvironmentOptions,
+): EnvironmentFormState {
   const enabledEnvironments = new Map(
     detail?.environments.map((environment) => [environment.environment, environment]) ?? [],
   );
 
-  return {
-    dev: detail ? enabledEnvironments.has("dev") : true,
-    staging: detail ? enabledEnvironments.has("staging") : true,
-    preview: detail ? enabledEnvironments.has("preview") : true,
-    preProduct: detail ? enabledEnvironments.has("preProduct") : true,
-    product: detail ? enabledEnvironments.has("product") : true,
-  };
+  return Object.fromEntries(
+    environmentOptions.map((environment) => [
+      environment.value,
+      detail ? enabledEnvironments.has(environment.value) : true,
+    ]),
+  );
 }
 
 function buildApplicationInput(
@@ -489,7 +382,7 @@ function buildApplicationInput(
   environmentOptions: ApplicationOption[],
 ): ApplicationMutationInput {
   const environments = environmentOptions
-    .filter((environment) => form.environments[environment.value as EnvironmentCode])
+    .filter((environment) => form.environments[environment.value])
     .map((environment) => ({
       environment: environment.value as EnvironmentCode,
     }));
@@ -539,81 +432,6 @@ function ApplicationFormLoading({ onBack }: { onBack: () => void }) {
         </div>
       </Card>
     </div>
-  );
-}
-
-function OwnerSearchResults({
-  isLoading,
-  onSelect,
-  query,
-  users,
-}: {
-  isLoading: boolean;
-  onSelect: (user: FeishuUserSearchResult) => void;
-  query: string;
-  users: FeishuUserSearchResult[];
-}) {
-  if (query.trim().length < 2) {
-    return null;
-  }
-
-  return (
-    <div className="absolute z-20 mt-1 max-h-72 w-full overflow-auto rounded-md border border-slate-200 bg-white py-1 shadow-lg">
-      {isLoading ? (
-        <div className="flex h-10 items-center gap-2 px-3 text-slate-500 text-sm">
-          <LoaderCircle className="size-4 animate-spin" />
-          搜索中
-        </div>
-      ) : null}
-      {!isLoading && users.length === 0 ? (
-        <div className="px-3 py-2 text-slate-500 text-sm">未找到匹配人员</div>
-      ) : null}
-      {users.map((user) => (
-        <Button
-          key={user.id || user.unionId || user.openId}
-          type="button"
-          variant="ghost"
-          className="h-auto w-full justify-start gap-3 rounded-none px-3 py-2 text-left font-normal hover:bg-slate-50"
-          onClick={() => onSelect(user)}
-        >
-          <OwnerAvatar user={user} className="size-8" />
-          <span className="min-w-0 flex-1">
-            <span className="block truncate font-medium text-slate-900 text-sm">
-              {getOwnerDisplayName(user)}
-            </span>
-            {user.email ? (
-              <span className="block truncate text-slate-500 text-xs">{user.email}</span>
-            ) : null}
-          </span>
-        </Button>
-      ))}
-    </div>
-  );
-}
-
-function OwnerAvatar({
-  className = "size-6",
-  user,
-}: {
-  className?: string;
-  user: OwnerDisplayUser;
-}) {
-  if (user.avatarUrl) {
-    return (
-      <img
-        src={user.avatarUrl}
-        alt={getOwnerDisplayName(user)}
-        className={`${className} shrink-0 rounded-full object-cover`}
-      />
-    );
-  }
-
-  return (
-    <span
-      className={`${className} flex shrink-0 items-center justify-center rounded-full bg-rose-500 font-semibold text-white text-xs`}
-    >
-      {getOwnerInitial(user)}
-    </span>
   );
 }
 

@@ -1,6 +1,2 @@
-export {
-  bundlesSnapshotQueryKey,
-  fetchBundlesSnapshot,
-} from "./api/bundles-snapshot";
-export { BundlesPage } from "./BundlesPage";
+export { getBundlesRouteConfig } from "./bundles-route-config";
 export type { BundlesSnapshot } from "./types";

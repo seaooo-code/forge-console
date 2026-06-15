@@ -1,16 +1,12 @@
-import { type MiCarEnvironmentCode, miCarEnvironmentCodes } from "@/types/environments";
-
 import type {
   EnvironmentCode,
   EnvironmentDetail,
+  EnvironmentMutationInput,
   EnvironmentsSnapshot,
   RuntimeEnvironment,
 } from "../types";
 
-export const environmentsSnapshotQueryKey = ["environments"] as const;
-
-export const environmentDetailQueryKey = (environmentId: EnvironmentCode) =>
-  ["environments", "detail", environmentId] as const;
+export { environmentsSnapshotQueryKey } from "./environment-query-keys";
 
 type EnvironmentsAPIResponse = {
   environments: RuntimeEnvironment[];
@@ -19,6 +15,22 @@ type EnvironmentsAPIResponse = {
 type EnvironmentDetailAPIResponse = {
   environment: RuntimeEnvironment;
 };
+
+type APIErrorPayload = {
+  error?: string;
+};
+
+export class EnvironmentAPIError extends Error {
+  readonly payload?: APIErrorPayload;
+  readonly status: number;
+
+  constructor(path: string, status: number, payload?: APIErrorPayload) {
+    super(payload?.error || `Request ${path} failed with ${status}`);
+    this.name = "EnvironmentAPIError";
+    this.payload = payload;
+    this.status = status;
+  }
+}
 
 const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8080").replace(
   /\/+$/,
@@ -35,27 +47,32 @@ export async function fetchEnvironmentsSnapshot(): Promise<EnvironmentsSnapshot>
   };
 }
 
-export async function fetchEnvironmentDetailSnapshot(
-  environmentId: EnvironmentCode,
-): Promise<EnvironmentsSnapshot> {
-  const payload = await fetchJSON<EnvironmentDetailAPIResponse>(
-    `/api/v1/environments/${environmentId}`,
-  );
-  const environment = normalizeEnvironment(payload.environment);
+export async function createEnvironment(
+  input: EnvironmentMutationInput,
+): Promise<RuntimeEnvironment> {
+  const payload = await fetchJSON<EnvironmentDetailAPIResponse>("/api/v1/environments", {
+    body: JSON.stringify(input),
+    method: "POST",
+  });
 
-  return {
-    details: {
-      [environment.id]: environment,
-    } as Record<EnvironmentCode, EnvironmentDetail>,
-    environments: [environment],
-  };
+  return normalizeEnvironment(payload.environment);
 }
 
-async function fetchJSON<T>(path: string): Promise<T> {
-  const response = await fetch(`${apiBaseUrl}${path}`);
+async function fetchJSON<T>(path: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(`${apiBaseUrl}${path}`, {
+    credentials: "include",
+    ...init,
+    headers: init?.body
+      ? {
+          "Content-Type": "application/json",
+          ...init.headers,
+        }
+      : init?.headers,
+  });
 
   if (!response.ok) {
-    throw new Error(`Request ${path} failed with ${response.status}`);
+    const payload = await readErrorPayload(response);
+    throw new EnvironmentAPIError(path, response.status, payload);
   }
 
   return response.json() as Promise<T>;
@@ -64,17 +81,11 @@ async function fetchJSON<T>(path: string): Promise<T> {
 function normalizeEnvironment(environment: RuntimeEnvironment): RuntimeEnvironment {
   return {
     ...environment,
-    id: toEnvironmentCode(environment.id),
+    id: String(environment.id),
+    storageConfigurationId: environment.storageConfigurationId ?? "",
+    storageConfigurationName: environment.storageConfigurationName ?? "",
     updatedAt: formatUpdatedAt(environment.updatedAt),
   };
-}
-
-function toEnvironmentCode(value: string): EnvironmentCode {
-  if (miCarEnvironmentCodes.includes(value as MiCarEnvironmentCode)) {
-    return value as EnvironmentCode;
-  }
-
-  throw new Error(`Unsupported environment code: ${value}`);
 }
 
 function formatUpdatedAt(value: string) {
@@ -93,4 +104,17 @@ function formatUpdatedAt(value: string) {
     minute: "2-digit",
     month: "2-digit",
   }).format(date);
+}
+
+async function readErrorPayload(response: Response): Promise<APIErrorPayload | undefined> {
+  const contentType = response.headers.get("content-type") ?? "";
+  if (!contentType.includes("application/json")) {
+    return undefined;
+  }
+
+  try {
+    return (await response.json()) as APIErrorPayload;
+  } catch (_error) {
+    return undefined;
+  }
 }

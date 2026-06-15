@@ -1,3 +1,2 @@
-export { fetchRollbackSnapshot, rollbackSnapshotQueryKey } from "./api/rollback-snapshot";
-export { RollbackPage } from "./RollbackPage";
+export { getRollbackRouteConfig } from "./rollback-route-config";
 export type { RollbackSnapshot } from "./types";

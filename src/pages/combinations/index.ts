@@ -1,6 +1,2 @@
-export {
-  combinationsSnapshotQueryKey,
-  fetchCombinationsSnapshot,
-} from "./api/combinations-snapshot";
-export { CombinationsPage } from "./CombinationsPage";
+export { getCombinationsRouteConfig } from "./combinations-route-config";
 export type { CombinationsSnapshot } from "./types";

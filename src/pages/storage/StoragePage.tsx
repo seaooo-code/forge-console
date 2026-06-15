@@ -56,9 +56,16 @@ export function StoragePage({
       {
         cellRenderer: StorageNameCell,
         field: "name",
-        flex: 1.2,
+        flex: 1,
         headerName: "配置名称",
         minWidth: 210,
+      },
+      {
+        cellRenderer: OwnerCell,
+        field: "owner",
+        flex: 0.72,
+        headerName: "负责人",
+        minWidth: 110,
       },
       {
         field: "adapter",
@@ -249,10 +256,14 @@ function StorageNameCell({ data }: ICellRendererParams<StorageConfigRecord>) {
       </div>
       <div className="min-w-0">
         <div className="truncate font-semibold text-slate-900 text-sm">{data.name}</div>
-        <div className="truncate text-slate-500 text-xs">{data.owner}</div>
+        <div className="truncate text-slate-500 text-xs">{data.id}</div>
       </div>
     </div>
   );
+}
+
+function OwnerCell({ value }: ICellRendererParams<StorageConfigRecord, string>) {
+  return <span className="truncate text-slate-700 text-sm">{value || "-"}</span>;
 }
 
 function BucketCell({ value }: ICellRendererParams<StorageConfigRecord, string>) {

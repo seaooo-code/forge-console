@@ -1,15 +1,14 @@
 import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
-import type { MiCarEnvironmentCode } from "@/types/environments";
 
 type EnvironmentBadgeProps = {
   children?: ReactNode;
   className?: string;
-  environment: MiCarEnvironmentCode;
+  environment: string;
 };
 
-export const miCarEnvironmentBadgeClass: Record<MiCarEnvironmentCode, string> = {
+export const miCarEnvironmentBadgeClass: Record<string, string> = {
   dev: "border-sky-200 bg-sky-50 text-sky-700",
   preProduct: "border-emerald-200 bg-emerald-50 text-emerald-700",
   preview: "border-amber-200 bg-amber-50 text-amber-700",
@@ -22,7 +21,7 @@ export function EnvironmentBadge({ children, className, environment }: Environme
     <span
       className={cn(
         "inline-flex h-6 items-center rounded border px-2 font-semibold text-xs leading-none",
-        miCarEnvironmentBadgeClass[environment],
+        miCarEnvironmentBadgeClass[environment] ?? "border-slate-200 bg-slate-50 text-slate-600",
         className,
       )}
     >

@@ -1,6 +1,2 @@
-export {
-  devTasksSnapshotQueryKey,
-  fetchDevTasksSnapshot,
-} from "./api/dev-tasks-snapshot";
-export { DevTasksPage } from "./DevTasksPage";
+export { getDevTasksRouteConfig } from "./dev-tasks-route-config";
 export type { DevTasksSnapshot } from "./types";

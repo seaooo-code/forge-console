@@ -1,9 +1,8 @@
-import { ArrowRight, Clock3, type LucideIcon, Server, Waves } from "lucide-react";
+import { Clock3, Database, type LucideIcon, Plus, Server, Waves } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import type { MiCarEnvironmentCode } from "@/types/environments";
 
 import type {
   EnvironmentCardTone,
@@ -13,7 +12,7 @@ import type {
 } from "./types";
 
 type EnvironmentsPageProps = {
-  onOpenEnvironment: (environmentId: MiCarEnvironmentCode) => void;
+  onCreateEnvironment: () => void;
   snapshot: EnvironmentsSnapshot;
 };
 
@@ -30,26 +29,36 @@ const statusClass: Record<EnvironmentStatus, string> = {
   灰度中: "border-amber-200 bg-amber-50 text-amber-700",
 };
 
-export function EnvironmentsPage({ onOpenEnvironment, snapshot }: EnvironmentsPageProps) {
+export function EnvironmentsPage({ onCreateEnvironment, snapshot }: EnvironmentsPageProps) {
   return (
     <>
       <div className="border-slate-200 border-b bg-white px-6 py-5">
-        <div>
-          <h1 className="font-semibold text-2xl text-slate-950 tracking-tight">环境管理</h1>
-          <p className="mt-2 text-slate-600 text-sm">
-            管理 dev / staging / preview / preProduct / product 五套运行环境
-          </p>
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+          <div>
+            <h1 className="font-semibold text-2xl text-slate-950 tracking-tight">环境管理</h1>
+            <p className="mt-2 text-slate-600 text-sm">
+              管理运行环境、流量标识和对应的对象存储配置
+            </p>
+          </div>
+          <Button
+            type="button"
+            className="bg-blue-600 hover:bg-blue-700"
+            onClick={onCreateEnvironment}
+          >
+            <Plus className="size-4" />
+            新建环境
+          </Button>
         </div>
       </div>
 
       <div className="space-y-4 px-6 py-5">
-        <section className="grid gap-3 xl:grid-cols-5">
+        {snapshot.environments.length === 0 ? (
+          <EmptyState onCreateEnvironment={onCreateEnvironment} />
+        ) : null}
+
+        <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           {snapshot.environments.map((environment) => (
-            <EnvironmentCard
-              key={environment.id}
-              environment={environment}
-              onOpen={() => onOpenEnvironment(environment.id)}
-            />
+            <EnvironmentCard key={environment.id} environment={environment} />
           ))}
         </section>
       </div>
@@ -57,13 +66,7 @@ export function EnvironmentsPage({ onOpenEnvironment, snapshot }: EnvironmentsPa
   );
 }
 
-function EnvironmentCard({
-  environment,
-  onOpen,
-}: {
-  environment: RuntimeEnvironment;
-  onOpen: () => void;
-}) {
+function EnvironmentCard({ environment }: { environment: RuntimeEnvironment }) {
   return (
     <Card
       className={cn(
@@ -98,15 +101,11 @@ function EnvironmentCard({
         <InfoMetric icon={Clock3} label="更新" value={environment.updatedAt} />
       </div>
 
-      <Button
-        variant="outline"
-        type="button"
-        className="h-9 w-full border-slate-200 bg-white font-medium text-blue-600 text-xs hover:bg-blue-50 hover:text-blue-700"
-        onClick={onOpen}
-      >
-        进入环境详情
-        <ArrowRight className="size-3.5" />
-      </Button>
+      <InfoMetric
+        icon={Database}
+        label="存储配置"
+        value={environment.storageConfigurationName || environment.storageConfigurationId}
+      />
     </Card>
   );
 }
@@ -128,5 +127,23 @@ function InfoMetric({
       </div>
       <div className="truncate font-semibold text-slate-800">{value}</div>
     </div>
+  );
+}
+
+function EmptyState({ onCreateEnvironment }: { onCreateEnvironment: () => void }) {
+  return (
+    <Card className="items-center rounded-lg border-slate-200 bg-white px-6 py-10 text-center shadow-none">
+      <div className="flex size-10 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
+        <Server className="size-5" />
+      </div>
+      <div>
+        <div className="font-semibold text-slate-900 text-sm">暂无环境</div>
+        <p className="mt-1 text-slate-500 text-sm">创建环境后再关联应用、组合包和发布流程。</p>
+      </div>
+      <Button type="button" className="bg-blue-600 hover:bg-blue-700" onClick={onCreateEnvironment}>
+        <Plus className="size-4" />
+        新建环境
+      </Button>
+    </Card>
   );
 }

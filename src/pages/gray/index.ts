@@ -1,3 +1,2 @@
-export { fetchGraySnapshot, graySnapshotQueryKey } from "./api/gray-snapshot";
-export { GrayPage } from "./GrayPage";
+export { getGrayRouteConfig } from "./gray-route-config";
 export type { GraySnapshot } from "./types";

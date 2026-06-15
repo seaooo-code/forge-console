@@ -15,6 +15,7 @@ src/
       components/         # 页面内专属组件
       hooks/              # 页面内专属 hook
       model/              # 页面内 Zustand store、派生状态
+      *-route-config.tsx  # 页面路由装配：查询、渲染、导航回调、页面级 mutation
       <Page>.tsx          # 页面入口组件
       types.ts            # 页面领域类型
       index.ts            # 页面公开出口
@@ -35,6 +36,7 @@ src/
 - `src/main.tsx` 只负责创建 React root 并渲染 `src/app`，不写业务 UI。
 - `src/app` 负责 Query Provider、全局布局、路由和模块装配，不放具体页面 UI。
 - `src/app/layouts` 放后台壳层、侧边栏、顶部栏、导航配置、壳层状态等跨页面结构。
+- 页面专属路由装配优先下沉到 `src/pages/<page>/*-route-config.tsx`，由页面公开出口暴露给 `app/layouts`；`app/layouts` 不直接组装页面内部 API、领域类型和页面级 mutation。
 - `src/pages/<page>` 是页面业务默认落点。新增后台页面、页面级面板、表格、图表、编辑器配置，优先放这里。
 - `src/pages/<page>/components` 只放该页面专属组件。两个及以上页面复用后，再移动到 `src/components/common`。
 - `src/components/ui` 只放 shadcn/ui 组件。这里的组件不得引用 `pages`、`app`、业务 store 或请求函数。
@@ -59,6 +61,7 @@ pages/applications/
 ```
 
 - `api/`：放请求函数、TanStack Query key、响应适配，不直接操作 UI 状态。
+- `*-route-config.tsx`：放该页面的路由级容器逻辑，包括 `queryFn`、`queryKey`、页面组件懒加载、导航回调和页面级 mutation 后刷新。
 - `components/`：放页面内专属组件，可以组合 shadcn/ui、AG Grid、ECharts。
 - `hooks/`：放页面专属 hook。跨页面复用前不要移动到全局 `hooks/`。
 - `model/`：放页面内 Zustand store、派生计算、状态转换。

@@ -17,6 +17,12 @@ export const applicationsSnapshotQueryKey = (filters?: Partial<ApplicationListFi
   return ["applications-snapshot", normalizedFilters] as const;
 };
 
+export const applicationDetailQueryKey = (applicationSlug: string) =>
+  ["applications-snapshot", "detail", applicationSlug] as const;
+
+export const applicationEditQueryKey = (applicationSlug: string) =>
+  ["applications-snapshot", "edit", applicationSlug] as const;
+
 export function normalizeApplicationListFilters(
   filters?: Partial<ApplicationListFilters>,
 ): ApplicationListFilters {

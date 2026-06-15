@@ -1,9 +1,2 @@
-export {
-  environmentDetailQueryKey,
-  environmentsSnapshotQueryKey,
-  fetchEnvironmentDetailSnapshot,
-  fetchEnvironmentsSnapshot,
-} from "./api/environments-snapshot";
-export { EnvironmentDetailPage } from "./EnvironmentDetailPage";
-export { EnvironmentsPage } from "./EnvironmentsPage";
+export { getEnvironmentRouteConfig } from "./environment-route-config";
 export type { EnvironmentsSnapshot } from "./types";

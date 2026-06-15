@@ -1,6 +1,2 @@
-export {
-  fetchPipelinesSnapshot,
-  pipelinesSnapshotQueryKey,
-} from "./api/pipelines-snapshot";
-export { PipelinesPage } from "./PipelinesPage";
+export { getPipelinesRouteConfig } from "./pipelines-route-config";
 export type { PipelinesSnapshot } from "./types";

@@ -9,6 +9,7 @@ import {
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 
+import { OwnerPicker } from "@/components/common/OwnerPicker";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -19,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { searchFeishuUsers } from "@/pages/applications";
 
 import {
   createStorageConfiguration,
@@ -94,6 +96,7 @@ export function StorageCreatePage({
     handleSubmit,
     register,
     reset,
+    setValue,
   } = useForm<StorageFormState>({
     defaultValues: initialForm,
   });
@@ -168,7 +171,7 @@ export function StorageCreatePage({
     setTestStatus("testing");
 
     try {
-      await testStorageConfiguration(input);
+      await testStorageConfiguration(input, storageId);
       setTestStatus("passed");
       setTestedSignature(buildStorageTestSignature(input));
     } catch (_error) {
@@ -176,6 +179,10 @@ export function StorageCreatePage({
       setTestedSignature("");
       setFormError("测试存储配置失败，请检查连接参数");
     }
+  };
+
+  const handleOwnerChange = (value: string) => {
+    setValue("owner", value, { shouldDirty: true, shouldTouch: true });
   };
 
   const primaryActionLabel = isCurrentTestPassed
@@ -297,7 +304,20 @@ export function StorageCreatePage({
               />
             </Field>
             <Field label="负责人">
-              <Input placeholder="rn-platform" {...register("owner")} />
+              <Controller
+                control={control}
+                name="owner"
+                render={({ field }) => (
+                  <OwnerPicker
+                    inputName={field.name}
+                    inputRef={field.ref}
+                    value={field.value}
+                    searchUsers={searchFeishuUsers}
+                    onBlur={field.onBlur}
+                    onChange={handleOwnerChange}
+                  />
+                )}
+              />
             </Field>
           </div>
         </Card>

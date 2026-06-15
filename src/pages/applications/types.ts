@@ -28,7 +28,7 @@ export type ApplicationDetailMetric = {
 
 export type ApplicationEnvironmentRecord = {
   id: string;
-  environment: "dev" | "staging" | "preview" | "preProduct" | "product";
+  environment: string;
   traffic: string;
   updatedAt: string;
   status: "健康" | "灰度中" | "维护中";

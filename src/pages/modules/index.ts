@@ -1,6 +1,2 @@
-export {
-  fetchModulesSnapshot,
-  modulesSnapshotQueryKey,
-} from "./api/modules-snapshot";
-export { ModulesPage } from "./ModulesPage";
+export { getModulesRouteConfig } from "./modules-route-config";
 export type { ModulesSnapshot } from "./types";

@@ -30,7 +30,8 @@ import { themeQuartz } from "@/lib/ag-grid";
 import { cn } from "@/lib/utils";
 import { useApplicationOptionsStore } from "@/store/use-application-options-store";
 
-import { searchFeishuUsers } from "./api/applications-snapshot";
+import { searchFeishuUsers } from "./api/feishu-user-search";
+import { useEnsureApplicationOptions } from "./hooks/use-application-options";
 import type {
   ApplicationListFilters,
   ApplicationOption,
@@ -107,6 +108,7 @@ export function ApplicationsPage({
   onRefresh,
   summary,
 }: ApplicationsPageProps) {
+  useEnsureApplicationOptions();
   const applicationOptions = useApplicationOptionsStore((state) => state.options);
   const [keywordInput, setKeywordInput] = useState(filters.keyword);
   const [deleteTarget, setDeleteTarget] = useState<HostApplication | null>(null);

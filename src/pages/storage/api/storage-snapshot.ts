@@ -6,10 +6,7 @@ import type {
   StorageTestResult,
 } from "../types";
 
-export const storageSnapshotQueryKey = ["storage-snapshot"] as const;
-
-export const storageEditQueryKey = (storageId: string) =>
-  ["storage-snapshot", "edit", storageId] as const;
+export { storageEditQueryKey, storageSnapshotQueryKey } from "./storage-query-keys";
 
 export const storageAdapterOptions: StorageAdapterOption[] = [
   {
@@ -82,14 +79,13 @@ export async function createStorageConfiguration(
 }
 
 export async function testStorageConfiguration(
-  _input: StorageMutationInput,
+  input: StorageMutationInput,
+  storageId?: string,
 ): Promise<StorageTestResult> {
-  await new Promise((resolve) => window.setTimeout(resolve, 360));
-
-  return {
-    ok: true,
-    testedAt: new Date().toISOString(),
-  };
+  return fetchJSON<StorageTestResult>("/api/v1/storage/configurations/test", {
+    body: JSON.stringify(storageId ? { ...input, id: storageId } : input),
+    method: "POST",
+  });
 }
 
 export async function updateStorageConfiguration(

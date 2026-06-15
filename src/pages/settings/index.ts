@@ -1,3 +1,2 @@
-export { fetchSettingsSnapshot, settingsSnapshotQueryKey } from "./api/settings-snapshot";
-export { SettingsPage } from "./SettingsPage";
+export { getSettingsRouteConfig } from "./settings-route-config";
 export type { SettingsSnapshot } from "./types";
