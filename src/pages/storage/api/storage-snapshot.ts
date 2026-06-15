@@ -10,10 +10,6 @@ export const storageAdapterOptions: StorageAdapterOption[] = [
   },
 ];
 
-type StorageConfigurationsAPIResponse = {
-  configurations: StorageConfigRecord[];
-};
-
 type StorageConfigurationAPIResponse = {
   configuration: StorageConfigRecord;
 };
@@ -38,16 +34,6 @@ const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8080"
   /\/+$/,
   "",
 );
-
-export async function fetchStorageSnapshot(): Promise<StorageSnapshot> {
-  const payload = await fetchJSON<StorageConfigurationsAPIResponse>(
-    "/api/v1/storage/configurations",
-  );
-
-  return {
-    configurations: payload.configurations,
-  };
-}
 
 export async function fetchStorageDetailSnapshot(storageId: string): Promise<StorageSnapshot> {
   const payload = await fetchJSON<StorageConfigurationAPIResponse>(

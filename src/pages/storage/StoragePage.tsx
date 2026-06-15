@@ -13,7 +13,7 @@ import {
   TriangleAlert,
 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
-
+import { fetchStorageConfigurationsSnapshot } from "@/api/storage-configurations";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { ConsoleTableFooter } from "@/components/common/ConsoleControls";
 import { consoleGridTheme } from "@/components/common/console-grid-theme";
@@ -23,7 +23,7 @@ import { cn } from "@/lib/utils";
 import type { StorageAdapter, StorageConfigRecord, StorageStatus } from "@/types/storage";
 
 import { storageSnapshotQueryKey } from "./api/storage-query-keys";
-import { deleteStorageConfiguration, fetchStorageSnapshot } from "./api/storage-snapshot";
+import { deleteStorageConfiguration } from "./api/storage-snapshot";
 
 type StoragePageProps = {
   onCreateStorage: () => void;
@@ -43,7 +43,7 @@ const statusClass: Record<StorageStatus, string> = {
 export function StoragePage({ onCreateStorage, onEditStorage }: StoragePageProps) {
   const queryClient = useQueryClient();
   const { data: snapshot } = useQuery({
-    queryFn: fetchStorageSnapshot,
+    queryFn: fetchStorageConfigurationsSnapshot,
     queryKey: storageSnapshotQueryKey,
   });
   const [deleteTarget, setDeleteTarget] = useState<StorageConfigRecord | null>(null);

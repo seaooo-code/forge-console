@@ -1,4 +1,3 @@
-import type { StorageConfigRecord, StorageSnapshot } from "@/types/storage";
 import type {
   EnvironmentCode,
   EnvironmentDetail,
@@ -19,10 +18,6 @@ type EnvironmentsAPIResponse = {
 
 type EnvironmentDetailAPIResponse = {
   environment: RuntimeEnvironment;
-};
-
-type StorageConfigurationsAPIResponse = {
-  configurations: StorageConfigRecord[];
 };
 
 type APIErrorPayload = {
@@ -69,16 +64,6 @@ export async function fetchEnvironmentDetailSnapshot(
       [environment.id]: environment,
     },
     environments: [environment],
-  };
-}
-
-export async function fetchEnvironmentStorageSnapshot(): Promise<StorageSnapshot> {
-  const payload = await fetchJSON<StorageConfigurationsAPIResponse>(
-    "/api/v1/storage/configurations",
-  );
-
-  return {
-    configurations: payload.configurations,
   };
 }
 

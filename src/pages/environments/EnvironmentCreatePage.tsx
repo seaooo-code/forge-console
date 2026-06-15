@@ -3,6 +3,7 @@ import { ArrowLeft, Layers3, LoaderCircle } from "lucide-react";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 
+import { fetchStorageConfigurationsSnapshot } from "@/api/storage-configurations";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -23,7 +24,6 @@ import {
 import {
   createEnvironment,
   fetchEnvironmentDetailSnapshot,
-  fetchEnvironmentStorageSnapshot,
   updateEnvironment,
 } from "./api/environments-snapshot";
 import type {
@@ -88,7 +88,7 @@ export function EnvironmentCreatePage({
     queryKey: environmentEditQueryKey(editEnvironmentId),
   });
   const { data: storageSnapshot, isFetching: isStorageFetching } = useQuery({
-    queryFn: fetchEnvironmentStorageSnapshot,
+    queryFn: fetchStorageConfigurationsSnapshot,
     queryKey: environmentStorageOptionsQueryKey(storageOptionsScope),
   });
   const environment = editEnvironmentId
