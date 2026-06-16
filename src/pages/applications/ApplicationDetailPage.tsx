@@ -36,7 +36,6 @@ import {
   applicationEnvironmentStatusClass,
   applicationMetricToneClass,
   applicationModuleKindClass,
-  applicationModuleStatusClass,
   applicationPipelineStatusClass,
   applicationStatusClass,
 } from "./constants";
@@ -112,17 +111,15 @@ export function ApplicationDetailPage({
         headerName: "类型",
         minWidth: 110,
       },
+      {
+        cellRenderer: ModuleCommonCell,
+        field: "commonModuleName",
+        flex: 0.9,
+        headerName: "通用模块",
+        minWidth: 130,
+      },
       { field: "repository", flex: 1.6, headerName: "仓库", minWidth: 240 },
       { field: "owner", flex: 0.8, headerName: "负责人", minWidth: 120 },
-      { field: "pipeline", flex: 1.1, headerName: "流水线", minWidth: 170 },
-      { field: "latestVersion", flex: 0.8, headerName: "线上版本", minWidth: 120 },
-      {
-        cellRenderer: ModuleStatusCell,
-        field: "status",
-        flex: 0.7,
-        headerName: "状态",
-        minWidth: 110,
-      },
     ],
     [],
   );
@@ -562,21 +559,14 @@ function ModuleKindCell({
   );
 }
 
-function ModuleStatusCell({
-  value,
-}: ICellRendererParams<ApplicationModuleRecord, ApplicationModuleRecord["status"]>) {
-  if (!value) {
-    return null;
+function ModuleCommonCell({ data }: ICellRendererParams<ApplicationModuleRecord>) {
+  if (!data || data.kind === "Common") {
+    return <span className="text-slate-400 text-xs">-</span>;
   }
 
   return (
-    <span
-      className={cn(
-        "inline-flex h-6 items-center rounded border px-2 font-semibold text-xs leading-none",
-        applicationModuleStatusClass[value],
-      )}
-    >
-      {value}
+    <span className="truncate text-slate-700 text-sm">
+      {data.commonModuleName || data.commonModuleId || "-"}
     </span>
   );
 }

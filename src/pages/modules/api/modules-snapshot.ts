@@ -1,10 +1,8 @@
-import { moduleStatusLabelByCode } from "../constants";
 import type {
   ModuleListFilters,
   ModuleMutationInput,
   ModuleRecord,
   ModuleRepositoryBinding,
-  ModuleStatusCode,
   ModulesSnapshot,
 } from "../types";
 
@@ -26,9 +24,7 @@ export const moduleEditQueryKey = (moduleId: string | undefined) => [
   moduleId ?? "none",
 ];
 
-type ModuleAPIRecord = Omit<ModuleRecord, "status"> & {
-  status: ModuleStatusCode | ModuleRecord["status"];
-};
+type ModuleAPIRecord = ModuleRecord;
 
 type ModulesAPIResponse = {
   modules: ModuleAPIRecord[];
@@ -95,10 +91,8 @@ export async function fetchModuleDetailSnapshot(moduleId: string): Promise<Modul
   return {
     modules: [module],
     summary: {
-      active: module.status === "活跃" ? 1 : 0,
       common: module.kind === "Common" ? 1 : 0,
       feature: module.kind === "Feature" ? 1 : 0,
-      frozen: module.status === "冻结" ? 1 : 0,
       total: 1,
     },
   };
@@ -162,10 +156,10 @@ export function normalizeModuleListFilters(
   filters?: Partial<ModuleListFilters>,
 ): ModuleListFilters {
   return {
+    applicationId: filters?.applicationId?.trim() ?? "",
     keyword: filters?.keyword?.trim() ?? "",
     kind: filters?.kind ?? "",
     owner: filters?.owner?.trim() ?? "",
-    status: filters?.status ?? "",
   };
 }
 
@@ -216,8 +210,8 @@ function buildModulesSnapshotPath(filters?: Partial<ModuleListFilters>) {
   if (normalizedFilters.kind) {
     params.set("kind", normalizedFilters.kind);
   }
-  if (normalizedFilters.status) {
-    params.set("status", normalizedFilters.status);
+  if (normalizedFilters.applicationId) {
+    params.set("applicationId", normalizedFilters.applicationId);
   }
   if (normalizedFilters.owner) {
     params.set("owner", normalizedFilters.owner);
@@ -232,15 +226,9 @@ function buildModulesSnapshotPath(filters?: Partial<ModuleListFilters>) {
 }
 
 function hasModuleListFilters(filters: ModuleListFilters) {
-  return Boolean(filters.kind || filters.status || filters.owner || filters.keyword);
+  return Boolean(filters.applicationId || filters.kind || filters.owner || filters.keyword);
 }
 
 function normalizeModule(module: ModuleAPIRecord): ModuleRecord {
-  return {
-    ...module,
-    status:
-      module.status === "active" || module.status === "frozen"
-        ? moduleStatusLabelByCode[module.status]
-        : module.status,
-  };
+  return module;
 }

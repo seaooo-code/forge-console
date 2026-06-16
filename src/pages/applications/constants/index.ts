@@ -87,11 +87,6 @@ export const applicationModuleKindClass: Record<ApplicationModuleRecord["kind"],
   Feature: "border-sky-200 bg-sky-50 text-sky-700",
 };
 
-export const applicationModuleStatusClass: Record<ApplicationModuleRecord["status"], string> = {
-  冻结: "border-slate-200 bg-slate-50 text-slate-600",
-  活跃: "border-emerald-200 bg-emerald-50 text-emerald-700",
-};
-
 export const applicationPipelineStatusClass: Record<ApplicationPipelineRecord["status"], string> = {
   failed: "border-red-200 bg-red-50 text-red-600",
   queued: "border-slate-200 bg-slate-50 text-slate-600",

@@ -1,7 +1,7 @@
 import { skipToken, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Box, CircleAlert, GitFork, LoaderCircle, PackagePlus } from "lucide-react";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { searchFeishuUsers } from "@/api/feishu-user-search";
 import { OwnerPicker } from "@/components/common/OwnerPicker";
 import { Button } from "@/components/ui/button";
@@ -21,19 +21,20 @@ import type { FeishuUserSearchResult } from "@/types/feishu";
 import {
   createModule,
   fetchModuleDetailSnapshot,
+  fetchModulesSnapshot,
   moduleEditQueryKey,
   modulesRootQueryKey,
+  modulesSnapshotQueryKey,
   searchCodeSourceRepositories,
   updateModule,
 } from "./api/modules-snapshot";
-import { defaultForm, kindOptions, statusOptions } from "./constants";
+import { defaultForm, kindOptions } from "./constants";
 import type {
   ModuleFormState,
   ModuleKind,
   ModuleMutationInput,
   ModuleRecord,
   ModuleRepositoryBinding,
-  ModuleStatusCode,
 } from "./types";
 
 type ModuleCreatePageProps = {
@@ -89,8 +90,29 @@ export function ModuleCreatePage({
   } = useForm<ModuleFormState>({
     defaultValues: initialForm,
   });
+  const selectedApplicationId = useWatch({ control, name: "applicationId" });
+  const selectedKind = useWatch({ control, name: "kind" });
+  const shouldLoadCommonModules = selectedKind === "Feature" && selectedApplicationId !== "";
+  const commonModuleFilters = useMemo(
+    () => ({
+      applicationId: shouldLoadCommonModules ? selectedApplicationId : "",
+      kind: "Common" as const,
+    }),
+    [selectedApplicationId, shouldLoadCommonModules],
+  );
+  const { data: commonModuleSnapshot } = useQuery({
+    queryFn: shouldLoadCommonModules ? () => fetchModulesSnapshot(commonModuleFilters) : skipToken,
+    queryKey: modulesSnapshotQueryKey(commonModuleFilters),
+  });
   const [formError, setFormError] = useState("");
   const hasInstalledCodeSource = codeSourceSnapshot?.apps.some((app) => app.status === "installed");
+  const commonModuleOptions = useMemo(
+    () =>
+      commonModuleSnapshot?.modules.filter(
+        (module) => module.applicationId === selectedApplicationId && module.id !== editModuleId,
+      ) ?? [],
+    [commonModuleSnapshot, editModuleId, selectedApplicationId],
+  );
 
   useEffect(() => {
     reset(initialForm);
@@ -118,8 +140,8 @@ export function ModuleCreatePage({
 
   const title = isEditMode ? "编辑模块" : "新建模块";
   const description = isEditMode
-    ? "维护模块仓库、负责人和启停状态"
-    : "登记新的 RN 模块仓库，并绑定归属应用与负责人";
+    ? "维护模块仓库、负责人和模块关系"
+    : "登记新的模块仓库，并绑定归属应用与负责人";
   const moduleIdField = register("id");
   const moduleNameField = register("name");
 
@@ -162,6 +184,20 @@ export function ModuleCreatePage({
     });
   };
 
+  const handleApplicationChange = (value: string) => {
+    clearFormError();
+    setValue("applicationId", value, { shouldDirty: true, shouldTouch: true });
+    setValue("commonModuleId", "", { shouldDirty: true, shouldTouch: true });
+  };
+
+  const handleKindChange = (value: ModuleKind) => {
+    clearFormError();
+    setValue("kind", value, { shouldDirty: true, shouldTouch: true });
+    if (value === "Common") {
+      setValue("commonModuleId", "", { shouldDirty: true, shouldTouch: true });
+    }
+  };
+
   const handleFormSubmit = async (form: ModuleFormState) => {
     const input = buildModuleInput(form);
     const validationError = validateModuleInput(input);
@@ -169,7 +205,6 @@ export function ModuleCreatePage({
       setFormError(validationError);
       return;
     }
-
     setFormError("");
 
     try {
@@ -276,13 +311,7 @@ export function ModuleCreatePage({
                     control={control}
                     name="applicationId"
                     render={({ field }) => (
-                      <Select
-                        value={field.value}
-                        onValueChange={(value) => {
-                          field.onChange(value);
-                          clearFormError();
-                        }}
-                      >
+                      <Select value={field.value} onValueChange={handleApplicationChange}>
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder="选择应用" />
                         </SelectTrigger>
@@ -321,10 +350,7 @@ export function ModuleCreatePage({
                     render={({ field }) => (
                       <Select
                         value={field.value}
-                        onValueChange={(value) => {
-                          field.onChange(value as ModuleKind);
-                          clearFormError();
-                        }}
+                        onValueChange={(value) => handleKindChange(value as ModuleKind)}
                       >
                         <SelectTrigger className="w-full">
                           <SelectValue />
@@ -340,32 +366,37 @@ export function ModuleCreatePage({
                     )}
                   />
                 </Field>
-                <Field label="模块状态" className="xl:col-span-4">
-                  <Controller
-                    control={control}
-                    name="status"
-                    render={({ field }) => (
-                      <Select
-                        value={field.value}
-                        onValueChange={(value) => {
-                          field.onChange(value as ModuleStatusCode);
-                          clearFormError();
-                        }}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {statusOptions.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                  />
-                </Field>
+                {selectedKind === "Feature" ? (
+                  <Field label="通用模块" className="xl:col-span-4">
+                    <Controller
+                      control={control}
+                      name="commonModuleId"
+                      render={({ field }) => (
+                        <Select
+                          value={field.value}
+                          onValueChange={(value) => {
+                            field.onChange(value);
+                            clearFormError();
+                          }}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="选择关联应用的通用模块" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {commonModuleOptions.map((module) => (
+                              <SelectItem key={module.id} value={module.id}>
+                                {module.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                    {commonModuleOptions.length === 0 ? (
+                      <p className="mt-2 text-amber-600 text-xs">请先为当前应用创建通用模块</p>
+                    ) : null}
+                  </Field>
+                ) : null}
               </div>
             </section>
 
@@ -412,6 +443,7 @@ function buildInitialForm(
 
   return {
     applicationId: moduleRecord.applicationId,
+    commonModuleId: moduleRecord.commonModuleId,
     id: moduleRecord.id,
     kind: moduleRecord.kind,
     name: moduleRecord.name,
@@ -434,13 +466,13 @@ function buildInitialForm(
       sshUrl: moduleRecord.repositorySshUrl,
     },
     repositoryKeyword: moduleRecord.repositoryFullName,
-    status: moduleRecord.status === "冻结" ? "frozen" : "active",
   };
 }
 
 function buildModuleInput(form: ModuleFormState): ModuleMutationInput {
   return {
     applicationId: form.applicationId,
+    commonModuleId: form.kind === "Feature" ? form.commonModuleId.trim() : undefined,
     id: form.id.trim(),
     kind: form.kind,
     name: form.name.trim(),
@@ -462,22 +494,32 @@ function buildModuleInput(form: ModuleFormState): ModuleMutationInput {
       provider: "github",
       sshUrl: "",
     },
-    status: form.status,
   };
 }
 
 function validateModuleInput(input: ModuleMutationInput) {
-  if (
-    !input.applicationId ||
-    !input.id ||
-    !input.name ||
-    !input.owner ||
-    !input.ownerUserId ||
-    !input.repository.id ||
-    !input.repository.installationId ||
-    !input.repository.fullName
-  ) {
-    return "请完整填写模块 ID、名称、关联应用、负责人，并选择已授权仓库";
+  if (!input.id) {
+    return "请填写模块 ID";
+  }
+
+  if (!input.name) {
+    return "请填写模块名称";
+  }
+
+  if (!input.applicationId) {
+    return "请选择关联应用";
+  }
+
+  if (input.kind === "Feature" && !input.commonModuleId) {
+    return "请选择当前应用的通用模块";
+  }
+
+  if (!input.owner || !input.ownerUserId) {
+    return "请从搜索结果中选择负责人";
+  }
+
+  if (!input.repository.id || !input.repository.installationId || !input.repository.fullName) {
+    return "请选择已授权仓库";
   }
 
   if (/\s/.test(input.id)) {
@@ -694,9 +736,7 @@ function ModuleCodeSourceRequired({
           </div>
           <div>
             <h1 className="font-semibold text-2xl text-slate-950 tracking-tight">新建模块</h1>
-            <p className="mt-2 text-slate-600 text-sm">
-              登记新的 RN 模块仓库，并绑定归属应用与负责人
-            </p>
+            <p className="mt-2 text-slate-600 text-sm">登记新的模块仓库，并绑定归属应用与负责人</p>
           </div>
         </div>
       </div>

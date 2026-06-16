@@ -4,9 +4,6 @@ import { AgGridReact } from "ag-grid-react";
 import {
   Box,
   Boxes,
-  CircleDot,
-  CirclePause,
-  GitBranch,
   GitFork,
   Layers3,
   Package,
@@ -38,8 +35,8 @@ import {
   modulesRootQueryKey,
   modulesSnapshotQueryKey,
 } from "./api/modules-snapshot";
-import { kindClass, statusClass } from "./constants";
-import type { ModuleKind, ModuleListFilters, ModuleRecord, ModuleStatus } from "./types";
+import { kindClass } from "./constants";
+import type { ModuleKind, ModuleListFilters, ModuleRecord } from "./types";
 
 type ModulesPageProps = {
   onCreateModule: () => void;
@@ -54,10 +51,10 @@ type ModuleActionsCellParams = {
 export function ModulesPage({ onCreateModule, onEditModule }: ModulesPageProps) {
   const queryClient = useQueryClient();
   const [filters, setFilters] = useState<ModuleListFilters>({
+    applicationId: "",
     keyword: "",
     kind: "",
     owner: "",
-    status: "",
   });
   const [deleteTarget, setDeleteTarget] = useState<ModuleRecord | null>(null);
   const [deleteError, setDeleteError] = useState("");
@@ -76,14 +73,11 @@ export function ModulesPage({ onCreateModule, onEditModule }: ModulesPageProps) 
   });
 
   const kindOptions = useMemo(() => globalEnums?.moduleKinds ?? [], [globalEnums]);
-  const statusOptions = useMemo(() => globalEnums?.moduleStatuses ?? [], [globalEnums]);
 
   const stats = useMemo(() => {
     const summary = snapshot?.summary ?? {
-      active: 0,
       common: 0,
       feature: 0,
-      frozen: 0,
       total: 0,
     };
 
@@ -101,7 +95,7 @@ export function ModulesPage({ onCreateModule, onEditModule }: ModulesPageProps) 
         icon: Layers3,
         iconClass: "bg-amber-50 text-amber-600",
         id: "common",
-        label: "Common Bundle",
+        label: "通用模块",
         value: summary.common,
       },
       {
@@ -109,24 +103,8 @@ export function ModulesPage({ onCreateModule, onEditModule }: ModulesPageProps) 
         icon: Package,
         iconClass: "bg-sky-50 text-sky-600",
         id: "feature",
-        label: "Feature Bundle",
+        label: "功能模块",
         value: summary.feature,
-      },
-      {
-        detail: "可参与研发",
-        icon: GitBranch,
-        iconClass: "bg-emerald-50 text-emerald-600",
-        id: "active",
-        label: "活跃模块",
-        value: summary.active,
-      },
-      {
-        detail: "暂停研发",
-        icon: CirclePause,
-        iconClass: "bg-slate-100 text-slate-500",
-        id: "frozen",
-        label: "冻结模块",
-        value: summary.frozen,
       },
     ];
   }, [snapshot]);
@@ -165,6 +143,13 @@ export function ModulesPage({ onCreateModule, onEditModule }: ModulesPageProps) 
         minWidth: 130,
       },
       {
+        cellRenderer: CommonModuleCell,
+        field: "commonModuleName",
+        flex: 0.8,
+        headerName: "通用模块",
+        minWidth: 130,
+      },
+      {
         cellRenderer: RepositoryCell,
         field: "repository",
         flex: 1.55,
@@ -172,13 +157,6 @@ export function ModulesPage({ onCreateModule, onEditModule }: ModulesPageProps) 
         minWidth: 260,
       },
       { field: "owner", flex: 0.75, headerName: "负责人", minWidth: 110 },
-      {
-        cellRenderer: StatusCell,
-        field: "status",
-        flex: 0.55,
-        headerName: "状态",
-        minWidth: 86,
-      },
       {
         cellRenderer: ActionsCell,
         cellRendererParams: {
@@ -217,12 +195,12 @@ export function ModulesPage({ onCreateModule, onEditModule }: ModulesPageProps) 
       <div className="border-slate-200 border-b bg-white px-6 py-5">
         <div>
           <h1 className="font-semibold text-2xl text-slate-950 tracking-tight">模块管理</h1>
-          <p className="mt-2 text-slate-600 text-sm">管理 RN 模块仓库、归属应用与负责人</p>
+          <p className="mt-2 text-slate-600 text-sm">管理模块仓库、归属应用、负责人和模块关系</p>
         </div>
       </div>
 
       <div className="space-y-4 px-6 py-5">
-        <section className="grid gap-3 xl:grid-cols-5">
+        <section className="grid gap-3 xl:grid-cols-3">
           {stats.map((item) => {
             const Icon = item.icon;
 
@@ -269,25 +247,6 @@ export function ModulesPage({ onCreateModule, onEditModule }: ModulesPageProps) 
                   setFilters((current) => ({
                     ...current,
                     kind: value as ModuleKind,
-                  }))
-                }
-              />
-              <ConsoleClearableFilterSelect
-                icon={CircleDot}
-                label="状态"
-                value={filters.status}
-                options={statusOptions}
-                clearLabel="清空状态筛选"
-                onClear={() =>
-                  setFilters((current) => ({
-                    ...current,
-                    status: "",
-                  }))
-                }
-                onValueChange={(value) =>
-                  setFilters((current) => ({
-                    ...current,
-                    status: value as ModuleListFilters["status"],
                   }))
                 }
               />
@@ -423,7 +382,9 @@ function ModuleCell({ data }: ICellRendererParams<ModuleRecord>) {
       </div>
       <div className="min-w-0 leading-tight">
         <div className="truncate font-semibold text-slate-900">{data.name}</div>
-        <div className="text-slate-500 text-xs">{data.kind} Bundle</div>
+        <div className="text-slate-500 text-xs">
+          {data.kind === "Common" ? "通用模块" : "功能模块"}
+        </div>
       </div>
     </div>
   );
@@ -459,19 +420,14 @@ function RepositoryCell({ value }: ICellRendererParams<ModuleRecord, string>) {
   );
 }
 
-function StatusCell({ value }: ICellRendererParams<ModuleRecord, ModuleStatus>) {
-  if (!value) {
-    return null;
+function CommonModuleCell({ data }: ICellRendererParams<ModuleRecord>) {
+  if (!data || data.kind === "Common") {
+    return <span className="text-slate-400 text-xs">-</span>;
   }
 
   return (
-    <span
-      className={cn(
-        "inline-flex h-6 items-center rounded border px-2 font-medium text-xs leading-none",
-        statusClass[value],
-      )}
-    >
-      {value}
+    <span className="truncate text-slate-700 text-sm">
+      {data.commonModuleName || data.commonModuleId || "-"}
     </span>
   );
 }

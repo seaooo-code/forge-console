@@ -1,7 +1,3 @@
-export type ModuleStatus = "冻结" | "活跃";
-
-export type ModuleStatusCode = "active" | "frozen";
-
 export type ModuleKind = "Common" | "Feature";
 
 export type ModuleApplicationOption = {
@@ -24,6 +20,8 @@ export type ModuleRecord = {
   applicationId: string;
   applicationName: string;
   applicationSlug: string;
+  commonModuleId: string;
+  commonModuleName: string;
   defaultBranch: string;
   id: string;
   name: string;
@@ -40,7 +38,6 @@ export type ModuleRecord = {
   repositoryInstallationId: string;
   repositoryProvider: "github";
   repositorySshUrl: string;
-  status: ModuleStatus;
 };
 
 export type ModulesSnapshot = {
@@ -49,15 +46,14 @@ export type ModulesSnapshot = {
 };
 
 export type ModuleSummary = {
-  active: number;
   common: number;
   feature: number;
-  frozen: number;
   total: number;
 };
 
 export type ModuleMutationInput = {
   applicationId: string;
+  commonModuleId?: string;
   id: string;
   name: string;
   kind: ModuleKind;
@@ -70,11 +66,11 @@ export type ModuleMutationInput = {
   ownerFeishuUserId?: string;
   ownerUserId: string;
   repository: ModuleRepositoryBinding;
-  status: ModuleStatusCode;
 };
 
 export type ModuleFormState = {
   applicationId: string;
+  commonModuleId: string;
   id: string;
   kind: ModuleKind;
   name: string;
@@ -88,12 +84,11 @@ export type ModuleFormState = {
   ownerUserId: string;
   repository: ModuleRepositoryBinding | null;
   repositoryKeyword: string;
-  status: ModuleStatusCode;
 };
 
 export type ModuleListFilters = {
+  applicationId: string;
   keyword: string;
   kind: ModuleKind | "";
   owner: string;
-  status: ModuleStatusCode | "";
 };

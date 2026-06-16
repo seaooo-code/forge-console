@@ -6,6 +6,5 @@ export type EnumOption = {
 export type GlobalEnums = {
   applicationStatuses: EnumOption[];
   moduleKinds: EnumOption[];
-  moduleStatuses: EnumOption[];
   platforms: EnumOption[];
 };

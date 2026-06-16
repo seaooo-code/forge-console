@@ -39,14 +39,13 @@ export type ApplicationEnvironmentRecord = {
 };
 
 export type ApplicationModuleRecord = {
+  commonModuleId: string;
+  commonModuleName: string;
   id: string;
   name: string;
   kind: "Common" | "Feature";
   repository: string;
   owner: string;
-  latestVersion: string;
-  pipeline: string;
-  status: "活跃" | "冻结";
 };
 
 export type ApplicationMemberRecord = {
