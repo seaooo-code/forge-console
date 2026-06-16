@@ -44,13 +44,23 @@ export async function searchFeishuUsers(query: string): Promise<FeishuUserSearch
   return payload.users.map(normalizeFeishuUserSearchResult);
 }
 
-function normalizeFeishuUserSearchResult(
-  user: FeishuUserSearchAPIResult,
-): FeishuUserSearchResult {
+function normalizeFeishuUserSearchResult(user: FeishuUserSearchAPIResult): FeishuUserSearchResult {
+  const openId = user.openId ?? "";
+  const userId = user.userId ?? "";
+  const unionId = user.unionId ?? "";
+
   return {
     ...user,
+    avatarUrl: user.avatarUrl ?? "",
     departmentIds: user.departmentIds ?? [],
-    id: user.id || user.openId || user.userId || user.unionId,
+    email: user.email ?? "",
+    enName: user.enName ?? "",
+    id: user.id || openId || userId || unionId,
+    mobile: user.mobile ?? "",
+    name: user.name ?? "",
+    openId,
+    unionId,
+    userId,
   };
 }
 

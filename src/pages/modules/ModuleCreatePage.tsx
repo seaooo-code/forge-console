@@ -120,8 +120,17 @@ export function ModuleCreatePage({
   const description = isEditMode
     ? "维护模块仓库、负责人和启停状态"
     : "登记新的 RN 模块仓库，并绑定归属应用与负责人";
+  const moduleIdField = register("id");
+  const moduleNameField = register("name");
+
+  const clearFormError = () => {
+    if (formError) {
+      setFormError("");
+    }
+  };
 
   const handleOwnerChange = (value: string) => {
+    clearFormError();
     setValue("owner", value, { shouldDirty: true, shouldTouch: true });
     setValue("ownerAvatarUrl", "", { shouldDirty: true });
     setValue("ownerDepartmentIds", [], { shouldDirty: true });
@@ -133,13 +142,24 @@ export function ModuleCreatePage({
   };
 
   const handleOwnerSelect = (user: FeishuUserSearchResult) => {
+    clearFormError();
+    setValue("owner", user.name, { shouldDirty: true, shouldTouch: true });
     setValue("ownerAvatarUrl", user.avatarUrl, { shouldDirty: true });
     setValue("ownerDepartmentIds", user.departmentIds, { shouldDirty: true });
     setValue("ownerEmail", user.email, { shouldDirty: true });
     setValue("ownerFeishuOpenId", user.openId, { shouldDirty: true });
     setValue("ownerFeishuUnionId", user.unionId, { shouldDirty: true });
     setValue("ownerFeishuUserId", user.userId, { shouldDirty: true });
-    setValue("ownerUserId", user.id, { shouldDirty: true });
+    setValue("ownerUserId", getOwnerUserId(user), { shouldDirty: true, shouldTouch: true });
+  };
+
+  const handleRepositoryChange = (repository: ModuleRepositoryBinding | null) => {
+    clearFormError();
+    setValue("repository", repository, { shouldDirty: true, shouldTouch: true });
+    setValue("repositoryKeyword", repository?.fullName ?? "", {
+      shouldDirty: true,
+      shouldTouch: true,
+    });
   };
 
   const handleFormSubmit = async (form: ModuleFormState) => {
@@ -234,18 +254,35 @@ export function ModuleCreatePage({
                     aria-disabled={isEditMode}
                     className={isEditMode ? "cursor-not-allowed bg-slate-50 text-slate-500" : ""}
                     placeholder="例如：module-profile"
-                    {...register("id")}
+                    {...moduleIdField}
+                    onChange={(event) => {
+                      moduleIdField.onChange(event);
+                      clearFormError();
+                    }}
                   />
                 </Field>
                 <Field label="模块名称" className="xl:col-span-4">
-                  <Input placeholder="例如：profile" {...register("name")} />
+                  <Input
+                    placeholder="例如：profile"
+                    {...moduleNameField}
+                    onChange={(event) => {
+                      moduleNameField.onChange(event);
+                      clearFormError();
+                    }}
+                  />
                 </Field>
                 <Field label="关联应用" className="xl:col-span-4">
                   <Controller
                     control={control}
                     name="applicationId"
                     render={({ field }) => (
-                      <Select value={field.value} onValueChange={field.onChange}>
+                      <Select
+                        value={field.value}
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                          clearFormError();
+                        }}
+                      >
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder="选择应用" />
                         </SelectTrigger>
@@ -284,7 +321,10 @@ export function ModuleCreatePage({
                     render={({ field }) => (
                       <Select
                         value={field.value}
-                        onValueChange={(value) => field.onChange(value as ModuleKind)}
+                        onValueChange={(value) => {
+                          field.onChange(value as ModuleKind);
+                          clearFormError();
+                        }}
                       >
                         <SelectTrigger className="w-full">
                           <SelectValue />
@@ -307,7 +347,10 @@ export function ModuleCreatePage({
                     render={({ field }) => (
                       <Select
                         value={field.value}
-                        onValueChange={(value) => field.onChange(value as ModuleStatusCode)}
+                        onValueChange={(value) => {
+                          field.onChange(value as ModuleStatusCode);
+                          clearFormError();
+                        }}
                       >
                         <SelectTrigger className="w-full">
                           <SelectValue />
@@ -336,18 +379,7 @@ export function ModuleCreatePage({
                   control={control}
                   name="repository"
                   render={({ field }) => (
-                    <RepositoryPicker
-                      value={field.value}
-                      onChange={(repository) => {
-                        field.onChange(repository);
-                        if (repository) {
-                          setValue("repositoryKeyword", repository.fullName, {
-                            shouldDirty: true,
-                            shouldTouch: true,
-                          });
-                        }
-                      }}
-                    />
+                    <RepositoryPicker value={field.value} onChange={handleRepositoryChange} />
                   )}
                 />
               </Field>
@@ -453,6 +485,10 @@ function validateModuleInput(input: ModuleMutationInput) {
   }
 
   return "";
+}
+
+function getOwnerUserId(user: FeishuUserSearchResult) {
+  return user.id || user.openId || user.userId || user.unionId;
 }
 
 function RepositoryPicker({
