@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ColDef, ICellRendererParams } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 import {
@@ -6,7 +6,6 @@ import {
   Boxes,
   CircleDot,
   CirclePause,
-  Download,
   GitBranch,
   GitFork,
   Layers3,
@@ -14,24 +13,33 @@ import {
   Pencil,
   Plus,
   RefreshCw,
-  UserRound,
+  Trash2,
 } from "lucide-react";
-import { useMemo } from "react";
-
+import { useMemo, useState } from "react";
+import { fetchGlobalEnums, globalEnumsQueryKey } from "@/api/enums";
+import { searchFeishuUsers } from "@/api/feishu-user-search";
+import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import {
-  ConsoleFilterSelect,
+  ConsoleClearableFilterSelect,
+  ConsoleOwnerSearchFilter,
   ConsoleSearchInput,
   ConsoleTableFooter,
 } from "@/components/common/ConsoleControls";
 import { consoleGridTheme } from "@/components/common/console-grid-theme";
-import { MockCard as Card, MockSurface } from "@/components/common/MockSurface";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
+import { applicationsRootQueryKey } from "@/pages/applications";
 
-import { fetchModulesSnapshot, modulesSnapshotQueryKey } from "./api/modules-snapshot";
+import {
+  deleteModule,
+  fetchModulesSnapshot,
+  modulesRootQueryKey,
+  modulesSnapshotQueryKey,
+} from "./api/modules-snapshot";
 import { kindClass, statusClass } from "./constants";
-import type { ModuleRecord, ModuleStatus } from "./types";
+import type { ModuleKind, ModuleListFilters, ModuleRecord, ModuleStatus } from "./types";
 
 type ModulesPageProps = {
   onCreateModule: () => void;
@@ -39,24 +47,54 @@ type ModulesPageProps = {
 };
 
 type ModuleActionsCellParams = {
+  onDeleteModule: (module: ModuleRecord) => void;
   onEditModule: (moduleId: string) => void;
 };
 
 export function ModulesPage({ onCreateModule, onEditModule }: ModulesPageProps) {
-  const { data: snapshot } = useQuery({
-    queryFn: fetchModulesSnapshot,
-    queryKey: modulesSnapshotQueryKey,
+  const queryClient = useQueryClient();
+  const [filters, setFilters] = useState<ModuleListFilters>({
+    keyword: "",
+    kind: "",
+    owner: "",
+    status: "",
+  });
+  const [deleteTarget, setDeleteTarget] = useState<ModuleRecord | null>(null);
+  const [deleteError, setDeleteError] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+  const {
+    data: snapshot,
+    isFetching,
+    refetch,
+  } = useQuery({
+    queryFn: () => fetchModulesSnapshot(filters),
+    queryKey: modulesSnapshotQueryKey(filters),
+  });
+  const { data: globalEnums } = useQuery({
+    queryFn: fetchGlobalEnums,
+    queryKey: globalEnumsQueryKey,
   });
 
-  const stats = useMemo(
-    () => [
+  const kindOptions = useMemo(() => globalEnums?.moduleKinds ?? [], [globalEnums]);
+  const statusOptions = useMemo(() => globalEnums?.moduleStatuses ?? [], [globalEnums]);
+
+  const stats = useMemo(() => {
+    const summary = snapshot?.summary ?? {
+      active: 0,
+      common: 0,
+      feature: 0,
+      frozen: 0,
+      total: 0,
+    };
+
+    return [
       {
-        detail: "覆盖 8 个应用",
+        detail: "已接入真实仓库",
         icon: Boxes,
         iconClass: "bg-blue-50 text-blue-600",
         id: "total",
         label: "模块总数",
-        value: 42,
+        value: summary.total,
       },
       {
         detail: "依赖基础",
@@ -64,7 +102,7 @@ export function ModulesPage({ onCreateModule, onEditModule }: ModulesPageProps) 
         iconClass: "bg-amber-50 text-amber-600",
         id: "common",
         label: "Common Bundle",
-        value: 8,
+        value: summary.common,
       },
       {
         detail: "业务模块",
@@ -72,15 +110,15 @@ export function ModulesPage({ onCreateModule, onEditModule }: ModulesPageProps) 
         iconClass: "bg-sky-50 text-sky-600",
         id: "feature",
         label: "Feature Bundle",
-        value: 34,
+        value: summary.feature,
       },
       {
-        detail: "近 7 天有构建",
+        detail: "可参与研发",
         icon: GitBranch,
         iconClass: "bg-emerald-50 text-emerald-600",
         id: "active",
         label: "活跃模块",
-        value: 38,
+        value: summary.active,
       },
       {
         detail: "暂停研发",
@@ -88,11 +126,10 @@ export function ModulesPage({ onCreateModule, onEditModule }: ModulesPageProps) 
         iconClass: "bg-slate-100 text-slate-500",
         id: "frozen",
         label: "冻结模块",
-        value: 4,
+        value: summary.frozen,
       },
-    ],
-    [],
-  );
+    ];
+  }, [snapshot]);
 
   const columnDefs = useMemo<ColDef<ModuleRecord>[]>(
     () => [
@@ -145,12 +182,13 @@ export function ModulesPage({ onCreateModule, onEditModule }: ModulesPageProps) 
       {
         cellRenderer: ActionsCell,
         cellRendererParams: {
+          onDeleteModule: setDeleteTarget,
           onEditModule,
         },
         colId: "actions",
-        flex: 0.82,
+        flex: 0.9,
         headerName: "操作",
-        minWidth: 138,
+        minWidth: 150,
         sortable: false,
       },
     ],
@@ -172,16 +210,14 @@ export function ModulesPage({ onCreateModule, onEditModule }: ModulesPageProps) 
     [],
   );
 
-  if (!snapshot) {
-    return null;
-  }
+  const modules = snapshot?.modules ?? [];
 
   return (
     <>
       <div className="border-slate-200 border-b bg-white px-6 py-5">
         <div>
           <h1 className="font-semibold text-2xl text-slate-950 tracking-tight">模块管理</h1>
-          <p className="mt-2 text-slate-600 text-sm">管理 RN 模块仓库与 Bundle 产物</p>
+          <p className="mt-2 text-slate-600 text-sm">管理 RN 模块仓库、归属应用与负责人</p>
         </div>
       </div>
 
@@ -214,52 +250,74 @@ export function ModulesPage({ onCreateModule, onEditModule }: ModulesPageProps) 
           })}
         </section>
 
-        <MockSurface
-          as="section"
-          className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm"
-        >
+        <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-3 border-slate-200 border-b px-4 py-3">
             <div className="flex min-w-0 flex-wrap items-center gap-2">
-              <ConsoleFilterSelect
+              <ConsoleClearableFilterSelect
                 icon={Boxes}
                 label="类型"
-                value="all"
-                options={[
-                  { label: "全部类型", value: "all" },
-                  { label: "Common", value: "common" },
-                  { label: "Feature", value: "feature" },
-                ]}
+                value={filters.kind}
+                options={kindOptions}
+                clearLabel="清空类型筛选"
+                onClear={() =>
+                  setFilters((current) => ({
+                    ...current,
+                    kind: "",
+                  }))
+                }
+                onValueChange={(value) =>
+                  setFilters((current) => ({
+                    ...current,
+                    kind: value as ModuleKind,
+                  }))
+                }
               />
-              <ConsoleFilterSelect
+              <ConsoleClearableFilterSelect
                 icon={CircleDot}
                 label="状态"
-                value="all"
-                options={[
-                  { label: "全部状态", value: "all" },
-                  { label: "活跃", value: "active" },
-                  { label: "冻结", value: "frozen" },
-                ]}
+                value={filters.status}
+                options={statusOptions}
+                clearLabel="清空状态筛选"
+                onClear={() =>
+                  setFilters((current) => ({
+                    ...current,
+                    status: "",
+                  }))
+                }
+                onValueChange={(value) =>
+                  setFilters((current) => ({
+                    ...current,
+                    status: value as ModuleListFilters["status"],
+                  }))
+                }
               />
-              <ConsoleFilterSelect
-                icon={UserRound}
-                label="负责人"
-                value="all"
-                options={[
-                  { label: "全部负责人", value: "all" },
-                  { label: "li.ming", value: "li.ming" },
-                  { label: "wang.fang", value: "wang.fang" },
-                  { label: "zhao.lei", value: "zhao.lei" },
-                ]}
+              <ConsoleOwnerSearchFilter
+                value={filters.owner}
+                searchUsers={searchFeishuUsers}
+                onValueChange={(owner) =>
+                  setFilters((current) => ({
+                    ...current,
+                    owner,
+                  }))
+                }
               />
-              <ConsoleSearchInput />
+              <ConsoleSearchInput
+                value={filters.keyword}
+                placeholder="搜索模块 / 仓库 / 应用"
+                onChange={(keyword) => setFilters((current) => ({ ...current, keyword }))}
+              />
             </div>
 
             <div className="flex shrink-0 items-center gap-2">
-              <Button variant="outline" size="icon" aria-label="刷新模块列表">
-                <RefreshCw className="size-4" />
-              </Button>
-              <Button variant="outline" size="icon" aria-label="下载模块列表">
-                <Download className="size-4" />
+              <Button
+                variant="outline"
+                size="icon"
+                aria-label="刷新模块列表"
+                onClick={() => {
+                  void refetch();
+                }}
+              >
+                <RefreshCw className={isFetching ? "size-4 animate-spin" : "size-4"} />
               </Button>
               <Button
                 type="button"
@@ -273,7 +331,7 @@ export function ModulesPage({ onCreateModule, onEditModule }: ModulesPageProps) 
           </div>
 
           <AgGridReact<ModuleRecord>
-            rowData={snapshot.modules}
+            rowData={modules}
             columnDefs={columnDefs}
             defaultColDef={defaultColDef}
             domLayout="autoHeight"
@@ -285,9 +343,51 @@ export function ModulesPage({ onCreateModule, onEditModule }: ModulesPageProps) 
             getRowId={({ data }) => data.id}
           />
 
-          <ConsoleTableFooter total={snapshot.modules.length} />
-        </MockSurface>
+          <ConsoleTableFooter total={modules.length} />
+        </section>
       </div>
+
+      <ConfirmDialog
+        isOpen={deleteTarget !== null}
+        isPending={isDeleting}
+        title="删除模块"
+        description={
+          deleteTarget ? `确认删除「${deleteTarget.name}」？删除后应用关联模块数会同步更新。` : ""
+        }
+        confirmLabel="删除模块"
+        tone="danger"
+        onCancel={() => {
+          if (isDeleting) {
+            return;
+          }
+          setDeleteTarget(null);
+          setDeleteError("");
+        }}
+        onConfirm={async () => {
+          if (!deleteTarget) {
+            return;
+          }
+
+          setIsDeleting(true);
+          setDeleteError("");
+          try {
+            await deleteModule(deleteTarget.id);
+            await queryClient.invalidateQueries({ queryKey: modulesRootQueryKey });
+            await queryClient.invalidateQueries({ queryKey: applicationsRootQueryKey });
+            setDeleteTarget(null);
+          } catch (error) {
+            setDeleteError(error instanceof Error ? error.message : "删除模块失败，请稍后重试");
+          } finally {
+            setIsDeleting(false);
+          }
+        }}
+      >
+        {deleteError ? (
+          <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-rose-600 text-sm">
+            {deleteError}
+          </div>
+        ) : null}
+      </ConfirmDialog>
     </>
   );
 }
@@ -378,6 +478,7 @@ function StatusCell({ value }: ICellRendererParams<ModuleRecord, ModuleStatus>) 
 
 function ActionsCell({
   data,
+  onDeleteModule,
   onEditModule,
 }: ICellRendererParams<ModuleRecord> & ModuleActionsCellParams) {
   if (!data) {
@@ -389,25 +490,20 @@ function ActionsCell({
       <Button
         variant="link"
         type="button"
-        className="h-auto p-0 text-blue-600 text-xs hover:text-blue-700"
-      >
-        详情
-      </Button>
-      <Button
-        variant="link"
-        type="button"
-        className="h-auto p-0 text-blue-600 text-xs hover:text-blue-700"
-      >
-        Bundle
-      </Button>
-      <Button
-        variant="link"
-        type="button"
         className="h-auto gap-1 p-0 text-blue-600 text-xs hover:text-blue-700"
         onClick={() => onEditModule(data.id)}
       >
         <Pencil className="size-3.5" />
         编辑
+      </Button>
+      <Button
+        variant="link"
+        type="button"
+        className="h-auto gap-1 p-0 text-rose-600 text-xs hover:text-rose-700"
+        onClick={() => onDeleteModule(data)}
+      >
+        <Trash2 className="size-3.5" />
+        删除
       </Button>
     </div>
   );

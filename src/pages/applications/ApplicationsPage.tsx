@@ -6,30 +6,25 @@ import {
   AppWindow,
   ArchiveX,
   CircleDot,
-  LoaderCircle,
-  type LucideIcon,
   MonitorSmartphone,
   Plus,
   RefreshCw,
   Smartphone,
   Trash2,
-  UserRound,
   Wrench,
-  X,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { searchFeishuUsers } from "@/api/feishu-user-search";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import {
-  ConsoleFilterSelect,
+  ConsoleClearableFilterSelect,
+  ConsoleOwnerSearchFilter,
   ConsoleSearchInput,
   ConsoleTableFooter,
 } from "@/components/common/ConsoleControls";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import type { FeishuUserSearchResult } from "@/types/feishu";
 
 import {
   applicationDeleteCheckQueryKey,
@@ -47,12 +42,7 @@ import {
   emptyApplicationListFilters,
 } from "./constants";
 import { useApplicationOptions } from "./hooks";
-import type {
-  ApplicationListFilters,
-  ApplicationOption,
-  ApplicationStatusCode,
-  HostApplication,
-} from "./types";
+import type { ApplicationListFilters, ApplicationStatusCode, HostApplication } from "./types";
 
 type ApplicationsPageProps = {
   onConfigureApplication: (applicationSlug: string) => void;
@@ -315,7 +305,7 @@ export function ApplicationsPage({
         <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-3 border-slate-200 border-b px-4 py-3">
             <div className="flex min-w-0 flex-wrap items-center gap-2">
-              <ClearableFilterSelect
+              <ConsoleClearableFilterSelect
                 icon={MonitorSmartphone}
                 label="平台"
                 value={filters.platform}
@@ -324,7 +314,7 @@ export function ApplicationsPage({
                 onClear={() => updateFilters({ platform: "" })}
                 onValueChange={(value) => updateFilters({ platform: value })}
               />
-              <ClearableFilterSelect
+              <ConsoleClearableFilterSelect
                 icon={CircleDot}
                 label="状态"
                 value={filters.status}
@@ -333,9 +323,10 @@ export function ApplicationsPage({
                 onClear={() => updateFilters({ status: "" })}
                 onValueChange={(value) => updateFilters({ status: value as ApplicationStatusCode })}
               />
-              <OwnerSearchFilter
+              <ConsoleOwnerSearchFilter
                 value={filters.owner}
-                onChange={(owner) => updateFilters({ owner })}
+                searchUsers={searchFeishuUsers}
+                onValueChange={(owner) => updateFilters({ owner })}
               />
               <ConsoleSearchInput
                 value={keywordInput}
@@ -531,201 +522,6 @@ function ApplicationsPageLoading() {
       </div>
     </>
   );
-}
-
-type OwnerSearchFilterProps = {
-  onChange: (owner: string) => void;
-  value: string;
-};
-
-type ClearableFilterSelectProps = {
-  clearLabel: string;
-  icon: LucideIcon;
-  label: string;
-  onClear: () => void;
-  onValueChange: (value: string) => void;
-  options: ApplicationOption[];
-  value: string;
-};
-
-function ClearableFilterSelect({
-  clearLabel,
-  icon,
-  label,
-  onClear,
-  onValueChange,
-  options,
-  value,
-}: ClearableFilterSelectProps) {
-  return (
-    <div className="flex items-center gap-1">
-      <ConsoleFilterSelect
-        icon={icon}
-        label={label}
-        value={value}
-        options={options}
-        onValueChange={onValueChange}
-      />
-      {value ? (
-        <Button
-          variant="outline"
-          type="button"
-          size="icon"
-          className="size-9 shrink-0 border-slate-200 bg-white text-slate-500"
-          aria-label={clearLabel}
-          onClick={onClear}
-        >
-          <X className="size-3.5" />
-        </Button>
-      ) : null}
-    </div>
-  );
-}
-
-function OwnerSearchFilter({ onChange, value }: OwnerSearchFilterProps) {
-  const [query, setQuery] = useState(value);
-  const [users, setUsers] = useState<FeishuUserSearchResult[]>([]);
-  const [isOpen, setIsOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    setQuery(value);
-  }, [value]);
-
-  useEffect(() => {
-    const keyword = query.trim();
-    if (!isOpen || keyword.length < 2) {
-      setUsers([]);
-      setIsLoading(false);
-      return;
-    }
-
-    let disposed = false;
-    setIsLoading(true);
-    const handle = window.setTimeout(() => {
-      void searchFeishuUsers(keyword)
-        .then((result) => {
-          if (!disposed) {
-            setUsers(result);
-          }
-        })
-        .catch(() => {
-          if (!disposed) {
-            setUsers([]);
-          }
-        })
-        .finally(() => {
-          if (!disposed) {
-            setIsLoading(false);
-          }
-        });
-    }, 280);
-
-    return () => {
-      disposed = true;
-      window.clearTimeout(handle);
-    };
-  }, [isOpen, query]);
-
-  const label = value || "负责人";
-
-  return (
-    <fieldset
-      className="relative m-0 min-w-0 border-0 p-0"
-      onBlur={(event) => {
-        const nextTarget = event.relatedTarget;
-        if (nextTarget instanceof Node && event.currentTarget.contains(nextTarget)) {
-          return;
-        }
-
-        window.setTimeout(() => setIsOpen(false), 150);
-      }}
-    >
-      <Button
-        variant="outline"
-        type="button"
-        className="h-9 min-w-28 justify-start gap-2 border-slate-200 bg-white px-3 font-medium text-slate-600 shadow-sm hover:bg-white hover:text-slate-900"
-        aria-label="负责人筛选"
-        onClick={() => setIsOpen((current) => !current)}
-      >
-        <UserRound className="size-3.5 shrink-0 text-slate-400" />
-        <span className="max-w-24 truncate">{label}</span>
-      </Button>
-
-      {isOpen ? (
-        <div className="absolute z-30 mt-1 w-72 rounded-md border border-slate-200 bg-white p-2 shadow-lg">
-          <div className="flex items-center gap-2">
-            <Input
-              value={query}
-              placeholder="搜索姓名、邮箱或账号"
-              className="h-8"
-              onChange={(event) => setQuery(event.target.value)}
-              onFocus={() => setIsOpen(true)}
-            />
-            {value ? (
-              <Button
-                variant="outline"
-                type="button"
-                size="icon"
-                className="size-8 shrink-0 border-slate-200 bg-white text-slate-500"
-                aria-label="清空负责人筛选"
-                onClick={() => {
-                  setQuery("");
-                  setUsers([]);
-                  setIsOpen(false);
-                  onChange("");
-                }}
-              >
-                <X className="size-3.5" />
-              </Button>
-            ) : null}
-          </div>
-          <div className="mt-2 max-h-72 overflow-auto">
-            {isLoading ? (
-              <div className="flex h-9 items-center gap-2 px-2 text-slate-500 text-sm">
-                <LoaderCircle className="size-4 animate-spin" />
-                搜索中
-              </div>
-            ) : null}
-            {!isLoading && query.trim().length >= 2 && users.length === 0 ? (
-              <div className="px-2 py-2 text-slate-500 text-sm">未找到匹配人员</div>
-            ) : null}
-            {users.map((user) => {
-              const name = getFeishuUserDisplayName(user);
-
-              return (
-                <Button
-                  key={user.id}
-                  variant="ghost"
-                  type="button"
-                  className="h-auto w-full justify-start gap-2 rounded-sm px-2 py-2 text-left font-normal"
-                  onClick={() => {
-                    setQuery(name);
-                    setIsOpen(false);
-                    onChange(name);
-                  }}
-                >
-                  <OwnerAvatar name={name} src={user.avatarUrl} />
-                  <span className="min-w-0">
-                    <span className="block truncate font-medium text-slate-900 text-sm">
-                      {name}
-                    </span>
-                    {user.email ? (
-                      <span className="block truncate text-slate-500 text-xs">{user.email}</span>
-                    ) : null}
-                  </span>
-                </Button>
-              );
-            })}
-          </div>
-        </div>
-      ) : null}
-    </fieldset>
-  );
-}
-
-function getFeishuUserDisplayName(user: FeishuUserSearchResult) {
-  return user.name;
 }
 
 function AppNameCell({ data }: ICellRendererParams<HostApplication>) {

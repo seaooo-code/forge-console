@@ -1,7 +1,7 @@
 import type { FeishuUserSearchResult } from "@/types/feishu";
 
 type FeishuUserSearchAPIResponse = {
-  users: FeishuUserSearchResult[];
+  users: FeishuUserSearchAPIResult[];
 };
 
 type APIErrorPayload = {
@@ -9,6 +9,10 @@ type APIErrorPayload = {
   feishuCode?: number;
   feishuEndpoint?: string;
   feishuMsg?: string;
+};
+
+type FeishuUserSearchAPIResult = Omit<FeishuUserSearchResult, "id"> & {
+  id?: string;
 };
 
 export class FeishuUserSearchAPIError extends Error {
@@ -37,7 +41,17 @@ export async function searchFeishuUsers(query: string): Promise<FeishuUserSearch
     `/api/v1/feishu/users/search?${params.toString()}`,
   );
 
-  return payload.users;
+  return payload.users.map(normalizeFeishuUserSearchResult);
+}
+
+function normalizeFeishuUserSearchResult(
+  user: FeishuUserSearchAPIResult,
+): FeishuUserSearchResult {
+  return {
+    ...user,
+    departmentIds: user.departmentIds ?? [],
+    id: user.id || user.openId || user.userId || user.unionId,
+  };
 }
 
 async function fetchJSON<T>(path: string): Promise<T> {

@@ -273,7 +273,11 @@ function ModuleCreateRoute() {
   const navigate = useNavigate();
 
   return (
-    <ModuleCreatePage onBack={() => navigate("/modules")} onSaved={() => navigate("/modules")} />
+    <ModuleCreatePage
+      onBack={() => navigate("/modules")}
+      onOpenCodeSources={() => navigate("/code-sources")}
+      onSaved={() => navigate("/modules")}
+    />
   );
 }
 

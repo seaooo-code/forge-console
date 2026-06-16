@@ -1,8 +1,9 @@
 import { skipToken, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Box, CircleAlert, LoaderCircle, PackagePlus } from "lucide-react";
+import { ArrowLeft, Box, CircleAlert, GitFork, LoaderCircle, PackagePlus } from "lucide-react";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-
+import { searchFeishuUsers } from "@/api/feishu-user-search";
+import { OwnerPicker } from "@/components/common/OwnerPicker";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -13,27 +14,33 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { applicationsRootQueryKey, fetchApplicationsSnapshot } from "@/pages/applications";
+import { codeSourcesSnapshotQueryKey, fetchCodeSourcesSnapshot } from "@/pages/code-sources";
+import type { FeishuUserSearchResult } from "@/types/feishu";
 
 import {
   createModule,
   fetchModuleDetailSnapshot,
   moduleEditQueryKey,
-  modulesSnapshotQueryKey,
+  modulesRootQueryKey,
+  searchCodeSourceRepositories,
   updateModule,
 } from "./api/modules-snapshot";
-import { defaultForm, kindOptions, moduleApplicationOptions, statusOptions } from "./constants";
+import { defaultForm, kindOptions, statusOptions } from "./constants";
 import type {
   ModuleFormState,
   ModuleKind,
   ModuleMutationInput,
   ModuleRecord,
-  ModuleStatus,
+  ModuleRepositoryBinding,
+  ModuleStatusCode,
 } from "./types";
 
 type ModuleCreatePageProps = {
   mode?: "create" | "edit";
   moduleId?: string;
   onBack: () => void;
+  onOpenCodeSources?: () => void;
   onSaved?: (moduleId: string) => void;
 };
 
@@ -41,19 +48,36 @@ export function ModuleCreatePage({
   mode = "create",
   moduleId,
   onBack,
+  onOpenCodeSources,
   onSaved,
 }: ModuleCreatePageProps) {
   const queryClient = useQueryClient();
   const isEditMode = mode === "edit";
   const editModuleId = isEditMode ? moduleId : undefined;
-  const { data: moduleSnapshot, isFetching } = useQuery({
+  const { data: applicationSnapshot, isFetching: isApplicationsFetching } = useQuery({
+    queryFn: () => fetchApplicationsSnapshot(),
+    queryKey: applicationsRootQueryKey,
+  });
+  const { data: moduleSnapshot, isFetching: isModuleFetching } = useQuery({
     queryFn: editModuleId ? () => fetchModuleDetailSnapshot(editModuleId) : skipToken,
     queryKey: moduleEditQueryKey(editModuleId),
   });
+  const { data: codeSourceSnapshot, isFetching: isCodeSourcesFetching } = useQuery({
+    queryFn: isEditMode ? skipToken : fetchCodeSourcesSnapshot,
+    queryKey: codeSourcesSnapshotQueryKey,
+  });
+  const applicationOptions = useMemo(
+    () =>
+      applicationSnapshot?.applications.map((application) => ({
+        label: application.name,
+        value: application.id,
+      })) ?? [],
+    [applicationSnapshot],
+  );
   const moduleRecord = editModuleId ? moduleSnapshot?.modules[0] : undefined;
   const initialForm = useMemo(
-    () => buildInitialForm(isEditMode ? moduleRecord : undefined),
-    [isEditMode, moduleRecord],
+    () => buildInitialForm(isEditMode ? moduleRecord : undefined, applicationOptions[0]?.value),
+    [applicationOptions, isEditMode, moduleRecord],
   );
   const {
     control,
@@ -61,28 +85,62 @@ export function ModuleCreatePage({
     handleSubmit,
     register,
     reset,
+    setValue,
   } = useForm<ModuleFormState>({
     defaultValues: initialForm,
   });
   const [formError, setFormError] = useState("");
+  const hasInstalledCodeSource = codeSourceSnapshot?.apps.some((app) => app.status === "installed");
 
   useEffect(() => {
     reset(initialForm);
     setFormError("");
   }, [initialForm, reset]);
 
-  if (isEditMode && isFetching && !moduleRecord) {
+  if (
+    (isEditMode && isModuleFetching && !moduleRecord) ||
+    (isApplicationsFetching && !applicationSnapshot)
+  ) {
     return <ModuleFormLoading onBack={onBack} />;
   }
 
-  if (isEditMode && !isFetching && !moduleRecord) {
+  if (!isEditMode && isCodeSourcesFetching && !codeSourceSnapshot) {
+    return <ModuleFormLoading onBack={onBack} />;
+  }
+
+  if (!isEditMode && codeSourceSnapshot && !hasInstalledCodeSource) {
+    return <ModuleCodeSourceRequired onBack={onBack} onOpenCodeSources={onOpenCodeSources} />;
+  }
+
+  if (isEditMode && !isModuleFetching && !moduleRecord) {
     return <ModuleFormNotFound onBack={onBack} />;
   }
 
   const title = isEditMode ? "编辑模块" : "新建模块";
   const description = isEditMode
     ? "维护模块仓库、负责人和启停状态"
-    : "登记新的 RN 模块仓库，用于 Bundle 产物管理";
+    : "登记新的 RN 模块仓库，并绑定归属应用与负责人";
+
+  const handleOwnerChange = (value: string) => {
+    setValue("owner", value, { shouldDirty: true, shouldTouch: true });
+    setValue("ownerAvatarUrl", "", { shouldDirty: true });
+    setValue("ownerDepartmentIds", [], { shouldDirty: true });
+    setValue("ownerEmail", "", { shouldDirty: true });
+    setValue("ownerFeishuOpenId", "", { shouldDirty: true });
+    setValue("ownerFeishuUnionId", "", { shouldDirty: true });
+    setValue("ownerFeishuUserId", "", { shouldDirty: true });
+    setValue("ownerUserId", "", { shouldDirty: true });
+  };
+
+  const handleOwnerSelect = (user: FeishuUserSearchResult) => {
+    setValue("ownerAvatarUrl", user.avatarUrl, { shouldDirty: true });
+    setValue("ownerDepartmentIds", user.departmentIds, { shouldDirty: true });
+    setValue("ownerEmail", user.email, { shouldDirty: true });
+    setValue("ownerFeishuOpenId", user.openId, { shouldDirty: true });
+    setValue("ownerFeishuUnionId", user.unionId, { shouldDirty: true });
+    setValue("ownerFeishuUserId", user.userId, { shouldDirty: true });
+    setValue("ownerUserId", user.id, { shouldDirty: true });
+  };
 
   const handleFormSubmit = async (form: ModuleFormState) => {
     const input = buildModuleInput(form);
@@ -103,10 +161,17 @@ export function ModuleCreatePage({
       const savedModule = isEditMode
         ? await updateExistingModule(moduleId, input)
         : await createModule(input);
-      await queryClient.invalidateQueries({ queryKey: modulesSnapshotQueryKey });
+      await queryClient.invalidateQueries({ queryKey: modulesRootQueryKey });
+      await queryClient.invalidateQueries({ queryKey: applicationsRootQueryKey });
       onSaved?.(savedModule.id);
-    } catch (_error) {
-      setFormError(isEditMode ? "保存模块失败，请稍后重试" : "创建模块失败，请确认模块 ID 未重复");
+    } catch (error) {
+      setFormError(
+        error instanceof Error
+          ? error.message
+          : isEditMode
+            ? "保存模块失败，请稍后重试"
+            : "创建模块失败，请确认模块 ID 未重复",
+      );
     }
   };
 
@@ -180,15 +245,12 @@ export function ModuleCreatePage({
                     control={control}
                     name="applicationId"
                     render={({ field }) => (
-                      <Select
-                        value={field.value || initialForm.applicationId}
-                        onValueChange={field.onChange}
-                      >
+                      <Select value={field.value} onValueChange={field.onChange}>
                         <SelectTrigger className="w-full">
-                          <SelectValue />
+                          <SelectValue placeholder="选择应用" />
                         </SelectTrigger>
                         <SelectContent>
-                          {moduleApplicationOptions.map((option) => (
+                          {applicationOptions.map((option) => (
                             <SelectItem key={option.value} value={option.value}>
                               {option.label}
                             </SelectItem>
@@ -199,7 +261,21 @@ export function ModuleCreatePage({
                   />
                 </Field>
                 <Field label="负责人" className="xl:col-span-4">
-                  <Input placeholder="例如：li.ming" {...register("owner")} />
+                  <Controller
+                    control={control}
+                    name="owner"
+                    render={({ field }) => (
+                      <OwnerPicker
+                        inputName={field.name}
+                        inputRef={field.ref}
+                        value={field.value}
+                        searchUsers={searchFeishuUsers}
+                        onBlur={field.onBlur}
+                        onChange={handleOwnerChange}
+                        onSelect={handleOwnerSelect}
+                      />
+                    )}
+                  />
                 </Field>
                 <Field label="模块类型" className="xl:col-span-4">
                   <Controller
@@ -231,7 +307,7 @@ export function ModuleCreatePage({
                     render={({ field }) => (
                       <Select
                         value={field.value}
-                        onValueChange={(value) => field.onChange(value as ModuleStatus)}
+                        onValueChange={(value) => field.onChange(value as ModuleStatusCode)}
                       >
                         <SelectTrigger className="w-full">
                           <SelectValue />
@@ -255,10 +331,24 @@ export function ModuleCreatePage({
                 <div className="h-4 w-1 rounded-full bg-emerald-500" />
                 <h2 className="font-semibold text-slate-900 text-sm">仓库信息</h2>
               </div>
-              <Field label="Git 仓库地址">
-                <Input
-                  placeholder="例如：git@git.mi.com:mi-car-rn/profile.git"
-                  {...register("repository")}
+              <Field label="Git 仓库" className="max-w-3xl">
+                <Controller
+                  control={control}
+                  name="repository"
+                  render={({ field }) => (
+                    <RepositoryPicker
+                      value={field.value}
+                      onChange={(repository) => {
+                        field.onChange(repository);
+                        if (repository) {
+                          setValue("repositoryKeyword", repository.fullName, {
+                            shouldDirty: true,
+                            shouldTouch: true,
+                          });
+                        }
+                      }}
+                    />
+                  )}
                 />
               </Field>
             </section>
@@ -277,48 +367,85 @@ async function updateExistingModule(moduleId: string | undefined, input: ModuleM
   return updateModule(moduleId, input);
 }
 
-function buildInitialForm(moduleRecord?: ModuleRecord): ModuleFormState {
+function buildInitialForm(
+  moduleRecord?: ModuleRecord,
+  fallbackApplicationId = "",
+): ModuleFormState {
   if (!moduleRecord) {
-    return { ...defaultForm };
+    return {
+      ...defaultForm,
+      applicationId: fallbackApplicationId,
+    };
   }
 
   return {
-    applicationId: resolveModuleApplicationId(moduleRecord),
+    applicationId: moduleRecord.applicationId,
     id: moduleRecord.id,
     kind: moduleRecord.kind,
     name: moduleRecord.name,
     owner: moduleRecord.owner,
-    repository: moduleRecord.repository,
-    status: moduleRecord.status,
+    ownerAvatarUrl: moduleRecord.ownerAvatarUrl,
+    ownerDepartmentIds: [],
+    ownerEmail: moduleRecord.ownerEmail,
+    ownerFeishuOpenId: "",
+    ownerFeishuUnionId: "",
+    ownerFeishuUserId: "",
+    ownerUserId: moduleRecord.ownerUserId,
+    repository: {
+      cloneUrl: moduleRecord.repositoryCloneUrl,
+      defaultBranch: moduleRecord.defaultBranch,
+      fullName: moduleRecord.repositoryFullName,
+      htmlUrl: moduleRecord.repositoryHtmlUrl,
+      id: moduleRecord.repositoryId,
+      installationId: moduleRecord.repositoryInstallationId,
+      provider: moduleRecord.repositoryProvider,
+      sshUrl: moduleRecord.repositorySshUrl,
+    },
+    repositoryKeyword: moduleRecord.repositoryFullName,
+    status: moduleRecord.status === "冻结" ? "frozen" : "active",
   };
 }
 
 function buildModuleInput(form: ModuleFormState): ModuleMutationInput {
   return {
-    applicationId: form.applicationId || defaultForm.applicationId,
+    applicationId: form.applicationId,
     id: form.id.trim(),
     kind: form.kind,
     name: form.name.trim(),
     owner: form.owner.trim(),
-    repository: form.repository.trim(),
+    ownerAvatarUrl: form.ownerAvatarUrl.trim(),
+    ownerDepartmentIds: form.ownerDepartmentIds,
+    ownerEmail: form.ownerEmail.trim(),
+    ownerFeishuOpenId: form.ownerFeishuOpenId.trim(),
+    ownerFeishuUnionId: form.ownerFeishuUnionId.trim(),
+    ownerFeishuUserId: form.ownerFeishuUserId.trim(),
+    ownerUserId: form.ownerUserId.trim(),
+    repository: form.repository ?? {
+      cloneUrl: "",
+      defaultBranch: "",
+      fullName: "",
+      htmlUrl: "",
+      id: "",
+      installationId: "",
+      provider: "github",
+      sshUrl: "",
+    },
     status: form.status,
   };
 }
 
-function resolveModuleApplicationId(moduleRecord: ModuleRecord) {
-  if (moduleApplicationOptions.some((option) => option.value === moduleRecord.applicationId)) {
-    return moduleRecord.applicationId;
-  }
-
-  return (
-    moduleApplicationOptions.find((option) => option.label === moduleRecord.applicationName)
-      ?.value ?? defaultForm.applicationId
-  );
-}
-
 function validateModuleInput(input: ModuleMutationInput) {
-  if (!input.applicationId || !input.id || !input.name || !input.owner || !input.repository) {
-    return "请完整填写模块 ID、名称、关联应用、负责人和仓库地址";
+  if (
+    !input.applicationId ||
+    !input.id ||
+    !input.name ||
+    !input.owner ||
+    !input.ownerUserId ||
+    !input.repository.id ||
+    !input.repository.installationId ||
+    !input.repository.fullName
+  ) {
+    return "请完整填写模块 ID、名称、关联应用、负责人，并选择已授权仓库";
   }
 
   if (/\s/.test(input.id)) {
@@ -326,6 +453,141 @@ function validateModuleInput(input: ModuleMutationInput) {
   }
 
   return "";
+}
+
+function RepositoryPicker({
+  onChange,
+  value,
+}: {
+  onChange: (value: ModuleRepositoryBinding | null) => void;
+  value: ModuleRepositoryBinding | null;
+}) {
+  const [keyword, setKeyword] = useState(value?.fullName ?? "");
+  const [isOpen, setIsOpen] = useState(false);
+  const [repositories, setRepositories] = useState<ModuleRepositoryBinding[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const selectedFullName = value?.fullName ?? "";
+
+  useEffect(() => {
+    if (selectedFullName && selectedFullName !== keyword) {
+      setKeyword(selectedFullName);
+    }
+  }, [keyword, selectedFullName]);
+
+  useEffect(() => {
+    const query = keyword.trim();
+    if (!isOpen || selectedFullName === keyword || query.length < 2) {
+      setRepositories([]);
+      setIsLoading(false);
+      setError("");
+      return;
+    }
+
+    let disposed = false;
+    setIsLoading(true);
+    setError("");
+    const handle = window.setTimeout(() => {
+      void searchCodeSourceRepositories(query)
+        .then((nextRepositories) => {
+          if (!disposed) {
+            setRepositories(nextRepositories);
+          }
+        })
+        .catch((searchError) => {
+          if (!disposed) {
+            setRepositories([]);
+            setError(
+              searchError instanceof Error
+                ? searchError.message
+                : "仓库搜索失败，请先确认代码源已配置并安装",
+            );
+          }
+        })
+        .finally(() => {
+          if (!disposed) {
+            setIsLoading(false);
+          }
+        });
+    }, 280);
+
+    return () => {
+      disposed = true;
+      window.clearTimeout(handle);
+    };
+  }, [isOpen, keyword, selectedFullName]);
+
+  const handleRepositorySelect = (repository: ModuleRepositoryBinding) => {
+    onChange(repository);
+    setKeyword(repository.fullName);
+    setRepositories([]);
+    setIsOpen(false);
+    setError("");
+  };
+
+  return (
+    <div className="relative">
+      <div className="flex items-center gap-2">
+        <GitFork className="size-4 shrink-0 text-slate-400" />
+        <Input
+          value={keyword}
+          placeholder="搜索 GitHub 授权仓库，例如 org/repo"
+          onBlur={() => window.setTimeout(() => setIsOpen(false), 150)}
+          onChange={(event) => {
+            const nextKeyword = event.target.value;
+            setKeyword(nextKeyword);
+            if (value && nextKeyword !== value.fullName) {
+              onChange(null);
+            }
+            setIsOpen(true);
+          }}
+          onFocus={() => setIsOpen(true)}
+        />
+      </div>
+      {value ? (
+        <div className="mt-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-slate-600 text-xs">
+          已绑定 {value.fullName}
+          {value.defaultBranch ? ` · 默认分支 ${value.defaultBranch}` : ""}
+        </div>
+      ) : null}
+      {isOpen && keyword.trim().length >= 2 && selectedFullName !== keyword ? (
+        <div className="absolute z-20 mt-1 max-h-72 w-full overflow-auto rounded-md border border-slate-200 bg-white py-1 shadow-lg">
+          {isLoading ? (
+            <div className="flex h-10 items-center gap-2 px-3 text-slate-500 text-sm">
+              <LoaderCircle className="size-4 animate-spin" />
+              搜索中
+            </div>
+          ) : null}
+          {!isLoading && error ? (
+            <div className="px-3 py-2 text-rose-600 text-sm">{error}</div>
+          ) : null}
+          {!isLoading && !error && repositories.length === 0 ? (
+            <div className="px-3 py-2 text-slate-500 text-sm">未找到匹配仓库</div>
+          ) : null}
+          {repositories.map((repository) => (
+            <Button
+              key={`${repository.provider}-${repository.id}`}
+              type="button"
+              variant="ghost"
+              className="h-auto w-full justify-start rounded-none px-3 py-2 text-left font-normal hover:bg-slate-50"
+              onClick={() => handleRepositorySelect(repository)}
+            >
+              <span className="min-w-0">
+                <span className="block truncate font-medium text-slate-900 text-sm">
+                  {repository.fullName}
+                </span>
+                {repository.defaultBranch ? (
+                  <span className="block truncate text-slate-500 text-xs">
+                    默认分支 {repository.defaultBranch}
+                  </span>
+                ) : null}
+              </span>
+            </Button>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
 function ModuleFormLoading({ onBack }: { onBack: () => void }) {
@@ -368,6 +630,65 @@ function ModuleFormNotFound({ onBack }: { onBack: () => void }) {
         <p className="mt-1 text-slate-500 text-sm">当前模块可能已被删除或路径无效。</p>
       </Card>
     </div>
+  );
+}
+
+function ModuleCodeSourceRequired({
+  onBack,
+  onOpenCodeSources,
+}: {
+  onBack: () => void;
+  onOpenCodeSources?: () => void;
+}) {
+  return (
+    <>
+      <div className="border-slate-200 border-b bg-white px-6 py-5">
+        <Button
+          variant="ghost"
+          type="button"
+          className="-ml-2 mb-3 h-8 gap-2 px-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+          onClick={onBack}
+        >
+          <ArrowLeft className="size-4" />
+          返回模块管理
+        </Button>
+        <div className="flex items-center gap-3">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-white shadow-sm">
+            <PackagePlus className="size-5" />
+          </div>
+          <div>
+            <h1 className="font-semibold text-2xl text-slate-950 tracking-tight">新建模块</h1>
+            <p className="mt-2 text-slate-600 text-sm">
+              登记新的 RN 模块仓库，并绑定归属应用与负责人
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="px-6 py-5">
+        <Card className="rounded-lg border-amber-200 bg-amber-50 p-5 text-amber-800 shadow-none">
+          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 font-semibold text-sm">
+                <GitFork className="size-4 shrink-0" />
+                需要先安装代码源
+              </div>
+              <p className="mt-2 max-w-2xl text-amber-700 text-sm leading-6">
+                当前账号还没有可用的代码源授权。新建模块需要从已授权仓库中选择 Git
+                仓库，请先到代码源管理安装 GitHub App。
+              </p>
+            </div>
+            <Button
+              type="button"
+              className="shrink-0 bg-amber-700 text-white hover:bg-amber-800"
+              onClick={onOpenCodeSources}
+            >
+              去代码源管理
+            </Button>
+          </div>
+        </Card>
+      </div>
+    </>
   );
 }
 

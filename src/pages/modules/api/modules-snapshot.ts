@@ -1,162 +1,246 @@
-import { moduleApplicationOptions } from "../constants";
-import type { ModuleMutationInput, ModuleRecord, ModulesSnapshot } from "../types";
+import { moduleStatusLabelByCode } from "../constants";
+import type {
+  ModuleListFilters,
+  ModuleMutationInput,
+  ModuleRecord,
+  ModuleRepositoryBinding,
+  ModuleStatusCode,
+  ModulesSnapshot,
+} from "../types";
 
-export const modulesSnapshotQueryKey = ["modules-snapshot"] as const;
+export const modulesRootQueryKey = ["modules-snapshot"] as const;
+
+export const modulesSnapshotQueryKey = (filters?: Partial<ModuleListFilters>) => {
+  const normalizedFilters = normalizeModuleListFilters(filters);
+
+  if (!hasModuleListFilters(normalizedFilters)) {
+    return modulesRootQueryKey;
+  }
+
+  return [...modulesRootQueryKey, normalizedFilters] as const;
+};
 
 export const moduleEditQueryKey = (moduleId: string | undefined) => [
-  ...modulesSnapshotQueryKey,
+  ...modulesRootQueryKey,
   "edit",
   moduleId ?? "none",
 ];
 
-const modulesSnapshot: ModulesSnapshot = {
-  modules: [
-    {
-      applicationId: "mi-car",
-      applicationName: "小米汽车 App",
-      id: "module-common",
-      kind: "Common",
-      name: "common",
-      owner: "li.ming",
-      repository: "git@git.mi.com:mi-car-rn/common.git",
-      status: "活跃",
-    },
-    {
-      applicationId: "mi-car",
-      applicationName: "小米汽车 App",
-      id: "module-home",
-      kind: "Feature",
-      name: "home",
-      owner: "wang.fang",
-      repository: "git@git.mi.com:mi-car-rn/home.git",
-      status: "活跃",
-    },
-    {
-      applicationId: "cockpit",
-      applicationName: "车机端应用",
-      id: "module-vehicle",
-      kind: "Feature",
-      name: "vehicle",
-      owner: "zhao.lei",
-      repository: "git@git.mi.com:mi-car-rn/vehicle.git",
-      status: "活跃",
-    },
-    {
-      applicationId: "cockpit",
-      applicationName: "车机端应用",
-      id: "module-ai",
-      kind: "Feature",
-      name: "ai-assistant",
-      owner: "chen.hao",
-      repository: "git@git.mi.com:mi-car-rn/ai-assistant.git",
-      status: "活跃",
-    },
-    {
-      applicationId: "mi-car",
-      applicationName: "小米汽车 App",
-      id: "module-message",
-      kind: "Feature",
-      name: "message",
-      owner: "sun.yu",
-      repository: "git@git.mi.com:mi-car-rn/message.git",
-      status: "活跃",
-    },
-    {
-      applicationId: "mi-car",
-      applicationName: "小米汽车 App",
-      id: "module-payment",
-      kind: "Feature",
-      name: "payment",
-      owner: "liu.qi",
-      repository: "git@git.mi.com:mi-car-rn/payment.git",
-      status: "冻结",
-    },
-    {
-      applicationId: "cockpit",
-      applicationName: "车机端应用",
-      id: "module-navigation",
-      kind: "Feature",
-      name: "navigation",
-      owner: "zhou.xin",
-      repository: "git@git.mi.com:mi-car-rn/nav.git",
-      status: "活跃",
-    },
-    {
-      applicationId: "cockpit",
-      applicationName: "车机端应用",
-      id: "module-media",
-      kind: "Feature",
-      name: "media-player",
-      owner: "huang.tao",
-      repository: "git@git.mi.com:mi-car-rn/media.git",
-      status: "活跃",
-    },
-    {
-      applicationId: "mi-car",
-      applicationName: "小米汽车 App",
-      id: "module-settings",
-      kind: "Feature",
-      name: "settings",
-      owner: "li.ming",
-      repository: "git@git.mi.com:mi-car-rn/settings.git",
-      status: "活跃",
-    },
-  ],
+type ModuleAPIRecord = Omit<ModuleRecord, "status"> & {
+  status: ModuleStatusCode | ModuleRecord["status"];
 };
 
-export async function fetchModulesSnapshot(): Promise<ModulesSnapshot> {
-  await new Promise((resolve) => window.setTimeout(resolve, 120));
+type ModulesAPIResponse = {
+  modules: ModuleAPIRecord[];
+  summary: ModulesSnapshot["summary"];
+};
 
-  return modulesSnapshot;
+type ModuleDetailAPIResponse = {
+  module: ModuleAPIRecord;
+};
+
+type CodeSourceRepositorySearchResponse = {
+  repositories: CodeSourceRepositoryAPIRecord[];
+};
+
+type CodeSourceRepositoryAPIRecord = {
+  cloneUrl: string;
+  defaultBranch: string;
+  fullName: string;
+  htmlUrl: string;
+  id: string;
+  installationId: string;
+  provider: "github";
+  sshUrl: string;
+};
+
+type APIErrorPayload = {
+  error?: string;
+};
+
+export class ModuleAPIError extends Error {
+  readonly payload?: APIErrorPayload;
+  readonly status: number;
+
+  constructor(path: string, status: number, payload?: APIErrorPayload) {
+    super(payload?.error || `Request ${path} failed with ${status}`);
+    this.name = "ModuleAPIError";
+    this.payload = payload;
+    this.status = status;
+  }
+}
+
+const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8080").replace(
+  /\/+$/,
+  "",
+);
+
+export async function fetchModulesSnapshot(
+  filters?: Partial<ModuleListFilters>,
+): Promise<ModulesSnapshot> {
+  const payload = await fetchJSON<ModulesAPIResponse>(buildModulesSnapshotPath(filters));
+
+  return {
+    modules: payload.modules.map(normalizeModule),
+    summary: payload.summary,
+  };
 }
 
 export async function fetchModuleDetailSnapshot(moduleId: string): Promise<ModulesSnapshot> {
-  await new Promise((resolve) => window.setTimeout(resolve, 120));
-  const moduleRecord = modulesSnapshot.modules.find((item) => item.id === moduleId);
+  const payload = await fetchJSON<ModuleDetailAPIResponse>(
+    `/api/v1/modules/${encodeURIComponent(moduleId)}`,
+  );
+  const module = normalizeModule(payload.module);
 
   return {
-    modules: moduleRecord ? [moduleRecord] : [],
+    modules: [module],
+    summary: {
+      active: module.status === "活跃" ? 1 : 0,
+      common: module.kind === "Common" ? 1 : 0,
+      feature: module.kind === "Feature" ? 1 : 0,
+      frozen: module.status === "冻结" ? 1 : 0,
+      total: 1,
+    },
   };
 }
 
 export async function createModule(input: ModuleMutationInput): Promise<ModuleRecord> {
-  await new Promise((resolve) => window.setTimeout(resolve, 180));
-  const existingModule = modulesSnapshot.modules.find((item) => item.id === input.id);
+  const payload = await fetchJSON<ModuleDetailAPIResponse>("/api/v1/modules", {
+    body: JSON.stringify(input),
+    method: "POST",
+  });
 
-  if (existingModule) {
-    throw new Error("Module already exists");
-  }
-
-  const moduleRecord: ModuleRecord = buildModuleRecord(input);
-  modulesSnapshot.modules = [moduleRecord, ...modulesSnapshot.modules];
-
-  return moduleRecord;
+  return normalizeModule(payload.module);
 }
 
 export async function updateModule(
   moduleId: string,
   input: ModuleMutationInput,
 ): Promise<ModuleRecord> {
-  await new Promise((resolve) => window.setTimeout(resolve, 180));
-  const moduleIndex = modulesSnapshot.modules.findIndex((item) => item.id === moduleId);
-
-  if (moduleIndex < 0) {
-    throw new Error("Module not found");
-  }
-
-  const moduleRecord: ModuleRecord = buildModuleRecord({ ...input, id: moduleId });
-  modulesSnapshot.modules = modulesSnapshot.modules.map((item, index) =>
-    index === moduleIndex ? moduleRecord : item,
+  const { id: _id, ...payloadInput } = input;
+  const payload = await fetchJSON<ModuleDetailAPIResponse>(
+    `/api/v1/modules/${encodeURIComponent(moduleId)}`,
+    {
+      body: JSON.stringify(payloadInput),
+      method: "PATCH",
+    },
   );
 
-  return moduleRecord;
+  return normalizeModule(payload.module);
 }
 
-function buildModuleRecord(input: ModuleMutationInput): ModuleRecord {
+export async function deleteModule(moduleId: string): Promise<void> {
+  await fetchJSON<void>(`/api/v1/modules/${encodeURIComponent(moduleId)}`, {
+    method: "DELETE",
+  });
+}
+
+export async function searchCodeSourceRepositories(
+  query: string,
+): Promise<ModuleRepositoryBinding[]> {
+  const params = new URLSearchParams({
+    pageSize: "10",
+    query,
+  });
+  const payload = await fetchJSON<CodeSourceRepositorySearchResponse>(
+    `/api/v1/code-sources/github/repositories/search?${params.toString()}`,
+  );
+
+  return payload.repositories.map((repository) => ({
+    cloneUrl: repository.cloneUrl,
+    defaultBranch: repository.defaultBranch,
+    fullName: repository.fullName,
+    htmlUrl: repository.htmlUrl,
+    id: repository.id,
+    installationId: repository.installationId,
+    provider: repository.provider,
+    sshUrl: repository.sshUrl,
+  }));
+}
+
+export function normalizeModuleListFilters(
+  filters?: Partial<ModuleListFilters>,
+): ModuleListFilters {
   return {
-    ...input,
-    applicationName:
-      moduleApplicationOptions.find((option) => option.value === input.applicationId)?.label ??
-      input.applicationId,
+    keyword: filters?.keyword?.trim() ?? "",
+    kind: filters?.kind ?? "",
+    owner: filters?.owner?.trim() ?? "",
+    status: filters?.status ?? "",
+  };
+}
+
+async function fetchJSON<T>(path: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(`${apiBaseUrl}${path}`, {
+    credentials: "include",
+    ...init,
+    headers: init?.body
+      ? {
+          "Content-Type": "application/json",
+          ...init.headers,
+        }
+      : init?.headers,
+  });
+
+  if (!response.ok) {
+    const payload = await readErrorPayload(response);
+    throw new ModuleAPIError(path, response.status, payload);
+  }
+
+  if (
+    response.status === 204 ||
+    !response.headers.get("content-type")?.includes("application/json")
+  ) {
+    return undefined as T;
+  }
+
+  return response.json() as Promise<T>;
+}
+
+async function readErrorPayload(response: Response): Promise<APIErrorPayload | undefined> {
+  const contentType = response.headers.get("content-type") ?? "";
+  if (!contentType.includes("application/json")) {
+    return undefined;
+  }
+
+  try {
+    return (await response.json()) as APIErrorPayload;
+  } catch (_error) {
+    return undefined;
+  }
+}
+
+function buildModulesSnapshotPath(filters?: Partial<ModuleListFilters>) {
+  const normalizedFilters = normalizeModuleListFilters(filters);
+  const params = new URLSearchParams();
+
+  if (normalizedFilters.kind) {
+    params.set("kind", normalizedFilters.kind);
+  }
+  if (normalizedFilters.status) {
+    params.set("status", normalizedFilters.status);
+  }
+  if (normalizedFilters.owner) {
+    params.set("owner", normalizedFilters.owner);
+  }
+  if (normalizedFilters.keyword) {
+    params.set("keyword", normalizedFilters.keyword);
+  }
+
+  const query = params.toString();
+
+  return query ? `/api/v1/modules?${query}` : "/api/v1/modules";
+}
+
+function hasModuleListFilters(filters: ModuleListFilters) {
+  return Boolean(filters.kind || filters.status || filters.owner || filters.keyword);
+}
+
+function normalizeModule(module: ModuleAPIRecord): ModuleRecord {
+  return {
+    ...module,
+    status:
+      module.status === "active" || module.status === "frozen"
+        ? moduleStatusLabelByCode[module.status]
+        : module.status,
   };
 }

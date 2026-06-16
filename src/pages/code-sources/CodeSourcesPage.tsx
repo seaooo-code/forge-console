@@ -1,13 +1,21 @@
-import { useQuery } from "@tanstack/react-query";
-import { GitFork, type LucideIcon, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ExternalLink, GitFork, type LucideIcon, Trash2 } from "lucide-react";
+import { useState } from "react";
 
+import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
-import { codeSourcesSnapshotQueryKey, fetchCodeSourcesSnapshot } from "./api/code-sources-snapshot";
+import {
+  CodeSourceAPIError,
+  codeSourcesSnapshotQueryKey,
+  deleteCodeSourceInstallations,
+  fetchCodeSourceAppManifest,
+  fetchCodeSourceInstallURL,
+  fetchCodeSourcesSnapshot,
+} from "./api/code-sources-snapshot";
 import { providerToneClass, statusClass, statusLabel } from "./constants";
 import type { CodeSourceApp, CodeSourceProvider } from "./types";
 
@@ -16,42 +24,70 @@ const providerIcons: Record<CodeSourceProvider, LucideIcon> = {
 };
 
 export function CodeSourcesPage() {
-  const { data: snapshot } = useQuery({
+  const queryClient = useQueryClient();
+  const {
+    data: snapshot,
+    error,
+    isError,
+    refetch,
+  } = useQuery({
     queryFn: fetchCodeSourcesSnapshot,
     queryKey: codeSourcesSnapshotQueryKey,
   });
-  const [apps, setApps] = useState<CodeSourceApp[]>([]);
+  const [deleteError, setDeleteError] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<CodeSourceApp | null>(null);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [installingProvider, setInstallingProvider] = useState<CodeSourceProvider | null>(null);
   const [message, setMessage] = useState("");
 
-  useEffect(() => {
-    if (snapshot) {
-      setApps(snapshot.apps);
+  const requestInstall = async (app: CodeSourceApp) => {
+    setInstallingProvider(app.provider);
+    setErrorMessage("");
+    setMessage("");
+    try {
+      if (app.configurationStatus === "notConfigured") {
+        const manifest = await fetchCodeSourceAppManifest(app.provider);
+        submitGitHubAppManifest(manifest.actionUrl, manifest.manifest);
+        return;
+      }
+
+      const installURL = await fetchCodeSourceInstallURL(app.provider);
+      window.location.assign(installURL.url);
+    } catch (error) {
+      if (
+        error instanceof CodeSourceAPIError &&
+        error.status === 503 &&
+        error.payload?.error === "code source auth not configured"
+      ) {
+        try {
+          const manifest = await fetchCodeSourceAppManifest(app.provider);
+          submitGitHubAppManifest(manifest.actionUrl, manifest.manifest);
+          return;
+        } catch (manifestError) {
+          setErrorMessage(
+            manifestError instanceof Error
+              ? manifestError.message
+              : "创建 GitHub App 失败，请稍后重试",
+          );
+          setInstallingProvider(null);
+          return;
+        }
+      }
+      setErrorMessage(error instanceof Error ? error.message : "获取安装地址失败，请稍后重试");
+      setInstallingProvider(null);
     }
-  }, [snapshot]);
-
-  const updateAppStatus = (targetApp: CodeSourceApp) => {
-    const nextStatus = targetApp.status === "installed" ? "notInstalled" : "installed";
-
-    setApps((currentApps) =>
-      currentApps.map((app) =>
-        app.id === targetApp.id
-          ? {
-              ...app,
-              installedAt: nextStatus === "installed" ? "刚刚" : undefined,
-              status: nextStatus,
-            }
-          : app,
-      ),
-    );
-    setMessage(
-      nextStatus === "installed"
-        ? `${targetApp.name} 已安装，后续可在仓库绑定时使用。`
-        : `${targetApp.name} 已删除，相关仓库授权将不可用。`,
-    );
   };
 
   if (!snapshot) {
-    return <CodeSourcesPageLoading />;
+    return isError ? (
+      <CodeSourcesPageError
+        message={error instanceof Error ? error.message : "读取代码源失败，请稍后重试"}
+        onRetry={() => void refetch()}
+      />
+    ) : (
+      <CodeSourcesPageLoading />
+    );
   }
 
   return (
@@ -61,7 +97,7 @@ export function CodeSourcesPage() {
           <div className="text-slate-500 text-xs">平台 / 代码源管理</div>
           <h1 className="mt-2 font-semibold text-2xl text-slate-950 tracking-tight">代码源管理</h1>
           <p className="mt-2 text-slate-600 text-sm">
-            安装或删除 GitHub App，用于后续仓库授权和绑定
+            创建或移除 GitHub App 授权，用于后续仓库绑定
           </p>
         </div>
       </div>
@@ -72,15 +108,120 @@ export function CodeSourcesPage() {
             {message}
           </div>
         ) : null}
+        {errorMessage ? (
+          <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-rose-600 text-sm">
+            {errorMessage}
+          </div>
+        ) : null}
 
         <section className="grid gap-4 xl:grid-cols-2">
-          {apps.map((app) => (
-            <CodeSourceAppCard key={app.id} app={app} onToggleStatus={updateAppStatus} />
+          {snapshot.apps.map((app) => (
+            <CodeSourceAppCard
+              key={app.id}
+              app={app}
+              isInstalling={installingProvider === app.provider}
+              onDeleteInstallations={(targetApp) => {
+                setDeleteTarget(targetApp);
+                setDeleteError("");
+                setErrorMessage("");
+                setMessage("");
+              }}
+              onInstall={requestInstall}
+            />
           ))}
         </section>
       </div>
+      <ConfirmDialog
+        isOpen={deleteTarget !== null}
+        isPending={isDeleting}
+        title="删除 GitHub 授权"
+        description={
+          deleteTarget
+            ? `确认删除当前账号的「${deleteTarget.name}」安装授权和仓库缓存？GitHub 开发者后台里的 App 本体需要在 GitHub 侧手动删除。`
+            : ""
+        }
+        confirmLabel="删除授权"
+        tone="danger"
+        onCancel={() => {
+          if (isDeleting) {
+            return;
+          }
+          setDeleteTarget(null);
+          setDeleteError("");
+        }}
+        onConfirm={async () => {
+          if (!deleteTarget) {
+            return;
+          }
+
+          setIsDeleting(true);
+          setDeleteError("");
+          setMessage("");
+          try {
+            await deleteCodeSourceInstallations(deleteTarget.provider);
+            await queryClient.invalidateQueries({ queryKey: codeSourcesSnapshotQueryKey });
+            setMessage(`${deleteTarget.name} 当前账号授权和仓库缓存已删除。`);
+            setDeleteTarget(null);
+          } catch (error) {
+            setDeleteError(error instanceof Error ? error.message : "删除授权失败，请稍后重试");
+          } finally {
+            setIsDeleting(false);
+          }
+        }}
+      >
+        {deleteError ? (
+          <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-rose-600 text-sm">
+            {deleteError}
+          </div>
+        ) : null}
+      </ConfirmDialog>
     </>
   );
+}
+
+function CodeSourcesPageError({ message, onRetry }: { message: string; onRetry: () => void }) {
+  return (
+    <>
+      <div className="border-slate-200 border-b bg-white px-6 py-5">
+        <div>
+          <div className="text-slate-500 text-xs">平台 / 代码源管理</div>
+          <h1 className="mt-2 font-semibold text-2xl text-slate-950 tracking-tight">代码源管理</h1>
+          <p className="mt-2 text-slate-600 text-sm">
+            创建或移除 GitHub App 授权，用于后续仓库绑定
+          </p>
+        </div>
+      </div>
+      <div className="px-6 py-5">
+        <Card className="rounded-lg border-rose-200 bg-rose-50 p-5 text-rose-700 shadow-none">
+          <div className="font-medium text-sm">代码源接口不可用</div>
+          <div className="mt-2 text-sm">{message}</div>
+          <Button
+            type="button"
+            variant="outline"
+            className="mt-4 border-rose-200 bg-white text-rose-700 hover:bg-rose-100"
+            onClick={onRetry}
+          >
+            重试
+          </Button>
+        </Card>
+      </div>
+    </>
+  );
+}
+
+function submitGitHubAppManifest(actionURL: string, manifest: string) {
+  const form = document.createElement("form");
+  form.action = actionURL;
+  form.method = "post";
+
+  const input = document.createElement("input");
+  input.name = "manifest";
+  input.type = "hidden";
+  input.value = manifest;
+  form.appendChild(input);
+
+  document.body.appendChild(form);
+  form.submit();
 }
 
 function CodeSourcesPageLoading() {
@@ -100,13 +241,18 @@ function CodeSourcesPageLoading() {
 
 function CodeSourceAppCard({
   app,
-  onToggleStatus,
+  isInstalling,
+  onDeleteInstallations,
+  onInstall,
 }: {
   app: CodeSourceApp;
-  onToggleStatus: (app: CodeSourceApp) => void;
+  isInstalling: boolean;
+  onDeleteInstallations: (app: CodeSourceApp) => void;
+  onInstall: (app: CodeSourceApp) => void;
 }) {
   const Icon = providerIcons[app.provider];
   const isInstalled = app.status === "installed";
+  const isConfigured = app.configurationStatus === "configured";
 
   return (
     <Card className="rounded-lg border-slate-200 bg-white p-5 shadow-none">
@@ -135,16 +281,31 @@ function CodeSourceAppCard({
 
         <div className="flex flex-col gap-3 border-slate-100 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="text-slate-500 text-sm">
-            {isInstalled ? `安装时间：${app.installedAt}` : "尚未安装"}
+            {isInstalled && app.installedAt ? `安装时间：${app.installedAt}` : null}
+            {isInstalled && !app.installedAt ? "已安装" : null}
+            {!isInstalled ? "尚未安装" : null}
           </div>
           <Button
             type="button"
             variant={isInstalled ? "destructive" : "default"}
             className={cn(!isInstalled && "bg-blue-600 hover:bg-blue-700")}
-            onClick={() => onToggleStatus(app)}
+            disabled={isInstalling}
+            onClick={() => {
+              if (isInstalled) {
+                onDeleteInstallations(app);
+                return;
+              }
+              onInstall(app);
+            }}
           >
-            {isInstalled ? <Trash2 className="size-4" /> : null}
-            {isInstalled ? "删除 App" : "安装 App"}
+            {isInstalled ? <Trash2 className="size-4" /> : <ExternalLink className="size-4" />}
+            {isInstalled
+              ? "删除授权"
+              : isInstalling
+                ? "正在打开"
+                : isConfigured
+                  ? "安装 App"
+                  : "创建 GitHub App"}
           </Button>
         </div>
       </div>
