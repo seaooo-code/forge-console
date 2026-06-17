@@ -20,6 +20,28 @@ export type BuildRunRecord = {
   version: string;
 };
 
+export type BuildRecordDetail = BuildRunRecord & {
+  artifactUrl: string;
+  createdAt: string;
+  defaultBranch: string;
+  environment: string;
+  environmentName: string;
+  errorMessage: string;
+  finishedAt: string;
+  moduleId: string;
+  queuedAt: string;
+  repositoryFullName: string;
+  repositoryId: string;
+  repositoryInstallationId: string;
+  repositoryProvider: string;
+  startedAtFull: string;
+  startedAtRaw: string;
+  storageConfigurationId: string;
+  storageConfigurationName: string;
+  updatedAt: string;
+  workerId: string;
+};
+
 export type BuildsSnapshot = {
   builds: BuildRunRecord[];
   summary: {

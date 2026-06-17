@@ -45,7 +45,11 @@ import type {
   BuildTriggerType,
 } from "./types";
 
-export function BuildsPage() {
+type BuildsPageProps = {
+  onOpenBuild: (buildId: string) => void;
+};
+
+export function BuildsPage({ onOpenBuild }: BuildsPageProps) {
   const queryClient = useQueryClient();
   const session = useAuthStore((state) => state.session);
   const {
@@ -245,6 +249,12 @@ export function BuildsPage() {
             suppressCellFocus
             suppressContextMenu
             getRowId={({ data }) => data.id}
+            rowClass="cursor-pointer"
+            onRowClicked={({ data }) => {
+              if (data) {
+                onOpenBuild(data.id);
+              }
+            }}
           />
 
           <ConsoleTableFooter total={snapshot.builds.length} />
@@ -365,7 +375,10 @@ function ActionsCell({
         size="sm"
         className="h-8 gap-1.5 border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700"
         disabled={!canPublish}
-        onClick={() => onPublish(data)}
+        onClick={(event) => {
+          event.stopPropagation();
+          onPublish(data);
+        }}
       >
         <Rocket className="size-3.5" />
         发布

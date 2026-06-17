@@ -1,4 +1,5 @@
 import type {
+  BuildRecordDetail,
   BuildReleaseFormState,
   BuildRunRecord,
   BuildRunStatus,
@@ -6,6 +7,7 @@ import type {
   BuildTriggerType,
 } from "../types";
 
+export const buildDetailQueryKey = (buildId: string) => ["build-detail", buildId] as const;
 export const buildsSnapshotQueryKey = ["builds-snapshot"] as const;
 
 type BuildRecordAPIStatus = "failed" | "pending" | "running" | "succeeded";
@@ -17,6 +19,7 @@ type BuildRecordAPIRecord = {
   artifactUrl: string;
   branch: string;
   createdAt: string;
+  defaultBranch: string;
   environment: string;
   environmentName: string;
   errorMessage: string;
@@ -26,8 +29,13 @@ type BuildRecordAPIRecord = {
   moduleName: string;
   queuedAt: string;
   repositoryFullName: string;
+  repositoryId: string;
+  repositoryInstallationId: string;
+  repositoryProvider: string;
   startedAt: string;
   status: BuildRecordAPIStatus;
+  storageConfigurationId: string;
+  storageConfigurationName: string;
   triggerId: string;
   triggerType: BuildRecordAPITriggerType;
   updatedAt: string;
@@ -43,6 +51,10 @@ type BuildsAPIResponse = {
     succeeded: number;
     total: number;
   };
+};
+
+type BuildDetailAPIResponse = {
+  build: BuildRecordAPIRecord;
 };
 
 type CreateBuildReleaseInput = BuildReleaseFormState & {
@@ -90,6 +102,14 @@ export async function fetchBuildsSnapshot(): Promise<BuildsSnapshot> {
       total: payload.summary.total,
     },
   };
+}
+
+export async function fetchBuildDetail(buildId: string): Promise<BuildRecordDetail> {
+  const payload = await fetchJSON<BuildDetailAPIResponse>(
+    `/api/v1/builds/${encodeURIComponent(buildId)}`,
+  );
+
+  return normalizeBuildDetail(payload.build);
 }
 
 export async function createBuildRelease(input: CreateBuildReleaseInput): Promise<string> {
@@ -175,6 +195,31 @@ function normalizeBuildRecord(record: BuildRecordAPIRecord): BuildRunRecord {
   };
 }
 
+function normalizeBuildDetail(record: BuildRecordAPIRecord): BuildRecordDetail {
+  return {
+    ...normalizeBuildRecord(record),
+    createdAt: formatFullTime(record.createdAt),
+    defaultBranch: record.defaultBranch || "-",
+    environment: record.environment || "-",
+    environmentName: record.environmentName || record.environment || "-",
+    errorMessage: record.errorMessage || "",
+    artifactUrl: record.artifactUrl || "-",
+    finishedAt: formatFullTime(record.finishedAt),
+    moduleId: record.moduleId,
+    queuedAt: formatFullTime(record.queuedAt),
+    repositoryFullName: record.repositoryFullName || "-",
+    repositoryId: record.repositoryId || "-",
+    repositoryInstallationId: record.repositoryInstallationId || "-",
+    repositoryProvider: record.repositoryProvider || "-",
+    startedAtFull: formatFullTime(record.startedAt),
+    startedAtRaw: record.startedAt,
+    storageConfigurationId: record.storageConfigurationId || "-",
+    storageConfigurationName: record.storageConfigurationName || "-",
+    updatedAt: formatFullTime(record.updatedAt),
+    workerId: record.workerId || "-",
+  };
+}
+
 const buildStatusMap: Record<BuildRecordAPIStatus, BuildRunStatus> = {
   failed: "failed",
   pending: "queued",
@@ -197,6 +242,26 @@ function formatTime(value: string) {
     hour: "2-digit",
     minute: "2-digit",
     month: "2-digit",
+  }).format(date);
+}
+
+function formatFullTime(value: string) {
+  if (!value) {
+    return "-";
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat("zh-CN", {
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    month: "2-digit",
+    second: "2-digit",
+    year: "numeric",
   }).format(date);
 }
 

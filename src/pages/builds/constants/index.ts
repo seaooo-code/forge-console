@@ -8,6 +8,14 @@ export const buildStatusClass: Record<BuildRunStatus, string> = {
   success: "border-emerald-200 bg-emerald-50 text-emerald-700",
 };
 
+export const buildStatusLabels: Record<BuildRunStatus, string> = {
+  canceled: "已取消",
+  failed: "失败",
+  queued: "排队中",
+  running: "构建中",
+  success: "成功",
+};
+
 export const buildTriggerLabels: Record<BuildTriggerType, string> = {
   manual: "手动触发",
   pipeline: "流水线触发",
