@@ -20,14 +20,34 @@ export type BuildRunRecord = {
   version: string;
 };
 
+export type BuildArtifactTreeNode = {
+  children?: BuildArtifactTreeNode[];
+  contentType?: string;
+  name: string;
+  objectKey?: string;
+  path: string;
+  sha256?: string;
+  sizeBytes: number;
+  type: "directory" | "file";
+};
+
+export type BuildArtifactTree = {
+  fileCount: number;
+  nodes: BuildArtifactTreeNode[];
+  totalSizeBytes: number;
+};
+
 export type BuildRecordDetail = BuildRunRecord & {
+  artifactTree: BuildArtifactTree;
   artifactUrl: string;
   createdAt: string;
   defaultBranch: string;
   environment: string;
   environmentName: string;
   errorMessage: string;
+  fileCount: number;
   finishedAt: string;
+  manifestKey: string;
   moduleId: string;
   queuedAt: string;
   repositoryFullName: string;
@@ -38,6 +58,7 @@ export type BuildRecordDetail = BuildRunRecord & {
   startedAtRaw: string;
   storageConfigurationId: string;
   storageConfigurationName: string;
+  totalSizeBytes: number;
   updatedAt: string;
   workerId: string;
 };

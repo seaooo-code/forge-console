@@ -1,4 +1,6 @@
 import type {
+  BuildArtifactTree,
+  BuildArtifactTreeNode,
   BuildRecordDetail,
   BuildReleaseFormState,
   BuildRunRecord,
@@ -15,6 +17,7 @@ type BuildRecordAPITriggerType = BuildTriggerType;
 
 type BuildRecordAPIRecord = {
   applicationName: string;
+  artifactTree?: BuildArtifactTreeAPIRecord;
   artifactKey: string;
   artifactUrl: string;
   branch: string;
@@ -23,8 +26,10 @@ type BuildRecordAPIRecord = {
   environment: string;
   environmentName: string;
   errorMessage: string;
+  fileCount: number;
   finishedAt: string;
   id: string;
+  manifestKey: string;
   moduleId: string;
   moduleName: string;
   queuedAt: string;
@@ -38,8 +43,26 @@ type BuildRecordAPIRecord = {
   storageConfigurationName: string;
   triggerId: string;
   triggerType: BuildRecordAPITriggerType;
+  totalSizeBytes: number;
   updatedAt: string;
   workerId: string;
+};
+
+type BuildArtifactTreeAPIRecord = {
+  fileCount: number;
+  nodes: BuildArtifactTreeNodeAPIRecord[];
+  totalSizeBytes: number;
+};
+
+type BuildArtifactTreeNodeAPIRecord = {
+  children?: BuildArtifactTreeNodeAPIRecord[];
+  contentType?: string;
+  name: string;
+  objectKey?: string;
+  path: string;
+  sha256?: string;
+  sizeBytes: number;
+  type: "directory" | "file";
 };
 
 type BuildsAPIResponse = {
@@ -198,13 +221,20 @@ function normalizeBuildRecord(record: BuildRecordAPIRecord): BuildRunRecord {
 function normalizeBuildDetail(record: BuildRecordAPIRecord): BuildRecordDetail {
   return {
     ...normalizeBuildRecord(record),
+    artifactTree: normalizeArtifactTree(
+      record.artifactTree,
+      record.fileCount,
+      record.totalSizeBytes,
+    ),
     createdAt: formatFullTime(record.createdAt),
     defaultBranch: record.defaultBranch || "-",
     environment: record.environment || "-",
     environmentName: record.environmentName || record.environment || "-",
     errorMessage: record.errorMessage || "",
     artifactUrl: record.artifactUrl || "-",
+    fileCount: record.fileCount ?? 0,
     finishedAt: formatFullTime(record.finishedAt),
+    manifestKey: record.manifestKey || "",
     moduleId: record.moduleId,
     queuedAt: formatFullTime(record.queuedAt),
     repositoryFullName: record.repositoryFullName || "-",
@@ -215,8 +245,34 @@ function normalizeBuildDetail(record: BuildRecordAPIRecord): BuildRecordDetail {
     startedAtRaw: record.startedAt,
     storageConfigurationId: record.storageConfigurationId || "-",
     storageConfigurationName: record.storageConfigurationName || "-",
+    totalSizeBytes: record.totalSizeBytes ?? 0,
     updatedAt: formatFullTime(record.updatedAt),
     workerId: record.workerId || "-",
+  };
+}
+
+function normalizeArtifactTree(
+  tree: BuildArtifactTreeAPIRecord | undefined,
+  fileCount: number | undefined,
+  totalSizeBytes: number | undefined,
+): BuildArtifactTree {
+  return {
+    fileCount: tree?.fileCount ?? fileCount ?? 0,
+    nodes: tree?.nodes?.map(normalizeArtifactTreeNode) ?? [],
+    totalSizeBytes: tree?.totalSizeBytes ?? totalSizeBytes ?? 0,
+  };
+}
+
+function normalizeArtifactTreeNode(node: BuildArtifactTreeNodeAPIRecord): BuildArtifactTreeNode {
+  return {
+    children: node.children?.map(normalizeArtifactTreeNode),
+    contentType: node.contentType || undefined,
+    name: node.name,
+    objectKey: node.objectKey || undefined,
+    path: node.path,
+    sha256: node.sha256 || undefined,
+    sizeBytes: node.sizeBytes,
+    type: node.type,
   };
 }
 

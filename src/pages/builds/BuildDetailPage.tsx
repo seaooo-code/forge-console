@@ -5,15 +5,20 @@ import {
   ArrowLeft,
   Box,
   CalendarClock,
+  ChevronDown,
+  ChevronRight,
   Clock3,
   Database,
   ExternalLink,
+  File,
+  Folder,
   GitBranch,
   HardDrive,
   PackageCheck,
   RadioTower,
   Server,
 } from "lucide-react";
+import { useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,7 +27,7 @@ import { cn } from "@/lib/utils";
 
 import { buildDetailQueryKey, fetchBuildDetail } from "./api/builds-snapshot";
 import { buildStatusClass, buildStatusLabels, buildTriggerLabels } from "./constants";
-import type { BuildRunStatus } from "./types";
+import type { BuildArtifactTreeNode, BuildRecordDetail, BuildRunStatus } from "./types";
 
 type BuildDetailPageProps = {
   buildId: string;
@@ -142,6 +147,12 @@ export function BuildDetailPage({ buildId, onBack }: BuildDetailPageProps) {
               <DetailItem icon={RadioTower} label="触发来源" value={build.triggerId} />
               <DetailItem icon={HardDrive} label="产物 Key" value={build.artifact} wide />
               <DetailItem icon={HardDrive} label="产物 URL" value={build.artifactUrl} wide />
+              <DetailItem
+                icon={HardDrive}
+                label="Manifest Key"
+                value={build.manifestKey || "-"}
+                wide
+              />
             </div>
           </Card>
 
@@ -166,9 +177,182 @@ export function BuildDetailPage({ buildId, onBack }: BuildDetailPageProps) {
             </div>
           </Card>
         </section>
+
+        <ArtifactTreePanel build={build} />
       </div>
     </>
   );
+}
+
+function ArtifactTreePanel({ build }: { build: BuildRecordDetail }) {
+  const nodes = build.artifactTree.nodes;
+  const [expandedPaths, setExpandedPaths] = useState<Set<string>>(
+    () => new Set(collectDirectoryPaths(nodes)),
+  );
+
+  const toggleExpanded = (path: string) => {
+    setExpandedPaths((current) => {
+      const next = new Set(current);
+      if (next.has(path)) {
+        next.delete(path);
+      } else {
+        next.add(path);
+      }
+      return next;
+    });
+  };
+
+  return (
+    <Card className="gap-0 rounded-lg border-slate-200 py-0 shadow-sm">
+      <SectionHeader title="产物文件" description="构建产物目录结构与文件摘要" />
+      <div className="border-slate-200 border-b px-4 py-3">
+        <div className="grid gap-3 text-sm md:grid-cols-3">
+          <ArtifactSummaryItem
+            label="文件数量"
+            value={`${build.artifactTree.fileCount || build.fileCount} 个`}
+          />
+          <ArtifactSummaryItem
+            label="总体积"
+            value={formatBytes(build.artifactTree.totalSizeBytes || build.totalSizeBytes)}
+          />
+          <ArtifactSummaryItem label="Manifest" value={build.manifestKey || "-"} monospace />
+        </div>
+      </div>
+      {nodes.length > 0 ? (
+        <div className="p-4">
+          <div className="rounded-lg border border-slate-200 bg-slate-50">
+            {nodes.map((node) => (
+              <ArtifactTreeNodeRow
+                key={node.path}
+                node={node}
+                depth={0}
+                expandedPaths={expandedPaths}
+                onToggle={toggleExpanded}
+              />
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="p-6 text-center">
+          <div className="mx-auto flex size-10 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
+            <HardDrive className="size-5" />
+          </div>
+          <div className="mt-3 font-semibold text-slate-900 text-sm">暂无产物文件结构</div>
+          <div className="mt-1 text-slate-500 text-sm">
+            历史构建仅记录产物根路径，新构建完成后会自动写入 manifest 并展示文件树。
+          </div>
+        </div>
+      )}
+    </Card>
+  );
+}
+
+function ArtifactSummaryItem({
+  label,
+  monospace = false,
+  value,
+}: {
+  label: string;
+  monospace?: boolean;
+  value: string;
+}) {
+  return (
+    <div className="min-w-0 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+      <div className="text-slate-500 text-xs">{label}</div>
+      <div
+        className={cn(
+          "mt-1 break-all font-semibold text-slate-800 text-sm",
+          monospace && "font-mono font-medium",
+        )}
+      >
+        {value || "-"}
+      </div>
+    </div>
+  );
+}
+
+function ArtifactTreeNodeRow({
+  depth,
+  expandedPaths,
+  node,
+  onToggle,
+}: {
+  depth: number;
+  expandedPaths: Set<string>;
+  node: BuildArtifactTreeNode;
+  onToggle: (path: string) => void;
+}) {
+  const Icon = node.type === "directory" ? Folder : File;
+  const children = node.children ?? [];
+  const isDirectory = node.type === "directory";
+  const isExpanded = expandedPaths.has(node.path);
+  const ChevronIcon = isExpanded ? ChevronDown : ChevronRight;
+
+  return (
+    <div>
+      <div className="grid min-h-10 grid-cols-1 items-start gap-2 border-slate-200 border-b px-3 py-2 last:border-b-0 md:grid-cols-[minmax(0,1fr)_7rem_10rem] md:gap-3">
+        <div className="flex min-w-0 items-start gap-2" style={{ paddingLeft: depth * 18 }}>
+          {isDirectory ? (
+            <button
+              type="button"
+              aria-label={isExpanded ? `收起 ${node.name}` : `展开 ${node.name}`}
+              aria-expanded={isExpanded}
+              className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded text-slate-400 hover:bg-slate-200 hover:text-slate-700"
+              onClick={() => onToggle(node.path)}
+            >
+              <ChevronIcon className="size-3.5" />
+            </button>
+          ) : (
+            <span className="size-4 shrink-0" />
+          )}
+          <Icon
+            className={cn(
+              "mt-0.5 size-4 shrink-0",
+              isDirectory ? "text-amber-500" : "text-slate-400",
+            )}
+          />
+          <div className="min-w-0">
+            <div className="break-all font-semibold text-slate-800 text-sm">{node.name}</div>
+            {!isDirectory ? (
+              <div className="mt-1 space-y-0.5 font-mono text-[11px] text-slate-500 leading-4">
+                {node.objectKey ? <div className="break-all">{node.objectKey}</div> : null}
+                {node.sha256 ? <div className="break-all">sha256:{node.sha256}</div> : null}
+              </div>
+            ) : null}
+          </div>
+        </div>
+        <div className="text-right font-mono text-slate-600 text-xs">
+          {formatBytes(node.sizeBytes)}
+        </div>
+        <div className="break-all text-slate-500 text-xs">
+          {isDirectory ? "目录" : node.contentType || "文件"}
+        </div>
+      </div>
+      {isExpanded
+        ? children.map((child) => (
+            <ArtifactTreeNodeRow
+              key={child.path}
+              node={child}
+              depth={depth + 1}
+              expandedPaths={expandedPaths}
+              onToggle={onToggle}
+            />
+          ))
+        : null}
+    </div>
+  );
+}
+
+function collectDirectoryPaths(nodes: BuildArtifactTreeNode[]) {
+  const paths: string[] = [];
+  for (const node of nodes) {
+    if (node.type !== "directory") {
+      continue;
+    }
+    paths.push(node.path);
+    paths.push(...collectDirectoryPaths(node.children ?? []));
+  }
+  return paths;
 }
 
 function BuildDetailFallback({
@@ -291,4 +475,20 @@ function BuildStatusBadge({ status }: { status: BuildRunStatus }) {
       {buildStatusLabels[status]}
     </span>
   );
+}
+
+function formatBytes(value: number) {
+  if (!Number.isFinite(value) || value <= 0) {
+    return "0 B";
+  }
+
+  const units = ["B", "KB", "MB", "GB"];
+  let size = value;
+  let unitIndex = 0;
+  while (size >= 1024 && unitIndex < units.length - 1) {
+    size /= 1024;
+    unitIndex += 1;
+  }
+
+  return `${size >= 10 || unitIndex === 0 ? size.toFixed(0) : size.toFixed(1)} ${units[unitIndex]}`;
 }
