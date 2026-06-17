@@ -1,33 +1,29 @@
-import type { MiCarEnvironmentCode } from "@/types/environments";
+export type ReleaseRecordStatus = "active" | "inactive" | "revoked";
 
-export type ReleaseRecordEnvironment = Exclude<MiCarEnvironmentCode, "dev">;
-
-export type ReleaseRecordStatus = "canceled" | "failed" | "queued" | "running" | "success";
-
-export type ReleaseRecordTriggerType = "manual" | "pipeline" | "release_task";
+export type ReleaseRecordType = "full" | "targeted";
 
 export type ReleasePointerRecord = {
   artifact: string;
   application: string;
-  effectiveAt: string;
-  environment: ReleaseRecordEnvironment;
+  buildRecordId: string;
+  createdAt: string;
+  environment: string;
+  environmentName: string;
   id: string;
-  moduleCount: number;
+  module: string;
+  moduleId: string;
   operator: string;
-  startedAt: string;
+  releaseType: ReleaseRecordType;
   status: ReleaseRecordStatus;
-  strategy: string;
-  triggerId: string;
-  triggerType: ReleaseRecordTriggerType;
+  updatedAt: string;
 };
 
 export type ReleaseRecordsSnapshot = {
   records: ReleasePointerRecord[];
   summary: {
-    failed: number;
-    queued: number;
-    running: number;
-    success: number;
+    active: number;
+    inactive: number;
+    revoked: number;
     total: number;
   };
 };

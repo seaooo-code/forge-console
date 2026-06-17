@@ -2,6 +2,8 @@ export type BuildRunStatus = "canceled" | "failed" | "queued" | "running" | "suc
 
 export type BuildTriggerType = "manual" | "pipeline";
 
+export type BuildReleaseType = "full" | "targeted";
+
 export type BuildRunRecord = {
   application: string;
   artifact: string;
@@ -27,4 +29,9 @@ export type BuildsSnapshot = {
     success: number;
     total: number;
   };
+};
+
+export type BuildReleaseFormState = {
+  identifier: string;
+  releaseType: BuildReleaseType;
 };

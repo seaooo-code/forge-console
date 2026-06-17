@@ -1,4 +1,10 @@
-import type { BuildRunRecord, BuildRunStatus, BuildsSnapshot, BuildTriggerType } from "../types";
+import type {
+  BuildReleaseFormState,
+  BuildRunRecord,
+  BuildRunStatus,
+  BuildsSnapshot,
+  BuildTriggerType,
+} from "../types";
 
 export const buildsSnapshotQueryKey = ["builds-snapshot"] as const;
 
@@ -39,6 +45,17 @@ type BuildsAPIResponse = {
   };
 };
 
+type CreateBuildReleaseInput = BuildReleaseFormState & {
+  buildRecordId: string;
+  createdByUserId: string;
+};
+
+type ReleaseDetailAPIResponse = {
+  release: {
+    id: string;
+  };
+};
+
 type APIErrorPayload = {
   error?: string;
 };
@@ -48,7 +65,7 @@ export class BuildAPIError extends Error {
   readonly status: number;
 
   constructor(path: string, status: number, payload?: APIErrorPayload) {
-    super(payload?.error ?? `Request ${path} failed with ${status}`);
+    super(getBuildAPIErrorMessage(path, status, payload));
     this.name = "BuildAPIError";
     this.payload = payload;
     this.status = status;
@@ -75,6 +92,20 @@ export async function fetchBuildsSnapshot(): Promise<BuildsSnapshot> {
   };
 }
 
+export async function createBuildRelease(input: CreateBuildReleaseInput): Promise<string> {
+  const payload = await fetchJSON<ReleaseDetailAPIResponse>("/api/v1/releases", {
+    body: JSON.stringify({
+      buildRecordId: input.buildRecordId,
+      createdByUserId: input.createdByUserId,
+      identifier: input.releaseType === "targeted" ? input.identifier.trim() : "",
+      releaseType: input.releaseType,
+    }),
+    method: "POST",
+  });
+
+  return payload.release.id;
+}
+
 async function fetchJSON<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${apiBaseUrl}${path}`, {
     credentials: "include",
@@ -93,6 +124,24 @@ async function fetchJSON<T>(path: string, init?: RequestInit): Promise<T> {
   }
 
   return response.json() as Promise<T>;
+}
+
+const buildAPIErrorMessages: Record<string, string> = {
+  "build record not found": "构建记录不存在",
+  "environment not found": "环境不存在",
+  "internal server error": "服务端内部错误，请稍后重试",
+  "invalid release request": "发布参数无效，请确认构建状态、发布类型和标识",
+  "module not found": "模块不存在",
+  "release route not found": "发布路由不存在",
+  "release service unavailable": "发布服务暂不可用",
+};
+
+function getBuildAPIErrorMessage(path: string, status: number, payload?: APIErrorPayload) {
+  const error = payload?.error;
+  if (error && buildAPIErrorMessages[error]) {
+    return buildAPIErrorMessages[error];
+  }
+  return error ?? `Request ${path} failed with ${status}`;
 }
 
 async function readErrorPayload(response: Response): Promise<APIErrorPayload | undefined> {
