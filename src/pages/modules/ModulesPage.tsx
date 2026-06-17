@@ -25,7 +25,6 @@ import {
 import { consoleGridTheme } from "@/components/common/console-grid-theme";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { applicationsRootQueryKey } from "@/pages/applications";
 
@@ -41,6 +40,7 @@ import type { ModuleKind, ModuleListFilters, ModuleRecord } from "./types";
 type ModulesPageProps = {
   onCreateModule: () => void;
   onEditModule: (moduleId: string) => void;
+  onOpenModule: (moduleId: string) => void;
 };
 
 type ModuleActionsCellParams = {
@@ -48,7 +48,7 @@ type ModuleActionsCellParams = {
   onEditModule: (moduleId: string) => void;
 };
 
-export function ModulesPage({ onCreateModule, onEditModule }: ModulesPageProps) {
+export function ModulesPage({ onCreateModule, onEditModule, onOpenModule }: ModulesPageProps) {
   const queryClient = useQueryClient();
   const [filters, setFilters] = useState<ModuleListFilters>({
     applicationId: "",
@@ -111,17 +111,6 @@ export function ModulesPage({ onCreateModule, onEditModule }: ModulesPageProps) 
 
   const columnDefs = useMemo<ColDef<ModuleRecord>[]>(
     () => [
-      {
-        cellRenderer: CheckboxCell,
-        headerComponent: CheckboxHeader,
-        maxWidth: 48,
-        minWidth: 48,
-        pinned: "left",
-        resizable: false,
-        sortable: false,
-        suppressHeaderMenuButton: true,
-        suppressMovable: true,
-      },
       {
         cellRenderer: ModuleCell,
         field: "name",
@@ -300,6 +289,12 @@ export function ModulesPage({ onCreateModule, onEditModule }: ModulesPageProps) 
             suppressCellFocus
             suppressContextMenu
             getRowId={({ data }) => data.id}
+            rowClass="cursor-pointer"
+            onRowClicked={({ data }) => {
+              if (data) {
+                onOpenModule(data.id);
+              }
+            }}
           />
 
           <ConsoleTableFooter total={modules.length} />
@@ -348,18 +343,6 @@ export function ModulesPage({ onCreateModule, onEditModule }: ModulesPageProps) 
         ) : null}
       </ConfirmDialog>
     </>
-  );
-}
-
-function CheckboxHeader() {
-  return <Checkbox aria-label="选择全部模块" />;
-}
-
-function CheckboxCell() {
-  return (
-    <div className="flex h-full items-center">
-      <Checkbox aria-label="选择模块" />
-    </div>
   );
 }
 
@@ -447,7 +430,10 @@ function ActionsCell({
         variant="link"
         type="button"
         className="h-auto gap-1 p-0 text-blue-600 text-xs hover:text-blue-700"
-        onClick={() => onEditModule(data.id)}
+        onClick={(event) => {
+          event.stopPropagation();
+          onEditModule(data.id);
+        }}
       >
         <Pencil className="size-3.5" />
         编辑
@@ -456,7 +442,10 @@ function ActionsCell({
         variant="link"
         type="button"
         className="h-auto gap-1 p-0 text-rose-600 text-xs hover:text-rose-700"
-        onClick={() => onDeleteModule(data)}
+        onClick={(event) => {
+          event.stopPropagation();
+          onDeleteModule(data);
+        }}
       >
         <Trash2 className="size-3.5" />
         删除

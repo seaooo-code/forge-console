@@ -92,3 +92,39 @@ export type ModuleListFilters = {
   kind: ModuleKind | "";
   owner: string;
 };
+
+export type ModuleBuildInput = {
+  branch: string;
+  environment: string;
+  moduleId: string;
+};
+
+export type ModuleBuildRecord = {
+  artifactKey: string;
+  artifactUrl: string;
+  branch: string;
+  createdAt: string;
+  defaultBranch: string;
+  environment: string;
+  errorMessage: string;
+  finishedAt: string;
+  id: string;
+  moduleId: string;
+  moduleName: string;
+  queuedAt: string;
+  repositoryFullName: string;
+  repositoryId: string;
+  repositoryInstallationId: string;
+  repositoryProvider: "github";
+  startedAt: string;
+  status: "failed" | "pending" | "running" | "succeeded";
+  storageConfigurationId: string;
+  storageConfigurationName: string;
+  updatedAt: string;
+  workerId: string;
+};
+
+export type ModuleBuildFormState = {
+  branch: string;
+  environment: string;
+};

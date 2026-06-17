@@ -11,6 +11,7 @@ import {
   Moon,
   Package,
   Rocket,
+  ServerCog,
   Settings,
   Sun,
   Workflow,
@@ -24,6 +25,7 @@ import type { NavGroup, NavIconName, NavItem } from "../types";
 
 const navIcons: Record<NavIconName, LucideIcon> = {
   app: AppWindow,
+  build: ServerCog,
   bundle: Package,
   codeSource: GitFork,
   dashboard: Gauge,
@@ -31,6 +33,7 @@ const navIcons: Record<NavIconName, LucideIcon> = {
   module: Boxes,
   pipeline: GitBranch,
   release: Rocket,
+  releaseRecord: ServerCog,
   rollback: History,
   settings: Settings,
   storage: Database,

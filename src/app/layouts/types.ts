@@ -12,6 +12,7 @@ export type NavGroup = {
 
 export type NavIconName =
   | "app"
+  | "build"
   | "bundle"
   | "codeSource"
   | "dashboard"
@@ -19,6 +20,7 @@ export type NavIconName =
   | "module"
   | "pipeline"
   | "release"
+  | "releaseRecord"
   | "rollback"
   | "settings"
   | "storage"

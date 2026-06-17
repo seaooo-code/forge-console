@@ -24,6 +24,10 @@ const BundlesPage = lazy(async () => ({
   default: (await import("@/pages/bundles")).BundlesPage,
 }));
 
+const BuildsPage = lazy(async () => ({
+  default: (await import("@/pages/builds")).BuildsPage,
+}));
+
 const CombinationsPage = lazy(async () => ({
   default: (await import("@/pages/combinations")).CombinationsPage,
 }));
@@ -38,6 +42,10 @@ const DashboardPage = lazy(async () => ({
 
 const DevTasksPage = lazy(async () => ({
   default: (await import("@/pages/dev-tasks")).DevTasksPage,
+}));
+
+const ReleaseRecordsPage = lazy(async () => ({
+  default: (await import("@/pages/release-records")).ReleaseRecordsPage,
 }));
 
 const EnvironmentCreatePage = lazy(async () => ({
@@ -58,6 +66,10 @@ const ModulesPage = lazy(async () => ({
 
 const ModuleCreatePage = lazy(async () => ({
   default: (await import("@/pages/modules")).ModuleCreatePage,
+}));
+
+const ModuleDetailPage = lazy(async () => ({
+  default: (await import("@/pages/modules")).ModuleDetailPage,
 }));
 
 const PipelinesPage = lazy(async () => ({
@@ -171,11 +183,15 @@ function ConsoleRoutes() {
         <Route path="modules" element={<ModulesRoute />} />
         <Route path="modules/new" element={<ModuleCreateRoute />} />
         <Route path="modules/:moduleId/edit" element={<ModuleEditRoute />} />
+        <Route path="modules/:moduleId" element={<ModuleDetailRoute />} />
         <Route path="dev-tasks" element={<DevTasksPage />} />
         <Route path="pipelines" element={<PipelinesPage />} />
+        <Route path="builds" element={<BuildsPage />} />
         <Route path="bundles" element={<BundlesPage />} />
         <Route path="combinations" element={<CombinationsPage />} />
         <Route path="releases" element={<ReleasesPage />} />
+        <Route path="release-records" element={<ReleaseRecordsPage />} />
+        <Route path="deployments" element={<Navigate to="/release-records" replace />} />
         <Route path="gray" element={<GrayPage />} />
         <Route path="rollback" element={<RollbackPage />} />
         <Route path="code-sources" element={<CodeSourcesPage />} />
@@ -265,6 +281,7 @@ function ModulesRoute() {
     <ModulesPage
       onCreateModule={() => navigate("/modules/new")}
       onEditModule={(moduleId: string) => navigate(`/modules/${encodeURIComponent(moduleId)}/edit`)}
+      onOpenModule={(moduleId: string) => navigate(`/modules/${encodeURIComponent(moduleId)}`)}
     />
   );
 }
@@ -295,6 +312,25 @@ function ModuleEditRoute() {
       moduleId={moduleId}
       onBack={() => navigate("/modules")}
       onSaved={() => navigate("/modules")}
+    />
+  );
+}
+
+function ModuleDetailRoute() {
+  const navigate = useNavigate();
+  const { moduleId } = useParams<{ moduleId: string }>();
+
+  if (!moduleId) {
+    return <Navigate to="/modules" replace />;
+  }
+
+  return (
+    <ModuleDetailPage
+      moduleId={moduleId}
+      onBack={() => navigate("/modules")}
+      onEditModule={(editableModuleId: string) =>
+        navigate(`/modules/${encodeURIComponent(editableModuleId)}/edit`)
+      }
     />
   );
 }
