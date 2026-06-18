@@ -66,7 +66,9 @@ export function BuildDetailPage({ buildId, onBack }: BuildDetailPageProps) {
               <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-sky-600 text-white shadow-sm">
                 <PackageCheck className="size-5" />
               </div>
-              <h1 className="font-semibold text-2xl text-slate-950 tracking-tight">{build.id}</h1>
+              <h1 className="font-semibold text-2xl text-slate-950 tracking-tight">
+                构建 {build.createdAt}
+              </h1>
               <BuildStatusBadge status={build.status} />
               <Badge variant="outline" className="border-slate-200 font-mono text-slate-600">
                 {buildTriggerLabels[build.triggerType]}

@@ -89,6 +89,7 @@ type CreateBuildReleaseInput = BuildReleaseFormState & {
 
 type ReleaseDetailAPIResponse = {
   release: {
+    createdAt: string;
     id: string;
   };
 };
@@ -148,7 +149,10 @@ export async function createBuild(input: BuildCreateInput): Promise<BuildCreateR
     method: "POST",
   });
 
-  return { id: payload.build.id };
+  return {
+    createdAt: formatRecordNumber(payload.build.createdAt),
+    id: payload.build.id,
+  };
 }
 
 export async function createBuildRelease(input: CreateBuildReleaseInput): Promise<string> {
@@ -162,7 +166,7 @@ export async function createBuildRelease(input: CreateBuildReleaseInput): Promis
     method: "POST",
   });
 
-  return payload.release.id;
+  return formatRecordNumber(payload.release.createdAt);
 }
 
 async function fetchJSON<T>(path: string, init?: RequestInit): Promise<T> {
@@ -225,9 +229,13 @@ function normalizeBuildRecord(record: BuildRecordAPIRecord): BuildRunRecord {
     artifact: record.artifactKey || "-",
     branch: record.branch || "-",
     commit: "-",
+    createdAt: formatRecordNumber(record.createdAt),
+    createdAtRaw: record.createdAt,
     duration: formatDuration(record.startedAt, record.finishedAt),
+    environment: record.environment,
     id: record.id,
     module: record.moduleName || record.moduleId,
+    moduleId: record.moduleId,
     operator: record.workerId || "-",
     startedAt: formatTime(record.startedAt || record.queuedAt || record.createdAt),
     status: buildStatusMap[record.status],
@@ -245,7 +253,7 @@ function normalizeBuildDetail(record: BuildRecordAPIRecord): BuildRecordDetail {
       record.fileCount,
       record.totalSizeBytes,
     ),
-    createdAt: formatFullTime(record.createdAt),
+    createdAt: formatRecordNumber(record.createdAt),
     defaultBranch: record.defaultBranch || "-",
     environment: record.environment || "-",
     environmentName: record.environmentName || record.environment || "-",
@@ -321,6 +329,10 @@ function formatTime(value: string) {
 }
 
 function formatFullTime(value: string) {
+  return formatRecordNumber(value);
+}
+
+function formatRecordNumber(value: string) {
   if (!value) {
     return "-";
   }
@@ -330,14 +342,13 @@ function formatFullTime(value: string) {
     return value;
   }
 
-  return new Intl.DateTimeFormat("zh-CN", {
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    month: "2-digit",
-    second: "2-digit",
-    year: "numeric",
-  }).format(date);
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, "0");
+  const day = `${date.getDate()}`.padStart(2, "0");
+  const hour = `${date.getHours()}`.padStart(2, "0");
+  const minute = `${date.getMinutes()}`.padStart(2, "0");
+  const second = `${date.getSeconds()}`.padStart(2, "0");
+  return `${year}-${month}-${day} ${hour}:${minute}:${second}`;
 }
 
 function formatDuration(startedAt: string, finishedAt: string) {

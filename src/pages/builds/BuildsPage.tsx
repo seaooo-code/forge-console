@@ -30,7 +30,10 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { environmentsSnapshotQueryKey, fetchEnvironmentsSnapshot } from "@/pages/environments";
-import { releaseRecordsSnapshotQueryKey } from "@/pages/release-records";
+import {
+  fetchReleaseRecordsSnapshot,
+  releaseRecordsSnapshotQueryKey,
+} from "@/pages/release-records";
 import { useAuthStore } from "@/store/use-auth-store";
 import type { AuthUser } from "@/types/auth";
 
@@ -67,6 +70,11 @@ type BuildEnvironmentOption = {
   value: string;
 };
 
+type ActiveFullReleaseTarget = {
+  build?: BuildRunRecord;
+  buildId: string;
+};
+
 export function BuildsPage({ onOpenBuild }: BuildsPageProps) {
   const queryClient = useQueryClient();
   const session = useAuthStore((state) => state.session);
@@ -86,12 +94,36 @@ export function BuildsPage({ onOpenBuild }: BuildsPageProps) {
     queryFn: fetchEnvironmentsSnapshot,
     queryKey: environmentsSnapshotQueryKey,
   });
+  const { data: releaseRecordsSnapshot } = useQuery({
+    queryFn: fetchReleaseRecordsSnapshot,
+    queryKey: releaseRecordsSnapshotQueryKey,
+  });
   const [isCreateBuildDialogOpen, setIsCreateBuildDialogOpen] = useState(false);
   const [buildError, setBuildError] = useState("");
   const [buildSuccess, setBuildSuccess] = useState("");
   const [releaseBuild, setReleaseBuild] = useState<BuildRunRecord | null>(null);
   const [releaseError, setReleaseError] = useState("");
   const [releaseSuccess, setReleaseSuccess] = useState("");
+  const buildsById = useMemo(
+    () => new Map(snapshot?.builds.map((build) => [build.id, build]) ?? []),
+    [snapshot],
+  );
+  const activeFullReleaseByTarget = useMemo(() => {
+    const releases = new Map<string, ActiveFullReleaseTarget>();
+
+    for (const record of releaseRecordsSnapshot?.records ?? []) {
+      if (record.status !== "active" || record.releaseType !== "full") {
+        continue;
+      }
+
+      releases.set(buildReleaseTargetKey(record.moduleId, record.environment), {
+        build: buildsById.get(record.buildRecordId),
+        buildId: record.buildRecordId,
+      });
+    }
+
+    return releases;
+  }, [buildsById, releaseRecordsSnapshot]);
   const moduleOptions = useMemo(
     () =>
       modulesSnapshot?.modules.map((module) => ({
@@ -136,11 +168,18 @@ export function BuildsPage({ onOpenBuild }: BuildsPageProps) {
   const columnDefs = useMemo<ColDef<BuildRunRecord>[]>(
     () => [
       {
-        cellRenderer: BuildCell,
+        cellRenderer: BuildIDCell,
         field: "id",
+        flex: 0.45,
+        headerName: "ID",
+        minWidth: 96,
+      },
+      {
+        cellRenderer: BuildCell,
+        field: "createdAt",
         flex: 1,
-        headerName: "构建编号",
-        minWidth: 168,
+        headerName: "构建时间",
+        minWidth: 176,
       },
       {
         field: "application",
@@ -349,7 +388,7 @@ export function BuildsPage({ onOpenBuild }: BuildsPageProps) {
               environment: form.environment,
               moduleId: form.moduleId,
             });
-            setBuildSuccess(`构建已提交：${build.id}`);
+            setBuildSuccess(`构建已提交：${build.createdAt}`);
             setIsCreateBuildDialogOpen(false);
             await queryClient.invalidateQueries({ queryKey: buildsSnapshotQueryKey });
           } catch (error) {
@@ -358,6 +397,13 @@ export function BuildsPage({ onOpenBuild }: BuildsPageProps) {
         }}
       />
       <BuildReleaseDialog
+        activeFullRelease={
+          releaseBuild
+            ? activeFullReleaseByTarget.get(
+                buildReleaseTargetKey(releaseBuild.moduleId, releaseBuild.environment),
+              )
+            : undefined
+        }
         build={releaseBuild}
         isOpen={Boolean(releaseBuild)}
         submitError={releaseError}
@@ -377,13 +423,13 @@ export function BuildsPage({ onOpenBuild }: BuildsPageProps) {
           setReleaseSuccess("");
 
           try {
-            const releaseId = await createBuildRelease({
+            const releaseCreatedAt = await createBuildRelease({
               buildRecordId: releaseBuild.id,
               createdByUserId,
               identifier: form.identifier,
               releaseType: form.releaseType,
             });
-            setReleaseSuccess(`发布已提交：${releaseId}`);
+            setReleaseSuccess(`发布已生效：${releaseCreatedAt}`);
             closeReleaseDialog();
             await queryClient.invalidateQueries({ queryKey: buildsSnapshotQueryKey });
             await queryClient.invalidateQueries({ queryKey: releaseRecordsSnapshotQueryKey });
@@ -401,12 +447,15 @@ function BuildCell({ data }: ICellRendererParams<BuildRunRecord>) {
     return null;
   }
 
-  return (
-    <div className="min-w-0 leading-tight">
-      <div className="truncate font-semibold text-blue-600 text-sm">{data.id}</div>
-      <div className="mt-1 truncate text-slate-600 text-xs">{data.artifact}</div>
-    </div>
-  );
+  return <span className="truncate font-semibold text-blue-600 text-sm">{data.createdAt}</span>;
+}
+
+function BuildIDCell({ value }: ICellRendererParams<BuildRunRecord, string>) {
+  return value ? (
+    <span className="truncate font-mono font-semibold text-slate-700 text-xs">
+      #{value.trim().slice(-8)}
+    </span>
+  ) : null;
 }
 
 function BranchCell({ data }: ICellRendererParams<BuildRunRecord>) {
@@ -486,6 +535,24 @@ function ActionsCell({
 function isBuildRowActionEvent(event: RowClickedEvent<BuildRunRecord>) {
   const target = event.event?.target;
   return target instanceof Element && Boolean(target.closest("[data-build-row-action]"));
+}
+
+function buildReleaseTargetKey(moduleId: string, environment: string) {
+  return `${moduleId}:${environment}`;
+}
+
+function isBuildOlderThanActiveRelease(
+  build: BuildRunRecord,
+  activeRelease: ActiveFullReleaseTarget,
+) {
+  const buildCreatedAt = Date.parse(build.createdAtRaw);
+  const activeBuildCreatedAt = Date.parse(activeRelease.build?.createdAtRaw ?? "");
+
+  if (!Number.isNaN(buildCreatedAt) && !Number.isNaN(activeBuildCreatedAt)) {
+    return buildCreatedAt < activeBuildCreatedAt;
+  }
+
+  return false;
 }
 
 function BuildCreateDialog({
@@ -711,12 +778,14 @@ function BuildCreateDialog({
 }
 
 function BuildReleaseDialog({
+  activeFullRelease,
   build,
   isOpen,
   onClose,
   onSubmit,
   submitError,
 }: {
+  activeFullRelease?: ActiveFullReleaseTarget;
   build: BuildRunRecord | null;
   isOpen: boolean;
   onClose: () => void;
@@ -737,6 +806,16 @@ function BuildReleaseDialog({
     },
   });
   const releaseType = watch("releaseType");
+  const isDuplicateFullRelease =
+    releaseType === "full" && Boolean(build && activeFullRelease?.buildId === build.id);
+  const isRollbackFullRelease =
+    releaseType === "full" &&
+    Boolean(
+      build &&
+        activeFullRelease &&
+        activeFullRelease.buildId !== build.id &&
+        isBuildOlderThanActiveRelease(build, activeFullRelease),
+    );
 
   useEffect(() => {
     if (!isOpen) {
@@ -768,7 +847,7 @@ function BuildReleaseDialog({
               发布构建
             </h2>
             <p id="build-release-dialog-description" className="text-slate-600 text-sm leading-6">
-              将构建「{build.id}」发布到 {build.version} 环境，发布后会更新访问路由指向。
+              将 {build.createdAt} 创建的构建发布到 {build.version} 环境，发布后会更新访问路由指向。
             </p>
           </div>
 
@@ -810,6 +889,18 @@ function BuildReleaseDialog({
               </Field>
             ) : null}
 
+            {isDuplicateFullRelease ? (
+              <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-amber-700 text-sm">
+                该构建已有生效中的全量发布，不能重复提交全量发布。
+              </div>
+            ) : null}
+            {isRollbackFullRelease ? (
+              <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-amber-700 text-sm">
+                当前生效构建创建于 {activeFullRelease?.build?.createdAt}
+                ，早于它的构建发布会回退访问路由。
+              </div>
+            ) : null}
+
             {submitError ? (
               <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-rose-600 text-sm">
                 {submitError}
@@ -824,7 +915,7 @@ function BuildReleaseDialog({
             <Button
               type="submit"
               className="bg-blue-600 text-white hover:bg-blue-700"
-              disabled={isSubmitting}
+              disabled={isSubmitting || isDuplicateFullRelease}
             >
               {isSubmitting ? (
                 <>

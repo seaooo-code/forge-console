@@ -9,9 +9,13 @@ export type BuildRunRecord = {
   artifact: string;
   branch: string;
   commit: string;
+  createdAt: string;
+  createdAtRaw: string;
   duration: string;
+  environment: string;
   id: string;
   module: string;
+  moduleId: string;
   operator: string;
   startedAt: string;
   status: BuildRunStatus;
@@ -88,5 +92,6 @@ export type BuildCreateFormState = {
 export type BuildCreateInput = BuildCreateFormState;
 
 export type BuildCreateResult = {
+  createdAt: string;
   id: string;
 };

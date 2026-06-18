@@ -42,11 +42,18 @@ export function ReleaseRecordsPage() {
   const columnDefs = useMemo<ColDef<ReleasePointerRecord>[]>(
     () => [
       {
-        cellRenderer: ReleaseRecordCell,
+        cellRenderer: ReleaseIDCell,
         field: "id",
+        flex: 0.45,
+        headerName: "ID",
+        minWidth: 96,
+      },
+      {
+        cellRenderer: ReleaseRecordCell,
+        field: "createdAt",
         flex: 1,
-        headerName: "发布编号",
-        minWidth: 172,
+        headerName: "发布时间",
+        minWidth: 176,
       },
       {
         field: "application",
@@ -93,12 +100,6 @@ export function ReleaseRecordsPage() {
         flex: 0.7,
         headerName: "操作人",
         minWidth: 100,
-      },
-      {
-        field: "createdAt",
-        flex: 0.68,
-        headerName: "发布时间",
-        minWidth: 110,
       },
       {
         field: "updatedAt",
@@ -206,12 +207,15 @@ function ReleaseRecordCell({ data }: ICellRendererParams<ReleasePointerRecord>) 
     return null;
   }
 
-  return (
-    <div className="min-w-0 leading-tight">
-      <div className="truncate font-semibold text-blue-600 text-sm">{data.id}</div>
-      <div className="mt-1 truncate text-slate-600 text-xs">{data.buildRecordId}</div>
-    </div>
-  );
+  return <span className="truncate font-semibold text-blue-600 text-sm">{data.createdAt}</span>;
+}
+
+function ReleaseIDCell({ value }: ICellRendererParams<ReleasePointerRecord, string>) {
+  return value ? (
+    <span className="truncate font-mono font-semibold text-slate-700 text-xs">
+      #{value.trim().slice(-8)}
+    </span>
+  ) : null;
 }
 
 function ModuleCell({ data }: ICellRendererParams<ReleasePointerRecord>) {

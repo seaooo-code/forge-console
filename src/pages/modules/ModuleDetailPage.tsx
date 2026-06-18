@@ -190,7 +190,7 @@ export function ModuleDetailPage({ moduleId, onBack, onEditModule }: ModuleDetai
               environment: form.environment,
               moduleId: module.id,
             });
-            setBuildSuccess(`构建已提交：${build.id}`);
+            setBuildSuccess(`构建已提交：${build.createdAt}`);
             setIsBuildDialogOpen(false);
             await queryClient.invalidateQueries({ queryKey: buildsSnapshotQueryKey });
           } catch (error) {

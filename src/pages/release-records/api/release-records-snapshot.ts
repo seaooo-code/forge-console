@@ -125,7 +125,7 @@ function normalizeReleaseRecord(record: ReleaseRecordAPIRecord): ReleasePointerR
     application: record.applicationName || "-",
     artifact: record.artifactKey || record.artifactUrl || "-",
     buildRecordId: record.buildRecordId || "-",
-    createdAt: formatTime(record.createdAt),
+    createdAt: formatRecordNumber(record.createdAt),
     environment: record.environment || "-",
     environmentName: record.environmentName || record.environment || "-",
     id: record.id,
@@ -154,4 +154,23 @@ function formatTime(value: string) {
     minute: "2-digit",
     month: "2-digit",
   }).format(date);
+}
+
+function formatRecordNumber(value: string) {
+  if (!value) {
+    return "-";
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, "0");
+  const day = `${date.getDate()}`.padStart(2, "0");
+  const hour = `${date.getHours()}`.padStart(2, "0");
+  const minute = `${date.getMinutes()}`.padStart(2, "0");
+  const second = `${date.getSeconds()}`.padStart(2, "0");
+  return `${year}-${month}-${day} ${hour}:${minute}:${second}`;
 }
