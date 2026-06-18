@@ -9,6 +9,8 @@ import {
   Hammer,
   Package,
   PenLine,
+  Rocket,
+  ShieldCheck,
   UserRound,
 } from "lucide-react";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
@@ -27,6 +29,13 @@ import {
 import { cn } from "@/lib/utils";
 import { buildsSnapshotQueryKey, createBuild } from "@/pages/builds";
 import { environmentsSnapshotQueryKey, fetchEnvironmentsSnapshot } from "@/pages/environments";
+import {
+  fetchReleaseRecordsSnapshot,
+  type ReleasePointerRecord,
+  releaseRecordStatusClass,
+  releaseRecordsSnapshotQueryKeyWithFilters,
+  releaseRecordTypeLabels,
+} from "@/pages/release-records";
 
 import { fetchModuleDetailSnapshot, moduleDetailQueryKey } from "./api/modules-snapshot";
 import { kindClass } from "./constants";
@@ -48,10 +57,16 @@ export function ModuleDetailPage({ moduleId, onBack, onEditModule }: ModuleDetai
     queryFn: fetchEnvironmentsSnapshot,
     queryKey: environmentsSnapshotQueryKey,
   });
+  const releaseRecordsFilters = useMemo(() => ({ moduleId }), [moduleId]);
+  const { data: releaseRecordsSnapshot, isFetching: isReleaseRecordsFetching } = useQuery({
+    queryFn: () => fetchReleaseRecordsSnapshot(releaseRecordsFilters),
+    queryKey: releaseRecordsSnapshotQueryKeyWithFilters(releaseRecordsFilters),
+  });
   const [isBuildDialogOpen, setIsBuildDialogOpen] = useState(false);
   const [buildError, setBuildError] = useState("");
   const [buildSuccess, setBuildSuccess] = useState("");
   const module = snapshot?.modules[0];
+  const releaseRecords = releaseRecordsSnapshot?.records ?? [];
   const environmentOptions = useMemo(
     () =>
       environmentSnapshot?.environments.map((environment) => ({
@@ -168,6 +183,8 @@ export function ModuleDetailPage({ moduleId, onBack, onEditModule }: ModuleDetai
             </div>
           </Card>
         </section>
+
+        <PublishedBuildsPanel isFetching={isReleaseRecordsFetching} records={releaseRecords} />
       </div>
 
       <ModuleBuildDialog
@@ -295,6 +312,106 @@ function formatCommonModule(module: ModuleRecord) {
   }
 
   return module.commonModuleName || module.commonModuleId || "-";
+}
+
+function PublishedBuildsPanel({
+  isFetching,
+  records,
+}: {
+  isFetching: boolean;
+  records: ReleasePointerRecord[];
+}) {
+  return (
+    <Card className="gap-0 rounded-lg border-slate-200 py-0 shadow-sm">
+      <SectionHeader title="已发布构建" description="当前模块已发布的全量和标识构建" />
+      {records.length > 0 ? (
+        <div className="overflow-hidden">
+          <div className="hidden border-slate-200 border-b bg-slate-50 px-4 py-2 font-medium text-slate-500 text-xs xl:grid xl:grid-cols-[110px_170px_110px_100px_minmax(140px,1fr)_92px_120px]">
+            <span>构建 ID</span>
+            <span>发布时间</span>
+            <span>环境</span>
+            <span>发布类型</span>
+            <span>标识</span>
+            <span>状态</span>
+            <span>操作人</span>
+          </div>
+          <div className="divide-y divide-slate-200">
+            {records.map((record) => (
+              <div
+                key={record.id}
+                className="grid gap-2 px-4 py-3 text-sm xl:grid-cols-[110px_170px_110px_100px_minmax(140px,1fr)_92px_120px] xl:items-center"
+              >
+                <PublishedBuildField label="构建 ID">
+                  <span className="font-mono font-semibold text-slate-800 text-xs">
+                    {formatShortRecordID(record.buildRecordId)}
+                  </span>
+                </PublishedBuildField>
+                <PublishedBuildField label="发布时间">
+                  <span className="font-mono text-slate-600 text-xs">{record.createdAt}</span>
+                </PublishedBuildField>
+                <PublishedBuildField label="环境">
+                  <span className="truncate font-medium text-slate-700">
+                    {record.environmentName}
+                  </span>
+                </PublishedBuildField>
+                <PublishedBuildField label="发布类型">
+                  <span className="font-medium text-slate-700 text-xs">
+                    {releaseRecordTypeLabels[record.releaseType]}
+                  </span>
+                </PublishedBuildField>
+                <PublishedBuildField label="标识">
+                  <span className="truncate text-slate-600">
+                    {record.releaseType === "targeted" ? record.identifier || "-" : "全量"}
+                  </span>
+                </PublishedBuildField>
+                <PublishedBuildField label="状态">
+                  <ReleaseStatusBadge status={record.status} />
+                </PublishedBuildField>
+                <PublishedBuildField label="操作人">
+                  <span className="truncate text-slate-600">{record.operator}</span>
+                </PublishedBuildField>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="px-4 py-8 text-center text-slate-500 text-sm">
+          {isFetching ? "正在加载已发布构建" : "暂无已发布构建"}
+        </div>
+      )}
+    </Card>
+  );
+}
+
+function PublishedBuildField({ children, label }: { children: ReactNode; label: string }) {
+  return (
+    <div className="grid min-w-0 grid-cols-[72px_minmax(0,1fr)] items-center gap-2 xl:block">
+      <span className="font-medium text-slate-500 text-xs xl:hidden">{label}</span>
+      <div className="min-w-0">{children}</div>
+    </div>
+  );
+}
+
+function ReleaseStatusBadge({ status }: { status: ReleasePointerRecord["status"] }) {
+  const Icon = status === "active" ? ShieldCheck : Rocket;
+  const label = status === "active" ? "生效中" : status === "inactive" ? "已失效" : "已撤销";
+
+  return (
+    <span
+      className={cn(
+        "inline-flex h-6 items-center gap-1 rounded border px-2 font-semibold text-xs leading-none",
+        releaseRecordStatusClass[status],
+      )}
+    >
+      <Icon className="size-3" />
+      {label}
+    </span>
+  );
+}
+
+function formatShortRecordID(value: string) {
+  const normalized = value.trim();
+  return normalized ? `#${normalized.slice(-8)}` : "-";
 }
 
 function ModuleBuildDialog({

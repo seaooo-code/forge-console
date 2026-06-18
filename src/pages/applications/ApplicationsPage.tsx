@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import type { ColDef, ICellRendererParams } from "ag-grid-community";
+import type { ColDef, ICellRendererParams, RowClickedEvent } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 import {
   Activity,
@@ -223,21 +223,15 @@ export function ApplicationsPage({
           onConfigureApplication,
           onDeleteApplication: handleRequestDeleteApplication,
           onUpdateApplicationStatus: handleRequestUpdateApplicationStatus,
-          onOpenApplication,
         },
         colId: "actions",
-        flex: 1.05,
+        flex: 0.9,
         headerName: "操作",
-        minWidth: 196,
+        minWidth: 150,
         sortable: false,
       },
     ],
-    [
-      handleRequestDeleteApplication,
-      handleRequestUpdateApplicationStatus,
-      onConfigureApplication,
-      onOpenApplication,
-    ],
+    [handleRequestDeleteApplication, handleRequestUpdateApplicationStatus, onConfigureApplication],
   );
 
   const defaultColDef = useMemo<ColDef<HostApplication>>(
@@ -365,6 +359,12 @@ export function ApplicationsPage({
             suppressCellFocus
             suppressContextMenu
             getRowId={({ data }) => data.id}
+            rowClass="cursor-pointer"
+            onRowClicked={(event) => {
+              if (event.data && !isApplicationRowActionEvent(event)) {
+                onOpenApplication(event.data.slug);
+              }
+            }}
           />
 
           <ConsoleTableFooter total={applications.length} />
@@ -597,31 +597,20 @@ function ActionsCell({
   data,
   onConfigureApplication,
   onDeleteApplication,
-  onOpenApplication,
   onUpdateApplicationStatus,
 }: ICellRendererParams<HostApplication> & {
   onConfigureApplication?: (applicationSlug: string) => void;
   onDeleteApplication?: (application: HostApplication) => void;
-  onOpenApplication?: (applicationSlug: string) => void;
   onUpdateApplicationStatus?: (application: HostApplication) => void;
 }) {
   const isOffline = data?.status === "已下线";
   const StatusActionIcon = isOffline ? Activity : ArchiveX;
 
   return (
-    <div className="flex h-full items-center gap-2 whitespace-nowrap font-medium text-xs">
-      <Button
-        variant="link"
-        type="button"
-        className="h-auto p-0 text-blue-600 text-xs hover:text-blue-700"
-        onClick={() => {
-          if (data) {
-            onOpenApplication?.(data.slug);
-          }
-        }}
-      >
-        详情
-      </Button>
+    <div
+      className="flex h-full items-center gap-2 whitespace-nowrap font-medium text-xs"
+      data-application-row-action="true"
+    >
       <Button
         variant="link"
         type="button"
@@ -667,6 +656,11 @@ function ActionsCell({
       </Button>
     </div>
   );
+}
+
+function isApplicationRowActionEvent(event: RowClickedEvent<HostApplication>) {
+  const target = event.event?.target;
+  return target instanceof Element && Boolean(target.closest("[data-application-row-action]"));
 }
 
 function percentage(value: number, total: number) {

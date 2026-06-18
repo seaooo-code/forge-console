@@ -24,7 +24,7 @@ export function ReleaseRecordsPage() {
     isFetching,
     refetch,
   } = useQuery({
-    queryFn: fetchReleaseRecordsSnapshot,
+    queryFn: () => fetchReleaseRecordsSnapshot(),
     queryKey: releaseRecordsSnapshotQueryKey,
   });
   const stats = useMemo(
@@ -74,12 +74,6 @@ export function ReleaseRecordsPage() {
         flex: 0.58,
         headerName: "环境",
         minWidth: 90,
-      },
-      {
-        field: "artifact",
-        flex: 1.25,
-        headerName: "指向产物",
-        minWidth: 220,
       },
       {
         cellRenderer: ReleaseTypeCell,

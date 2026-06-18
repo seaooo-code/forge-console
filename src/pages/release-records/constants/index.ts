@@ -8,5 +8,5 @@ export const releaseRecordStatusClass: Record<ReleaseRecordStatus, string> = {
 
 export const releaseRecordTypeLabels: Record<ReleaseRecordType, string> = {
   full: "全量发布",
-  targeted: "定向发布",
+  targeted: "标识发布",
 };

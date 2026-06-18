@@ -95,7 +95,7 @@ export function BuildsPage({ onOpenBuild }: BuildsPageProps) {
     queryKey: environmentsSnapshotQueryKey,
   });
   const { data: releaseRecordsSnapshot } = useQuery({
-    queryFn: fetchReleaseRecordsSnapshot,
+    queryFn: () => fetchReleaseRecordsSnapshot(),
     queryKey: releaseRecordsSnapshotQueryKey,
   });
   const [isCreateBuildDialogOpen, setIsCreateBuildDialogOpen] = useState(false);

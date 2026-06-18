@@ -1,11 +1,14 @@
 import type {
   ReleasePointerRecord,
   ReleaseRecordStatus,
+  ReleaseRecordsFilters,
   ReleaseRecordsSnapshot,
   ReleaseRecordType,
 } from "../types";
 
 export const releaseRecordsSnapshotQueryKey = ["release-records-snapshot"] as const;
+export const releaseRecordsSnapshotQueryKeyWithFilters = (filters: ReleaseRecordsFilters) =>
+  [...releaseRecordsSnapshotQueryKey, filters] as const;
 
 type ReleaseRecordAPIStatus = ReleaseRecordStatus;
 type ReleaseRecordAPIType = ReleaseRecordType;
@@ -22,6 +25,7 @@ type ReleaseRecordAPIRecord = {
   environment: string;
   environmentName: string;
   id: string;
+  identifier: string;
   moduleId: string;
   moduleName: string;
   releaseType: ReleaseRecordAPIType;
@@ -54,8 +58,24 @@ const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8080"
   "",
 );
 
-export async function fetchReleaseRecordsSnapshot(): Promise<ReleaseRecordsSnapshot> {
-  const payload = await fetchJSON<ReleaseRecordsAPIResponse>("/api/v1/releases");
+export async function fetchReleaseRecordsSnapshot(
+  filters: ReleaseRecordsFilters = {},
+): Promise<ReleaseRecordsSnapshot> {
+  const searchParams = new URLSearchParams();
+  const moduleId = filters.moduleId?.trim();
+  const environment = filters.environment?.trim();
+
+  if (moduleId) {
+    searchParams.set("moduleId", moduleId);
+  }
+  if (environment) {
+    searchParams.set("environment", environment);
+  }
+
+  const queryString = searchParams.toString();
+  const payload = await fetchJSON<ReleaseRecordsAPIResponse>(
+    `/api/v1/releases${queryString ? `?${queryString}` : ""}`,
+  );
   const records = payload.releases.map(normalizeReleaseRecord);
   const summary: ReleaseRecordsSnapshot["summary"] = {
     active: 0,
@@ -129,6 +149,7 @@ function normalizeReleaseRecord(record: ReleaseRecordAPIRecord): ReleasePointerR
     environment: record.environment || "-",
     environmentName: record.environmentName || record.environment || "-",
     id: record.id,
+    identifier: record.identifier || "",
     module: record.moduleName || record.moduleId || "-",
     moduleId: record.moduleId || "-",
     operator: record.createdBy || record.createdByUserId || "-",

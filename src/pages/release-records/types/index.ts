@@ -2,6 +2,11 @@ export type ReleaseRecordStatus = "active" | "inactive" | "revoked";
 
 export type ReleaseRecordType = "full" | "targeted";
 
+export type ReleaseRecordsFilters = {
+  environment?: string;
+  moduleId?: string;
+};
+
 export type ReleasePointerRecord = {
   artifact: string;
   application: string;
@@ -10,6 +15,7 @@ export type ReleasePointerRecord = {
   environment: string;
   environmentName: string;
   id: string;
+  identifier: string;
   module: string;
   moduleId: string;
   operator: string;
