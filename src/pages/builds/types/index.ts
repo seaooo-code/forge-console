@@ -78,3 +78,15 @@ export type BuildReleaseFormState = {
   identifier: string;
   releaseType: BuildReleaseType;
 };
+
+export type BuildCreateFormState = {
+  branch: string;
+  environment: string;
+  moduleId: string;
+};
+
+export type BuildCreateInput = BuildCreateFormState;
+
+export type BuildCreateResult = {
+  id: string;
+};

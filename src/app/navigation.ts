@@ -17,7 +17,7 @@ export const navGroups: NavGroup[] = [
     items: [
       { id: "dev-tasks", label: "开发任务", href: "/dev-tasks", icon: "task" },
       { id: "pipelines", label: "流水线管理", href: "/pipelines", icon: "pipeline" },
-      { id: "builds", label: "构建记录", href: "/builds", icon: "build" },
+      { id: "builds", label: "构建管理", href: "/builds", icon: "build" },
     ],
   },
   {

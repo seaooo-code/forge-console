@@ -25,14 +25,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { buildsSnapshotQueryKey } from "@/pages/builds";
+import { buildsSnapshotQueryKey, createBuild } from "@/pages/builds";
 import { environmentsSnapshotQueryKey, fetchEnvironmentsSnapshot } from "@/pages/environments";
 
-import {
-  createModuleBuild,
-  fetchModuleDetailSnapshot,
-  moduleDetailQueryKey,
-} from "./api/modules-snapshot";
+import { fetchModuleDetailSnapshot, moduleDetailQueryKey } from "./api/modules-snapshot";
 import { kindClass } from "./constants";
 import type { ModuleBuildFormState, ModuleRecord } from "./types";
 
@@ -189,7 +185,7 @@ export function ModuleDetailPage({ moduleId, onBack, onEditModule }: ModuleDetai
           setBuildSuccess("");
 
           try {
-            const build = await createModuleBuild({
+            const build = await createBuild({
               branch: form.branch.trim(),
               environment: form.environment,
               moduleId: module.id,

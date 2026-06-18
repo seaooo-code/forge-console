@@ -1,6 +1,8 @@
 import type {
   BuildArtifactTree,
   BuildArtifactTreeNode,
+  BuildCreateInput,
+  BuildCreateResult,
   BuildRecordDetail,
   BuildReleaseFormState,
   BuildRunRecord,
@@ -135,6 +137,20 @@ export async function fetchBuildDetail(buildId: string): Promise<BuildRecordDeta
   return normalizeBuildDetail(payload.build);
 }
 
+export async function createBuild(input: BuildCreateInput): Promise<BuildCreateResult> {
+  const payload = await fetchJSON<BuildDetailAPIResponse>("/api/v1/builds", {
+    body: JSON.stringify({
+      branch: input.branch.trim(),
+      environment: input.environment,
+      moduleId: input.moduleId,
+      triggerType: "manual",
+    }),
+    method: "POST",
+  });
+
+  return { id: payload.build.id };
+}
+
 export async function createBuildRelease(input: CreateBuildReleaseInput): Promise<string> {
   const payload = await fetchJSON<ReleaseDetailAPIResponse>("/api/v1/releases", {
     body: JSON.stringify({
@@ -171,12 +187,15 @@ async function fetchJSON<T>(path: string, init?: RequestInit): Promise<T> {
 
 const buildAPIErrorMessages: Record<string, string> = {
   "build record not found": "构建记录不存在",
+  "build service unavailable": "构建服务暂不可用",
   "environment not found": "环境不存在",
   "internal server error": "服务端内部错误，请稍后重试",
+  "invalid build request": "构建参数无效，请检查模块、分支和环境",
   "invalid release request": "发布参数无效，请确认构建状态、发布类型和标识",
   "module not found": "模块不存在",
   "release route not found": "发布路由不存在",
   "release service unavailable": "发布服务暂不可用",
+  "storage configuration not found": "环境未绑定有效存储配置，无法构建",
 };
 
 function getBuildAPIErrorMessage(path: string, status: number, payload?: APIErrorPayload) {

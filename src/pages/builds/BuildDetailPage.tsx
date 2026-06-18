@@ -60,7 +60,7 @@ export function BuildDetailPage({ buildId, onBack }: BuildDetailPageProps) {
               onClick={onBack}
             >
               <ArrowLeft className="size-4" />
-              返回构建记录
+              返回构建管理
             </Button>
             <div className="flex flex-wrap items-center gap-3">
               <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-sky-600 text-white shadow-sm">
@@ -374,7 +374,7 @@ function BuildDetailFallback({
           onClick={onBack}
         >
           <ArrowLeft className="size-4" />
-          返回构建记录
+          返回构建管理
         </Button>
       </div>
       <div className="px-6 py-5">

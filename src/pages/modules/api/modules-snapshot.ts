@@ -1,23 +1,22 @@
+import {
+  fetchModulesSnapshot,
+  modulesRootQueryKey,
+  modulesSnapshotQueryKey,
+  normalizeModuleListFilters,
+} from "@/api/modules";
+
 import type {
-  ModuleBuildInput,
-  ModuleBuildRecord,
-  ModuleListFilters,
   ModuleMutationInput,
   ModuleRecord,
   ModuleRepositoryBinding,
   ModulesSnapshot,
 } from "../types";
 
-export const modulesRootQueryKey = ["modules-snapshot"] as const;
-
-export const modulesSnapshotQueryKey = (filters?: Partial<ModuleListFilters>) => {
-  const normalizedFilters = normalizeModuleListFilters(filters);
-
-  if (!hasModuleListFilters(normalizedFilters)) {
-    return modulesRootQueryKey;
-  }
-
-  return [...modulesRootQueryKey, normalizedFilters] as const;
+export {
+  fetchModulesSnapshot,
+  modulesRootQueryKey,
+  modulesSnapshotQueryKey,
+  normalizeModuleListFilters,
 };
 
 export const moduleDetailQueryKey = (moduleId: string | undefined) => [
@@ -34,17 +33,8 @@ export const moduleEditQueryKey = (moduleId: string | undefined) => [
 
 type ModuleAPIRecord = ModuleRecord;
 
-type ModulesAPIResponse = {
-  modules: ModuleAPIRecord[];
-  summary: ModulesSnapshot["summary"];
-};
-
 type ModuleDetailAPIResponse = {
   module: ModuleAPIRecord;
-};
-
-type ModuleBuildDetailAPIResponse = {
-  build: ModuleBuildRecord;
 };
 
 type CodeSourceRepositorySearchResponse = {
@@ -100,17 +90,6 @@ const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8080"
   "",
 );
 
-export async function fetchModulesSnapshot(
-  filters?: Partial<ModuleListFilters>,
-): Promise<ModulesSnapshot> {
-  const payload = await fetchJSON<ModulesAPIResponse>(buildModulesSnapshotPath(filters));
-
-  return {
-    modules: payload.modules.map(normalizeModule),
-    summary: payload.summary,
-  };
-}
-
 export async function fetchModuleDetailSnapshot(moduleId: string): Promise<ModulesSnapshot> {
   const payload = await fetchJSON<ModuleDetailAPIResponse>(
     `/api/v1/modules/${encodeURIComponent(moduleId)}`,
@@ -158,15 +137,6 @@ export async function deleteModule(moduleId: string): Promise<void> {
   });
 }
 
-export async function createModuleBuild(input: ModuleBuildInput): Promise<ModuleBuildRecord> {
-  const payload = await fetchJSON<ModuleBuildDetailAPIResponse>("/api/v1/builds", {
-    body: JSON.stringify(input),
-    method: "POST",
-  });
-
-  return payload.build;
-}
-
 export async function searchCodeSourceRepositories(
   query: string,
 ): Promise<ModuleRepositoryBinding[]> {
@@ -188,17 +158,6 @@ export async function searchCodeSourceRepositories(
     provider: repository.provider,
     sshUrl: repository.sshUrl,
   }));
-}
-
-export function normalizeModuleListFilters(
-  filters?: Partial<ModuleListFilters>,
-): ModuleListFilters {
-  return {
-    applicationId: filters?.applicationId?.trim() ?? "",
-    keyword: filters?.keyword?.trim() ?? "",
-    kind: filters?.kind ?? "",
-    owner: filters?.owner?.trim() ?? "",
-  };
 }
 
 async function fetchJSON<T>(path: string, init?: RequestInit): Promise<T> {
@@ -247,32 +206,6 @@ function getModuleAPIErrorMessage(path: string, status: number, payload?: APIErr
   }
 
   return `Request ${path} failed with ${status}`;
-}
-
-function buildModulesSnapshotPath(filters?: Partial<ModuleListFilters>) {
-  const normalizedFilters = normalizeModuleListFilters(filters);
-  const params = new URLSearchParams();
-
-  if (normalizedFilters.kind) {
-    params.set("kind", normalizedFilters.kind);
-  }
-  if (normalizedFilters.applicationId) {
-    params.set("applicationId", normalizedFilters.applicationId);
-  }
-  if (normalizedFilters.owner) {
-    params.set("owner", normalizedFilters.owner);
-  }
-  if (normalizedFilters.keyword) {
-    params.set("keyword", normalizedFilters.keyword);
-  }
-
-  const query = params.toString();
-
-  return query ? `/api/v1/modules?${query}` : "/api/v1/modules";
-}
-
-function hasModuleListFilters(filters: ModuleListFilters) {
-  return Boolean(filters.applicationId || filters.kind || filters.owner || filters.keyword);
 }
 
 function normalizeModule(module: ModuleAPIRecord): ModuleRecord {

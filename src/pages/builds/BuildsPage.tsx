@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import type { ColDef, ICellRendererParams } from "ag-grid-community";
+import type { ColDef, ICellRendererParams, RowClickedEvent } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 import {
   Activity,
@@ -8,12 +8,14 @@ import {
   GitBranch,
   LoaderCircle,
   PackageCheck,
+  Plus,
   RefreshCw,
   Rocket,
 } from "lucide-react";
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 
+import { fetchModulesSnapshot, modulesRootQueryKey } from "@/api/modules";
 import { ConsoleTableFooter } from "@/components/common/ConsoleControls";
 import { consoleGridTheme } from "@/components/common/console-grid-theme";
 import { Button } from "@/components/ui/button";
@@ -27,17 +29,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { environmentsSnapshotQueryKey, fetchEnvironmentsSnapshot } from "@/pages/environments";
 import { releaseRecordsSnapshotQueryKey } from "@/pages/release-records";
 import { useAuthStore } from "@/store/use-auth-store";
 import type { AuthUser } from "@/types/auth";
 
 import {
   buildsSnapshotQueryKey,
+  createBuild,
   createBuildRelease,
   fetchBuildsSnapshot,
 } from "./api/builds-snapshot";
 import { buildStatusClass, buildTriggerLabels } from "./constants";
 import type {
+  BuildCreateFormState,
   BuildReleaseFormState,
   BuildReleaseType,
   BuildRunRecord,
@@ -47,6 +52,19 @@ import type {
 
 type BuildsPageProps = {
   onOpenBuild: (buildId: string) => void;
+};
+
+type BuildModuleOption = {
+  applicationName: string;
+  defaultBranch: string;
+  label: string;
+  repositoryFullName: string;
+  value: string;
+};
+
+type BuildEnvironmentOption = {
+  label: string;
+  value: string;
 };
 
 export function BuildsPage({ onOpenBuild }: BuildsPageProps) {
@@ -60,9 +78,39 @@ export function BuildsPage({ onOpenBuild }: BuildsPageProps) {
     queryFn: fetchBuildsSnapshot,
     queryKey: buildsSnapshotQueryKey,
   });
+  const { data: modulesSnapshot, isFetching: isModulesFetching } = useQuery({
+    queryFn: () => fetchModulesSnapshot(),
+    queryKey: modulesRootQueryKey,
+  });
+  const { data: environmentSnapshot, isFetching: isEnvironmentsFetching } = useQuery({
+    queryFn: fetchEnvironmentsSnapshot,
+    queryKey: environmentsSnapshotQueryKey,
+  });
+  const [isCreateBuildDialogOpen, setIsCreateBuildDialogOpen] = useState(false);
+  const [buildError, setBuildError] = useState("");
+  const [buildSuccess, setBuildSuccess] = useState("");
   const [releaseBuild, setReleaseBuild] = useState<BuildRunRecord | null>(null);
   const [releaseError, setReleaseError] = useState("");
   const [releaseSuccess, setReleaseSuccess] = useState("");
+  const moduleOptions = useMemo(
+    () =>
+      modulesSnapshot?.modules.map((module) => ({
+        applicationName: module.applicationName,
+        defaultBranch: module.defaultBranch,
+        label: module.name,
+        repositoryFullName: module.repositoryFullName || module.repository,
+        value: module.id,
+      })) ?? [],
+    [modulesSnapshot],
+  );
+  const environmentOptions = useMemo(
+    () =>
+      environmentSnapshot?.environments.map((environment) => ({
+        label: environment.name,
+        value: environment.id,
+      })) ?? [],
+    [environmentSnapshot],
+  );
   const openReleaseDialog = useCallback((build: BuildRunRecord) => {
     setReleaseBuild(build);
     setReleaseError("");
@@ -180,9 +228,9 @@ export function BuildsPage({ onOpenBuild }: BuildsPageProps) {
   return (
     <>
       <div className="border-slate-200 border-b bg-white px-6 py-5">
-        <h1 className="font-semibold text-2xl text-slate-950 tracking-tight">构建记录</h1>
+        <h1 className="font-semibold text-2xl text-slate-950 tracking-tight">构建管理</h1>
         <p className="mt-2 text-slate-600 text-sm">
-          汇总所有模块构建执行，区分手动触发、任务触发与流水线触发
+          汇总所有模块构建执行，支持手动新增构建并跟踪流水线触发结果
         </p>
       </div>
 
@@ -222,9 +270,22 @@ export function BuildsPage({ onOpenBuild }: BuildsPageProps) {
 
             <div className="flex shrink-0 items-center gap-2">
               <Button
+                type="button"
+                className="bg-blue-600 hover:bg-blue-700"
+                onClick={() => {
+                  setBuildError("");
+                  setBuildSuccess("");
+                  setReleaseSuccess("");
+                  setIsCreateBuildDialogOpen(true);
+                }}
+              >
+                <Plus className="size-4" />
+                新增构建
+              </Button>
+              <Button
                 variant="outline"
                 size="icon"
-                aria-label="刷新构建记录"
+                aria-label="刷新构建列表"
                 disabled={isFetching}
                 onClick={() => void refetch()}
               >
@@ -234,6 +295,11 @@ export function BuildsPage({ onOpenBuild }: BuildsPageProps) {
             {releaseSuccess ? (
               <div className="basis-full rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-emerald-700 text-sm">
                 {releaseSuccess}
+              </div>
+            ) : null}
+            {buildSuccess ? (
+              <div className="basis-full rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-emerald-700 text-sm">
+                {buildSuccess}
               </div>
             ) : null}
           </div>
@@ -250,9 +316,9 @@ export function BuildsPage({ onOpenBuild }: BuildsPageProps) {
             suppressContextMenu
             getRowId={({ data }) => data.id}
             rowClass="cursor-pointer"
-            onRowClicked={({ data }) => {
-              if (data) {
-                onOpenBuild(data.id);
+            onRowClicked={(event) => {
+              if (event.data && !isBuildRowActionEvent(event)) {
+                onOpenBuild(event.data.id);
               }
             }}
           />
@@ -261,6 +327,36 @@ export function BuildsPage({ onOpenBuild }: BuildsPageProps) {
         </section>
       </div>
 
+      <BuildCreateDialog
+        environmentOptions={environmentOptions}
+        isEnvironmentsFetching={isEnvironmentsFetching}
+        isModulesFetching={isModulesFetching}
+        isOpen={isCreateBuildDialogOpen}
+        moduleOptions={moduleOptions}
+        submitError={buildError}
+        onClose={() => {
+          setIsCreateBuildDialogOpen(false);
+          setBuildError("");
+        }}
+        onSubmit={async (form) => {
+          setBuildError("");
+          setBuildSuccess("");
+          setReleaseSuccess("");
+
+          try {
+            const build = await createBuild({
+              branch: form.branch,
+              environment: form.environment,
+              moduleId: form.moduleId,
+            });
+            setBuildSuccess(`构建已提交：${build.id}`);
+            setIsCreateBuildDialogOpen(false);
+            await queryClient.invalidateQueries({ queryKey: buildsSnapshotQueryKey });
+          } catch (error) {
+            setBuildError(error instanceof Error ? error.message : "提交构建失败，请稍后重试");
+          }
+        }}
+      />
       <BuildReleaseDialog
         build={releaseBuild}
         isOpen={Boolean(releaseBuild)}
@@ -368,7 +464,7 @@ function ActionsCell({
   const canPublish = data.status === "success";
 
   return (
-    <div className="flex h-full items-center">
+    <div className="flex h-full items-center" data-build-row-action="true">
       <Button
         variant="outline"
         type="button"
@@ -383,6 +479,233 @@ function ActionsCell({
         <Rocket className="size-3.5" />
         发布
       </Button>
+    </div>
+  );
+}
+
+function isBuildRowActionEvent(event: RowClickedEvent<BuildRunRecord>) {
+  const target = event.event?.target;
+  return target instanceof Element && Boolean(target.closest("[data-build-row-action]"));
+}
+
+function BuildCreateDialog({
+  environmentOptions,
+  isEnvironmentsFetching,
+  isModulesFetching,
+  isOpen,
+  moduleOptions,
+  onClose,
+  onSubmit,
+  submitError,
+}: {
+  environmentOptions: BuildEnvironmentOption[];
+  isEnvironmentsFetching: boolean;
+  isModulesFetching: boolean;
+  isOpen: boolean;
+  moduleOptions: BuildModuleOption[];
+  onClose: () => void;
+  onSubmit: (form: BuildCreateFormState) => Promise<void>;
+  submitError: string;
+}) {
+  const {
+    control,
+    formState: { errors, isSubmitting },
+    getValues,
+    handleSubmit,
+    register,
+    reset,
+    setValue,
+    watch,
+  } = useForm<BuildCreateFormState>({
+    defaultValues: {
+      branch: "",
+      environment: "",
+      moduleId: "",
+    },
+  });
+  const hasModuleOptions = moduleOptions.length > 0;
+  const hasEnvironmentOptions = environmentOptions.length > 0;
+  const selectedModuleId = watch("moduleId");
+  const selectedModule = moduleOptions.find((module) => module.value === selectedModuleId);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    reset({
+      branch: "",
+      environment: "",
+      moduleId: "",
+    });
+  }, [isOpen, reset]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    const firstModule = moduleOptions[0];
+    const firstEnvironment = environmentOptions[0];
+    const currentForm = getValues();
+
+    if (!currentForm.moduleId && firstModule) {
+      setValue("moduleId", firstModule.value, { shouldValidate: true });
+      if (!currentForm.branch) {
+        setValue("branch", firstModule.defaultBranch, { shouldValidate: true });
+      }
+    }
+    if (!currentForm.environment && firstEnvironment) {
+      setValue("environment", firstEnvironment.value, { shouldValidate: true });
+    }
+  }, [environmentOptions, getValues, isOpen, moduleOptions, setValue]);
+
+  if (!isOpen) {
+    return null;
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/40 px-4 backdrop-blur-xs">
+      <section
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="build-create-dialog-title"
+        aria-describedby="build-create-dialog-description"
+        className="w-full max-w-lg rounded-lg border border-slate-200 bg-white p-5 shadow-xl"
+      >
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <div className="space-y-2">
+            <h2 id="build-create-dialog-title" className="font-semibold text-lg text-slate-950">
+              新增构建
+            </h2>
+            <p id="build-create-dialog-description" className="text-slate-600 text-sm leading-6">
+              选择模块、分支与环境后提交构建，产物会上传到环境绑定的存储配置。
+            </p>
+          </div>
+
+          <div className="mt-4 space-y-4">
+            <Field label="模块" inputId="build-create-module">
+              <Controller
+                control={control}
+                name="moduleId"
+                rules={{ required: "请选择模块" }}
+                render={({ field }) => (
+                  <Select
+                    value={field.value}
+                    onValueChange={(value) => {
+                      field.onChange(value);
+                      const nextModule = moduleOptions.find((module) => module.value === value);
+                      setValue("branch", nextModule?.defaultBranch ?? "");
+                    }}
+                  >
+                    <SelectTrigger id="build-create-module" className="w-full">
+                      <SelectValue placeholder={isModulesFetching ? "模块加载中" : "选择模块"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {moduleOptions.map((module) => (
+                        <SelectItem key={module.value} value={module.value}>
+                          {module.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              {selectedModule ? (
+                <div className="truncate text-slate-500 text-xs">
+                  {selectedModule.applicationName || "-"} ·{" "}
+                  {selectedModule.repositoryFullName || "-"}
+                </div>
+              ) : null}
+              {errors.moduleId ? (
+                <div className="text-rose-600 text-xs">{errors.moduleId.message}</div>
+              ) : null}
+            </Field>
+
+            <Field label="分支" inputId="build-create-branch">
+              <Input
+                id="build-create-branch"
+                placeholder={selectedModule?.defaultBranch || "输入 Git 分支"}
+                {...register("branch", {
+                  validate: (value) => (value.trim() ? true : "请输入分支"),
+                })}
+              />
+              {errors.branch ? (
+                <div className="text-rose-600 text-xs">{errors.branch.message}</div>
+              ) : null}
+            </Field>
+
+            <Field label="环境" inputId="build-create-environment">
+              <Controller
+                control={control}
+                name="environment"
+                rules={{ required: "请选择环境" }}
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger id="build-create-environment" className="w-full">
+                      <SelectValue
+                        placeholder={isEnvironmentsFetching ? "环境加载中" : "选择环境"}
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {environmentOptions.map((environment) => (
+                        <SelectItem key={environment.value} value={environment.value}>
+                          {environment.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              {errors.environment ? (
+                <div className="text-rose-600 text-xs">{errors.environment.message}</div>
+              ) : null}
+            </Field>
+
+            {submitError ? (
+              <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-rose-600 text-sm">
+                {submitError}
+              </div>
+            ) : null}
+            {!isModulesFetching && !hasModuleOptions ? (
+              <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-amber-700 text-sm">
+                暂无可用模块，请先在模块管理中创建模块。
+              </div>
+            ) : null}
+            {!isEnvironmentsFetching && !hasEnvironmentOptions ? (
+              <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-amber-700 text-sm">
+                暂无可用环境，请先在环境管理中创建环境。
+              </div>
+            ) : null}
+          </div>
+
+          <div className="mt-5 flex justify-end gap-2">
+            <Button variant="outline" type="button" disabled={isSubmitting} onClick={onClose}>
+              取消
+            </Button>
+            <Button
+              type="submit"
+              className="bg-blue-600 text-white hover:bg-blue-700"
+              disabled={
+                isSubmitting ||
+                isModulesFetching ||
+                isEnvironmentsFetching ||
+                !hasModuleOptions ||
+                !hasEnvironmentOptions
+              }
+            >
+              {isSubmitting ? (
+                <>
+                  <LoaderCircle className="size-4 animate-spin" />
+                  提交中
+                </>
+              ) : (
+                "提交构建"
+              )}
+            </Button>
+          </div>
+        </form>
+      </section>
     </div>
   );
 }
