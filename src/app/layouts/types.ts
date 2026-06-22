@@ -1,5 +1,6 @@
 export type NavItem = {
   id: string;
+  isMock?: boolean;
   label: string;
   href: string;
   icon: NavIconName;

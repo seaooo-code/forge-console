@@ -26,7 +26,7 @@ import {
   fetchEnvironmentDetailSnapshot,
   updateEnvironment,
 } from "./api/environments-snapshot";
-import { defaultForm, statusOptions, toneOptions } from "./constants";
+import { defaultForm, toneOptions } from "./constants";
 import type {
   EnvironmentCardTone,
   EnvironmentFormState,
@@ -102,11 +102,11 @@ export function EnvironmentCreatePage({
 
   const title = isEditMode ? "编辑环境" : "新建环境";
   const description = isEditMode
-    ? "维护运行环境的展示信息、状态和存储配置关联"
+    ? "维护运行环境的展示信息和存储配置关联"
     : "创建运行环境，并绑定一个对象存储配置作为 Bundle 分发入口";
 
   const handleFormSubmit = async (form: EnvironmentFormState) => {
-    const input = buildEnvironmentInput(form);
+    const input = buildEnvironmentInput(form, isEditMode ? environment : undefined);
     const validationError = validateEnvironmentInput(input, storageConfigurations);
     if (validationError) {
       setFormError(validationError);
@@ -175,7 +175,7 @@ export function EnvironmentCreatePage({
         ) : null}
 
         <Card className="rounded-lg border-slate-200 bg-white p-0 shadow-none">
-          <FormSectionHeader title="基础信息" description="定义环境唯一标识、名称和运行状态" />
+          <FormSectionHeader title="基础信息" description="定义环境唯一标识、名称和视觉标识" />
           <div className="grid gap-4 px-5 pb-5 xl:grid-cols-3">
             <Field label="环境 ID" required>
               <Input
@@ -187,29 +187,6 @@ export function EnvironmentCreatePage({
             </Field>
             <Field label="环境名称" required>
               <Input placeholder="例如：QA 环境" {...register("name")} />
-            </Field>
-            <Field label="状态">
-              <Controller
-                control={control}
-                name="status"
-                render={({ field }) => (
-                  <Select
-                    value={field.value}
-                    onValueChange={(value) => field.onChange(value as EnvironmentStatusCode)}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {statusOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              />
             </Field>
             <Field label="视觉标识">
               <Controller
@@ -352,7 +329,7 @@ function EnvironmentFormNotFound({ onBack }: { onBack: () => void }) {
         返回环境管理
       </Button>
       <h1 className="font-semibold text-2xl text-slate-950 tracking-tight">环境不存在</h1>
-      <p className="mt-2 text-slate-600 text-sm">当前环境可能已被删除或路径无效。</p>
+      <p className="mt-2 text-slate-600 text-sm">当前环境不存在或路径无效。</p>
     </div>
   );
 }
@@ -372,12 +349,15 @@ function buildInitialForm(environment?: RuntimeEnvironment): EnvironmentFormStat
   };
 }
 
-function buildEnvironmentInput(form: EnvironmentFormState): EnvironmentMutationInput {
+function buildEnvironmentInput(
+  form: EnvironmentFormState,
+  environment?: RuntimeEnvironment,
+): EnvironmentMutationInput {
   return {
     code: form.code.trim(),
     description: form.description.trim(),
     name: form.name.trim(),
-    status: form.status,
+    status: form.status ?? (environment ? toStatusCode(environment.status) : defaultForm.status),
     storageConfigurationId: form.storageConfigurationId,
     tone: form.tone,
   };

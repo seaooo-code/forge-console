@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 
 import { environmentsSnapshotQueryKey } from "./api/environment-query-keys";
 import { fetchEnvironmentsSnapshot } from "./api/environments-snapshot";
-import { environmentToneClass, statusClass } from "./constants";
+import { environmentToneClass } from "./constants";
 import type { RuntimeEnvironment } from "./types";
 
 type EnvironmentsPageProps = {
@@ -105,17 +105,8 @@ function EnvironmentCard({
           </div>
           <div className="min-w-0">
             <div className="font-semibold text-slate-900 text-sm">{environment.name}</div>
-            <div className="font-mono text-slate-500 text-xs">{environment.id}</div>
           </div>
         </div>
-        <span
-          className={cn(
-            "inline-flex h-6 shrink-0 items-center rounded border px-2 font-medium text-xs leading-none",
-            statusClass[environment.status],
-          )}
-        >
-          {environment.status}
-        </span>
       </div>
 
       <p className="min-h-10 text-slate-600 text-sm leading-5">{environment.description}</p>

@@ -7,8 +7,12 @@ import {
   CalendarClock,
   ChevronDown,
   ChevronRight,
+  ChevronsDown,
+  ChevronsUp,
   Clock3,
+  Copy,
   Database,
+  Download,
   ExternalLink,
   File,
   Folder,
@@ -16,13 +20,17 @@ import {
   HardDrive,
   PackageCheck,
   RadioTower,
+  Search,
   Server,
+  X,
 } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
+import { fetchModuleDetailSnapshot, moduleDetailQueryKey } from "@/api/modules";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 import { buildDetailQueryKey, fetchBuildDetail } from "./api/builds-snapshot";
@@ -32,9 +40,21 @@ import type { BuildArtifactTreeNode, BuildRecordDetail, BuildRunStatus } from ".
 type BuildDetailPageProps = {
   buildId: string;
   onBack: () => void;
+  onOpenEnvironment: (environmentId: string) => void;
+  onOpenStorage: (storageId: string) => void;
 };
 
-export function BuildDetailPage({ buildId, onBack }: BuildDetailPageProps) {
+const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8080").replace(
+  /\/+$/,
+  "",
+);
+
+export function BuildDetailPage({
+  buildId,
+  onBack,
+  onOpenEnvironment,
+  onOpenStorage,
+}: BuildDetailPageProps) {
   const {
     data: build,
     error,
@@ -42,11 +62,23 @@ export function BuildDetailPage({ buildId, onBack }: BuildDetailPageProps) {
   } = useQuery({
     queryFn: () => fetchBuildDetail(buildId),
     queryKey: buildDetailQueryKey(buildId),
+    refetchInterval: (query) => {
+      const currentBuild = query.state.data as BuildRecordDetail | undefined;
+      return isLiveBuildStatus(currentBuild?.status) ? 5000 : false;
+    },
+  });
+  const buildModuleId = build?.moduleId;
+  const { data: moduleSnapshot } = useQuery({
+    enabled: Boolean(buildModuleId && buildModuleId !== "-"),
+    queryFn: () => fetchModuleDetailSnapshot(buildModuleId ?? ""),
+    queryKey: moduleDetailQueryKey(buildModuleId),
   });
 
   if (!build) {
     return <BuildDetailFallback error={error} isFetching={isFetching} onBack={onBack} />;
   }
+
+  const applicationSlug = moduleSnapshot?.modules[0]?.applicationSlug ?? "";
 
   return (
     <>
@@ -73,6 +105,11 @@ export function BuildDetailPage({ buildId, onBack }: BuildDetailPageProps) {
               <Badge variant="outline" className="border-slate-200 font-mono text-slate-600">
                 {buildTriggerLabels[build.triggerType]}
               </Badge>
+              {isLiveBuildStatus(build.status) ? (
+                <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700">
+                  自动刷新中
+                </Badge>
+              ) : null}
             </div>
             <p className="mt-2 text-slate-600 text-sm">
               {build.application} / {build.module} / {build.environmentName}
@@ -131,28 +168,24 @@ export function BuildDetailPage({ buildId, onBack }: BuildDetailPageProps) {
 
         <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
           <Card className="gap-0 rounded-lg border-slate-200 py-0 shadow-sm">
-            <SectionHeader title="构建信息" description="执行状态、触发来源和产物路径" />
+            <SectionHeader title="构建信息" description="执行状态、触发来源和产物地址" />
             <div className="grid gap-3 p-4 md:grid-cols-2">
-              <DetailItem icon={CalendarClock} label="排队时间" value={build.queuedAt} />
               <DetailItem
                 icon={CalendarClock}
                 label="开始时间"
                 value={build.startedAtRaw ? build.startedAtFull : "-"}
               />
               <DetailItem icon={CalendarClock} label="完成时间" value={build.finishedAt} />
-              <DetailItem icon={CalendarClock} label="更新时间" value={build.updatedAt} />
               <DetailItem
                 icon={RadioTower}
                 label="触发方式"
                 value={buildTriggerLabels[build.triggerType]}
               />
               <DetailItem icon={RadioTower} label="触发来源" value={build.triggerId} />
-              <DetailItem icon={HardDrive} label="产物 Key" value={build.artifact} wide />
-              <DetailItem icon={HardDrive} label="产物 URL" value={build.artifactUrl} wide />
               <DetailItem
                 icon={HardDrive}
-                label="Manifest Key"
-                value={build.manifestKey || "-"}
+                label="产物 URL"
+                value={getArtifactBaseURL(build)}
                 wide
               />
             </div>
@@ -162,35 +195,55 @@ export function BuildDetailPage({ buildId, onBack }: BuildDetailPageProps) {
             <SectionHeader title="上下文" description="仓库、环境和存储配置" />
             <div className="grid gap-3 p-4">
               <DetailItem icon={GitBranch} label="仓库" value={build.repositoryFullName} />
-              <DetailItem icon={GitBranch} label="Repository ID" value={build.repositoryId} />
               <DetailItem
-                icon={GitBranch}
-                label="Installation ID"
-                value={build.repositoryInstallationId}
+                icon={Database}
+                label="环境名称"
+                value={build.environmentName}
+                onClick={
+                  build.environment && build.environment !== "-"
+                    ? () => onOpenEnvironment(build.environment)
+                    : undefined
+                }
               />
-              <DetailItem icon={Database} label="环境 Code" value={build.environment} />
-              <DetailItem icon={Database} label="环境名称" value={build.environmentName} />
               <DetailItem
                 icon={Database}
                 label="存储配置"
-                value={build.storageConfigurationName}
-                description={build.storageConfigurationId}
+                value={getStorageConfigurationDisplayName(build)}
+                onClick={
+                  build.storageConfigurationId && build.storageConfigurationId !== "-"
+                    ? () => onOpenStorage(build.storageConfigurationId)
+                    : undefined
+                }
               />
             </div>
           </Card>
         </section>
 
-        <ArtifactTreePanel build={build} />
+        <ArtifactTreePanel applicationSlug={applicationSlug} build={build} />
       </div>
     </>
   );
 }
 
-function ArtifactTreePanel({ build }: { build: BuildRecordDetail }) {
+function ArtifactTreePanel({
+  applicationSlug,
+  build,
+}: {
+  applicationSlug: string;
+  build: BuildRecordDetail;
+}) {
   const nodes = build.artifactTree.nodes;
-  const [expandedPaths, setExpandedPaths] = useState<Set<string>>(
-    () => new Set(collectDirectoryPaths(nodes)),
+  const directoryPaths = useMemo(() => collectDirectoryPaths(nodes), [nodes]);
+  const [expandedPaths, setExpandedPaths] = useState<Set<string>>(() => new Set());
+  const [copiedStatus, setCopiedStatus] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const normalizedSearchQuery = searchQuery.trim().toLowerCase();
+  const hasSearch = normalizedSearchQuery.length > 0;
+  const visibleNodes = useMemo(
+    () => (hasSearch ? filterArtifactTreeNodes(nodes, normalizedSearchQuery) : nodes),
+    [hasSearch, nodes, normalizedSearchQuery],
   );
+  const visibleFileCount = countArtifactFiles(visibleNodes);
 
   const toggleExpanded = (path: string) => {
     setExpandedPaths((current) => {
@@ -203,12 +256,26 @@ function ArtifactTreePanel({ build }: { build: BuildRecordDetail }) {
       return next;
     });
   };
+  const copyArtifactValue = (value: string, label: string) => {
+    if (!value || !navigator.clipboard) {
+      setCopiedStatus("复制失败");
+      return;
+    }
+
+    void navigator.clipboard
+      .writeText(value)
+      .then(() => setCopiedStatus(`${label}已复制`))
+      .catch(() => setCopiedStatus("复制失败"))
+      .finally(() => {
+        window.setTimeout(() => setCopiedStatus(""), 1800);
+      });
+  };
 
   return (
     <Card className="gap-0 rounded-lg border-slate-200 py-0 shadow-sm">
       <SectionHeader title="产物文件" description="构建产物目录结构与文件摘要" />
       <div className="border-slate-200 border-b px-4 py-3">
-        <div className="grid gap-3 text-sm md:grid-cols-3">
+        <div className="grid gap-3 text-sm md:grid-cols-2">
           <ArtifactSummaryItem
             label="文件数量"
             value={`${build.artifactTree.fileCount || build.fileCount} 个`}
@@ -217,22 +284,88 @@ function ArtifactTreePanel({ build }: { build: BuildRecordDetail }) {
             label="总体积"
             value={formatBytes(build.artifactTree.totalSizeBytes || build.totalSizeBytes)}
           />
-          <ArtifactSummaryItem label="Manifest" value={build.manifestKey || "-"} monospace />
         </div>
       </div>
       {nodes.length > 0 ? (
-        <div className="p-4">
-          <div className="rounded-lg border border-slate-200 bg-slate-50">
-            {nodes.map((node) => (
-              <ArtifactTreeNodeRow
-                key={node.path}
-                node={node}
-                depth={0}
-                expandedPaths={expandedPaths}
-                onToggle={toggleExpanded}
+        <div className="flex flex-wrap items-center justify-between gap-3 border-slate-200 border-b px-4 py-3">
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <div className="relative min-w-64 flex-1">
+              <Search className="-translate-y-1/2 absolute top-1/2 left-3 size-4 text-slate-400" />
+              <Input
+                value={searchQuery}
+                className="h-9 pl-9"
+                placeholder="搜索文件名 / 路径 / Object Key"
+                onChange={(event) => setSearchQuery(event.target.value)}
               />
-            ))}
+            </div>
+            {searchQuery ? (
+              <Button
+                variant="outline"
+                type="button"
+                size="icon"
+                className="size-9 shrink-0"
+                aria-label="清空产物文件搜索"
+                onClick={() => setSearchQuery("")}
+              >
+                <X className="size-4" />
+              </Button>
+            ) : null}
           </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {hasSearch ? (
+              <span className="text-slate-500 text-xs">匹配 {visibleFileCount} 个文件</span>
+            ) : null}
+            {copiedStatus ? <span className="text-emerald-600 text-xs">{copiedStatus}</span> : null}
+            <Button
+              variant="outline"
+              type="button"
+              className="h-9 gap-2 border-slate-200 bg-white text-slate-600"
+              onClick={() => setExpandedPaths(new Set(directoryPaths))}
+            >
+              <ChevronsDown className="size-4" />
+              展开全部
+            </Button>
+            <Button
+              variant="outline"
+              type="button"
+              className="h-9 gap-2 border-slate-200 bg-white text-slate-600"
+              onClick={() => setExpandedPaths(new Set())}
+            >
+              <ChevronsUp className="size-4" />
+              收起全部
+            </Button>
+          </div>
+        </div>
+      ) : null}
+      {nodes.length > 0 ? (
+        <div className="p-4">
+          {visibleNodes.length > 0 ? (
+            <div className="rounded-lg border border-slate-200 bg-slate-50">
+              {visibleNodes.map((node) => (
+                <ArtifactTreeNodeRow
+                  key={node.path}
+                  applicationSlug={applicationSlug}
+                  build={build}
+                  node={node}
+                  depth={0}
+                  expandedPaths={expandedPaths}
+                  forceExpanded={hasSearch}
+                  onCopy={copyArtifactValue}
+                  onToggle={toggleExpanded}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-8 text-center">
+              <div className="mx-auto flex size-10 items-center justify-center rounded-lg bg-white text-slate-500">
+                <Search className="size-5" />
+              </div>
+              <div className="mt-3 font-semibold text-slate-900 text-sm">未找到匹配文件</div>
+              <div className="mt-1 text-slate-500 text-sm">
+                换一个文件名、路径或 Object Key 再试。
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         <div className="p-6 text-center">
@@ -274,25 +407,37 @@ function ArtifactSummaryItem({
 }
 
 function ArtifactTreeNodeRow({
+  applicationSlug,
+  build,
   depth,
   expandedPaths,
+  forceExpanded,
   node,
+  onCopy,
   onToggle,
 }: {
+  applicationSlug: string;
+  build: BuildRecordDetail;
   depth: number;
   expandedPaths: Set<string>;
+  forceExpanded: boolean;
   node: BuildArtifactTreeNode;
+  onCopy: (value: string, label: string) => void;
   onToggle: (path: string) => void;
 }) {
   const Icon = node.type === "directory" ? Folder : File;
   const children = node.children ?? [];
   const isDirectory = node.type === "directory";
-  const isExpanded = expandedPaths.has(node.path);
+  const isExpanded = forceExpanded || expandedPaths.has(node.path);
   const ChevronIcon = isExpanded ? ChevronDown : ChevronRight;
+  const objectKey = isDirectory ? "" : getArtifactObjectKey(build, node);
+  const downloadUrl = isDirectory
+    ? ""
+    : getArtifactFileDownloadURL(build, node, applicationSlug, objectKey);
 
   return (
     <div>
-      <div className="grid min-h-10 grid-cols-1 items-start gap-2 border-slate-200 border-b px-3 py-2 last:border-b-0 md:grid-cols-[minmax(0,1fr)_7rem_10rem] md:gap-3">
+      <div className="grid min-h-10 grid-cols-1 items-start gap-2 border-slate-200 border-b px-3 py-2 last:border-b-0 md:grid-cols-[minmax(0,1fr)_7rem_10rem_7.5rem] md:gap-3">
         <div className="flex min-w-0 items-start gap-2" style={{ paddingLeft: depth * 18 }}>
           {isDirectory ? (
             <button
@@ -317,7 +462,7 @@ function ArtifactTreeNodeRow({
             <div className="break-all font-semibold text-slate-800 text-sm">{node.name}</div>
             {!isDirectory ? (
               <div className="mt-1 space-y-0.5 font-mono text-[11px] text-slate-500 leading-4">
-                {node.objectKey ? <div className="break-all">{node.objectKey}</div> : null}
+                {objectKey ? <div className="break-all">{objectKey}</div> : null}
                 {node.sha256 ? <div className="break-all">sha256:{node.sha256}</div> : null}
               </div>
             ) : null}
@@ -327,22 +472,164 @@ function ArtifactTreeNodeRow({
           {formatBytes(node.sizeBytes)}
         </div>
         <div className="break-all text-slate-500 text-xs">
-          {isDirectory ? "目录" : node.contentType || "文件"}
+          {isDirectory ? "目录" : formatArtifactContentType(node.contentType)}
+        </div>
+        <div className="flex items-center justify-end gap-1">
+          {!isDirectory ? (
+            <>
+              {downloadUrl ? (
+                <Button
+                  asChild
+                  variant="outline"
+                  size="icon"
+                  className="size-8 border-slate-200 bg-white text-slate-500"
+                  title="下载文件"
+                >
+                  <a href={downloadUrl} target="_blank" rel="noreferrer">
+                    <Download className="size-3.5" />
+                  </a>
+                </Button>
+              ) : (
+                <Button
+                  variant="outline"
+                  type="button"
+                  size="icon"
+                  className="size-8 border-slate-200 bg-white text-slate-400"
+                  title="缺少应用标识，无法生成下载地址"
+                  disabled
+                >
+                  <Download className="size-3.5" />
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                type="button"
+                size="icon"
+                className="size-8 border-slate-200 bg-white text-slate-500"
+                title="复制相对路径"
+                onClick={() => onCopy(node.path, "相对路径")}
+              >
+                <Copy className="size-3.5" />
+              </Button>
+              <Button
+                variant="outline"
+                type="button"
+                size="icon"
+                className="size-8 border-slate-200 bg-white text-slate-500"
+                title="复制 Object Key"
+                disabled={!objectKey}
+                onClick={() => onCopy(objectKey, "Object Key")}
+              >
+                <HardDrive className="size-3.5" />
+              </Button>
+            </>
+          ) : null}
         </div>
       </div>
       {isExpanded
         ? children.map((child) => (
             <ArtifactTreeNodeRow
               key={child.path}
+              applicationSlug={applicationSlug}
+              build={build}
               node={child}
               depth={depth + 1}
               expandedPaths={expandedPaths}
+              forceExpanded={forceExpanded}
+              onCopy={onCopy}
               onToggle={onToggle}
             />
           ))
         : null}
     </div>
   );
+}
+
+function filterArtifactTreeNodes(
+  nodes: BuildArtifactTreeNode[],
+  query: string,
+): BuildArtifactTreeNode[] {
+  const filteredNodes: BuildArtifactTreeNode[] = [];
+
+  for (const node of nodes) {
+    const children = filterArtifactTreeNodes(node.children ?? [], query);
+    const isMatch = artifactNodeMatchesSearch(node, query);
+    if (isMatch || children.length > 0) {
+      filteredNodes.push({
+        ...node,
+        children: isMatch ? node.children : children,
+      });
+    }
+  }
+
+  return filteredNodes;
+}
+
+function artifactNodeMatchesSearch(node: BuildArtifactTreeNode, query: string) {
+  return [node.name, node.path, node.objectKey ?? "", node.sha256 ?? "", node.contentType ?? ""]
+    .join(" ")
+    .toLowerCase()
+    .includes(query);
+}
+
+function formatArtifactContentType(contentType?: string) {
+  const normalizedContentType = contentType?.split(";")[0]?.trim().toLowerCase() ?? "";
+  if (!normalizedContentType) {
+    return "文件";
+  }
+
+  const contentTypeLabels: Record<string, string> = {
+    "application/javascript": "JavaScript",
+    "application/json": "JSON",
+    "application/octet-stream": "二进制文件",
+    "application/wasm": "WASM",
+    "application/x-javascript": "JavaScript",
+    "application/zip": "ZIP 压缩包",
+    "font/otf": "字体文件",
+    "font/ttf": "字体文件",
+    "font/woff": "字体文件",
+    "font/woff2": "字体文件",
+    "image/jpeg": "JPEG 图片",
+    "image/png": "PNG 图片",
+    "image/svg+xml": "SVG 图片",
+    "image/webp": "WebP 图片",
+    "text/css": "CSS",
+    "text/html": "HTML",
+    "text/javascript": "JavaScript",
+    "text/plain": "文本文件",
+    "video/mp4": "MP4 视频",
+  };
+
+  if (contentTypeLabels[normalizedContentType]) {
+    return contentTypeLabels[normalizedContentType];
+  }
+
+  const category = normalizedContentType.split("/")[0];
+  if (category === "audio") {
+    return "音频文件";
+  }
+  if (category === "image") {
+    return "图片文件";
+  }
+  if (category === "text") {
+    return "文本文件";
+  }
+  if (category === "video") {
+    return "视频文件";
+  }
+
+  return "文件";
+}
+
+function countArtifactFiles(nodes: BuildArtifactTreeNode[]) {
+  let count = 0;
+  for (const node of nodes) {
+    if (node.type === "file") {
+      count += 1;
+    }
+    count += countArtifactFiles(node.children ?? []);
+  }
+  return count;
 }
 
 function collectDirectoryPaths(nodes: BuildArtifactTreeNode[]) {
@@ -355,6 +642,70 @@ function collectDirectoryPaths(nodes: BuildArtifactTreeNode[]) {
     paths.push(...collectDirectoryPaths(node.children ?? []));
   }
   return paths;
+}
+
+function getArtifactFileDownloadURL(
+  build: BuildRecordDetail,
+  node: BuildArtifactTreeNode,
+  applicationSlug: string,
+  objectKey: string,
+) {
+  const publicBaseURL = getPublicBaseURL(build);
+  if (publicBaseURL && objectKey) {
+    return `${publicBaseURL}/${objectKey}`;
+  }
+
+  if (!applicationSlug || !build.moduleId || !build.environment || !build.id || !node.path) {
+    return "";
+  }
+
+  const params = new URLSearchParams({ path: node.path });
+  return `${apiBaseUrl}/api/v1/artifacts/applications/${encodeURIComponent(
+    applicationSlug,
+  )}/modules/${encodeURIComponent(build.moduleId)}/environments/${encodeURIComponent(
+    build.environment,
+  )}/builds/${encodeURIComponent(build.id)}/file?${params.toString()}`;
+}
+
+function getArtifactBaseURL(build: BuildRecordDetail) {
+  return getPublicBaseURL(build) || apiBaseUrl;
+}
+
+function getStorageConfigurationDisplayName(build: BuildRecordDetail) {
+  const name = build.storageConfigurationName.trim();
+  const id = build.storageConfigurationId.trim();
+
+  if (!name || name === "-" || name === id || /^storage-[a-f0-9]+$/i.test(name)) {
+    return "存储配置";
+  }
+
+  return name;
+}
+
+function getArtifactObjectKey(build: BuildRecordDetail, node: BuildArtifactTreeNode) {
+  const objectKey = node.objectKey?.trim().replace(/^\/+|\/+$/g, "");
+  if (objectKey) {
+    return objectKey;
+  }
+
+  const artifactKey = build.artifact.trim().replace(/^\/+|\/+$/g, "");
+  const path = node.path.trim().replace(/^\/+/, "");
+  return artifactKey && path ? `${artifactKey}/${path}` : "";
+}
+
+function getPublicBaseURL(build: BuildRecordDetail) {
+  const artifactUrl = build.artifactUrl.trim().replace(/\/+$/g, "");
+  const artifactKey = build.artifact.trim().replace(/^\/+|\/+$/g, "");
+  if (!artifactUrl || artifactUrl === "-" || !artifactKey || artifactKey === "-") {
+    return "";
+  }
+
+  const suffix = `/${artifactKey}`;
+  return artifactUrl.endsWith(suffix) ? artifactUrl.slice(0, -suffix.length) : artifactUrl;
+}
+
+function isLiveBuildStatus(status?: BuildRunStatus) {
+  return status === "queued" || status === "running";
 }
 
 function BuildDetailFallback({
@@ -438,12 +789,14 @@ function DetailItem({
   description,
   icon: Icon,
   label,
+  onClick,
   value,
   wide = false,
 }: {
   description?: string;
   icon: LucideIcon;
   label: string;
+  onClick?: () => void;
   value: string;
   wide?: boolean;
 }) {
@@ -457,7 +810,18 @@ function DetailItem({
       <Icon className="mt-0.5 size-4 shrink-0 text-slate-400" />
       <div className="min-w-0">
         <div className="text-slate-500 text-xs">{label}</div>
-        <div className="break-all font-semibold text-slate-800 text-sm">{value || "-"}</div>
+        {onClick ? (
+          <Button
+            variant="link"
+            type="button"
+            className="h-auto min-w-0 justify-start break-all p-0 text-left font-semibold text-blue-600 text-sm"
+            onClick={onClick}
+          >
+            {value || "-"}
+          </Button>
+        ) : (
+          <div className="break-all font-semibold text-slate-800 text-sm">{value || "-"}</div>
+        )}
         {description ? (
           <div className="mt-0.5 break-all text-slate-500 text-xs">{description}</div>
         ) : null}

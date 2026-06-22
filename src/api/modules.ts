@@ -12,7 +12,17 @@ export const modulesSnapshotQueryKey = (filters?: Partial<ModuleListFilters>) =>
   return [...modulesRootQueryKey, normalizedFilters] as const;
 };
 
+export const moduleDetailQueryKey = (moduleId: string | undefined) => [
+  ...modulesRootQueryKey,
+  "detail",
+  moduleId ?? "none",
+];
+
 type ModuleAPIRecord = ModuleRecord;
+
+type ModuleDetailAPIResponse = {
+  module: ModuleAPIRecord;
+};
 
 type ModulesAPIResponse = {
   modules: ModuleAPIRecord[];
@@ -48,6 +58,22 @@ export async function fetchModulesSnapshot(
   return {
     modules: payload.modules.map(normalizeModule),
     summary: payload.summary,
+  };
+}
+
+export async function fetchModuleDetailSnapshot(moduleId: string): Promise<ModulesSnapshot> {
+  const payload = await fetchJSON<ModuleDetailAPIResponse>(
+    `/api/v1/modules/${encodeURIComponent(moduleId)}`,
+  );
+  const module = normalizeModule(payload.module);
+
+  return {
+    modules: [module],
+    summary: {
+      common: module.kind === "Common" ? 1 : 0,
+      feature: module.kind === "Feature" ? 1 : 0,
+      total: 1,
+    },
   };
 }
 

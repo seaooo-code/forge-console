@@ -1,9 +1,4 @@
-import type {
-  EnvironmentCardTone,
-  EnvironmentFormState,
-  EnvironmentStatus,
-  EnvironmentStatusCode,
-} from "../types";
+import type { EnvironmentCardTone, EnvironmentFormState } from "../types";
 
 export const defaultForm: EnvironmentFormState = {
   code: "",
@@ -21,16 +16,6 @@ export const environmentToneClass: Record<EnvironmentCardTone, string> = {
   rose: "border-t-rose-500",
   sky: "border-t-sky-500",
 };
-
-export const statusClass: Record<EnvironmentStatus, string> = {
-  健康: "border-emerald-200 bg-emerald-50 text-emerald-700",
-  灰度中: "border-amber-200 bg-amber-50 text-amber-700",
-};
-
-export const statusOptions: Array<{ label: string; value: EnvironmentStatusCode }> = [
-  { label: "健康", value: "healthy" },
-  { label: "灰度中", value: "gray" },
-];
 
 export const toneOptions: Array<{ label: string; value: EnvironmentCardTone }> = [
   { label: "蓝色", value: "blue" },

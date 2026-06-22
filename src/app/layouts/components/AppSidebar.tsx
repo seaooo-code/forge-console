@@ -106,7 +106,7 @@ export function AppSidebar({ navGroups, onNavigate }: AppSidebarProps) {
                   variant="ghost"
                   type="button"
                   className={cn(
-                    "flex h-9 w-full justify-start gap-3 rounded-md px-3 text-left font-medium text-sm transition-colors",
+                    "relative flex h-9 w-full justify-start gap-3 rounded-md px-3 pr-12 text-left font-medium text-sm transition-colors",
                     active &&
                       "bg-blue-600 text-white shadow-blue-600/25 shadow-lg hover:bg-blue-600 hover:text-white",
                     !active &&
@@ -121,6 +121,21 @@ export function AppSidebar({ navGroups, onNavigate }: AppSidebarProps) {
                 >
                   <Icon className="size-4 shrink-0" />
                   <span className="truncate">{item.label}</span>
+                  {item.isMock ? (
+                    <span
+                      className={cn(
+                        "absolute top-1 right-1.5 rounded px-1.5 py-0.5 font-medium text-[10px] leading-none",
+                        active
+                          ? "bg-white/20 text-white"
+                          : isLight
+                            ? "bg-amber-50 text-amber-700"
+                            : "bg-amber-500/15 text-amber-300",
+                      )}
+                      title="暂未接真实接口"
+                    >
+                      未接
+                    </span>
+                  ) : null}
                 </Button>
               );
             })}

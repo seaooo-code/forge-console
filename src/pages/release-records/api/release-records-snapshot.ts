@@ -1,11 +1,14 @@
 import type {
   ReleasePointerRecord,
+  ReleaseRecordDetail,
   ReleaseRecordStatus,
   ReleaseRecordsFilters,
   ReleaseRecordsSnapshot,
   ReleaseRecordType,
 } from "../types";
 
+export const releaseRecordDetailQueryKey = (releaseId: string) =>
+  ["release-record-detail", releaseId] as const;
 export const releaseRecordsSnapshotQueryKey = ["release-records-snapshot"] as const;
 export const releaseRecordsSnapshotQueryKeyWithFilters = (filters: ReleaseRecordsFilters) =>
   [...releaseRecordsSnapshotQueryKey, filters] as const;
@@ -93,6 +96,25 @@ export async function fetchReleaseRecordsSnapshot(
   };
 }
 
+export async function fetchReleaseRecordDetail(releaseId: string): Promise<ReleaseRecordDetail> {
+  const normalizedReleaseId = releaseId.trim();
+  if (!normalizedReleaseId) {
+    throw new ReleaseRecordsAPIError("/api/v1/releases", 400, {
+      error: "invalid release request",
+    });
+  }
+
+  const snapshot = await fetchReleaseRecordsSnapshot();
+  const record = snapshot.records.find((item) => item.id === normalizedReleaseId);
+  if (!record) {
+    throw new ReleaseRecordsAPIError(`/api/v1/releases/${encodeURIComponent(releaseId)}`, 404, {
+      error: "release not found",
+    });
+  }
+
+  return record;
+}
+
 async function fetchJSON<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${apiBaseUrl}${path}`, {
     credentials: "include",
@@ -116,6 +138,7 @@ async function fetchJSON<T>(path: string, init?: RequestInit): Promise<T> {
 const releaseRecordsAPIErrorMessages: Record<string, string> = {
   "internal server error": "服务端内部错误，请稍后重试",
   "invalid release request": "发布记录筛选参数无效",
+  "release not found": "发布记录不存在",
   "release service unavailable": "发布服务暂不可用",
 };
 
@@ -144,8 +167,13 @@ function normalizeReleaseRecord(record: ReleaseRecordAPIRecord): ReleasePointerR
   return {
     application: record.applicationName || "-",
     artifact: record.artifactKey || record.artifactUrl || "-",
+    artifactKey: record.artifactKey || "-",
+    artifactUrl: record.artifactUrl || "",
     buildRecordId: record.buildRecordId || "-",
     createdAt: formatRecordNumber(record.createdAt),
+    createdAtRaw: record.createdAt,
+    createdByUserId: record.createdByUserId || "-",
+    description: record.description || "",
     environment: record.environment || "-",
     environmentName: record.environmentName || record.environment || "-",
     id: record.id,
@@ -156,6 +184,8 @@ function normalizeReleaseRecord(record: ReleaseRecordAPIRecord): ReleasePointerR
     releaseType: record.releaseType,
     status: record.status,
     updatedAt: formatTime(record.updatedAt),
+    updatedAtFull: formatRecordNumber(record.updatedAt),
+    updatedAtRaw: record.updatedAt,
   };
 }
 

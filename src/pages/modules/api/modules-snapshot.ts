@@ -1,29 +1,22 @@
 import {
+  fetchModuleDetailSnapshot,
   fetchModulesSnapshot,
+  moduleDetailQueryKey,
   modulesRootQueryKey,
   modulesSnapshotQueryKey,
   normalizeModuleListFilters,
 } from "@/api/modules";
 
-import type {
-  ModuleMutationInput,
-  ModuleRecord,
-  ModuleRepositoryBinding,
-  ModulesSnapshot,
-} from "../types";
+import type { ModuleMutationInput, ModuleRecord, ModuleRepositoryBinding } from "../types";
 
 export {
+  fetchModuleDetailSnapshot,
   fetchModulesSnapshot,
+  moduleDetailQueryKey,
   modulesRootQueryKey,
   modulesSnapshotQueryKey,
   normalizeModuleListFilters,
 };
-
-export const moduleDetailQueryKey = (moduleId: string | undefined) => [
-  ...modulesRootQueryKey,
-  "detail",
-  moduleId ?? "none",
-];
 
 export const moduleEditQueryKey = (moduleId: string | undefined) => [
   ...modulesRootQueryKey,
@@ -89,22 +82,6 @@ const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8080"
   /\/+$/,
   "",
 );
-
-export async function fetchModuleDetailSnapshot(moduleId: string): Promise<ModulesSnapshot> {
-  const payload = await fetchJSON<ModuleDetailAPIResponse>(
-    `/api/v1/modules/${encodeURIComponent(moduleId)}`,
-  );
-  const module = normalizeModule(payload.module);
-
-  return {
-    modules: [module],
-    summary: {
-      common: module.kind === "Common" ? 1 : 0,
-      feature: module.kind === "Feature" ? 1 : 0,
-      total: 1,
-    },
-  };
-}
 
 export async function createModule(input: ModuleMutationInput): Promise<ModuleRecord> {
   const payload = await fetchJSON<ModuleDetailAPIResponse>("/api/v1/modules", {

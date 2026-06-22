@@ -9,9 +9,14 @@ export type ReleaseRecordsFilters = {
 
 export type ReleasePointerRecord = {
   artifact: string;
+  artifactKey: string;
+  artifactUrl: string;
   application: string;
   buildRecordId: string;
   createdAt: string;
+  createdAtRaw: string;
+  createdByUserId: string;
+  description: string;
   environment: string;
   environmentName: string;
   id: string;
@@ -22,7 +27,11 @@ export type ReleasePointerRecord = {
   releaseType: ReleaseRecordType;
   status: ReleaseRecordStatus;
   updatedAt: string;
+  updatedAtFull: string;
+  updatedAtRaw: string;
 };
+
+export type ReleaseRecordDetail = ReleasePointerRecord;
 
 export type ReleaseRecordsSnapshot = {
   records: ReleasePointerRecord[];

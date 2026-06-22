@@ -52,6 +52,10 @@ const ReleaseRecordsPage = lazy(async () => ({
   default: (await import("@/pages/release-records")).ReleaseRecordsPage,
 }));
 
+const ReleaseRecordDetailPage = lazy(async () => ({
+  default: (await import("@/pages/release-records")).ReleaseRecordDetailPage,
+}));
+
 const EnvironmentCreatePage = lazy(async () => ({
   default: (await import("@/pages/environments")).EnvironmentCreatePage,
 }));
@@ -195,8 +199,10 @@ function ConsoleRoutes() {
         <Route path="bundles" element={<BundlesPage />} />
         <Route path="combinations" element={<CombinationsPage />} />
         <Route path="releases" element={<ReleasesPage />} />
-        <Route path="release-records" element={<ReleaseRecordsPage />} />
+        <Route path="release-records" element={<ReleaseRecordsRoute />} />
+        <Route path="release-records/:releaseId" element={<ReleaseRecordDetailRoute />} />
         <Route path="deployments" element={<Navigate to="/release-records" replace />} />
+        <Route path="deployments/:releaseId" element={<DeploymentDetailRedirect />} />
         <Route path="gray" element={<GrayPage />} />
         <Route path="rollback" element={<RollbackPage />} />
         <Route path="code-sources" element={<CodeSourcesPage />} />
@@ -358,7 +364,65 @@ function BuildDetailRoute() {
     return <Navigate to="/builds" replace />;
   }
 
-  return <BuildDetailPage buildId={buildId} onBack={() => navigate("/builds")} />;
+  return (
+    <BuildDetailPage
+      buildId={buildId}
+      onBack={() => navigate("/builds")}
+      onOpenEnvironment={(environmentId: string) =>
+        navigate(`/environments/${encodeURIComponent(environmentId)}/edit`)
+      }
+      onOpenStorage={(storageId: string) =>
+        navigate(`/storage/${encodeURIComponent(storageId)}/edit`)
+      }
+    />
+  );
+}
+
+function ReleaseRecordsRoute() {
+  const navigate = useNavigate();
+
+  return (
+    <ReleaseRecordsPage
+      onOpenRelease={(releaseId: string) =>
+        navigate(`/release-records/${encodeURIComponent(releaseId)}`)
+      }
+    />
+  );
+}
+
+function ReleaseRecordDetailRoute() {
+  const navigate = useNavigate();
+  const { releaseId } = useParams<{ releaseId: string }>();
+
+  if (!releaseId) {
+    return <Navigate to="/release-records" replace />;
+  }
+
+  return (
+    <ReleaseRecordDetailPage
+      releaseId={releaseId}
+      onBack={() => navigate("/release-records")}
+      onOpenApplication={(applicationSlug: string) =>
+        navigate(`/apps/${encodeURIComponent(applicationSlug)}`)
+      }
+      onOpenBuild={(buildId: string) => navigate(`/builds/${encodeURIComponent(buildId)}`)}
+      onOpenEnvironment={(environmentId: string) =>
+        navigate(`/environments/${encodeURIComponent(environmentId)}/edit`)
+      }
+      onOpenModule={(moduleId: string) => navigate(`/modules/${encodeURIComponent(moduleId)}`)}
+    />
+  );
+}
+
+function DeploymentDetailRedirect() {
+  const { releaseId } = useParams<{ releaseId: string }>();
+
+  return (
+    <Navigate
+      to={releaseId ? `/release-records/${encodeURIComponent(releaseId)}` : "/release-records"}
+      replace
+    />
+  );
 }
 
 function EnvironmentsRoute() {

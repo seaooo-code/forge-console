@@ -15,10 +15,18 @@ import {
   fetchReleaseRecordsSnapshot,
   releaseRecordsSnapshotQueryKey,
 } from "./api/release-records-snapshot";
-import { releaseRecordStatusClass, releaseRecordTypeLabels } from "./constants";
+import {
+  releaseRecordStatusClass,
+  releaseRecordStatusLabels,
+  releaseRecordTypeLabels,
+} from "./constants";
 import type { ReleasePointerRecord, ReleaseRecordStatus, ReleaseRecordType } from "./types";
 
-export function ReleaseRecordsPage() {
+type ReleaseRecordsPageProps = {
+  onOpenRelease: (releaseId: string) => void;
+};
+
+export function ReleaseRecordsPage({ onOpenRelease }: ReleaseRecordsPageProps) {
   const {
     data: snapshot,
     isFetching,
@@ -187,6 +195,12 @@ export function ReleaseRecordsPage() {
             suppressCellFocus
             suppressContextMenu
             getRowId={({ data }) => data.id}
+            rowClass="cursor-pointer"
+            onRowClicked={({ data }) => {
+              if (data) {
+                onOpenRelease(data.id);
+              }
+            }}
           />
 
           <ConsoleTableFooter total={snapshot.records.length} />
@@ -252,7 +266,7 @@ function StatusCell({ value }: ICellRendererParams<ReleasePointerRecord, Release
       )}
     >
       <Icon className="size-3" />
-      {value}
+      {releaseRecordStatusLabels[value]}
     </span>
   );
 }
