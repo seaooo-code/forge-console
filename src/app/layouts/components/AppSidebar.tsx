@@ -7,6 +7,7 @@ import {
   GitBranch,
   GitFork,
   History,
+  KeyRound,
   Layers3,
   Moon,
   Package,
@@ -24,6 +25,7 @@ import { useConsoleLayoutStore } from "../model/use-console-layout-store";
 import type { NavGroup, NavIconName, NavItem } from "../types";
 
 const navIcons: Record<NavIconName, LucideIcon> = {
+  accessToken: KeyRound,
   app: AppWindow,
   build: ServerCog,
   bundle: Package,

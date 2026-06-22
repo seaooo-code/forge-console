@@ -12,6 +12,7 @@ export type NavGroup = {
 };
 
 export type NavIconName =
+  | "accessToken"
   | "app"
   | "build"
   | "bundle"

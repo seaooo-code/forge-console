@@ -8,6 +8,10 @@ import { useAuthStore } from "@/store/use-auth-store";
 
 import { ConsoleLayout, ConsoleRouteNotFound } from "./layouts/ConsoleLayout";
 
+const AccessTokensPage = lazy(async () => ({
+  default: (await import("@/pages/access-tokens")).AccessTokensPage,
+}));
+
 const ApplicationCreatePage = lazy(async () => ({
   default: (await import("@/pages/applications")).ApplicationCreatePage,
 }));
@@ -212,6 +216,7 @@ function ConsoleRoutes() {
         <Route path="environments" element={<EnvironmentsRoute />} />
         <Route path="environments/new" element={<EnvironmentCreateRoute />} />
         <Route path="environments/:environmentId/edit" element={<EnvironmentEditRoute />} />
+        <Route path="access-tokens" element={<AccessTokensPage />} />
         <Route path="settings" element={<SettingsPage />} />
         <Route path="*" element={<ConsoleRouteNotFound />} />
       </Route>

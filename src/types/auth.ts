@@ -1,4 +1,5 @@
 export type AuthUser = {
+  id: string;
   unionId: string;
   openId: string;
   userId: string;

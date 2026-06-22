@@ -34,8 +34,6 @@ import {
   fetchReleaseRecordsSnapshot,
   releaseRecordsSnapshotQueryKey,
 } from "@/pages/release-records";
-import { useAuthStore } from "@/store/use-auth-store";
-import type { AuthUser } from "@/types/auth";
 
 import {
   buildsSnapshotQueryKey,
@@ -77,7 +75,6 @@ type ActiveFullReleaseTarget = {
 
 export function BuildsPage({ onOpenBuild }: BuildsPageProps) {
   const queryClient = useQueryClient();
-  const session = useAuthStore((state) => state.session);
   const {
     data: snapshot,
     isFetching,
@@ -413,19 +410,12 @@ export function BuildsPage({ onOpenBuild }: BuildsPageProps) {
             return;
           }
 
-          const createdByUserId = getCurrentUserId(session?.user);
-          if (!createdByUserId) {
-            setReleaseError("当前登录态缺少用户 ID，无法发布");
-            return;
-          }
-
           setReleaseError("");
           setReleaseSuccess("");
 
           try {
             const releaseCreatedAt = await createBuildRelease({
               buildRecordId: releaseBuild.id,
-              createdByUserId,
               identifier: form.identifier,
               releaseType: form.releaseType,
             });
@@ -950,8 +940,4 @@ function Field({
       {children}
     </div>
   );
-}
-
-function getCurrentUserId(user: AuthUser | undefined) {
-  return user?.openId?.trim() || user?.userId?.trim() || user?.unionId?.trim() || "";
 }

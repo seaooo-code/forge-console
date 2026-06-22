@@ -84,7 +84,6 @@ type BuildDetailAPIResponse = {
 
 type CreateBuildReleaseInput = BuildReleaseFormState & {
   buildRecordId: string;
-  createdByUserId: string;
 };
 
 type ReleaseDetailAPIResponse = {
@@ -159,7 +158,6 @@ export async function createBuildRelease(input: CreateBuildReleaseInput): Promis
   const payload = await fetchJSON<ReleaseDetailAPIResponse>("/api/v1/releases", {
     body: JSON.stringify({
       buildRecordId: input.buildRecordId,
-      createdByUserId: input.createdByUserId,
       identifier: input.releaseType === "targeted" ? input.identifier.trim() : "",
       releaseType: input.releaseType,
     }),
