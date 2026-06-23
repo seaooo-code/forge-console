@@ -31,10 +31,11 @@ import { buildsSnapshotQueryKey, createBuild } from "@/pages/builds";
 import { environmentsSnapshotQueryKey, fetchEnvironmentsSnapshot } from "@/pages/environments";
 import {
   fetchReleaseRecordsSnapshot,
+  getReleaseRecordTargetLabel,
+  getReleaseRecordTypeLabel,
   type ReleasePointerRecord,
   releaseRecordStatusClass,
   releaseRecordsSnapshotQueryKeyWithFilters,
-  releaseRecordTypeLabels,
 } from "@/pages/release-records";
 
 import { fetchModuleDetailSnapshot, moduleDetailQueryKey } from "./api/modules-snapshot";
@@ -356,12 +357,12 @@ function PublishedBuildsPanel({
                 </PublishedBuildField>
                 <PublishedBuildField label="发布类型">
                   <span className="font-medium text-slate-700 text-xs">
-                    {releaseRecordTypeLabels[record.releaseType]}
+                    {getReleaseRecordTypeLabel(record)}
                   </span>
                 </PublishedBuildField>
                 <PublishedBuildField label="标识">
                   <span className="truncate text-slate-600">
-                    {record.releaseType === "targeted" ? record.identifier || "-" : "全量"}
+                    {getReleaseRecordTargetLabel(record)}
                   </span>
                 </PublishedBuildField>
                 <PublishedBuildField label="状态">

@@ -68,10 +68,6 @@ const EnvironmentsPage = lazy(async () => ({
   default: (await import("@/pages/environments")).EnvironmentsPage,
 }));
 
-const GrayPage = lazy(async () => ({
-  default: (await import("@/pages/gray")).GrayPage,
-}));
-
 const ModulesPage = lazy(async () => ({
   default: (await import("@/pages/modules")).ModulesPage,
 }));
@@ -90,10 +86,6 @@ const PipelinesPage = lazy(async () => ({
 
 const ReleasesPage = lazy(async () => ({
   default: (await import("@/pages/releases")).ReleasesPage,
-}));
-
-const RollbackPage = lazy(async () => ({
-  default: (await import("@/pages/rollback")).RollbackPage,
 }));
 
 const SettingsPage = lazy(async () => ({
@@ -207,8 +199,6 @@ function ConsoleRoutes() {
         <Route path="release-records/:releaseId" element={<ReleaseRecordDetailRoute />} />
         <Route path="deployments" element={<Navigate to="/release-records" replace />} />
         <Route path="deployments/:releaseId" element={<DeploymentDetailRedirect />} />
-        <Route path="gray" element={<GrayPage />} />
-        <Route path="rollback" element={<RollbackPage />} />
         <Route path="code-sources" element={<CodeSourcesPage />} />
         <Route path="storage" element={<StorageRoute />} />
         <Route path="storage/new" element={<StorageCreateRoute />} />

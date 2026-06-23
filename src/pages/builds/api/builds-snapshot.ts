@@ -158,7 +158,19 @@ export async function createBuildRelease(input: CreateBuildReleaseInput): Promis
   const payload = await fetchJSON<ReleaseDetailAPIResponse>("/api/v1/releases", {
     body: JSON.stringify({
       buildRecordId: input.buildRecordId,
-      identifier: input.releaseType === "targeted" ? input.identifier.trim() : "",
+      expiresAt:
+        input.releaseType === "gray" && input.grayStrategy === "targeted"
+          ? new Date(input.expiresAt).toISOString()
+          : undefined,
+      grayPercentage:
+        input.releaseType === "gray" && input.grayStrategy === "percentage"
+          ? input.grayPercentage
+          : 0,
+      grayStrategy: input.releaseType === "gray" ? input.grayStrategy : "",
+      identifier:
+        input.releaseType === "gray" && input.grayStrategy === "targeted"
+          ? input.identifier.trim()
+          : "",
       releaseType: input.releaseType,
     }),
     method: "POST",
@@ -193,7 +205,8 @@ const buildAPIErrorMessages: Record<string, string> = {
   "environment not found": "环境不存在",
   "internal server error": "服务端内部错误，请稍后重试",
   "invalid build request": "构建参数无效，请检查模块、分支和环境",
-  "invalid release request": "发布参数无效，请确认构建状态、发布类型和标识",
+  "invalid release request": "发布参数无效，请确认构建状态、发布类型和灰度配置",
+  "release already active": "该构建已是当前发布目标的生效版本，没有新的路由变化",
   "module not found": "模块不存在",
   "release route not found": "发布路由不存在",
   "release service unavailable": "发布服务暂不可用",

@@ -2,7 +2,9 @@ export type BuildRunStatus = "canceled" | "failed" | "queued" | "running" | "suc
 
 export type BuildTriggerType = "manual" | "pipeline";
 
-export type BuildReleaseType = "full" | "targeted";
+export type BuildReleaseType = "full" | "gray";
+
+export type BuildReleaseGrayStrategy = "percentage" | "targeted";
 
 export type BuildRunRecord = {
   application: string;
@@ -79,6 +81,9 @@ export type BuildsSnapshot = {
 };
 
 export type BuildReleaseFormState = {
+  expiresAt: string;
+  grayPercentage: number;
+  grayStrategy: BuildReleaseGrayStrategy;
   identifier: string;
   releaseType: BuildReleaseType;
 };

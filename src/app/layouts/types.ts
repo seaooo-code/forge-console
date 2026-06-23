@@ -23,7 +23,6 @@ export type NavIconName =
   | "pipeline"
   | "release"
   | "releaseRecord"
-  | "rollback"
   | "settings"
   | "storage"
   | "task";

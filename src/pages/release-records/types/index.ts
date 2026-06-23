@@ -1,6 +1,8 @@
-export type ReleaseRecordStatus = "active" | "inactive" | "revoked";
+export type ReleaseRecordStatus = "active" | "inactive";
 
-export type ReleaseRecordType = "full" | "targeted";
+export type ReleaseRecordType = "full" | "gray";
+
+export type ReleaseGrayStrategy = "" | "percentage" | "targeted";
 
 export type ReleaseRecordsFilters = {
   environment?: string;
@@ -15,11 +17,17 @@ export type ReleasePointerRecord = {
   buildRecordId: string;
   createdAt: string;
   createdAtRaw: string;
+  createdAtShort: string;
   createdByUserId: string;
   description: string;
   environment: string;
   environmentName: string;
+  expiresAt: string;
+  expiresAtRaw: string;
+  expiresAtShort: string;
   id: string;
+  grayPercentage: number;
+  grayStrategy: ReleaseGrayStrategy;
   identifier: string;
   module: string;
   moduleId: string;
@@ -38,7 +46,6 @@ export type ReleaseRecordsSnapshot = {
   summary: {
     active: number;
     inactive: number;
-    revoked: number;
     total: number;
   };
 };

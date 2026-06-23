@@ -1,4 +1,5 @@
 import type {
+  ReleaseGrayStrategy,
   ReleasePointerRecord,
   ReleaseRecordDetail,
   ReleaseRecordStatus,
@@ -27,6 +28,9 @@ type ReleaseRecordAPIRecord = {
   description: string;
   environment: string;
   environmentName: string;
+  expiresAt: string;
+  grayPercentage: number;
+  grayStrategy: ReleaseGrayStrategy;
   id: string;
   identifier: string;
   moduleId: string;
@@ -38,6 +42,10 @@ type ReleaseRecordAPIRecord = {
 
 type ReleaseRecordsAPIResponse = {
   releases: ReleaseRecordAPIRecord[];
+};
+
+type ReleaseDetailAPIResponse = {
+  release: ReleaseRecordAPIRecord;
 };
 
 type APIErrorPayload = {
@@ -83,7 +91,6 @@ export async function fetchReleaseRecordsSnapshot(
   const summary: ReleaseRecordsSnapshot["summary"] = {
     active: 0,
     inactive: 0,
-    revoked: 0,
     total: records.length,
   };
   for (const record of records) {
@@ -115,6 +122,48 @@ export async function fetchReleaseRecordDetail(releaseId: string): Promise<Relea
   return record;
 }
 
+export async function updateReleaseGrayPercentage(
+  releaseId: string,
+  grayPercentage: number,
+): Promise<ReleaseRecordDetail> {
+  const normalizedReleaseId = releaseId.trim();
+  if (!normalizedReleaseId) {
+    throw new ReleaseRecordsAPIError("/api/v1/releases", 400, {
+      error: "invalid release request",
+    });
+  }
+
+  const payload = await fetchJSON<ReleaseDetailAPIResponse>(
+    `/api/v1/releases/${encodeURIComponent(normalizedReleaseId)}/gray-percentage`,
+    {
+      body: JSON.stringify({ grayPercentage }),
+      method: "PATCH",
+    },
+  );
+
+  return normalizeReleaseRecord(payload.release);
+}
+
+export async function inactivateTargetedGrayRelease(
+  releaseId: string,
+): Promise<ReleaseRecordDetail> {
+  const normalizedReleaseId = releaseId.trim();
+  if (!normalizedReleaseId) {
+    throw new ReleaseRecordsAPIError("/api/v1/releases", 400, {
+      error: "invalid release request",
+    });
+  }
+
+  const payload = await fetchJSON<ReleaseDetailAPIResponse>(
+    `/api/v1/releases/${encodeURIComponent(normalizedReleaseId)}/inactivate`,
+    {
+      method: "PATCH",
+    },
+  );
+
+  return normalizeReleaseRecord(payload.release);
+}
+
 async function fetchJSON<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${apiBaseUrl}${path}`, {
     credentials: "include",
@@ -137,7 +186,8 @@ async function fetchJSON<T>(path: string, init?: RequestInit): Promise<T> {
 
 const releaseRecordsAPIErrorMessages: Record<string, string> = {
   "internal server error": "服务端内部错误，请稍后重试",
-  "invalid release request": "发布记录筛选参数无效",
+  "invalid release request": "发布参数无效，请确认灰度配置",
+  "release already active": "该构建已是当前发布目标的生效版本，没有新的路由变化",
   "release not found": "发布记录不存在",
   "release service unavailable": "发布服务暂不可用",
 };
@@ -172,24 +222,30 @@ function normalizeReleaseRecord(record: ReleaseRecordAPIRecord): ReleasePointerR
     buildRecordId: record.buildRecordId || "-",
     createdAt: formatRecordNumber(record.createdAt),
     createdAtRaw: record.createdAt,
+    createdAtShort: formatShortRecordTime(record.createdAt),
     createdByUserId: record.createdByUserId || "-",
     description: record.description || "",
     environment: record.environment || "-",
     environmentName: record.environmentName || record.environment || "-",
+    expiresAt: formatRecordNumber(record.expiresAt),
+    expiresAtRaw: record.expiresAt || "",
+    expiresAtShort: formatShortRecordTime(record.expiresAt),
+    grayPercentage: record.grayPercentage ?? 0,
+    grayStrategy: record.grayStrategy || "",
     id: record.id,
     identifier: record.identifier || "",
-    module: record.moduleName || record.moduleId || "-",
+    module: record.moduleName || "-",
     moduleId: record.moduleId || "-",
     operator: record.createdBy || record.createdByUserId || "-",
     releaseType: record.releaseType,
     status: record.status,
-    updatedAt: formatTime(record.updatedAt),
+    updatedAt: formatShortRecordTime(record.updatedAt),
     updatedAtFull: formatRecordNumber(record.updatedAt),
     updatedAtRaw: record.updatedAt,
   };
 }
 
-function formatTime(value: string) {
+function formatShortRecordTime(value: string) {
   if (!value) {
     return "-";
   }
@@ -199,12 +255,11 @@ function formatTime(value: string) {
     return value;
   }
 
-  return new Intl.DateTimeFormat("zh-CN", {
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    month: "2-digit",
-  }).format(date);
+  const month = `${date.getMonth() + 1}`.padStart(2, "0");
+  const day = `${date.getDate()}`.padStart(2, "0");
+  const hour = `${date.getHours()}`.padStart(2, "0");
+  const minute = `${date.getMinutes()}`.padStart(2, "0");
+  return `${month}-${day} ${hour}:${minute}`;
 }
 
 function formatRecordNumber(value: string) {

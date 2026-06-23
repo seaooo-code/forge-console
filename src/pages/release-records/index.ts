@@ -6,6 +6,8 @@ export {
   releaseRecordsSnapshotQueryKeyWithFilters,
 } from "./api/release-records-snapshot";
 export {
+  getReleaseRecordTargetLabel,
+  getReleaseRecordTypeLabel,
   releaseRecordStatusClass,
   releaseRecordStatusLabels,
   releaseRecordTypeLabels,

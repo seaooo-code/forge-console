@@ -16,11 +16,11 @@ import {
   releaseRecordsSnapshotQueryKey,
 } from "./api/release-records-snapshot";
 import {
+  getReleaseRecordTypeLabel,
   releaseRecordStatusClass,
   releaseRecordStatusLabels,
-  releaseRecordTypeLabels,
 } from "./constants";
-import type { ReleasePointerRecord, ReleaseRecordStatus, ReleaseRecordType } from "./types";
+import type { ReleasePointerRecord, ReleaseRecordStatus } from "./types";
 
 type ReleaseRecordsPageProps = {
   onOpenRelease: (releaseId: string) => void;
@@ -42,7 +42,6 @@ export function ReleaseRecordsPage({ onOpenRelease }: ReleaseRecordsPageProps) {
             { id: "total", label: "总发布", value: snapshot.summary.total, tone: "sky" },
             { id: "active", label: "生效中", value: snapshot.summary.active, tone: "emerald" },
             { id: "inactive", label: "已失效", value: snapshot.summary.inactive, tone: "slate" },
-            { id: "revoked", label: "已撤销", value: snapshot.summary.revoked, tone: "red" },
           ]
         : [],
     [snapshot],
@@ -91,6 +90,20 @@ export function ReleaseRecordsPage({ onOpenRelease }: ReleaseRecordsPageProps) {
         minWidth: 102,
       },
       {
+        cellRenderer: GrayConfigCell,
+        field: "grayStrategy",
+        flex: 0.82,
+        headerName: "灰度配置",
+        minWidth: 136,
+      },
+      {
+        cellRenderer: ExpiresAtCell,
+        field: "expiresAt",
+        flex: 0.8,
+        headerName: "过期时间",
+        minWidth: 132,
+      },
+      {
         cellRenderer: StatusCell,
         field: "status",
         flex: 0.65,
@@ -102,12 +115,6 @@ export function ReleaseRecordsPage({ onOpenRelease }: ReleaseRecordsPageProps) {
         flex: 0.7,
         headerName: "操作人",
         minWidth: 100,
-      },
-      {
-        field: "updatedAt",
-        flex: 0.68,
-        headerName: "更新时间",
-        minWidth: 110,
       },
     ],
     [],
@@ -139,7 +146,7 @@ export function ReleaseRecordsPage({ onOpenRelease }: ReleaseRecordsPageProps) {
       </div>
 
       <div className="space-y-4 px-6 py-5">
-        <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {stats.map((item) => (
             <Card key={item.id} className="rounded-lg px-5 py-4 shadow-none">
               <div className="flex items-start justify-between gap-4">
@@ -215,7 +222,9 @@ function ReleaseRecordCell({ data }: ICellRendererParams<ReleasePointerRecord>) 
     return null;
   }
 
-  return <span className="truncate font-semibold text-blue-600 text-sm">{data.createdAt}</span>;
+  return (
+    <span className="truncate font-semibold text-blue-600 text-sm">{data.createdAtShort}</span>
+  );
 }
 
 function ReleaseIDCell({ value }: ICellRendererParams<ReleasePointerRecord, string>) {
@@ -234,7 +243,6 @@ function ModuleCell({ data }: ICellRendererParams<ReleasePointerRecord>) {
   return (
     <div className="min-w-0 leading-tight">
       <div className="truncate font-semibold text-slate-800 text-sm">{data.module}</div>
-      <div className="mt-1 truncate text-slate-500 text-xs">{data.moduleId}</div>
     </div>
   );
 }
@@ -245,10 +253,51 @@ function EnvironmentCell({ data }: ICellRendererParams<ReleasePointerRecord>) {
   ) : null;
 }
 
-function ReleaseTypeCell({ value }: ICellRendererParams<ReleasePointerRecord, ReleaseRecordType>) {
-  return value ? (
-    <span className="font-medium text-slate-700 text-xs">{releaseRecordTypeLabels[value]}</span>
+function ReleaseTypeCell({ data }: ICellRendererParams<ReleasePointerRecord>) {
+  return data ? (
+    <span className="font-medium text-slate-700 text-xs">{getReleaseRecordTypeLabel(data)}</span>
   ) : null;
+}
+
+function GrayConfigCell({ data }: ICellRendererParams<ReleasePointerRecord>) {
+  if (!data) {
+    return null;
+  }
+
+  if (data.releaseType !== "gray") {
+    return <span className="text-slate-400 text-xs">-</span>;
+  }
+
+  if (data.grayStrategy === "targeted") {
+    return (
+      <span className="truncate font-mono font-semibold text-slate-700 text-xs">
+        {data.identifier || "-"}
+      </span>
+    );
+  }
+
+  if (data.grayStrategy === "percentage") {
+    const percentage = Math.max(0, Math.min(100, data.grayPercentage));
+
+    return (
+      <div className="min-w-0 flex-1">
+        <div className="font-semibold text-slate-700 text-xs">{percentage}%</div>
+        <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-100">
+          <div className="h-full rounded-full bg-blue-500" style={{ width: `${percentage}%` }} />
+        </div>
+      </div>
+    );
+  }
+
+  return <span className="text-slate-400 text-xs">-</span>;
+}
+
+function ExpiresAtCell({ data }: ICellRendererParams<ReleasePointerRecord>) {
+  if (!data) {
+    return null;
+  }
+
+  return <span className="truncate text-slate-600 text-xs">{data.expiresAtShort}</span>;
 }
 
 function StatusCell({ value }: ICellRendererParams<ReleasePointerRecord, ReleaseRecordStatus>) {

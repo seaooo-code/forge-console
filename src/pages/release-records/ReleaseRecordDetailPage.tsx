@@ -1,33 +1,41 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { LucideIcon } from "lucide-react";
 import {
   ArrowLeft,
   Box,
   CalendarClock,
+  CircleOff,
   ExternalLink,
+  LoaderCircle,
   PackageCheck,
   RadioTower,
   Rocket,
   ShieldCheck,
   UserRound,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import { fetchModuleDetailSnapshot, moduleDetailQueryKey } from "@/api/modules";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 import {
   fetchReleaseRecordDetail,
+  inactivateTargetedGrayRelease,
   releaseRecordDetailQueryKey,
+  releaseRecordsSnapshotQueryKey,
+  updateReleaseGrayPercentage,
 } from "./api/release-records-snapshot";
 import {
+  getReleaseRecordTargetLabel,
+  getReleaseRecordTypeLabel,
   releaseRecordStatusClass,
   releaseRecordStatusLabels,
-  releaseRecordTypeLabels,
 } from "./constants";
-import type { ReleaseRecordDetail, ReleaseRecordStatus, ReleaseRecordType } from "./types";
+import type { ReleaseRecordDetail, ReleaseRecordStatus } from "./types";
 
 type ReleaseRecordDetailPageProps = {
   onBack: () => void;
@@ -46,6 +54,12 @@ export function ReleaseRecordDetailPage({
   onOpenModule,
   releaseId,
 }: ReleaseRecordDetailPageProps) {
+  const queryClient = useQueryClient();
+  const [grayPercentageInput, setGrayPercentageInput] = useState("0");
+  const [grayPercentageError, setGrayPercentageError] = useState("");
+  const [grayPercentageMessage, setGrayPercentageMessage] = useState("");
+  const [inactivateError, setInactivateError] = useState("");
+  const [inactivateMessage, setInactivateMessage] = useState("");
   const {
     data: release,
     error,
@@ -60,6 +74,59 @@ export function ReleaseRecordDetailPage({
     queryFn: () => fetchModuleDetailSnapshot(releaseModuleId ?? ""),
     queryKey: moduleDetailQueryKey(releaseModuleId),
   });
+  const grayPercentageMutation = useMutation({
+    mutationFn: (grayPercentage: number) => updateReleaseGrayPercentage(releaseId, grayPercentage),
+    onError: (mutationError) => {
+      setGrayPercentageMessage("");
+      setGrayPercentageError(
+        mutationError instanceof Error ? mutationError.message : "灰度比例更新失败",
+      );
+    },
+    onSuccess: async (updatedRelease, grayPercentage) => {
+      setGrayPercentageError("");
+      setGrayPercentageMessage(grayPercentage === 100 ? "已转为全量发布" : "灰度比例已更新");
+      setGrayPercentageInput(String(updatedRelease.grayPercentage));
+      queryClient.setQueryData(releaseRecordDetailQueryKey(releaseId), updatedRelease);
+
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: releaseRecordDetailQueryKey(releaseId) }),
+        queryClient.invalidateQueries({ queryKey: releaseRecordsSnapshotQueryKey }),
+        releaseModuleId && releaseModuleId !== "-"
+          ? queryClient.invalidateQueries({ queryKey: moduleDetailQueryKey(releaseModuleId) })
+          : Promise.resolve(),
+      ]);
+    },
+  });
+  const inactivateMutation = useMutation({
+    mutationFn: () => inactivateTargetedGrayRelease(releaseId),
+    onError: (mutationError) => {
+      setInactivateMessage("");
+      setInactivateError(
+        mutationError instanceof Error ? mutationError.message : "定向灰度失效失败",
+      );
+    },
+    onSuccess: async (updatedRelease) => {
+      setInactivateError("");
+      setInactivateMessage("定向灰度已失效");
+      queryClient.setQueryData(releaseRecordDetailQueryKey(releaseId), updatedRelease);
+
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: releaseRecordDetailQueryKey(releaseId) }),
+        queryClient.invalidateQueries({ queryKey: releaseRecordsSnapshotQueryKey }),
+        releaseModuleId && releaseModuleId !== "-"
+          ? queryClient.invalidateQueries({ queryKey: moduleDetailQueryKey(releaseModuleId) })
+          : Promise.resolve(),
+      ]);
+    },
+  });
+
+  useEffect(() => {
+    if (release?.releaseType === "gray" && release.grayStrategy === "percentage") {
+      setGrayPercentageInput(String(release.grayPercentage));
+      setGrayPercentageError("");
+      setGrayPercentageMessage("");
+    }
+  }, [release?.grayPercentage, release?.grayStrategy, release?.releaseType]);
 
   if (!release) {
     return <ReleaseRecordDetailFallback error={error} isFetching={isFetching} onBack={onBack} />;
@@ -67,6 +134,10 @@ export function ReleaseRecordDetailPage({
 
   const applicationSlug = moduleSnapshot?.modules[0]?.applicationSlug ?? "";
   const releaseTarget = getReleaseTargetLabel(release);
+  const canInactivateTargetedGray =
+    release.status === "active" &&
+    release.releaseType === "gray" &&
+    release.grayStrategy === "targeted";
 
   return (
     <>
@@ -90,11 +161,34 @@ export function ReleaseRecordDetailPage({
                 发布 {formatShortRecordID(release.id)}
               </h1>
               <ReleaseStatusBadge status={release.status} />
-              <ReleaseTypeBadge releaseType={release.releaseType} />
+              <ReleaseTypeBadge release={release} />
             </div>
           </div>
 
           <div className="flex flex-wrap gap-2">
+            {canInactivateTargetedGray ? (
+              <Button
+                variant="outline"
+                type="button"
+                className="border-rose-200 bg-white text-rose-700 hover:bg-rose-50 hover:text-rose-800"
+                disabled={inactivateMutation.isPending}
+                onClick={() => {
+                  if (!window.confirm("失效后该定向标识会回退到比例灰度或全量发布，是否继续？")) {
+                    return;
+                  }
+                  setInactivateError("");
+                  setInactivateMessage("");
+                  inactivateMutation.mutate();
+                }}
+              >
+                {inactivateMutation.isPending ? (
+                  <LoaderCircle className="size-4 animate-spin" />
+                ) : (
+                  <CircleOff className="size-4" />
+                )}
+                {inactivateMutation.isPending ? "失效中" : "手动失效"}
+              </Button>
+            ) : null}
             <Button
               variant="outline"
               type="button"
@@ -131,6 +225,19 @@ export function ReleaseRecordDetailPage({
           </section>
         ) : null}
 
+        {inactivateError || inactivateMessage ? (
+          <section
+            className={cn(
+              "rounded-lg border px-4 py-3 text-sm",
+              inactivateError
+                ? "border-rose-200 bg-rose-50 text-rose-700"
+                : "border-emerald-200 bg-emerald-50 text-emerald-700",
+            )}
+          >
+            {inactivateError || inactivateMessage}
+          </section>
+        ) : null}
+
         <section className="grid gap-4 xl:grid-cols-[1fr_1fr]">
           <Card className="gap-0 rounded-lg border-slate-200 py-0 shadow-sm">
             <SectionHeader title="发布信息" />
@@ -141,8 +248,18 @@ export function ReleaseRecordDetailPage({
                 icon={RadioTower}
                 label="发布目标"
                 value={releaseTarget}
-                description={release.releaseType === "targeted" ? release.identifier : undefined}
+                description={
+                  release.releaseType === "gray" ? getReleaseRecordTypeLabel(release) : undefined
+                }
               />
+              {release.releaseType === "gray" && release.grayStrategy === "targeted" ? (
+                <DetailItem
+                  icon={CalendarClock}
+                  label="过期时间"
+                  value={release.expiresAt}
+                  description="到期后自动失效"
+                />
+              ) : null}
               <DetailItem icon={UserRound} label="操作人" value={release.operator} />
             </div>
           </Card>
@@ -181,6 +298,77 @@ export function ReleaseRecordDetailPage({
             </div>
           </Card>
         </section>
+
+        {release.releaseType === "gray" && release.grayStrategy === "percentage" ? (
+          <Card className="gap-0 rounded-lg border-slate-200 py-0 shadow-sm">
+            <SectionHeader title="比例灰度" />
+            <div className="grid gap-4 p-4 lg:grid-cols-[1fr_auto] lg:items-end">
+              <div className="space-y-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <div className="font-medium text-slate-700 text-sm">当前比例</div>
+                    <div className="mt-1 text-slate-500 text-xs">
+                      当前生效比例为 {release.grayPercentage}%
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="border-blue-200 text-blue-700">
+                    {release.grayPercentage}%
+                  </Badge>
+                </div>
+                <div className="grid gap-2 md:grid-cols-[minmax(0,260px)_minmax(0,1fr)] md:items-center">
+                  <Input
+                    min={0}
+                    max={100}
+                    type="number"
+                    value={grayPercentageInput}
+                    onChange={(event) => {
+                      setGrayPercentageInput(event.target.value);
+                      setGrayPercentageError("");
+                      setGrayPercentageMessage("");
+                    }}
+                  />
+                  {Number(grayPercentageInput) === 100 ? (
+                    <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-amber-800 text-xs">
+                      更新为 100% 后会转为全量发布，并替换当前默认路由。
+                    </div>
+                  ) : null}
+                </div>
+                {grayPercentageError ? (
+                  <div className="text-red-600 text-xs">{grayPercentageError}</div>
+                ) : null}
+                {grayPercentageMessage ? (
+                  <div className="text-emerald-700 text-xs">{grayPercentageMessage}</div>
+                ) : null}
+              </div>
+              <Button
+                type="button"
+                className="bg-blue-600 text-white hover:bg-blue-700"
+                disabled={grayPercentageMutation.isPending}
+                onClick={() => {
+                  const nextPercentage = Number(grayPercentageInput);
+                  if (
+                    !Number.isInteger(nextPercentage) ||
+                    nextPercentage < 0 ||
+                    nextPercentage > 100
+                  ) {
+                    setGrayPercentageMessage("");
+                    setGrayPercentageError("请输入 0 到 100 之间的整数");
+                    return;
+                  }
+                  if (
+                    nextPercentage === 100 &&
+                    !window.confirm("比例更新为 100% 后将转为全量发布，是否继续？")
+                  ) {
+                    return;
+                  }
+                  grayPercentageMutation.mutate(nextPercentage);
+                }}
+              >
+                {grayPercentageMutation.isPending ? "更新中" : "更新比例"}
+              </Button>
+            </div>
+          </Card>
+        ) : null}
       </div>
     </>
   );
@@ -296,20 +484,16 @@ function ReleaseStatusBadge({ status }: { status: ReleaseRecordStatus }) {
   );
 }
 
-function ReleaseTypeBadge({ releaseType }: { releaseType: ReleaseRecordType }) {
+function ReleaseTypeBadge({ release }: { release: ReleaseRecordDetail }) {
   return (
     <Badge variant="outline" className="border-slate-200 font-medium text-slate-600">
-      {releaseRecordTypeLabels[releaseType]}
+      {getReleaseRecordTypeLabel(release)}
     </Badge>
   );
 }
 
 function getReleaseTargetLabel(release: ReleaseRecordDetail) {
-  if (release.releaseType === "targeted") {
-    return release.identifier ? `标识 ${release.identifier}` : "标识发布";
-  }
-
-  return "默认访问路由";
+  return getReleaseRecordTargetLabel(release);
 }
 
 function formatShortRecordID(value: string) {

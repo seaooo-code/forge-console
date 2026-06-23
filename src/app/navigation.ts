@@ -31,8 +31,6 @@ export const navGroups: NavGroup[] = [
     items: [
       { id: "releases", isMock: true, label: "发布任务", href: "/releases", icon: "release" },
       { id: "release-records", label: "发布记录", href: "/release-records", icon: "releaseRecord" },
-      { id: "gray", isMock: true, label: "灰度管理", href: "/gray", icon: "pipeline" },
-      { id: "rollback", isMock: true, label: "回滚中心", href: "/rollback", icon: "rollback" },
     ],
   },
   {
