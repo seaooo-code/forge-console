@@ -32,11 +32,11 @@ import {
   fetchApplicationDetailSnapshot,
   updateApplicationStatus,
 } from "./api/applications-snapshot";
+import { ClientIntegrationSection } from "./components/ClientIntegrationSection";
 import {
   applicationEnvironmentStatusClass,
   applicationMetricToneClass,
   applicationModuleKindClass,
-  applicationPipelineStatusClass,
   applicationStatusClass,
 } from "./constants";
 import type {
@@ -44,7 +44,6 @@ import type {
   ApplicationEnvironmentRecord,
   ApplicationMemberRecord,
   ApplicationModuleRecord,
-  ApplicationPipelineRecord,
   ApplicationStatusCode,
 } from "./types";
 
@@ -120,25 +119,6 @@ export function ApplicationDetailPage({
       },
       { field: "repository", flex: 1.6, headerName: "仓库", minWidth: 240 },
       { field: "owner", flex: 0.8, headerName: "负责人", minWidth: 120 },
-    ],
-    [],
-  );
-
-  const pipelineColumnDefs = useMemo<ColDef<ApplicationPipelineRecord>[]>(
-    () => [
-      { field: "runId", flex: 0.7, headerName: "RUN ID", minWidth: 110 },
-      { field: "moduleName", flex: 0.9, headerName: "模块", minWidth: 120 },
-      { field: "branch", flex: 1.6, headerName: "分支", minWidth: 240 },
-      {
-        cellRenderer: PipelineStatusCell,
-        field: "status",
-        flex: 0.8,
-        headerName: "状态",
-        minWidth: 120,
-      },
-      { field: "duration", flex: 0.7, headerName: "耗时", minWidth: 110 },
-      { field: "operator", flex: 0.8, headerName: "执行人", minWidth: 120 },
-      { field: "startedAt", flex: 0.8, headerName: "开始", minWidth: 120 },
     ],
     [],
   );
@@ -322,6 +302,8 @@ export function ApplicationDetailPage({
           </Card>
         </section>
 
+        <ClientIntegrationSection clientIntegration={detail.clientIntegration} />
+
         <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
           <TableHeader title="环境绑定" description="宿主应用已启用环境" />
           <AgGridReact<ApplicationEnvironmentRecord>
@@ -347,22 +329,6 @@ export function ApplicationDetailPage({
             domLayout="autoHeight"
             headerHeight={46}
             rowHeight={58}
-            theme={consoleGridTheme}
-            suppressCellFocus
-            suppressContextMenu
-            getRowId={({ data }) => data.id}
-          />
-        </section>
-
-        <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-          <TableHeader title="最近流水线" description="应用维度最近 Pipeline Run" />
-          <AgGridReact<ApplicationPipelineRecord>
-            rowData={detail.pipelines}
-            columnDefs={pipelineColumnDefs}
-            defaultColDef={defaultColDef}
-            domLayout="autoHeight"
-            headerHeight={46}
-            rowHeight={54}
             theme={consoleGridTheme}
             suppressCellFocus
             suppressContextMenu
@@ -567,25 +533,6 @@ function ModuleCommonCell({ data }: ICellRendererParams<ApplicationModuleRecord>
   return (
     <span className="truncate text-slate-700 text-sm">
       {data.commonModuleName || data.commonModuleId || "-"}
-    </span>
-  );
-}
-
-function PipelineStatusCell({
-  value,
-}: ICellRendererParams<ApplicationPipelineRecord, ApplicationPipelineRecord["status"]>) {
-  if (!value) {
-    return null;
-  }
-
-  return (
-    <span
-      className={cn(
-        "inline-flex h-6 items-center rounded border px-2 font-semibold text-xs leading-none",
-        applicationPipelineStatusClass[value],
-      )}
-    >
-      {value}
     </span>
   );
 }

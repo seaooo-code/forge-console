@@ -55,15 +55,26 @@ export type ApplicationMemberRecord = {
   team: string;
 };
 
-export type ApplicationPipelineRecord = {
-  id: string;
-  runId: string;
-  moduleName: string;
-  branch: string;
-  status: "success" | "running" | "failed" | "queued";
-  duration: string;
-  operator: string;
-  startedAt: string;
+export type ClientIntegrationField = {
+  name: string;
+  description: string;
+  required?: boolean;
+  type?: string;
+  example?: string;
+};
+
+export type ClientIntegrationEndpoint = {
+  baseUrl: string;
+  path: string;
+  method: string;
+  requestFields: ClientIntegrationField[];
+  responseFields: ClientIntegrationField[];
+  description?: string;
+  exampleUrl?: string;
+};
+
+export type ClientIntegrationInfo = {
+  endpoint: ClientIntegrationEndpoint;
 };
 
 export type ApplicationDetail = {
@@ -80,7 +91,7 @@ export type ApplicationDetail = {
   environments: ApplicationEnvironmentRecord[];
   modules: ApplicationModuleRecord[];
   members: ApplicationMemberRecord[];
-  pipelines: ApplicationPipelineRecord[];
+  clientIntegration?: ClientIntegrationInfo;
 };
 
 export type ApplicationSummary = {

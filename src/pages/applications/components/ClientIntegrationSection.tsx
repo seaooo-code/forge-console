@@ -1,0 +1,135 @@
+import { CircleAlert, Code2, type LucideIcon } from "lucide-react";
+import type { ClientIntegrationField, ClientIntegrationInfo } from "../types";
+
+type ClientIntegrationSectionProps = {
+  clientIntegration?: ClientIntegrationInfo;
+};
+
+export function ClientIntegrationSection({ clientIntegration }: ClientIntegrationSectionProps) {
+  if (!clientIntegration) {
+    return (
+      <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+        <SectionHeader title="客户端接入信息" description="客户端获取 manifest 的接口说明" />
+        <div className="flex items-start gap-3 p-4">
+          <CircleAlert className="mt-0.5 size-4 shrink-0 text-amber-500" />
+          <div>
+            <div className="font-semibold text-slate-900 text-sm">暂无接入信息</div>
+            <div className="mt-1 text-slate-500 text-xs">
+              应用详情接口返回 clientIntegration 后，这里会展示客户端请求 manifest
+              的域名、路径、请求字段和响应字段。
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  const { endpoint } = clientIntegration;
+
+  return (
+    <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+      <SectionHeader
+        title="客户端接入信息"
+        description={endpoint.description || "客户端获取 manifest 的接口说明"}
+      />
+      <div className="space-y-4 p-4">
+        <div className="grid gap-3 md:grid-cols-3">
+          <InfoItem icon={Code2} label="接口域名" value={endpoint.baseUrl} />
+          <InfoItem icon={Code2} label="接口路径" value={endpoint.path} />
+          <InfoItem icon={Code2} label="请求方法" value={endpoint.method} />
+        </div>
+        {endpoint.exampleUrl ? (
+          <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-3">
+            <div className="font-medium text-slate-500 text-xs">示例请求</div>
+            <div className="mt-1 break-all font-mono text-slate-800 text-sm">
+              {endpoint.exampleUrl}
+            </div>
+          </div>
+        ) : null}
+        <FieldDescriptionTable title="请求字段" fields={endpoint.requestFields} />
+        <FieldDescriptionTable title="响应字段" fields={endpoint.responseFields} />
+      </div>
+    </section>
+  );
+}
+
+function InfoItem({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: LucideIcon;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="flex min-w-0 gap-3 rounded-md border border-slate-200 bg-white px-3 py-3">
+      <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-500">
+        <Icon className="size-4" />
+      </div>
+      <div className="min-w-0">
+        <div className="font-medium text-slate-500 text-xs">{label}</div>
+        <div className="mt-1 break-all font-semibold text-slate-800 text-sm">{value}</div>
+      </div>
+    </div>
+  );
+}
+
+function FieldDescriptionTable({
+  fields,
+  title,
+}: {
+  fields: ClientIntegrationField[];
+  title: string;
+}) {
+  return (
+    <div className="overflow-hidden rounded-md border border-slate-200">
+      <div className="flex h-10 items-center border-slate-200 border-b bg-slate-50 px-3 font-semibold text-slate-900 text-sm">
+        {title}
+      </div>
+      {fields.length ? (
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-180 table-fixed border-collapse text-left text-sm">
+            <thead className="bg-white text-slate-500 text-xs">
+              <tr className="border-slate-200 border-b">
+                <th className="w-52 px-3 py-2 font-medium">字段</th>
+                <th className="w-24 px-3 py-2 font-medium">类型</th>
+                <th className="w-20 px-3 py-2 font-medium">必填</th>
+                <th className="px-3 py-2 font-medium">说明</th>
+                <th className="w-56 px-3 py-2 font-medium">示例</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {fields.map((field) => (
+                <tr key={`${title}-${field.name}`} className="bg-white">
+                  <td className="break-all px-3 py-2 font-mono text-slate-900">{field.name}</td>
+                  <td className="break-all px-3 py-2 text-slate-600">{field.type || "-"}</td>
+                  <td className="px-3 py-2 text-slate-600">
+                    {field.required === undefined ? "-" : field.required ? "是" : "否"}
+                  </td>
+                  <td className="px-3 py-2 text-slate-700">{field.description}</td>
+                  <td className="break-all px-3 py-2 font-mono text-slate-600">
+                    {field.example || "-"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="px-3 py-4 text-slate-500 text-sm">后端未返回字段说明。</div>
+      )}
+    </div>
+  );
+}
+
+function SectionHeader({ description, title }: { description: string; title: string }) {
+  return (
+    <div className="flex h-12 items-center justify-between border-slate-200 border-b px-4">
+      <div>
+        <div className="font-semibold text-slate-900 text-sm">{title}</div>
+        <div className="text-slate-500 text-xs">{description}</div>
+      </div>
+    </div>
+  );
+}

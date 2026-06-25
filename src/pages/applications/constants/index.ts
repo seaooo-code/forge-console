@@ -5,7 +5,6 @@ import type {
   ApplicationEnvironmentRecord,
   ApplicationListFilters,
   ApplicationModuleRecord,
-  ApplicationPipelineRecord,
   ApplicationStatus,
   ApplicationStatusCode,
 } from "../types";
@@ -85,11 +84,4 @@ export const applicationEnvironmentStatusClass: Record<
 export const applicationModuleKindClass: Record<ApplicationModuleRecord["kind"], string> = {
   Common: "border-amber-200 bg-amber-50 text-amber-700",
   Feature: "border-sky-200 bg-sky-50 text-sky-700",
-};
-
-export const applicationPipelineStatusClass: Record<ApplicationPipelineRecord["status"], string> = {
-  failed: "border-red-200 bg-red-50 text-red-600",
-  queued: "border-slate-200 bg-slate-50 text-slate-600",
-  running: "border-blue-200 bg-blue-50 text-blue-700",
-  success: "border-emerald-200 bg-emerald-50 text-emerald-700",
 };
