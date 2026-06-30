@@ -24,13 +24,31 @@ export type AuthTokenMeta = {
   hasRefreshToken: boolean;
 };
 
+export type GlobalRole = "SuperAdmin" | "PlatformAdmin" | "ReleaseAdmin" | "Auditor";
+
+export type GlobalCapabilities = {
+  canCreateApplication: boolean;
+  canManageApplications: boolean;
+  canManageModules: boolean;
+  canCreateBuild: boolean;
+  canCreateRelease: boolean;
+  canManageCodeSources: boolean;
+  canManageStorage: boolean;
+  canManageEnvironments: boolean;
+  canManageAccessTokens: boolean;
+};
+
 export type AuthSession = {
   authorizedAt: string;
+  capabilities: GlobalCapabilities;
+  roles: GlobalRole[];
   token: AuthTokenMeta;
   user: AuthUser;
 };
 
 export type FeishuAuthResponse = {
+  capabilities?: Partial<GlobalCapabilities>;
+  roles?: GlobalRole[];
   token: AuthTokenMeta;
   user: AuthUser;
 };

@@ -28,6 +28,7 @@ import { MockCard as Card, MockSurface } from "@/components/common/MockSurface";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/store/use-auth-store";
 import { miCarEnvironmentFilterOptions } from "@/types/environments";
 
 import { fetchReleasesSnapshot } from "./api/releases-snapshot";
@@ -35,6 +36,8 @@ import { statusClass, timelineClass } from "./constants";
 import type { ReleaseEnvironment, ReleaseRecord, ReleaseStatus } from "./types";
 
 export function ReleasesPage() {
+  const session = useAuthStore((state) => state.session);
+  const canCreateRelease = Boolean(session?.capabilities.canCreateRelease);
   const { data: snapshot } = useQuery({
     queryFn: fetchReleasesSnapshot,
     queryKey: ["releases-snapshot"],
@@ -43,7 +46,13 @@ export function ReleasesPage() {
     () => [
       {
         cellRenderer: CheckboxCell,
+        cellRendererParams: {
+          canCreateRelease,
+        },
         headerComponent: CheckboxHeader,
+        headerComponentParams: {
+          canCreateRelease,
+        },
         maxWidth: 44,
         minWidth: 44,
         pinned: "left",
@@ -107,6 +116,9 @@ export function ReleasesPage() {
       },
       {
         cellRenderer: ActionsCell,
+        cellRendererParams: {
+          canCreateRelease,
+        },
         colId: "actions",
         flex: 0.74,
         headerName: "操作",
@@ -114,7 +126,7 @@ export function ReleasesPage() {
         sortable: false,
       },
     ],
-    [],
+    [canCreateRelease],
   );
 
   const defaultColDef = useMemo<ColDef<ReleaseRecord>>(
@@ -303,7 +315,7 @@ export function ReleasesPage() {
               <Button variant="outline" size="icon" aria-label="下载发布任务">
                 <Download className="size-4" />
               </Button>
-              <Button className="bg-blue-600 hover:bg-blue-700">
+              <Button className="bg-blue-600 hover:bg-blue-700" disabled={!canCreateRelease}>
                 <Plus className="size-4" />
                 新建发布单
               </Button>
@@ -357,14 +369,16 @@ function InfoTile({ detail, icon: Icon, iconClass, label, title }: InfoTileProps
   );
 }
 
-function CheckboxHeader() {
-  return <Checkbox aria-label="选择全部发布任务" />;
+function CheckboxHeader({ canCreateRelease }: { canCreateRelease?: boolean }) {
+  return <Checkbox aria-label="选择全部发布任务" disabled={!canCreateRelease} />;
 }
 
-function CheckboxCell() {
+function CheckboxCell({
+  canCreateRelease,
+}: ICellRendererParams<ReleaseRecord> & { canCreateRelease?: boolean }) {
   return (
     <div className="flex h-full items-center">
-      <Checkbox aria-label="选择发布任务" />
+      <Checkbox aria-label="选择发布任务" disabled={!canCreateRelease} />
     </div>
   );
 }
@@ -419,7 +433,9 @@ function StatusBadge({ children, status }: { children: ReactNode; status: Releas
   );
 }
 
-function ActionsCell() {
+function ActionsCell({
+  canCreateRelease,
+}: ICellRendererParams<ReleaseRecord> & { canCreateRelease?: boolean }) {
   return (
     <div className="flex h-full items-center gap-2 whitespace-nowrap font-medium text-blue-600 text-xs">
       <Button
@@ -439,6 +455,7 @@ function ActionsCell() {
       <Button
         variant="link"
         type="button"
+        disabled={!canCreateRelease}
         className="h-auto p-0 text-red-500 text-xs hover:text-red-600"
       >
         回滚

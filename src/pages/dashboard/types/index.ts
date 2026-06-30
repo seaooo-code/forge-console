@@ -1,15 +1,22 @@
-import type { MiCarEnvironmentCode } from "@/types/environments";
-
-export type MetricIconName = "app" | "bundle" | "module" | "pipeline" | "release" | "task";
+export type MetricIconName =
+  | "accessToken"
+  | "app"
+  | "build"
+  | "codeSource"
+  | "environment"
+  | "module"
+  | "release"
+  | "storage";
 
 export type SummaryMetric = {
+  description: string;
   id: string;
   label: string;
   value: string;
   trend: string;
-  trendTone: "positive" | "negative";
+  trendTone: "positive" | "negative" | "neutral";
   icon: MetricIconName;
-  iconTone: "blue" | "cyan" | "amber" | "green" | "sky" | "red";
+  iconTone: "amber" | "blue" | "cyan" | "emerald" | "indigo" | "red" | "slate" | "violet";
   sparkline: number[];
 };
 
@@ -19,31 +26,42 @@ export type BuildTrendPoint = {
   successCount: number;
 };
 
-export type PipelineSuccessRate = {
-  name: string;
-  rate: number;
-};
-
-export type DevTask = {
+export type RecentBuildRecord = {
+  application: string;
+  duration: string;
+  environment: string;
   id: string;
-  title: string;
-  developer: string;
-  moduleCount: number;
-  status: "dev" | "test" | "review" | "done";
+  module: string;
+  operator: string;
+  startedAt: string;
+  status: "failed" | "queued" | "running" | "success";
 };
 
 export type ReleaseRecord = {
+  application: string;
   id: string;
-  environment: Exclude<MiCarEnvironmentCode, "dev">;
+  environment: string;
   gray: string;
-  status: "灰度中" | "已完成" | "已回滚";
+  module: string;
+  status: "active" | "inactive";
+  updatedAt: string;
+};
+
+export type ResourceStatus = {
+  description: string;
+  href: string;
+  id: string;
+  label: string;
+  status: "attention" | "healthy" | "neutral";
+  statusLabel: string;
+  value: string;
 };
 
 export type DashboardSnapshot = {
   metrics: SummaryMetric[];
   buildTrend: BuildTrendPoint[];
-  pipelineRates: PipelineSuccessRate[];
-  tasks: DevTask[];
+  builds: RecentBuildRecord[];
   releases: ReleaseRecord[];
+  resources: ResourceStatus[];
   updatedAt: string;
 };

@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/store/use-auth-store";
 
 import {
   CodeSourceAPIError,
@@ -25,6 +26,8 @@ const providerIcons: Record<CodeSourceProvider, LucideIcon> = {
 
 export function CodeSourcesPage() {
   const queryClient = useQueryClient();
+  const session = useAuthStore((state) => state.session);
+  const canManageCodeSources = Boolean(session?.capabilities.canManageCodeSources);
   const {
     data: snapshot,
     error,
@@ -119,6 +122,7 @@ export function CodeSourcesPage() {
             <CodeSourceAppCard
               key={app.id}
               app={app}
+              canManageCodeSources={canManageCodeSources}
               isInstalling={installingProvider === app.provider}
               onDeleteInstallations={(targetApp) => {
                 setDeleteTarget(targetApp);
@@ -241,11 +245,13 @@ function CodeSourcesPageLoading() {
 
 function CodeSourceAppCard({
   app,
+  canManageCodeSources,
   isInstalling,
   onDeleteInstallations,
   onInstall,
 }: {
   app: CodeSourceApp;
+  canManageCodeSources: boolean;
   isInstalling: boolean;
   onDeleteInstallations: (app: CodeSourceApp) => void;
   onInstall: (app: CodeSourceApp) => void;
@@ -289,7 +295,7 @@ function CodeSourceAppCard({
             type="button"
             variant={isInstalled ? "destructive" : "default"}
             className={cn(!isInstalled && "bg-blue-600 hover:bg-blue-700")}
-            disabled={isInstalling}
+            disabled={!canManageCodeSources || isInstalling}
             onClick={() => {
               if (isInstalled) {
                 onDeleteInstallations(app);

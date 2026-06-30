@@ -68,6 +68,7 @@ const moduleAPIErrorMessages: Record<string, string> = {
   "build service unavailable": "构建服务暂不可用",
   "environment not found": "环境不存在",
   "feature module requires common module": "功能模块必须选择当前应用的通用模块",
+  forbidden: "当前账号无权限执行此操作",
   "internal server error": "服务端内部错误，请稍后重试",
   "invalid module request": "模块参数无效，请检查表单",
   "invalid build request": "构建参数无效，请检查分支和环境",

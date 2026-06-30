@@ -4,6 +4,7 @@ import { Clock3, Database, type LucideIcon, Pencil, Plus, Server } from "lucide-
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/store/use-auth-store";
 
 import { environmentsSnapshotQueryKey } from "./api/environment-query-keys";
 import { fetchEnvironmentsSnapshot } from "./api/environments-snapshot";
@@ -19,6 +20,8 @@ export function EnvironmentsPage({
   onCreateEnvironment,
   onEditEnvironment,
 }: EnvironmentsPageProps) {
+  const session = useAuthStore((state) => state.session);
+  const canManageEnvironments = Boolean(session?.capabilities.canManageEnvironments);
   const { data: snapshot } = useQuery({
     queryFn: fetchEnvironmentsSnapshot,
     queryKey: environmentsSnapshotQueryKey,
@@ -39,6 +42,7 @@ export function EnvironmentsPage({
           <Button
             type="button"
             className="bg-blue-600 hover:bg-blue-700"
+            disabled={!canManageEnvironments}
             onClick={onCreateEnvironment}
           >
             <Plus className="size-4" />
@@ -49,13 +53,17 @@ export function EnvironmentsPage({
 
       <div className="space-y-4 px-6 py-5">
         {snapshot.environments.length === 0 ? (
-          <EmptyState onCreateEnvironment={onCreateEnvironment} />
+          <EmptyState
+            canManageEnvironments={canManageEnvironments}
+            onCreateEnvironment={onCreateEnvironment}
+          />
         ) : null}
 
         <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           {snapshot.environments.map((environment) => (
             <EnvironmentCard
               key={environment.id}
+              canManageEnvironments={canManageEnvironments}
               environment={environment}
               onEditEnvironment={onEditEnvironment}
             />
@@ -85,9 +93,11 @@ function EnvironmentsPageLoading() {
 }
 
 function EnvironmentCard({
+  canManageEnvironments,
   environment,
   onEditEnvironment,
 }: {
+  canManageEnvironments: boolean;
   environment: RuntimeEnvironment;
   onEditEnvironment: (environmentId: string) => void;
 }) {
@@ -122,6 +132,7 @@ function EnvironmentCard({
           size="icon"
           className="size-8 text-slate-500 hover:text-blue-600"
           aria-label="编辑环境"
+          disabled={!canManageEnvironments}
           onClick={() => onEditEnvironment(environment.id)}
         >
           <Pencil className="size-4" />
@@ -151,7 +162,13 @@ function InfoMetric({
   );
 }
 
-function EmptyState({ onCreateEnvironment }: { onCreateEnvironment: () => void }) {
+function EmptyState({
+  canManageEnvironments,
+  onCreateEnvironment,
+}: {
+  canManageEnvironments: boolean;
+  onCreateEnvironment: () => void;
+}) {
   return (
     <Card className="items-center rounded-lg border-slate-200 bg-white px-6 py-10 text-center shadow-none">
       <div className="flex size-10 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
@@ -161,7 +178,12 @@ function EmptyState({ onCreateEnvironment }: { onCreateEnvironment: () => void }
         <div className="font-semibold text-slate-900 text-sm">暂无环境</div>
         <p className="mt-1 text-slate-500 text-sm">创建环境后再关联应用、组合包和发布流程。</p>
       </div>
-      <Button type="button" className="bg-blue-600 hover:bg-blue-700" onClick={onCreateEnvironment}>
+      <Button
+        type="button"
+        className="bg-blue-600 hover:bg-blue-700"
+        disabled={!canManageEnvironments}
+        onClick={onCreateEnvironment}
+      >
         <Plus className="size-4" />
         新建环境
       </Button>

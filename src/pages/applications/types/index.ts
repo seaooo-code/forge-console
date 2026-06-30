@@ -49,10 +49,21 @@ export type ApplicationModuleRecord = {
 };
 
 export type ApplicationMemberRecord = {
+  avatarUrl: string;
+  email: string;
   id: string;
   name: string;
   role: "Owner" | "Developer" | "QA" | "Release";
   team: string;
+  userId: string;
+};
+
+export type ApplicationCapabilities = {
+  canEditApplication: boolean;
+  canManageMembers: boolean;
+  canUpdateStatus: boolean;
+  canCreateBuild: boolean;
+  canRelease: boolean;
 };
 
 export type ClientIntegrationField = {
@@ -91,6 +102,7 @@ export type ApplicationDetail = {
   environments: ApplicationEnvironmentRecord[];
   modules: ApplicationModuleRecord[];
   members: ApplicationMemberRecord[];
+  capabilities: ApplicationCapabilities;
   clientIntegration?: ClientIntegrationInfo;
 };
 
@@ -132,9 +144,8 @@ export type ApplicationEnvironmentInput = {
 };
 
 export type ApplicationMemberInput = {
-  name: string;
   role: ApplicationMemberRecord["role"];
-  team: string;
+  userId: string;
 };
 
 export type ApplicationOption = {

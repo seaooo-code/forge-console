@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { useAuthStore } from "@/store/use-auth-store";
 
 import {
   accessTokensSnapshotQueryKey,
@@ -36,6 +37,8 @@ const defaultForm: AccessTokenFormState = {
 
 export function AccessTokensPage() {
   const queryClient = useQueryClient();
+  const session = useAuthStore((state) => state.session);
+  const canManageAccessTokens = Boolean(session?.capabilities.canManageAccessTokens);
   const {
     data: snapshot,
     error,
@@ -193,6 +196,7 @@ export function AccessTokensPage() {
                 <AccessTokenRow
                   key={token.id}
                   token={token}
+                  canManageAccessTokens={canManageAccessTokens}
                   isPending={pendingStatusTokenId === token.id}
                   onDelete={(target) => setDeleteTarget(target)}
                   onStatusChange={(target, status) => void handleStatusChange(target, status)}
@@ -226,7 +230,7 @@ export function AccessTokensPage() {
                   type="button"
                   variant="outline"
                   size="sm"
-                  disabled={isGenerating || isCreating}
+                  disabled={!canManageAccessTokens || isGenerating || isCreating}
                   onClick={() => void handleGenerate()}
                 >
                   <KeyRound className="size-4" />
@@ -276,7 +280,7 @@ export function AccessTokensPage() {
             />
             <Button
               type="submit"
-              disabled={isCreating || !generatedToken}
+              disabled={!canManageAccessTokens || isCreating || !generatedToken}
               className="w-full bg-blue-600 hover:bg-blue-700"
             >
               <Plus className="size-4" />
@@ -349,11 +353,13 @@ export function AccessTokensPage() {
 }
 
 function AccessTokenRow({
+  canManageAccessTokens,
   isPending,
   onDelete,
   onStatusChange,
   token,
 }: {
+  canManageAccessTokens: boolean;
   isPending: boolean;
   onDelete: (token: ArtifactAccessTokenRecord) => void;
   onStatusChange: (token: ArtifactAccessTokenRecord, status: ArtifactAccessTokenStatus) => void;
@@ -383,13 +389,19 @@ function AccessTokenRow({
           type="button"
           variant="outline"
           size="sm"
-          disabled={isPending}
+          disabled={!canManageAccessTokens || isPending}
           onClick={() => onStatusChange(token, nextStatus)}
         >
           <StatusIcon className="size-4" />
           {isDisabled ? "启用" : "停用"}
         </Button>
-        <Button type="button" variant="outline" size="icon" onClick={() => onDelete(token)}>
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          disabled={!canManageAccessTokens}
+          onClick={() => onDelete(token)}
+        >
           <Trash2 className="size-4 text-rose-600" />
         </Button>
       </div>

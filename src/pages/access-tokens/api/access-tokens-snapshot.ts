@@ -27,12 +27,20 @@ export class AccessTokensAPIError extends Error {
   readonly status: number;
 
   constructor(path: string, status: number, payload?: APIErrorPayload) {
-    super(payload?.error || `Request ${path} failed with ${status}`);
+    super(getAccessTokensAPIErrorMessage(path, status, payload));
     this.name = "AccessTokensAPIError";
     this.payload = payload;
     this.status = status;
   }
 }
+
+const accessTokensAPIErrorMessages: Record<string, string> = {
+  "artifact access token already exists": "访问令牌已存在，请重新生成",
+  "artifact access token not found": "访问令牌不存在",
+  forbidden: "当前账号无权限执行此操作",
+  "internal server error": "服务端内部错误，请稍后重试",
+  "invalid artifact access token request": "访问令牌参数无效，请检查表单",
+};
 
 const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8080").replace(
   /\/+$/,
@@ -130,4 +138,12 @@ async function readErrorPayload(response: Response): Promise<APIErrorPayload | u
   } catch (_error) {
     return undefined;
   }
+}
+
+function getAccessTokensAPIErrorMessage(path: string, status: number, payload?: APIErrorPayload) {
+  const error = payload?.error;
+  if (error) {
+    return accessTokensAPIErrorMessages[error] ?? error;
+  }
+  return `Request ${path} failed with ${status}`;
 }

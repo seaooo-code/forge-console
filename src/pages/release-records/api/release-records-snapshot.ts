@@ -185,6 +185,7 @@ async function fetchJSON<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 const releaseRecordsAPIErrorMessages: Record<string, string> = {
+  forbidden: "当前账号无权限执行此操作",
   "internal server error": "服务端内部错误，请稍后重试",
   "invalid release request": "发布参数无效，请确认灰度配置",
   "release already active": "该构建已是当前发布目标的生效版本，没有新的路由变化",

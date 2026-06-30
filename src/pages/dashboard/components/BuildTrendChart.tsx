@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef } from "react";
+import { Link } from "react-router";
 
-import { MockCard as Card } from "@/components/common/MockSurface";
-import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { type EChartsOption, echarts } from "@/lib/echarts";
 
 import type { BuildTrendPoint } from "../types";
@@ -18,10 +19,19 @@ export function BuildTrendChart({ data }: BuildTrendChartProps) {
       animationDuration: 500,
       color: ["#0f7ae5", "#11bec8"],
       grid: {
-        bottom: 28,
-        left: 20,
+        bottom: 30,
+        left: 28,
         right: 18,
-        top: 24,
+        top: 28,
+      },
+      legend: {
+        show: false,
+      },
+      tooltip: {
+        axisPointer: {
+          type: "shadow",
+        },
+        trigger: "axis",
       },
       xAxis: {
         axisLabel: {
@@ -41,13 +51,16 @@ export function BuildTrendChart({ data }: BuildTrendChartProps) {
       },
       yAxis: {
         axisLabel: {
-          show: false,
+          color: "#94a3b8",
+          fontSize: 11,
         },
         axisLine: {
           show: false,
         },
         splitLine: {
-          show: false,
+          lineStyle: {
+            color: "#eef2f7",
+          },
         },
         type: "value",
       },
@@ -94,24 +107,36 @@ export function BuildTrendChart({ data }: BuildTrendChartProps) {
   }, [option]);
 
   return (
-    <Card className="rounded-lg py-0 shadow-none">
+    <Card className="gap-0 rounded-lg border-slate-200 py-0 shadow-sm">
       <CardHeader className="flex h-12 flex-row items-center justify-between border-b px-4 py-0">
-        <CardTitle className="flex h-full items-center text-slate-900 text-sm">
-          构建趋势（近 7 天）
-        </CardTitle>
-        <div className="flex items-center gap-3 font-medium text-slate-500 text-xs">
-          <span className="inline-flex items-center gap-1.5">
-            <span className="size-2 rounded-full bg-blue-600" />
-            构建数
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <span className="size-2 rounded-full bg-cyan-500" />
-            成功数
-          </span>
+        <div className="min-w-0">
+          <CardTitle className="text-slate-900 text-sm">构建趋势</CardTitle>
+          <div className="mt-1 text-slate-500 text-xs">近 7 天构建总量与成功数</div>
+        </div>
+        <div className="flex shrink-0 items-center gap-3">
+          <div className="hidden items-center gap-3 font-medium text-slate-500 text-xs sm:flex">
+            <span className="inline-flex items-center gap-1.5">
+              <span className="size-2 rounded-full bg-blue-600" />
+              构建数
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="size-2 rounded-full bg-cyan-500" />
+              成功数
+            </span>
+          </div>
+          <Button asChild variant="outline" size="sm" className="h-8 border-slate-200">
+            <Link to="/builds">打开构建</Link>
+          </Button>
         </div>
       </CardHeader>
       <CardContent className="px-4 py-4">
-        <div ref={chartRef} className="h-52 w-full" />
+        {data.length > 0 ? (
+          <div ref={chartRef} className="h-60 w-full" />
+        ) : (
+          <div className="grid h-60 place-items-center rounded-md bg-slate-50 text-slate-500 text-sm">
+            暂无构建数据
+          </div>
+        )}
       </CardContent>
     </Card>
   );

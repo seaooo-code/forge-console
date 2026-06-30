@@ -89,6 +89,18 @@ async function exchangeFeishuAuthorization(code: string, state: string): Promise
 function toAuthSession(payload: FeishuAuthResponse): AuthSession {
   return {
     authorizedAt: new Date().toISOString(),
+    capabilities: {
+      canCreateApplication: Boolean(payload.capabilities?.canCreateApplication),
+      canManageAccessTokens: Boolean(payload.capabilities?.canManageAccessTokens),
+      canManageApplications: Boolean(payload.capabilities?.canManageApplications),
+      canManageCodeSources: Boolean(payload.capabilities?.canManageCodeSources),
+      canManageEnvironments: Boolean(payload.capabilities?.canManageEnvironments),
+      canManageModules: Boolean(payload.capabilities?.canManageModules),
+      canManageStorage: Boolean(payload.capabilities?.canManageStorage),
+      canCreateBuild: Boolean(payload.capabilities?.canCreateBuild),
+      canCreateRelease: Boolean(payload.capabilities?.canCreateRelease),
+    },
+    roles: payload.roles ?? [],
     token: payload.token,
     user: payload.user,
   };

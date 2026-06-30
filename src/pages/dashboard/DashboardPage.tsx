@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
-import { ChevronDown } from "lucide-react";
+import { Activity, Clock3, Layers3, type LucideIcon, RotateCw, TriangleAlert } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -10,57 +11,153 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { type MiCarEnvironmentCode, miCarEnvironmentFilterOptions } from "@/types/environments";
-import { fetchDashboardSnapshot } from "./api/dashboard-snapshot";
+import { dashboardSnapshotQueryKey, fetchDashboardSnapshot } from "./api/dashboard-snapshot";
 import { BuildTrendChart } from "./components/BuildTrendChart";
 import { MetricOverview } from "./components/MetricOverview";
-import { PipelineSuccessPanel } from "./components/PipelineSuccessPanel";
+import { RecentBuildsTable } from "./components/RecentBuildsTable";
 import { RecentReleasesTable } from "./components/RecentReleasesTable";
-import { RecentTasksTable } from "./components/RecentTasksTable";
+import { ReleaseOverviewPanel } from "./components/ReleaseOverviewPanel";
+import { ResourceOverviewPanel } from "./components/ResourceOverviewPanel";
 import { useDashboardContextStore } from "./model/use-dashboard-context-store";
 
+const metricSkeletonKeys = ["apps", "modules", "builds", "success", "releases", "resources"];
+
 export function DashboardPage() {
-  const { data: snapshot } = useQuery({
+  const {
+    data: snapshot,
+    error,
+    isError,
+    isFetching,
+    refetch,
+  } = useQuery({
     queryFn: fetchDashboardSnapshot,
-    queryKey: ["dashboard-snapshot"],
+    queryKey: dashboardSnapshotQueryKey,
   });
 
-  if (!snapshot) {
-    return null;
+  if (!snapshot && !isError) {
+    return <DashboardSkeleton />;
   }
+
+  if (!snapshot) {
+    return (
+      <DashboardErrorState
+        error={error}
+        isFetching={isFetching}
+        onRetry={() => {
+          void refetch();
+        }}
+      />
+    );
+  }
+
+  const totalBuilds = snapshot.buildTrend.reduce((total, item) => total + item.buildCount, 0);
+  const successfulBuilds = snapshot.buildTrend.reduce(
+    (total, item) => total + item.successCount,
+    0,
+  );
+  const buildSuccessRate =
+    totalBuilds > 0 ? `${((successfulBuilds / totalBuilds) * 100).toFixed(1)}%` : "-";
+  const activeReleaseCount = snapshot.releases.filter(
+    (release) => release.status === "active",
+  ).length;
 
   return (
     <>
       <div className="border-slate-200 border-b bg-white px-6 py-5">
-        <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+        <div className="flex flex-col gap-4 2xl:flex-row 2xl:items-start 2xl:justify-between">
           <div>
-            <h1 className="font-semibold text-2xl text-slate-950 tracking-tight">研发效能总览</h1>
+            <h1 className="font-semibold text-2xl text-slate-950 tracking-tight">平台运行概览</h1>
             <p className="mt-2 text-slate-600 text-sm">
-              实时掌握 RN Bundle 研发、构建、发布全链路指标
+              关注当前已接入的应用、模块、构建、发布和平台资源状态
             </p>
           </div>
-          <div className="flex flex-col items-start gap-3 xl:items-end">
+          <div className="flex flex-col items-start gap-3 2xl:items-end">
             <DashboardContextControls />
             <div className="text-slate-400 text-xs">
               数据更新时间 {formatUpdatedAt(snapshot.updatedAt)}
             </div>
           </div>
         </div>
+        <div className="mt-5 grid gap-3 md:grid-cols-3">
+          <SummaryPill icon={Activity} label="构建成功率" value={buildSuccessRate} />
+          <SummaryPill icon={Layers3} label="生效发布" value={`${activeReleaseCount} 个`} />
+          <SummaryPill
+            icon={Clock3}
+            label="最近构建"
+            value={snapshot.builds[0]?.startedAt ?? "-"}
+          />
+        </div>
       </div>
 
       <div className="space-y-4 px-6 py-5">
         <MetricOverview metrics={snapshot.metrics} />
 
-        <section className="grid gap-4 xl:grid-cols-4">
-          <div className="xl:col-span-3">
+        <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+          <div className="min-w-0">
             <BuildTrendChart data={snapshot.buildTrend} />
           </div>
-          <PipelineSuccessPanel rates={snapshot.pipelineRates} />
+          <ReleaseOverviewPanel releases={snapshot.releases} />
         </section>
 
+        <ResourceOverviewPanel resources={snapshot.resources} />
+
         <section className="grid gap-4 xl:grid-cols-2">
-          <RecentTasksTable tasks={snapshot.tasks} />
+          <RecentBuildsTable builds={snapshot.builds} />
           <RecentReleasesTable releases={snapshot.releases} />
         </section>
+      </div>
+    </>
+  );
+}
+
+function DashboardErrorState({
+  error,
+  isFetching,
+  onRetry,
+}: {
+  error: unknown;
+  isFetching: boolean;
+  onRetry: () => void;
+}) {
+  return (
+    <>
+      <div className="border-slate-200 border-b bg-white px-6 py-5">
+        <div className="flex flex-col gap-4 2xl:flex-row 2xl:items-start 2xl:justify-between">
+          <div>
+            <h1 className="font-semibold text-2xl text-slate-950 tracking-tight">平台运行概览</h1>
+            <p className="mt-2 text-slate-600 text-sm">
+              关注当前已接入的应用、模块、构建、发布和平台资源状态
+            </p>
+          </div>
+          <DashboardContextControls />
+        </div>
+      </div>
+      <div className="px-6 py-5">
+        <Card className="rounded-lg border-amber-200 bg-amber-50 px-5 py-5 shadow-sm">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex min-w-0 gap-3">
+              <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-white text-amber-600">
+                <TriangleAlert className="size-5" />
+              </span>
+              <div className="min-w-0">
+                <div className="font-semibold text-amber-950 text-sm">仪表盘数据加载失败</div>
+                <div className="mt-1 text-amber-800 text-sm">
+                  {error instanceof Error ? error.message : "无法获取仪表盘聚合数据"}
+                </div>
+              </div>
+            </div>
+            <Button
+              className="h-9 shrink-0"
+              disabled={isFetching}
+              onClick={onRetry}
+              size="sm"
+              variant="outline"
+            >
+              <RotateCw className="size-4" />
+              重试
+            </Button>
+          </div>
+        </Card>
       </div>
     </>
   );
@@ -73,15 +170,10 @@ function DashboardContextControls() {
 
   return (
     <div className="flex flex-wrap items-center gap-3">
-      <Button
-        variant="outline"
-        type="button"
-        className="h-10 shrink-0 gap-2 border-slate-200 bg-white px-4 font-semibold text-slate-700 shadow-sm"
-      >
+      <div className="flex h-10 shrink-0 items-center gap-2 rounded-md border border-slate-200 bg-white px-4 font-semibold text-slate-700 text-sm shadow-sm">
         <span className="size-2.5 rounded-full bg-emerald-500" />
         {project}
-        <ChevronDown className="size-4 text-slate-400" />
-      </Button>
+      </div>
 
       <Select
         value={environment}
@@ -100,6 +192,66 @@ function DashboardContextControls() {
         </SelectContent>
       </Select>
     </div>
+  );
+}
+
+function SummaryPill({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: LucideIcon;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="flex min-w-0 items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3">
+      <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-white text-slate-600 shadow-xs">
+        <Icon className="size-4" />
+      </span>
+      <div className="min-w-0">
+        <div className="truncate text-slate-500 text-xs">{label}</div>
+        <div className="mt-0.5 truncate font-semibold text-slate-900 text-sm">{value}</div>
+      </div>
+    </div>
+  );
+}
+
+function DashboardSkeleton() {
+  return (
+    <>
+      <div className="border-slate-200 border-b bg-white px-6 py-5">
+        <div className="flex flex-col gap-4 2xl:flex-row 2xl:items-start 2xl:justify-between">
+          <div>
+            <div className="h-7 w-42 animate-pulse rounded bg-slate-100" />
+            <div className="mt-3 h-4 w-80 max-w-full animate-pulse rounded bg-slate-100" />
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <div className="h-10 w-32 animate-pulse rounded bg-slate-100" />
+            <div className="h-10 w-36 animate-pulse rounded bg-slate-100" />
+          </div>
+        </div>
+        <div className="mt-5 grid gap-3 md:grid-cols-3">
+          <Card className="h-16 animate-pulse rounded-lg border-slate-200 bg-slate-50 shadow-none" />
+          <Card className="h-16 animate-pulse rounded-lg border-slate-200 bg-slate-50 shadow-none" />
+          <Card className="h-16 animate-pulse rounded-lg border-slate-200 bg-slate-50 shadow-none" />
+        </div>
+      </div>
+      <div className="space-y-4 px-6 py-5">
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
+          {metricSkeletonKeys.map((key) => (
+            <Card
+              key={`metric-skeleton-${key}`}
+              className="h-39 animate-pulse rounded-lg border-slate-200 bg-white shadow-sm"
+            />
+          ))}
+        </div>
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+          <Card className="h-86 animate-pulse rounded-lg border-slate-200 bg-white shadow-sm" />
+          <Card className="h-86 animate-pulse rounded-lg border-slate-200 bg-white shadow-sm" />
+        </div>
+      </div>
+    </>
   );
 }
 

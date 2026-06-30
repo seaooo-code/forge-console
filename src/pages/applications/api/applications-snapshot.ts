@@ -1,9 +1,11 @@
 import { applicationStatusLabelByCode } from "../constants";
 import type {
+  ApplicationCapabilities,
   ApplicationDeleteCheck,
   ApplicationDetail,
   ApplicationEnvironmentRecord,
   ApplicationListFilters,
+  ApplicationMemberInput,
   ApplicationMemberRecord,
   ApplicationMutationInput,
   ApplicationOptions,
@@ -40,6 +42,8 @@ type ApplicationDetailRawAPIResponse = {
   application: ApplicationAPIRecord;
   detail: ApplicationDetail;
 };
+
+type ApplicationMemberAPIResponse = ApplicationMemberRecord;
 
 type APIErrorPayload = {
   error?: string;
@@ -162,6 +166,51 @@ export async function deleteApplication(applicationSlug: string): Promise<void> 
   });
 }
 
+export async function upsertApplicationMember(
+  applicationSlug: string,
+  input: ApplicationMemberInput,
+): Promise<ApplicationMemberRecord> {
+  const payload = await fetchJSON<ApplicationMemberAPIResponse>(
+    `/api/v1/applications/${encodeURIComponent(applicationSlug)}/members`,
+    {
+      body: JSON.stringify(input),
+      method: "POST",
+    },
+  );
+  return normalizeApplicationMember(payload);
+}
+
+export async function updateApplicationMemberRole(
+  applicationSlug: string,
+  userId: string,
+  role: ApplicationMemberInput["role"],
+): Promise<ApplicationMemberRecord> {
+  const payload = await fetchJSON<ApplicationMemberAPIResponse>(
+    `/api/v1/applications/${encodeURIComponent(applicationSlug)}/members/${encodeURIComponent(
+      userId,
+    )}`,
+    {
+      body: JSON.stringify({ role }),
+      method: "PATCH",
+    },
+  );
+  return normalizeApplicationMember(payload);
+}
+
+export async function deleteApplicationMember(
+  applicationSlug: string,
+  userId: string,
+): Promise<void> {
+  await fetchJSON<void>(
+    `/api/v1/applications/${encodeURIComponent(applicationSlug)}/members/${encodeURIComponent(
+      userId,
+    )}`,
+    {
+      method: "DELETE",
+    },
+  );
+}
+
 async function fetchJSON<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${apiBaseUrl}${path}`, {
     credentials: "include",
@@ -209,10 +258,20 @@ function buildAPIErrorMessage(path: string, status: number, payload?: APIErrorPa
       : payload.feishuMsg;
   }
   if (payload?.error) {
-    return payload.error;
+    return applicationAPIErrorMessages[payload.error] ?? payload.error;
   }
   return `Request ${path} failed with ${status}`;
 }
+
+const applicationAPIErrorMessages: Record<string, string> = {
+  "application is referenced by modules": "应用已被模块引用，不能删除",
+  "application last owner": "不能移除应用最后一个 Owner",
+  "application not found": "应用不存在",
+  "application slug already exists": "应用标识已存在，请更换后重试",
+  forbidden: "当前账号无权限执行此操作",
+  "internal server error": "服务端内部错误，请稍后重试",
+  "invalid application request": "应用参数无效，请检查表单",
+};
 
 function buildApplicationsSnapshotPath(filters?: Partial<ApplicationListFilters>) {
   const normalizedFilters = normalizeApplicationListFilters(filters);
@@ -263,8 +322,21 @@ function normalizeApplication(application: ApplicationAPIRecord): HostApplicatio
 function normalizeApplicationDetail(detail: ApplicationDetail): ApplicationDetail {
   return {
     ...detail,
+    capabilities: normalizeApplicationCapabilities(detail.capabilities),
     environments: detail.environments.map(normalizeApplicationEnvironment),
     members: detail.members.map(normalizeApplicationMember),
+  };
+}
+
+function normalizeApplicationCapabilities(
+  capabilities?: Partial<ApplicationCapabilities>,
+): ApplicationCapabilities {
+  return {
+    canCreateBuild: Boolean(capabilities?.canCreateBuild),
+    canEditApplication: Boolean(capabilities?.canEditApplication),
+    canManageMembers: Boolean(capabilities?.canManageMembers),
+    canRelease: Boolean(capabilities?.canRelease),
+    canUpdateStatus: Boolean(capabilities?.canUpdateStatus),
   };
 }
 
@@ -278,7 +350,15 @@ function normalizeApplicationEnvironment(
 }
 
 function normalizeApplicationMember(member: ApplicationMemberRecord): ApplicationMemberRecord {
-  return member;
+  return {
+    avatarUrl: member.avatarUrl || "",
+    email: member.email || "",
+    id: member.id || member.userId,
+    name: member.name || member.userId,
+    role: member.role,
+    team: member.team || "",
+    userId: member.userId || member.id,
+  };
 }
 
 function formatDate(value: string) {

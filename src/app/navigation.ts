@@ -3,7 +3,7 @@ import type { NavGroup } from "./layouts/types";
 export const navGroups: NavGroup[] = [
   {
     label: "概览",
-    items: [{ id: "dashboard", isMock: true, label: "仪表盘", href: "/", icon: "dashboard" }],
+    items: [{ id: "dashboard", label: "仪表盘", href: "/", icon: "dashboard" }],
   },
   {
     label: "资源管理",

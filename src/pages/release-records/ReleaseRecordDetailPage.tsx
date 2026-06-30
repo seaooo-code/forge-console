@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/store/use-auth-store";
 
 import {
   fetchReleaseRecordDetail,
@@ -55,6 +56,8 @@ export function ReleaseRecordDetailPage({
   releaseId,
 }: ReleaseRecordDetailPageProps) {
   const queryClient = useQueryClient();
+  const session = useAuthStore((state) => state.session);
+  const canCreateRelease = Boolean(session?.capabilities.canCreateRelease);
   const [grayPercentageInput, setGrayPercentageInput] = useState("0");
   const [grayPercentageError, setGrayPercentageError] = useState("");
   const [grayPercentageMessage, setGrayPercentageMessage] = useState("");
@@ -171,7 +174,7 @@ export function ReleaseRecordDetailPage({
                 variant="outline"
                 type="button"
                 className="border-rose-200 bg-white text-rose-700 hover:bg-rose-50 hover:text-rose-800"
-                disabled={inactivateMutation.isPending}
+                disabled={!canCreateRelease || inactivateMutation.isPending}
                 onClick={() => {
                   if (!window.confirm("失效后该定向标识会回退到比例灰度或全量发布，是否继续？")) {
                     return;
@@ -321,6 +324,7 @@ export function ReleaseRecordDetailPage({
                     max={100}
                     type="number"
                     value={grayPercentageInput}
+                    disabled={!canCreateRelease || grayPercentageMutation.isPending}
                     onChange={(event) => {
                       setGrayPercentageInput(event.target.value);
                       setGrayPercentageError("");
@@ -343,7 +347,7 @@ export function ReleaseRecordDetailPage({
               <Button
                 type="button"
                 className="bg-blue-600 text-white hover:bg-blue-700"
-                disabled={grayPercentageMutation.isPending}
+                disabled={!canCreateRelease || grayPercentageMutation.isPending}
                 onClick={() => {
                   const nextPercentage = Number(grayPercentageInput);
                   if (

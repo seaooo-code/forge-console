@@ -25,6 +25,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/store/use-auth-store";
 
 import {
   applicationDeleteCheckQueryKey,
@@ -56,6 +57,9 @@ export function ApplicationsPage({
   onOpenApplication,
 }: ApplicationsPageProps) {
   const queryClient = useQueryClient();
+  const session = useAuthStore((state) => state.session);
+  const canCreateApplication = Boolean(session?.capabilities.canCreateApplication);
+  const canManageApplications = Boolean(session?.capabilities.canManageApplications);
   const [filters, setFilters] = useState<ApplicationListFilters>(emptyApplicationListFilters);
   const {
     data: snapshot,
@@ -220,6 +224,7 @@ export function ApplicationsPage({
       {
         cellRenderer: ActionsCell,
         cellRendererParams: {
+          canManage: canManageApplications,
           onConfigureApplication,
           onDeleteApplication: handleRequestDeleteApplication,
           onUpdateApplicationStatus: handleRequestUpdateApplicationStatus,
@@ -231,7 +236,12 @@ export function ApplicationsPage({
         sortable: false,
       },
     ],
-    [handleRequestDeleteApplication, handleRequestUpdateApplicationStatus, onConfigureApplication],
+    [
+      canManageApplications,
+      handleRequestDeleteApplication,
+      handleRequestUpdateApplicationStatus,
+      onConfigureApplication,
+    ],
   );
 
   const defaultColDef = useMemo<ColDef<HostApplication>>(
@@ -341,7 +351,11 @@ export function ApplicationsPage({
               >
                 <RefreshCw className={isFetching ? "size-4 animate-spin" : "size-4"} />
               </Button>
-              <Button className="bg-blue-600 hover:bg-blue-700" onClick={onCreateApplication}>
+              <Button
+                className="bg-blue-600 hover:bg-blue-700"
+                disabled={!canCreateApplication}
+                onClick={onCreateApplication}
+              >
                 <Plus className="size-4" />
                 新建应用
               </Button>
@@ -594,11 +608,13 @@ function OwnerAvatar({ name, src }: { name: string; src: string }) {
 }
 
 function ActionsCell({
+  canManage,
   data,
   onConfigureApplication,
   onDeleteApplication,
   onUpdateApplicationStatus,
 }: ICellRendererParams<HostApplication> & {
+  canManage?: boolean;
   onConfigureApplication?: (applicationSlug: string) => void;
   onDeleteApplication?: (application: HostApplication) => void;
   onUpdateApplicationStatus?: (application: HostApplication) => void;
@@ -626,8 +642,9 @@ function ActionsCell({
       <Button
         variant="link"
         type="button"
+        disabled={!canManage}
         className={cn(
-          "h-auto gap-1 p-0 text-xs",
+          "h-auto gap-1 p-0 text-xs disabled:text-slate-400",
           isOffline
             ? "text-emerald-600 hover:text-emerald-700"
             : "text-slate-600 hover:text-slate-800",
@@ -644,6 +661,7 @@ function ActionsCell({
       <Button
         variant="link"
         type="button"
+        disabled={!canManage}
         className="h-auto gap-1 p-0 text-rose-600 text-xs hover:text-rose-700 disabled:text-slate-400"
         onClick={() => {
           if (data) {

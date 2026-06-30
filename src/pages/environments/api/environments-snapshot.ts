@@ -29,12 +29,19 @@ export class EnvironmentAPIError extends Error {
   readonly status: number;
 
   constructor(path: string, status: number, payload?: APIErrorPayload) {
-    super(payload?.error || `Request ${path} failed with ${status}`);
+    super(getEnvironmentAPIErrorMessage(path, status, payload));
     this.name = "EnvironmentAPIError";
     this.payload = payload;
     this.status = status;
   }
 }
+
+const environmentAPIErrorMessages: Record<string, string> = {
+  forbidden: "当前账号无权限执行此操作",
+  "internal server error": "服务端内部错误，请稍后重试",
+  "invalid environment request": "环境参数无效，请检查表单",
+  "storage configuration not found": "存储配置不存在",
+};
 
 const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8080").replace(
   /\/+$/,
@@ -150,4 +157,12 @@ async function readErrorPayload(response: Response): Promise<APIErrorPayload | u
   } catch (_error) {
     return undefined;
   }
+}
+
+function getEnvironmentAPIErrorMessage(path: string, status: number, payload?: APIErrorPayload) {
+  const error = payload?.error;
+  if (error) {
+    return environmentAPIErrorMessages[error] ?? error;
+  }
+  return `Request ${path} failed with ${status}`;
 }

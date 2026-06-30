@@ -11,17 +11,30 @@ import {
   MonitorSmartphone,
   PackageCheck,
   PenLine,
+  Plus,
   RadioTower,
   Smartphone,
+  Trash2,
 } from "lucide-react";
 import { useMemo, useState } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { searchFeishuUsers } from "@/api/feishu-user-search";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { consoleGridTheme } from "@/components/common/console-grid-theme";
 import { EnvironmentBadge } from "@/components/common/EnvironmentBadge";
+import { OwnerPicker } from "@/components/common/OwnerPicker";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import type { FeishuUserSearchResult } from "@/types/feishu";
 
 import {
   applicationDetailQueryKey,
@@ -29,8 +42,11 @@ import {
 } from "./api/application-list-filters";
 import {
   type ApplicationDetailAPIResponse,
+  deleteApplicationMember,
   fetchApplicationDetailSnapshot,
+  updateApplicationMemberRole,
   updateApplicationStatus,
+  upsertApplicationMember,
 } from "./api/applications-snapshot";
 import { ClientIntegrationSection } from "./components/ClientIntegrationSection";
 import {
@@ -46,6 +62,22 @@ import type {
   ApplicationModuleRecord,
   ApplicationStatusCode,
 } from "./types";
+
+type ApplicationMemberFormState = {
+  memberName: string;
+  role: ApplicationMemberRecord["role"];
+  userId: string;
+};
+
+const applicationMemberRoleOptions: ReadonlyArray<{
+  label: string;
+  value: ApplicationMemberRecord["role"];
+}> = [
+  { label: "Owner", value: "Owner" },
+  { label: "Developer", value: "Developer" },
+  { label: "QA", value: "QA" },
+  { label: "Release", value: "Release" },
+];
 
 type ApplicationDetailPageProps = {
   applicationSlug: string;
@@ -67,6 +99,30 @@ export function ApplicationDetailPage({
   const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [actionError, setActionError] = useState("");
+  const [memberActionError, setMemberActionError] = useState("");
+  const [isMutatingMember, setIsMutatingMember] = useState(false);
+  const [roleChangeTarget, setRoleChangeTarget] = useState<{
+    member: ApplicationMemberRecord;
+    role: ApplicationMemberRecord["role"];
+  } | null>(null);
+  const [deleteMemberTarget, setDeleteMemberTarget] = useState<ApplicationMemberRecord | null>(
+    null,
+  );
+  const {
+    control: memberFormControl,
+    formState: { errors: memberFormErrors },
+    handleSubmit: handleSubmitMemberForm,
+    reset: resetMemberForm,
+    setValue: setMemberFormValue,
+    watch: watchMemberForm,
+  } = useForm<ApplicationMemberFormState>({
+    defaultValues: {
+      memberName: "",
+      role: "Developer",
+      userId: "",
+    },
+  });
+  const selectedMemberUserId = watchMemberForm("userId");
   const application =
     overrideDetail?.application ??
     snapshot?.applications.find((item) => item.slug === applicationSlug);
@@ -145,6 +201,26 @@ export function ApplicationDetailPage({
   const statusActionLabel = application.status === "已下线" ? "上线" : "下线";
   const nextStatus: ApplicationStatusCode = application.status === "已下线" ? "running" : "offline";
   const StatusActionIcon = application.status === "已下线" ? Activity : ArchiveX;
+  const canEditApplication = detail.capabilities.canEditApplication;
+  const canManageMembers = detail.capabilities.canManageMembers;
+  const canUpdateStatus = detail.capabilities.canUpdateStatus;
+
+  const updateMembers = (members: ApplicationMemberRecord[]) => {
+    setOverrideDetail({
+      application,
+      detail: {
+        ...detail,
+        members,
+      },
+    });
+  };
+
+  const refreshApplicationDetail = async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: applicationDetailQueryKey(application.slug) }),
+      queryClient.invalidateQueries({ queryKey: applicationsRootQueryKey }),
+    ]);
+  };
 
   const handleUpdateApplicationStatus = async () => {
     setIsUpdatingStatus(true);
@@ -161,6 +237,70 @@ export function ApplicationDetailPage({
       );
     } finally {
       setIsUpdatingStatus(false);
+    }
+  };
+
+  const handleAddMember = handleSubmitMemberForm(async (form) => {
+    if (!canManageMembers) {
+      return;
+    }
+    setIsMutatingMember(true);
+    setMemberActionError("");
+
+    try {
+      const member = await upsertApplicationMember(application.slug, {
+        role: form.role,
+        userId: form.userId,
+      });
+      updateMembers(upsertMemberInList(detail.members, member));
+      resetMemberForm({ memberName: "", role: "Developer", userId: "" });
+      await refreshApplicationDetail();
+    } catch (error) {
+      setMemberActionError(error instanceof Error ? error.message : "添加成员失败，请稍后重试");
+    } finally {
+      setIsMutatingMember(false);
+    }
+  });
+
+  const handleConfirmRoleChange = async () => {
+    if (!roleChangeTarget) {
+      return;
+    }
+    setIsMutatingMember(true);
+    setMemberActionError("");
+
+    try {
+      const member = await updateApplicationMemberRole(
+        application.slug,
+        roleChangeTarget.member.userId,
+        roleChangeTarget.role,
+      );
+      updateMembers(upsertMemberInList(detail.members, member));
+      setRoleChangeTarget(null);
+      await refreshApplicationDetail();
+    } catch (error) {
+      setMemberActionError(error instanceof Error ? error.message : "修改成员角色失败，请稍后重试");
+    } finally {
+      setIsMutatingMember(false);
+    }
+  };
+
+  const handleConfirmDeleteMember = async () => {
+    if (!deleteMemberTarget) {
+      return;
+    }
+    setIsMutatingMember(true);
+    setMemberActionError("");
+
+    try {
+      await deleteApplicationMember(application.slug, deleteMemberTarget.userId);
+      updateMembers(detail.members.filter((member) => member.userId !== deleteMemberTarget.userId));
+      setDeleteMemberTarget(null);
+      await refreshApplicationDetail();
+    } catch (error) {
+      setMemberActionError(error instanceof Error ? error.message : "移除成员失败，请稍后重试");
+    } finally {
+      setIsMutatingMember(false);
     }
   };
 
@@ -214,6 +354,7 @@ export function ApplicationDetailPage({
               <Button
                 variant="outline"
                 type="button"
+                disabled={!canEditApplication}
                 onClick={() => onEditApplication(application.slug)}
               >
                 <PenLine className="size-4" />
@@ -227,7 +368,7 @@ export function ApplicationDetailPage({
                     ? "border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-700"
                     : "border-emerald-200 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700",
                 )}
-                disabled={isUpdatingStatus}
+                disabled={!canUpdateStatus || isUpdatingStatus}
                 onClick={() => {
                   setActionError("");
                   setIsStatusDialogOpen(true);
@@ -294,9 +435,91 @@ export function ApplicationDetailPage({
                 {detail.members.length} 人
               </Badge>
             </div>
-            <div className="space-y-2 p-4">
+            <div className="space-y-3 p-4">
+              {canManageMembers ? (
+                <form className="space-y-2" onSubmit={handleAddMember}>
+                  <div className="grid gap-2 md:grid-cols-[1fr_8.5rem_auto]">
+                    <Controller
+                      control={memberFormControl}
+                      name="memberName"
+                      rules={{
+                        validate: () => Boolean(selectedMemberUserId) || "请选择成员",
+                      }}
+                      render={({ field }) => (
+                        <OwnerPicker<FeishuUserSearchResult>
+                          value={field.value}
+                          inputName={field.name}
+                          inputRef={field.ref}
+                          placeholder="搜索成员姓名、邮箱或账号"
+                          searchUsers={searchFeishuUsers}
+                          onBlur={field.onBlur}
+                          onChange={(value) => {
+                            field.onChange(value);
+                            setMemberFormValue("userId", "", { shouldValidate: true });
+                          }}
+                          onSelect={(user) => {
+                            setMemberFormValue("userId", user.id, { shouldValidate: true });
+                          }}
+                        />
+                      )}
+                    />
+                    <Controller
+                      control={memberFormControl}
+                      name="role"
+                      render={({ field }) => (
+                        <Select value={field.value} onValueChange={field.onChange}>
+                          <SelectTrigger className="w-full">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {applicationMemberRoleOptions.map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                    <Button
+                      type="submit"
+                      className="gap-2 bg-blue-600 text-white hover:bg-blue-700"
+                      disabled={!selectedMemberUserId || isMutatingMember}
+                    >
+                      <Plus className="size-4" />
+                      添加
+                    </Button>
+                  </div>
+                  {memberFormErrors.memberName ? (
+                    <div className="text-rose-600 text-xs">
+                      {memberFormErrors.memberName.message}
+                    </div>
+                  ) : null}
+                </form>
+              ) : null}
+              {memberActionError ? (
+                <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-rose-600 text-sm">
+                  {memberActionError}
+                </div>
+              ) : null}
               {detail.members.map((member) => (
-                <MemberRow key={member.id} member={member} />
+                <MemberRow
+                  key={member.id}
+                  canManage={canManageMembers}
+                  disabled={isMutatingMember}
+                  member={member}
+                  onDelete={(target) => {
+                    setMemberActionError("");
+                    setDeleteMemberTarget(target);
+                  }}
+                  onRoleChange={(target, role) => {
+                    if (target.role === role) {
+                      return;
+                    }
+                    setMemberActionError("");
+                    setRoleChangeTarget({ member: target, role });
+                  }}
+                />
               ))}
             </div>
           </Card>
@@ -336,6 +559,61 @@ export function ApplicationDetailPage({
           />
         </section>
       </div>
+      <ConfirmDialog
+        isOpen={roleChangeTarget !== null}
+        isPending={isMutatingMember}
+        title="修改成员角色"
+        description={
+          roleChangeTarget
+            ? `确认将「${memberDisplayName(roleChangeTarget.member)}」的角色修改为 ${roleChangeTarget.role}？`
+            : ""
+        }
+        confirmLabel="修改角色"
+        onCancel={() => {
+          if (isMutatingMember) {
+            return;
+          }
+          setRoleChangeTarget(null);
+          setMemberActionError("");
+        }}
+        onConfirm={() => {
+          void handleConfirmRoleChange();
+        }}
+      >
+        {memberActionError ? (
+          <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-rose-600 text-sm">
+            {memberActionError}
+          </div>
+        ) : null}
+      </ConfirmDialog>
+      <ConfirmDialog
+        isOpen={deleteMemberTarget !== null}
+        isPending={isMutatingMember}
+        title="移除成员"
+        description={
+          deleteMemberTarget
+            ? `确认移除「${memberDisplayName(deleteMemberTarget)}」的应用权限？`
+            : ""
+        }
+        confirmLabel="移除成员"
+        tone="danger"
+        onCancel={() => {
+          if (isMutatingMember) {
+            return;
+          }
+          setDeleteMemberTarget(null);
+          setMemberActionError("");
+        }}
+        onConfirm={() => {
+          void handleConfirmDeleteMember();
+        }}
+      >
+        {memberActionError ? (
+          <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-rose-600 text-sm">
+            {memberActionError}
+          </div>
+        ) : null}
+      </ConfirmDialog>
     </>
   );
 }
@@ -437,18 +715,98 @@ function ConfigItem({
   );
 }
 
-function MemberRow({ member }: { member: ApplicationMemberRecord }) {
+function MemberRow({
+  canManage,
+  disabled,
+  member,
+  onDelete,
+  onRoleChange,
+}: {
+  canManage: boolean;
+  disabled: boolean;
+  member: ApplicationMemberRecord;
+  onDelete: (member: ApplicationMemberRecord) => void;
+  onRoleChange: (member: ApplicationMemberRecord, role: ApplicationMemberRecord["role"]) => void;
+}) {
   return (
     <div className="flex items-center justify-between gap-3 rounded-md border border-slate-200 bg-slate-50 px-3 py-2.5">
-      <div className="min-w-0">
-        <div className="truncate font-semibold text-slate-900 text-sm">{member.name}</div>
-        <div className="mt-0.5 truncate text-slate-500 text-xs">{member.team}</div>
+      <div className="flex min-w-0 items-center gap-2">
+        <MemberAvatar member={member} />
+        <div className="min-w-0">
+          <div className="truncate font-semibold text-slate-900 text-sm">
+            {memberDisplayName(member)}
+          </div>
+          <div className="mt-0.5 truncate text-slate-500 text-xs">
+            {member.email || member.team || member.userId}
+          </div>
+        </div>
       </div>
-      <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700">
-        {member.role}
-      </Badge>
+      {canManage ? (
+        <div className="flex shrink-0 items-center gap-2">
+          <Select
+            value={member.role}
+            disabled={disabled}
+            onValueChange={(role) => onRoleChange(member, role as ApplicationMemberRecord["role"])}
+          >
+            <SelectTrigger className="h-8 w-30 bg-white">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {applicationMemberRoleOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            className="size-8 border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+            disabled={disabled}
+            aria-label="移除成员权限"
+            onClick={() => onDelete(member)}
+          >
+            <Trash2 className="size-4" />
+          </Button>
+        </div>
+      ) : (
+        <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700">
+          {member.role}
+        </Badge>
+      )}
     </div>
   );
+}
+
+function MemberAvatar({ member }: { member: ApplicationMemberRecord }) {
+  const name = memberDisplayName(member);
+  if (member.avatarUrl) {
+    return <img src={member.avatarUrl} alt={name} className="size-8 rounded-full object-cover" />;
+  }
+
+  return (
+    <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-blue-600 font-semibold text-white text-xs">
+      {name.trim().slice(0, 1).toUpperCase()}
+    </span>
+  );
+}
+
+function memberDisplayName(member: ApplicationMemberRecord) {
+  return member.name || member.email || member.userId || member.id;
+}
+
+function upsertMemberInList(
+  members: ApplicationMemberRecord[],
+  nextMember: ApplicationMemberRecord,
+) {
+  const existingIndex = members.findIndex((member) => member.userId === nextMember.userId);
+  if (existingIndex < 0) {
+    return [...members, nextMember];
+  }
+
+  return members.map((member, index) => (index === existingIndex ? nextMember : member));
 }
 
 function TableHeader({ description, title }: { description: string; title: string }) {

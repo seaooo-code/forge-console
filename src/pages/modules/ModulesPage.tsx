@@ -27,6 +27,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { applicationsRootQueryKey } from "@/pages/applications";
+import { useAuthStore } from "@/store/use-auth-store";
 
 import {
   deleteModule,
@@ -44,12 +45,15 @@ type ModulesPageProps = {
 };
 
 type ModuleActionsCellParams = {
+  canManageModules: boolean;
   onDeleteModule: (module: ModuleRecord) => void;
   onEditModule: (moduleId: string) => void;
 };
 
 export function ModulesPage({ onCreateModule, onEditModule, onOpenModule }: ModulesPageProps) {
   const queryClient = useQueryClient();
+  const session = useAuthStore((state) => state.session);
+  const canManageModules = Boolean(session?.capabilities.canManageModules);
   const [filters, setFilters] = useState<ModuleListFilters>({
     applicationId: "",
     keyword: "",
@@ -149,6 +153,7 @@ export function ModulesPage({ onCreateModule, onEditModule, onOpenModule }: Modu
       {
         cellRenderer: ActionsCell,
         cellRendererParams: {
+          canManageModules,
           onDeleteModule: setDeleteTarget,
           onEditModule,
         },
@@ -159,7 +164,7 @@ export function ModulesPage({ onCreateModule, onEditModule, onOpenModule }: Modu
         sortable: false,
       },
     ],
-    [onEditModule],
+    [canManageModules, onEditModule],
   );
 
   const defaultColDef = useMemo<ColDef<ModuleRecord>>(
@@ -270,6 +275,7 @@ export function ModulesPage({ onCreateModule, onEditModule, onOpenModule }: Modu
               <Button
                 type="button"
                 className="bg-blue-600 hover:bg-blue-700"
+                disabled={!canManageModules}
                 onClick={onCreateModule}
               >
                 <Plus className="size-4" />
@@ -416,6 +422,7 @@ function CommonModuleCell({ data }: ICellRendererParams<ModuleRecord>) {
 }
 
 function ActionsCell({
+  canManageModules,
   data,
   onDeleteModule,
   onEditModule,
@@ -429,7 +436,8 @@ function ActionsCell({
       <Button
         variant="link"
         type="button"
-        className="h-auto gap-1 p-0 text-blue-600 text-xs hover:text-blue-700"
+        disabled={!canManageModules}
+        className="h-auto gap-1 p-0 text-blue-600 text-xs hover:text-blue-700 disabled:text-slate-400"
         onClick={(event) => {
           event.stopPropagation();
           onEditModule(data.id);
@@ -441,7 +449,8 @@ function ActionsCell({
       <Button
         variant="link"
         type="button"
-        className="h-auto gap-1 p-0 text-rose-600 text-xs hover:text-rose-700"
+        disabled={!canManageModules}
+        className="h-auto gap-1 p-0 text-rose-600 text-xs hover:text-rose-700 disabled:text-slate-400"
         onClick={(event) => {
           event.stopPropagation();
           onDeleteModule(data);

@@ -1,14 +1,18 @@
 import type { ColDef } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 import { useMemo } from "react";
+import { Link } from "react-router";
 
 import { EnvironmentBadge } from "@/components/common/EnvironmentBadge";
-import { MockCard as Card } from "@/components/common/MockSurface";
 import { Button } from "@/components/ui/button";
-import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
-import { dashboardSummaryGridTheme, recentReleaseStatusClass } from "../constants";
+import {
+  dashboardSummaryGridTheme,
+  recentReleaseStatusClass,
+  recentReleaseStatusLabel,
+} from "../constants";
 import type { ReleaseRecord } from "../types";
 
 type RecentReleasesTableProps = {
@@ -19,10 +23,23 @@ export function RecentReleasesTable({ releases }: RecentReleasesTableProps) {
   const columnDefs = useMemo<ColDef<ReleaseRecord>[]>(
     () => [
       {
+        cellRenderer: ({ data }: { data?: ReleaseRecord }) =>
+          data ? (
+            <div className="min-w-0 leading-tight">
+              <div className="truncate font-medium text-slate-800">{data.module}</div>
+              <div className="truncate text-slate-500 text-xs">{data.application}</div>
+            </div>
+          ) : null,
+        field: "module",
+        flex: 1.4,
+        headerName: "模块",
+        minWidth: 170,
+      },
+      {
         field: "id",
-        flex: 1.1,
-        headerName: "发布单",
-        minWidth: 150,
+        flex: 1,
+        headerName: "发布记录",
+        minWidth: 140,
       },
       {
         cellRenderer: ({ value }: { value?: ReleaseRecord["environment"] }) =>
@@ -36,7 +53,7 @@ export function RecentReleasesTable({ releases }: RecentReleasesTableProps) {
       },
       {
         field: "gray",
-        flex: 0.7,
+        flex: 0.6,
         headerName: "灰度",
         minWidth: 90,
       },
@@ -49,13 +66,19 @@ export function RecentReleasesTable({ releases }: RecentReleasesTableProps) {
                 recentReleaseStatusClass[value],
               )}
             >
-              {value}
+              {recentReleaseStatusLabel[value]}
             </span>
           ) : null,
         field: "status",
-        flex: 0.8,
+        flex: 0.7,
         headerName: "状态",
         minWidth: 100,
+      },
+      {
+        field: "updatedAt",
+        flex: 0.6,
+        headerName: "更新",
+        minWidth: 80,
       },
     ],
     [],
@@ -72,30 +95,33 @@ export function RecentReleasesTable({ releases }: RecentReleasesTableProps) {
   );
 
   return (
-    <Card className="rounded-lg py-0 shadow-none">
+    <Card className="gap-0 rounded-lg border-slate-200 py-0 shadow-sm">
       <CardHeader className="flex h-12 flex-row items-center justify-between border-b px-4 py-0">
-        <CardTitle className="text-slate-900 text-sm">最近发布</CardTitle>
-        <Button
-          variant="link"
-          type="button"
-          className="h-auto p-0 font-medium text-blue-600 text-xs"
-        >
-          查看全部 →
+        <div className="min-w-0">
+          <CardTitle className="text-slate-900 text-sm">最近发布</CardTitle>
+          <div className="mt-1 text-slate-500 text-xs">发布记录与当前生效状态</div>
+        </div>
+        <Button asChild variant="outline" size="sm" className="h-8 shrink-0 border-slate-200">
+          <Link to="/release-records">打开发布</Link>
         </Button>
       </CardHeader>
       <CardContent className="px-0 py-0">
-        <AgGridReact<ReleaseRecord>
-          rowData={releases}
-          columnDefs={columnDefs}
-          defaultColDef={defaultColDef}
-          domLayout="autoHeight"
-          headerHeight={40}
-          rowHeight={44}
-          theme={dashboardSummaryGridTheme}
-          suppressCellFocus
-          suppressContextMenu
-          getRowId={({ data }) => data.id}
-        />
+        {releases.length > 0 ? (
+          <AgGridReact<ReleaseRecord>
+            rowData={releases}
+            columnDefs={columnDefs}
+            defaultColDef={defaultColDef}
+            domLayout="autoHeight"
+            headerHeight={40}
+            rowHeight={48}
+            theme={dashboardSummaryGridTheme}
+            suppressCellFocus
+            suppressContextMenu
+            getRowId={({ data }) => data.id}
+          />
+        ) : (
+          <div className="grid h-52 place-items-center text-slate-500 text-sm">暂无发布记录</div>
+        )}
       </CardContent>
     </Card>
   );

@@ -16,12 +16,22 @@ export class StorageAPIError extends Error {
   readonly status: number;
 
   constructor(path: string, status: number, payload?: APIErrorPayload) {
-    super(payload?.error || `Request ${path} failed with ${status}`);
+    super(getStorageAPIErrorMessage(path, status, payload));
     this.name = "StorageAPIError";
     this.payload = payload;
     this.status = status;
   }
 }
+
+const storageAPIErrorMessages: Record<string, string> = {
+  forbidden: "当前账号无权限执行此操作",
+  "internal server error": "服务端内部错误，请稍后重试",
+  "invalid storage configuration request": "存储配置参数无效，请检查表单",
+  "storage configuration already exists": "存储配置已存在，请更换标识后重试",
+  "storage configuration is referenced by environments": "存储配置已被环境引用，不能删除",
+  "storage configuration not found": "存储配置不存在",
+  "storage service unavailable": "存储服务暂不可用",
+};
 
 const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8080").replace(
   /\/+$/,
@@ -119,4 +129,12 @@ async function readErrorPayload(response: Response): Promise<APIErrorPayload | u
   } catch (_error) {
     return undefined;
   }
+}
+
+function getStorageAPIErrorMessage(path: string, status: number, payload?: APIErrorPayload) {
+  const error = payload?.error;
+  if (error) {
+    return storageAPIErrorMessages[error] ?? error;
+  }
+  return `Request ${path} failed with ${status}`;
 }

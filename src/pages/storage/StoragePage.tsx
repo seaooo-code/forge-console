@@ -20,6 +20,7 @@ import { consoleGridTheme } from "@/components/common/console-grid-theme";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/store/use-auth-store";
 import type { StorageConfigRecord, StorageStatus } from "@/types/storage";
 
 import { storageSnapshotQueryKey } from "./api/storage-query-keys";
@@ -33,6 +34,8 @@ type StoragePageProps = {
 
 export function StoragePage({ onCreateStorage, onEditStorage }: StoragePageProps) {
   const queryClient = useQueryClient();
+  const session = useAuthStore((state) => state.session);
+  const canManageStorage = Boolean(session?.capabilities.canManageStorage);
   const { data: snapshot } = useQuery({
     queryFn: fetchStorageConfigurationsSnapshot,
     queryKey: storageSnapshotQueryKey,
@@ -109,6 +112,7 @@ export function StoragePage({ onCreateStorage, onEditStorage }: StoragePageProps
       {
         cellRenderer: ActionsCell,
         cellRendererParams: {
+          canManageStorage,
           onDeleteStorage: handleRequestDeleteStorage,
           onEditStorage,
         },
@@ -119,7 +123,7 @@ export function StoragePage({ onCreateStorage, onEditStorage }: StoragePageProps
         sortable: false,
       },
     ],
-    [handleRequestDeleteStorage, onEditStorage],
+    [canManageStorage, handleRequestDeleteStorage, onEditStorage],
   );
 
   const defaultColDef = useMemo<ColDef<StorageConfigRecord>>(
@@ -155,6 +159,7 @@ export function StoragePage({ onCreateStorage, onEditStorage }: StoragePageProps
           <Button
             type="button"
             className="shrink-0 bg-blue-600 hover:bg-blue-700"
+            disabled={!canManageStorage}
             onClick={onCreateStorage}
           >
             <Plus className="size-4" />
@@ -332,11 +337,17 @@ function StatusCell({ value }: ICellRendererParams<StorageConfigRecord, StorageS
 }
 
 type ActionsCellParams = ICellRendererParams<StorageConfigRecord> & {
+  canManageStorage?: boolean;
   onDeleteStorage?: (storage: StorageConfigRecord) => void;
   onEditStorage?: (storageId: string) => void;
 };
 
-function ActionsCell({ data, onDeleteStorage, onEditStorage }: ActionsCellParams) {
+function ActionsCell({
+  canManageStorage,
+  data,
+  onDeleteStorage,
+  onEditStorage,
+}: ActionsCellParams) {
   if (!data) {
     return null;
   }
@@ -349,6 +360,7 @@ function ActionsCell({ data, onDeleteStorage, onEditStorage }: ActionsCellParams
         size="icon"
         className="size-8 text-slate-500 hover:text-blue-600"
         aria-label="编辑存储配置"
+        disabled={!canManageStorage}
         onClick={() => onEditStorage?.(data.id)}
       >
         <Pencil className="size-4" />
@@ -359,6 +371,7 @@ function ActionsCell({ data, onDeleteStorage, onEditStorage }: ActionsCellParams
         size="icon"
         className="size-8 text-slate-500 hover:text-red-600"
         aria-label="删除存储配置"
+        disabled={!canManageStorage}
         onClick={() => onDeleteStorage?.(data)}
       >
         <Trash2 className="size-4" />

@@ -34,6 +34,7 @@ import {
   fetchReleaseRecordsSnapshot,
   releaseRecordsSnapshotQueryKey,
 } from "@/pages/release-records";
+import { useAuthStore } from "@/store/use-auth-store";
 
 import {
   buildsSnapshotQueryKey,
@@ -76,6 +77,9 @@ type ActiveFullReleaseTarget = {
 
 export function BuildsPage({ onOpenBuild }: BuildsPageProps) {
   const queryClient = useQueryClient();
+  const session = useAuthStore((state) => state.session);
+  const canCreateBuild = Boolean(session?.capabilities.canCreateBuild);
+  const canCreateRelease = Boolean(session?.capabilities.canCreateRelease);
   const {
     data: snapshot,
     isFetching,
@@ -232,7 +236,11 @@ export function BuildsPage({ onOpenBuild }: BuildsPageProps) {
       },
       {
         cellRenderer: (params: ICellRendererParams<BuildRunRecord>) => (
-          <ActionsCell data={params.data} onPublish={openReleaseDialog} />
+          <ActionsCell
+            canCreateRelease={canCreateRelease}
+            data={params.data}
+            onPublish={openReleaseDialog}
+          />
         ),
         colId: "actions",
         flex: 0.65,
@@ -241,7 +249,7 @@ export function BuildsPage({ onOpenBuild }: BuildsPageProps) {
         sortable: false,
       },
     ],
-    [openReleaseDialog],
+    [canCreateRelease, openReleaseDialog],
   );
   const defaultColDef = useMemo<ColDef<BuildRunRecord>>(
     () => ({
@@ -309,6 +317,7 @@ export function BuildsPage({ onOpenBuild }: BuildsPageProps) {
               <Button
                 type="button"
                 className="bg-blue-600 hover:bg-blue-700"
+                disabled={!canCreateBuild}
                 onClick={() => {
                   setBuildError("");
                   setBuildSuccess("");
@@ -494,9 +503,11 @@ function StatusCell({ value }: ICellRendererParams<BuildRunRecord, BuildRunStatu
 }
 
 function ActionsCell({
+  canCreateRelease,
   data,
   onPublish,
 }: {
+  canCreateRelease: boolean;
   data?: BuildRunRecord;
   onPublish: (build: BuildRunRecord) => void;
 }) {
@@ -504,7 +515,7 @@ function ActionsCell({
     return null;
   }
 
-  const canPublish = data.status === "success";
+  const canPublish = canCreateRelease && data.status === "success";
 
   return (
     <div className="flex h-full items-center" data-build-row-action="true">
