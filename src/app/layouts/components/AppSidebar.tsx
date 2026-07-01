@@ -4,17 +4,13 @@ import {
   Boxes,
   Database,
   Gauge,
-  GitBranch,
   GitFork,
   KeyRound,
   Layers3,
   Moon,
-  Package,
-  Rocket,
   ServerCog,
   Settings,
   Sun,
-  Workflow,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -27,17 +23,13 @@ const navIcons: Record<NavIconName, LucideIcon> = {
   accessToken: KeyRound,
   app: AppWindow,
   build: ServerCog,
-  bundle: Package,
   codeSource: GitFork,
   dashboard: Gauge,
   environment: Layers3,
   module: Boxes,
-  pipeline: GitBranch,
-  release: Rocket,
   releaseRecord: ServerCog,
   settings: Settings,
   storage: Database,
-  task: Workflow,
 };
 
 type AppSidebarProps = {

@@ -15,14 +15,10 @@ export type NavIconName =
   | "accessToken"
   | "app"
   | "build"
-  | "bundle"
   | "codeSource"
   | "dashboard"
   | "environment"
   | "module"
-  | "pipeline"
-  | "release"
   | "releaseRecord"
   | "settings"
-  | "storage"
-  | "task";
+  | "storage";

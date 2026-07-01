@@ -24,10 +24,6 @@ const ApplicationsPage = lazy(async () => ({
   default: (await import("@/pages/applications")).ApplicationsPage,
 }));
 
-const BundlesPage = lazy(async () => ({
-  default: (await import("@/pages/bundles")).BundlesPage,
-}));
-
 const BuildsPage = lazy(async () => ({
   default: (await import("@/pages/builds")).BuildsPage,
 }));
@@ -36,20 +32,12 @@ const BuildDetailPage = lazy(async () => ({
   default: (await import("@/pages/builds")).BuildDetailPage,
 }));
 
-const CombinationsPage = lazy(async () => ({
-  default: (await import("@/pages/combinations")).CombinationsPage,
-}));
-
 const CodeSourcesPage = lazy(async () => ({
   default: (await import("@/pages/code-sources")).CodeSourcesPage,
 }));
 
 const DashboardPage = lazy(async () => ({
   default: (await import("@/pages/dashboard")).DashboardPage,
-}));
-
-const DevTasksPage = lazy(async () => ({
-  default: (await import("@/pages/dev-tasks")).DevTasksPage,
 }));
 
 const ReleaseRecordsPage = lazy(async () => ({
@@ -78,14 +66,6 @@ const ModuleCreatePage = lazy(async () => ({
 
 const ModuleDetailPage = lazy(async () => ({
   default: (await import("@/pages/modules")).ModuleDetailPage,
-}));
-
-const PipelinesPage = lazy(async () => ({
-  default: (await import("@/pages/pipelines")).PipelinesPage,
-}));
-
-const ReleasesPage = lazy(async () => ({
-  default: (await import("@/pages/releases")).ReleasesPage,
 }));
 
 const SettingsPage = lazy(async () => ({
@@ -188,13 +168,8 @@ function ConsoleRoutes() {
         <Route path="modules/new" element={<ModuleCreateRoute />} />
         <Route path="modules/:moduleId/edit" element={<ModuleEditRoute />} />
         <Route path="modules/:moduleId" element={<ModuleDetailRoute />} />
-        <Route path="dev-tasks" element={<DevTasksPage />} />
-        <Route path="pipelines" element={<PipelinesPage />} />
         <Route path="builds" element={<BuildsRoute />} />
         <Route path="builds/:buildId" element={<BuildDetailRoute />} />
-        <Route path="bundles" element={<BundlesPage />} />
-        <Route path="combinations" element={<CombinationsPage />} />
-        <Route path="releases" element={<ReleasesPage />} />
         <Route path="release-records" element={<ReleaseRecordsRoute />} />
         <Route path="release-records/:releaseId" element={<ReleaseRecordDetailRoute />} />
         <Route path="deployments" element={<Navigate to="/release-records" replace />} />
