@@ -80,12 +80,12 @@ export function ConsoleFilterSelect({
     >
       <SelectTrigger
         className={cn(
-          "h-9 w-auto min-w-28 gap-2 border-slate-200 bg-white px-3 font-medium text-slate-600 shadow-sm",
+          "h-9 w-auto min-w-28 gap-2 border-border bg-card px-3 font-medium text-muted-foreground shadow-sm",
           className,
         )}
         aria-label={`${label}筛选`}
       >
-        <Icon className="size-3.5 shrink-0 text-slate-400" />
+        <Icon className="size-3.5 shrink-0 text-muted-foreground" />
         <span>{label}</span>
         <SelectValue className="hidden" />
       </SelectTrigger>
@@ -123,7 +123,7 @@ export function ConsoleClearableFilterSelect({
           variant="outline"
           type="button"
           size="icon"
-          className="size-9 shrink-0 border-slate-200 bg-white text-slate-500"
+          className="size-9 shrink-0 border-border bg-card text-muted-foreground"
           aria-label={clearLabel}
           onClick={onClear}
         >
@@ -210,19 +210,19 @@ export function ConsoleOwnerSearchFilter<TUser extends ConsoleOwnerSearchUser>({
       <Button
         variant="outline"
         type="button"
-        className="h-9 min-w-28 justify-start gap-2 border-slate-200 bg-white px-3 font-medium text-slate-600 shadow-sm hover:bg-white hover:text-slate-900"
+        className="h-9 min-w-28 justify-start gap-2 border-border bg-card px-3 font-medium text-muted-foreground shadow-sm hover:bg-card hover:text-foreground"
         aria-label={`${label}筛选`}
         onClick={() => {
           setQuery(selectedLabel);
           setIsOpen((current) => !current);
         }}
       >
-        <UserRound className="size-3.5 shrink-0 text-slate-400" />
+        <UserRound className="size-3.5 shrink-0 text-muted-foreground" />
         <span className="max-w-24 truncate">{buttonLabel}</span>
       </Button>
 
       {isOpen ? (
-        <div className="absolute z-30 mt-1 w-72 rounded-md border border-slate-200 bg-white p-2 shadow-lg">
+        <div className="absolute z-30 mt-1 w-72 rounded-md border border-border bg-popover p-2 shadow-lg">
           <div className="flex items-center gap-2">
             <Input
               value={query}
@@ -236,7 +236,7 @@ export function ConsoleOwnerSearchFilter<TUser extends ConsoleOwnerSearchUser>({
                 variant="outline"
                 type="button"
                 size="icon"
-                className="size-8 shrink-0 border-slate-200 bg-white text-slate-500"
+                className="size-8 shrink-0 border-border bg-card text-muted-foreground"
                 aria-label={`清空${label}筛选`}
                 onClick={() => {
                   setQuery("");
@@ -252,13 +252,13 @@ export function ConsoleOwnerSearchFilter<TUser extends ConsoleOwnerSearchUser>({
           </div>
           <div className="mt-2 max-h-72 overflow-auto">
             {isLoading ? (
-              <div className="flex h-9 items-center gap-2 px-2 text-slate-500 text-sm">
+              <div className="flex h-9 items-center gap-2 px-2 text-muted-foreground text-sm">
                 <LoaderCircle className="size-4 animate-spin" />
                 搜索中
               </div>
             ) : null}
             {!isLoading && query.trim().length >= 2 && users.length === 0 ? (
-              <div className="px-2 py-2 text-slate-500 text-sm">未找到匹配人员</div>
+              <div className="px-2 py-2 text-muted-foreground text-sm">未找到匹配人员</div>
             ) : null}
             {users.map((user) => (
               <Button
@@ -275,11 +275,13 @@ export function ConsoleOwnerSearchFilter<TUser extends ConsoleOwnerSearchUser>({
               >
                 <ConsoleOwnerAvatar name={user.name} src={user.avatarUrl} />
                 <span className="min-w-0">
-                  <span className="block truncate font-medium text-slate-900 text-sm">
+                  <span className="block truncate font-medium text-foreground text-sm">
                     {user.name}
                   </span>
                   {user.email ? (
-                    <span className="block truncate text-slate-500 text-xs">{user.email}</span>
+                    <span className="block truncate text-muted-foreground text-xs">
+                      {user.email}
+                    </span>
                   ) : null}
                 </span>
               </Button>
@@ -300,13 +302,13 @@ export function ConsoleSearchInput({
   return (
     <div
       className={cn(
-        "flex h-9 min-w-60 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 text-slate-500",
+        "flex h-9 min-w-60 items-center gap-2 rounded-md border border-border bg-card px-3 text-muted-foreground",
         className,
       )}
     >
       <Search className="size-4 shrink-0" />
       <Input
-        className="h-auto min-w-0 flex-1 border-0 bg-transparent px-0 py-0 text-sm shadow-none placeholder:text-slate-400 focus-visible:ring-0"
+        className="h-auto min-w-0 flex-1 border-0 bg-transparent px-0 py-0 text-sm shadow-none placeholder:text-muted-foreground focus-visible:ring-0"
         value={value}
         placeholder={placeholder}
         onChange={(event) => onChange?.(event.target.value)}
@@ -321,7 +323,7 @@ function ConsoleOwnerAvatar({ name, src }: { name: string; src: string }) {
   }
 
   return (
-    <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-rose-500 font-semibold text-white text-xs">
+    <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary font-semibold text-primary-foreground text-xs">
       {name.slice(0, 1).toUpperCase()}
     </span>
   );
@@ -329,34 +331,30 @@ function ConsoleOwnerAvatar({ name, src }: { name: string; src: string }) {
 
 export function ConsoleTableFooter({ pageSize = "20", total }: ConsoleTableFooterProps) {
   return (
-    <div className="flex flex-col gap-3 border-slate-200 border-t px-4 py-3 text-slate-500 text-sm md:flex-row md:items-center md:justify-between">
+    <div className="flex flex-col gap-3 border-border border-t px-4 py-3 text-muted-foreground text-sm md:flex-row md:items-center md:justify-between">
       <span>共 {total} 条</span>
       <div className="flex items-center gap-2">
         <Button
           variant="outline"
           type="button"
           size="icon"
-          className="size-8 border-slate-200 bg-white text-slate-400"
+          className="size-8 border-border bg-card text-muted-foreground"
         >
           ‹
         </Button>
-        <Button
-          type="button"
-          size="icon"
-          className="size-8 border border-blue-600 bg-blue-600 font-medium text-white hover:bg-blue-700"
-        >
+        <Button type="button" size="icon" className="size-8 font-medium">
           1
         </Button>
         <Button
           variant="outline"
           type="button"
           size="icon"
-          className="size-8 border-slate-200 bg-white text-slate-400"
+          className="size-8 border-border bg-card text-muted-foreground"
         >
           ›
         </Button>
         <Select defaultValue={pageSize}>
-          <SelectTrigger className="h-8 w-27 border-slate-200 bg-white px-3 text-slate-600 text-xs shadow-none">
+          <SelectTrigger className="h-8 w-27 border-border bg-card px-3 text-muted-foreground text-xs shadow-none">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>

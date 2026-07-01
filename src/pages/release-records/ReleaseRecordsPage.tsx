@@ -140,9 +140,9 @@ export function ReleaseRecordsPage({ onOpenRelease }: ReleaseRecordsPageProps) {
 
   return (
     <>
-      <div className="border-slate-200 border-b bg-white px-6 py-5">
-        <h1 className="font-semibold text-2xl text-slate-950 tracking-tight">发布记录</h1>
-        <p className="mt-2 text-slate-600 text-sm">记录构建产物发布后的访问路由指向变更</p>
+      <div className="border-border border-b bg-card px-6 py-5">
+        <h1 className="font-semibold text-2xl text-foreground tracking-tight">发布记录</h1>
+        <p className="mt-2 text-muted-foreground text-sm">记录构建产物发布后的访问路由指向变更</p>
       </div>
 
       <div className="space-y-4 px-6 py-5">
@@ -151,18 +151,19 @@ export function ReleaseRecordsPage({ onOpenRelease }: ReleaseRecordsPageProps) {
             <Card key={item.id} className="rounded-lg px-5 py-4 shadow-none">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <div className="font-medium text-slate-500 text-sm">{item.label}</div>
-                  <div className="mt-2 font-semibold text-3xl text-slate-950 leading-none">
+                  <div className="font-medium text-muted-foreground text-sm">{item.label}</div>
+                  <div className="mt-2 font-semibold text-3xl text-foreground leading-none">
                     {item.value}
                   </div>
                 </div>
                 <div
                   className={cn(
                     "flex size-5 shrink-0 items-center justify-center rounded border",
-                    item.tone === "emerald" && "border-emerald-200 bg-emerald-50 text-emerald-600",
-                    item.tone === "red" && "border-red-200 bg-red-50 text-red-600",
-                    item.tone === "sky" && "border-sky-200 bg-sky-50 text-sky-600",
-                    item.tone === "slate" && "border-slate-200 bg-slate-50 text-slate-500",
+                    item.tone === "emerald" && "border-success/30 bg-success/10 text-success",
+                    item.tone === "red" &&
+                      "border-destructive/30 bg-destructive/10 text-destructive",
+                    item.tone === "sky" && "border-info/30 bg-info/10 text-info",
+                    item.tone === "slate" && "border-border bg-muted text-muted-foreground",
                   )}
                 >
                   <Circle className="size-2 fill-current" />
@@ -172,10 +173,10 @@ export function ReleaseRecordsPage({ onOpenRelease }: ReleaseRecordsPageProps) {
           ))}
         </section>
 
-        <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-slate-200 border-b px-4 py-3">
+        <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-border border-b px-4 py-3">
             <div className="flex min-w-0 flex-wrap items-center gap-2">
-              <span className="font-medium text-slate-500 text-sm">最近发布</span>
+              <span className="font-medium text-muted-foreground text-sm">最近发布</span>
             </div>
 
             <div className="flex shrink-0 items-center gap-2">
@@ -222,14 +223,12 @@ function ReleaseRecordCell({ data }: ICellRendererParams<ReleasePointerRecord>) 
     return null;
   }
 
-  return (
-    <span className="truncate font-semibold text-blue-600 text-sm">{data.createdAtShort}</span>
-  );
+  return <span className="truncate font-semibold text-primary text-sm">{data.createdAtShort}</span>;
 }
 
 function ReleaseIDCell({ value }: ICellRendererParams<ReleasePointerRecord, string>) {
   return value ? (
-    <span className="truncate font-mono font-semibold text-slate-700 text-xs">
+    <span className="truncate font-mono font-semibold text-foreground text-xs">
       #{value.trim().slice(-8)}
     </span>
   ) : null;
@@ -242,7 +241,7 @@ function ModuleCell({ data }: ICellRendererParams<ReleasePointerRecord>) {
 
   return (
     <div className="min-w-0 leading-tight">
-      <div className="truncate font-semibold text-slate-800 text-sm">{data.module}</div>
+      <div className="truncate font-semibold text-foreground text-sm">{data.module}</div>
     </div>
   );
 }
@@ -255,7 +254,7 @@ function EnvironmentCell({ data }: ICellRendererParams<ReleasePointerRecord>) {
 
 function ReleaseTypeCell({ data }: ICellRendererParams<ReleasePointerRecord>) {
   return data ? (
-    <span className="font-medium text-slate-700 text-xs">{getReleaseRecordTypeLabel(data)}</span>
+    <span className="font-medium text-foreground text-xs">{getReleaseRecordTypeLabel(data)}</span>
   ) : null;
 }
 
@@ -265,12 +264,12 @@ function GrayConfigCell({ data }: ICellRendererParams<ReleasePointerRecord>) {
   }
 
   if (data.releaseType !== "gray") {
-    return <span className="text-slate-400 text-xs">-</span>;
+    return <span className="text-muted-foreground text-xs">-</span>;
   }
 
   if (data.grayStrategy === "targeted") {
     return (
-      <span className="truncate font-mono font-semibold text-slate-700 text-xs">
+      <span className="truncate font-mono font-semibold text-foreground text-xs">
         {data.identifier || "-"}
       </span>
     );
@@ -281,15 +280,15 @@ function GrayConfigCell({ data }: ICellRendererParams<ReleasePointerRecord>) {
 
     return (
       <div className="min-w-0 flex-1">
-        <div className="font-semibold text-slate-700 text-xs">{percentage}%</div>
-        <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-100">
-          <div className="h-full rounded-full bg-blue-500" style={{ width: `${percentage}%` }} />
+        <div className="font-semibold text-foreground text-xs">{percentage}%</div>
+        <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-muted">
+          <div className="h-full rounded-full bg-primary" style={{ width: `${percentage}%` }} />
         </div>
       </div>
     );
   }
 
-  return <span className="text-slate-400 text-xs">-</span>;
+  return <span className="text-muted-foreground text-xs">-</span>;
 }
 
 function ExpiresAtCell({ data }: ICellRendererParams<ReleasePointerRecord>) {
@@ -297,7 +296,7 @@ function ExpiresAtCell({ data }: ICellRendererParams<ReleasePointerRecord>) {
     return null;
   }
 
-  return <span className="truncate text-slate-600 text-xs">{data.expiresAtShort}</span>;
+  return <span className="truncate text-muted-foreground text-xs">{data.expiresAtShort}</span>;
 }
 
 function StatusCell({ value }: ICellRendererParams<ReleasePointerRecord, ReleaseRecordStatus>) {

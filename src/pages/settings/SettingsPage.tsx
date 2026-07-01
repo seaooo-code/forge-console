@@ -167,10 +167,10 @@ export function SettingsPage() {
 
   return (
     <>
-      <div className="border-slate-200 border-b bg-white px-6 py-5">
+      <div className="border-border border-b bg-card px-6 py-5">
         <div>
-          <h1 className="font-semibold text-2xl text-slate-950 tracking-tight">系统设置</h1>
-          <p className="mt-2 text-slate-600 text-sm">
+          <h1 className="font-semibold text-2xl text-foreground tracking-tight">系统设置</h1>
+          <p className="mt-2 text-muted-foreground text-sm">
             平台级配置 · 用户、权限、模板、存储、签名、通知
           </p>
         </div>
@@ -179,7 +179,7 @@ export function SettingsPage() {
       <div className="grid gap-4 px-6 py-5 xl:grid-cols-12">
         <aside className="xl:col-span-3">
           <Card className="gap-0 rounded-lg p-0 shadow-none">
-            <div className="divide-y divide-slate-100">
+            <div className="divide-y divide-border">
               {snapshot.navItems.map((item, index) => (
                 <SettingsNavButton key={item.id} item={item} active={index === 0} />
               ))}
@@ -190,11 +190,11 @@ export function SettingsPage() {
         <div className="space-y-4 xl:col-span-9">
           <MockSurface
             as="section"
-            className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm"
+            className="overflow-hidden rounded-lg border border-border bg-card shadow-sm"
           >
-            <div className="flex h-12 items-center justify-between border-slate-200 border-b px-4">
-              <h2 className="font-semibold text-slate-900 text-sm">用户管理 · 成员列表</h2>
-              <Button variant="link" type="button" className="h-auto p-0 text-blue-600 text-xs">
+            <div className="flex h-12 items-center justify-between border-border border-b px-4">
+              <h2 className="font-semibold text-foreground text-sm">用户管理 · 成员列表</h2>
+              <Button variant="link" type="button" className="h-auto p-0 text-primary text-xs">
                 邀请成员
                 <ChevronRight className="size-3.5" />
               </Button>
@@ -215,10 +215,10 @@ export function SettingsPage() {
 
           <MockSurface
             as="section"
-            className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm"
+            className="overflow-hidden rounded-lg border border-border bg-card shadow-sm"
           >
-            <div className="flex h-12 items-center border-slate-200 border-b px-4">
-              <h2 className="font-semibold text-slate-900 text-sm">角色权限矩阵</h2>
+            <div className="flex h-12 items-center border-border border-b px-4">
+              <h2 className="font-semibold text-foreground text-sm">角色权限矩阵</h2>
             </div>
             <AgGridReact<PermissionMatrixRecord>
               rowData={snapshot.permissions}
@@ -262,15 +262,15 @@ function SettingsNavButton({ active, item }: { active: boolean; item: SettingsNa
       variant="ghost"
       type="button"
       className={cn(
-        "h-12 w-full justify-between rounded-none px-4 text-slate-700 hover:bg-blue-50 hover:text-blue-600",
-        active ? "border-blue-600 border-l-2 bg-blue-50 text-blue-600" : "",
+        "h-12 w-full justify-between rounded-none px-4 text-foreground hover:bg-primary/10 hover:text-primary",
+        active ? "border-primary border-l-2 bg-primary/10 text-primary" : "",
       )}
     >
       <span className="flex items-center gap-3">
         <Icon className="size-4" />
         <span className="font-semibold text-sm">{item.label}</span>
       </span>
-      <ChevronRight className="size-4 text-slate-400" />
+      <ChevronRight className="size-4 text-muted-foreground" />
     </Button>
   );
 }
@@ -282,10 +282,10 @@ function MemberCell({ data }: ICellRendererParams<MemberRecord>) {
 
   return (
     <div className="flex min-w-0 items-center gap-3">
-      <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-rose-500 font-semibold text-white text-xs">
+      <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary font-semibold text-primary-foreground text-xs">
         {data.avatar}
       </span>
-      <span className="truncate font-semibold text-slate-900 text-sm">{data.name}</span>
+      <span className="truncate font-semibold text-foreground text-sm">{data.name}</span>
     </div>
   );
 }
@@ -302,8 +302,8 @@ function RoleCell({ value }: ICellRendererParams<MemberRecord, string>) {
       className={cn(
         "inline-flex h-6 items-center rounded border px-2 font-semibold text-xs leading-none",
         isAdmin
-          ? "border-blue-200 bg-blue-50 text-blue-700"
-          : "border-slate-200 bg-slate-100 text-slate-600",
+          ? "border-info/30 bg-info/10 text-info"
+          : "border-border bg-muted text-muted-foreground",
       )}
     >
       {value}
@@ -330,19 +330,19 @@ function StatusCell({ value }: ICellRendererParams<MemberRecord, MemberStatus>) 
 
 function MemberActionsCell() {
   return (
-    <div className="flex h-full items-center gap-2 whitespace-nowrap font-medium text-blue-600 text-xs">
+    <div className="flex h-full items-center gap-2 whitespace-nowrap font-medium text-primary text-xs">
       <Button
         variant="link"
         type="button"
-        className="h-auto p-0 text-blue-600 text-xs hover:text-blue-700"
+        className="h-auto p-0 text-primary text-xs hover:text-primary/80"
       >
         编辑
       </Button>
-      <span className="text-slate-300">|</span>
+      <span className="text-muted-foreground">|</span>
       <Button
         variant="link"
         type="button"
-        className="h-auto p-0 text-blue-600 text-xs hover:text-blue-700"
+        className="h-auto p-0 text-primary text-xs hover:text-primary/80"
       >
         权限
       </Button>
@@ -354,11 +354,11 @@ function PermissionCell({ value }: ICellRendererParams<PermissionMatrixRecord, b
   return (
     <div className="flex w-full justify-center">
       {value ? (
-        <span className="flex size-5 items-center justify-center rounded-full bg-emerald-100 font-semibold text-emerald-600 text-xs">
+        <span className="flex size-5 items-center justify-center rounded-full bg-success/10 font-semibold text-success text-xs">
           ✓
         </span>
       ) : (
-        <span className="font-semibold text-slate-300 text-sm">—</span>
+        <span className="font-semibold text-muted-foreground text-sm">—</span>
       )}
     </div>
   );
@@ -379,11 +379,11 @@ function ConfigPanel<TItem extends { id: string }>({
 }: ConfigPanelProps<TItem>) {
   return (
     <Card className="gap-0 rounded-lg p-0 shadow-none">
-      <div className="flex h-12 items-center gap-2 border-slate-200 border-b px-4">
-        <Icon className="size-4 text-slate-500" />
-        <h2 className="font-semibold text-slate-900 text-sm">{title}</h2>
+      <div className="flex h-12 items-center gap-2 border-border border-b px-4">
+        <Icon className="size-4 text-muted-foreground" />
+        <h2 className="font-semibold text-foreground text-sm">{title}</h2>
       </div>
-      <div className="divide-y divide-slate-100 px-4 py-2">
+      <div className="divide-y divide-border px-4 py-2">
         {items.map((item) => (
           <Fragment key={item.id}>{renderItem(item)}</Fragment>
         ))}
@@ -396,10 +396,10 @@ function CdnConfigItem({ config }: { config: CdnConfigRecord }) {
   return (
     <div className="flex items-center justify-between gap-4 py-3">
       <div className="min-w-0">
-        <div className="truncate font-mono font-semibold text-slate-900 text-sm">
+        <div className="truncate font-mono font-semibold text-foreground text-sm">
           {config.domain}
         </div>
-        <div className="mt-1 text-slate-500 text-xs">命中率 {config.hitRate}</div>
+        <div className="mt-1 text-muted-foreground text-xs">命中率 {config.hitRate}</div>
       </div>
       <EnvironmentBadge className="shrink-0" environment={config.environment} />
     </div>
@@ -409,8 +409,8 @@ function CdnConfigItem({ config }: { config: CdnConfigRecord }) {
 function NotificationItem({ notification }: { notification: NotificationChannelRecord }) {
   return (
     <div className="flex items-center justify-between gap-4 py-3">
-      <div className="font-medium text-slate-500 text-sm">{notification.label}</div>
-      <div className="min-w-0 truncate text-right font-mono font-semibold text-slate-900 text-xs">
+      <div className="font-medium text-muted-foreground text-sm">{notification.label}</div>
+      <div className="min-w-0 truncate text-right font-mono font-semibold text-foreground text-xs">
         {notification.value}
       </div>
     </div>

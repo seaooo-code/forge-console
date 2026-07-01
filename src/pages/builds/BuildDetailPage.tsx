@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import type { LucideIcon } from "lucide-react";
 import {
-  AlertTriangle,
   ArrowLeft,
   Box,
   CalendarClock,
@@ -27,6 +26,7 @@ import {
 import { useMemo, useState } from "react";
 
 import { fetchModuleDetailSnapshot, moduleDetailQueryKey } from "@/api/modules";
+import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -82,43 +82,47 @@ export function BuildDetailPage({
 
   return (
     <>
-      <div className="border-slate-200 border-b bg-white px-6 py-5">
+      <div className="border-border border-b bg-card px-6 py-5">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div>
             <Button
               variant="ghost"
               type="button"
-              className="-ml-2 mb-3 h-8 gap-2 px-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+              className="-ml-2 mb-3 h-8 gap-2 px-2 text-muted-foreground hover:bg-muted hover:text-foreground"
               onClick={onBack}
             >
               <ArrowLeft className="size-4" />
               返回构建管理
             </Button>
             <div className="flex flex-wrap items-center gap-3">
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-sky-600 text-white shadow-sm">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
                 <PackageCheck className="size-5" />
               </div>
-              <h1 className="font-semibold text-2xl text-slate-950 tracking-tight">
+              <h1 className="font-semibold text-2xl text-foreground tracking-tight">
                 构建 {build.createdAt}
               </h1>
               <BuildStatusBadge status={build.status} />
-              <Badge variant="outline" className="border-slate-200 font-mono text-slate-600">
+              <Badge variant="outline" className="border-border font-mono text-muted-foreground">
                 {buildTriggerLabels[build.triggerType]}
               </Badge>
               {isLiveBuildStatus(build.status) ? (
-                <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700">
+                <Badge variant="outline" className="border-info/30 bg-info/10 text-info">
                   自动刷新中
                 </Badge>
               ) : null}
             </div>
-            <p className="mt-2 text-slate-600 text-sm">
+            <p className="mt-2 text-muted-foreground text-sm">
               {build.application} / {build.module} / {build.environmentName}
             </p>
           </div>
 
           <div className="flex flex-wrap gap-2">
             {build.artifactUrl !== "-" ? (
-              <Button asChild type="button" className="bg-blue-600 text-white hover:bg-blue-700">
+              <Button
+                asChild
+                type="button"
+                className="bg-primary text-primary-foreground hover:bg-primary/90"
+              >
                 <a href={build.artifactUrl} target="_blank" rel="noreferrer">
                   <ExternalLink className="size-4" />
                   打开产物
@@ -153,21 +157,14 @@ export function BuildDetailPage({
         </section>
 
         {build.errorMessage ? (
-          <section className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-700">
-            <div className="flex items-start gap-2">
-              <AlertTriangle className="mt-0.5 size-4 shrink-0" />
-              <div>
-                <div className="font-semibold text-sm">构建失败原因</div>
-                <div className="mt-1 whitespace-pre-wrap text-sm leading-6">
-                  {build.errorMessage}
-                </div>
-              </div>
-            </div>
-          </section>
+          <Alert variant="danger">
+            <div className="font-semibold text-sm">构建失败原因</div>
+            <div className="mt-1 whitespace-pre-wrap text-sm leading-6">{build.errorMessage}</div>
+          </Alert>
         ) : null}
 
         <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
-          <Card className="gap-0 rounded-lg border-slate-200 py-0 shadow-sm">
+          <Card className="gap-0 rounded-lg border-border py-0 shadow-sm">
             <SectionHeader title="构建信息" description="执行状态、触发来源和产物地址" />
             <div className="grid gap-3 p-4 md:grid-cols-2">
               <DetailItem
@@ -191,7 +188,7 @@ export function BuildDetailPage({
             </div>
           </Card>
 
-          <Card className="gap-0 rounded-lg border-slate-200 py-0 shadow-sm">
+          <Card className="gap-0 rounded-lg border-border py-0 shadow-sm">
             <SectionHeader title="上下文" description="仓库、环境和存储配置" />
             <div className="grid gap-3 p-4">
               <DetailItem icon={GitBranch} label="仓库" value={build.repositoryFullName} />
@@ -272,9 +269,9 @@ function ArtifactTreePanel({
   };
 
   return (
-    <Card className="gap-0 rounded-lg border-slate-200 py-0 shadow-sm">
+    <Card className="gap-0 rounded-lg border-border py-0 shadow-sm">
       <SectionHeader title="产物文件" description="构建产物目录结构与文件摘要" />
-      <div className="border-slate-200 border-b px-4 py-3">
+      <div className="border-border border-b px-4 py-3">
         <div className="grid gap-3 text-sm md:grid-cols-2">
           <ArtifactSummaryItem
             label="文件数量"
@@ -287,10 +284,10 @@ function ArtifactTreePanel({
         </div>
       </div>
       {nodes.length > 0 ? (
-        <div className="flex flex-wrap items-center justify-between gap-3 border-slate-200 border-b px-4 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-border border-b px-4 py-3">
           <div className="flex min-w-0 flex-1 items-center gap-2">
             <div className="relative min-w-64 flex-1">
-              <Search className="-translate-y-1/2 absolute top-1/2 left-3 size-4 text-slate-400" />
+              <Search className="-translate-y-1/2 absolute top-1/2 left-3 size-4 text-muted-foreground" />
               <Input
                 value={searchQuery}
                 className="h-9 pl-9"
@@ -313,13 +310,13 @@ function ArtifactTreePanel({
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {hasSearch ? (
-              <span className="text-slate-500 text-xs">匹配 {visibleFileCount} 个文件</span>
+              <span className="text-muted-foreground text-xs">匹配 {visibleFileCount} 个文件</span>
             ) : null}
-            {copiedStatus ? <span className="text-emerald-600 text-xs">{copiedStatus}</span> : null}
+            {copiedStatus ? <span className="text-success text-xs">{copiedStatus}</span> : null}
             <Button
               variant="outline"
               type="button"
-              className="h-9 gap-2 border-slate-200 bg-white text-slate-600"
+              className="h-9 gap-2 border-border bg-card text-muted-foreground"
               onClick={() => setExpandedPaths(new Set(directoryPaths))}
             >
               <ChevronsDown className="size-4" />
@@ -328,7 +325,7 @@ function ArtifactTreePanel({
             <Button
               variant="outline"
               type="button"
-              className="h-9 gap-2 border-slate-200 bg-white text-slate-600"
+              className="h-9 gap-2 border-border bg-card text-muted-foreground"
               onClick={() => setExpandedPaths(new Set())}
             >
               <ChevronsUp className="size-4" />
@@ -340,7 +337,7 @@ function ArtifactTreePanel({
       {nodes.length > 0 ? (
         <div className="p-4">
           {visibleNodes.length > 0 ? (
-            <div className="rounded-lg border border-slate-200 bg-slate-50">
+            <div className="rounded-lg border border-border bg-muted">
               {visibleNodes.map((node) => (
                 <ArtifactTreeNodeRow
                   key={node.path}
@@ -356,12 +353,12 @@ function ArtifactTreePanel({
               ))}
             </div>
           ) : (
-            <div className="rounded-lg border border-slate-200 bg-slate-50 p-8 text-center">
-              <div className="mx-auto flex size-10 items-center justify-center rounded-lg bg-white text-slate-500">
+            <div className="rounded-lg border border-border bg-muted p-8 text-center">
+              <div className="mx-auto flex size-10 items-center justify-center rounded-lg bg-card text-muted-foreground">
                 <Search className="size-5" />
               </div>
-              <div className="mt-3 font-semibold text-slate-900 text-sm">未找到匹配文件</div>
-              <div className="mt-1 text-slate-500 text-sm">
+              <div className="mt-3 font-semibold text-foreground text-sm">未找到匹配文件</div>
+              <div className="mt-1 text-muted-foreground text-sm">
                 换一个文件名、路径或 Object Key 再试。
               </div>
             </div>
@@ -369,11 +366,11 @@ function ArtifactTreePanel({
         </div>
       ) : (
         <div className="p-6 text-center">
-          <div className="mx-auto flex size-10 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
+          <div className="mx-auto flex size-10 items-center justify-center rounded-lg bg-muted text-muted-foreground">
             <HardDrive className="size-5" />
           </div>
-          <div className="mt-3 font-semibold text-slate-900 text-sm">暂无产物文件结构</div>
-          <div className="mt-1 text-slate-500 text-sm">
+          <div className="mt-3 font-semibold text-foreground text-sm">暂无产物文件结构</div>
+          <div className="mt-1 text-muted-foreground text-sm">
             历史构建仅记录产物根路径，新构建完成后会自动写入 manifest 并展示文件树。
           </div>
         </div>
@@ -392,11 +389,11 @@ function ArtifactSummaryItem({
   value: string;
 }) {
   return (
-    <div className="min-w-0 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
-      <div className="text-slate-500 text-xs">{label}</div>
+    <div className="min-w-0 rounded-lg border border-border bg-muted px-3 py-2">
+      <div className="text-muted-foreground text-xs">{label}</div>
       <div
         className={cn(
-          "mt-1 break-all font-semibold text-slate-800 text-sm",
+          "mt-1 break-all font-semibold text-foreground text-sm",
           monospace && "font-mono font-medium",
         )}
       >
@@ -437,14 +434,14 @@ function ArtifactTreeNodeRow({
 
   return (
     <div>
-      <div className="grid min-h-10 grid-cols-1 items-start gap-2 border-slate-200 border-b px-3 py-2 last:border-b-0 md:grid-cols-[minmax(0,1fr)_7rem_10rem_7.5rem] md:gap-3">
+      <div className="grid min-h-10 grid-cols-1 items-start gap-2 border-border border-b px-3 py-2 last:border-b-0 md:grid-cols-[minmax(0,1fr)_7rem_10rem_7.5rem] md:gap-3">
         <div className="flex min-w-0 items-start gap-2" style={{ paddingLeft: depth * 18 }}>
           {isDirectory ? (
             <button
               type="button"
               aria-label={isExpanded ? `收起 ${node.name}` : `展开 ${node.name}`}
               aria-expanded={isExpanded}
-              className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded text-slate-400 hover:bg-slate-200 hover:text-slate-700"
+              className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground"
               onClick={() => onToggle(node.path)}
             >
               <ChevronIcon className="size-3.5" />
@@ -455,23 +452,23 @@ function ArtifactTreeNodeRow({
           <Icon
             className={cn(
               "mt-0.5 size-4 shrink-0",
-              isDirectory ? "text-amber-500" : "text-slate-400",
+              isDirectory ? "text-warning" : "text-muted-foreground",
             )}
           />
           <div className="min-w-0">
-            <div className="break-all font-semibold text-slate-800 text-sm">{node.name}</div>
+            <div className="break-all font-semibold text-foreground text-sm">{node.name}</div>
             {!isDirectory ? (
-              <div className="mt-1 space-y-0.5 font-mono text-[11px] text-slate-500 leading-4">
+              <div className="mt-1 space-y-0.5 font-mono text-[11px] text-muted-foreground leading-4">
                 {objectKey ? <div className="break-all">{objectKey}</div> : null}
                 {node.sha256 ? <div className="break-all">sha256:{node.sha256}</div> : null}
               </div>
             ) : null}
           </div>
         </div>
-        <div className="text-right font-mono text-slate-600 text-xs">
+        <div className="text-right font-mono text-muted-foreground text-xs">
           {formatBytes(node.sizeBytes)}
         </div>
-        <div className="break-all text-slate-500 text-xs">
+        <div className="break-all text-muted-foreground text-xs">
           {isDirectory ? "目录" : formatArtifactContentType(node.contentType)}
         </div>
         <div className="flex items-center justify-end gap-1">
@@ -482,7 +479,7 @@ function ArtifactTreeNodeRow({
                   asChild
                   variant="outline"
                   size="icon"
-                  className="size-8 border-slate-200 bg-white text-slate-500"
+                  className="size-8 border-border bg-card text-muted-foreground"
                   title="下载文件"
                 >
                   <a href={downloadUrl} target="_blank" rel="noreferrer">
@@ -494,7 +491,7 @@ function ArtifactTreeNodeRow({
                   variant="outline"
                   type="button"
                   size="icon"
-                  className="size-8 border-slate-200 bg-white text-slate-400"
+                  className="size-8 border-border bg-card text-muted-foreground"
                   title="缺少应用标识，无法生成下载地址"
                   disabled
                 >
@@ -505,7 +502,7 @@ function ArtifactTreeNodeRow({
                 variant="outline"
                 type="button"
                 size="icon"
-                className="size-8 border-slate-200 bg-white text-slate-500"
+                className="size-8 border-border bg-card text-muted-foreground"
                 title="复制相对路径"
                 onClick={() => onCopy(node.path, "相对路径")}
               >
@@ -515,7 +512,7 @@ function ArtifactTreeNodeRow({
                 variant="outline"
                 type="button"
                 size="icon"
-                className="size-8 border-slate-200 bg-white text-slate-500"
+                className="size-8 border-border bg-card text-muted-foreground"
                 title="复制 Object Key"
                 disabled={!objectKey}
                 onClick={() => onCopy(objectKey, "Object Key")}
@@ -719,11 +716,11 @@ function BuildDetailFallback({
 }) {
   return (
     <>
-      <div className="border-slate-200 border-b bg-white px-6 py-5">
+      <div className="border-border border-b bg-card px-6 py-5">
         <Button
           variant="ghost"
           type="button"
-          className="-ml-2 h-8 gap-2 px-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+          className="-ml-2 h-8 gap-2 px-2 text-muted-foreground hover:bg-muted hover:text-foreground"
           onClick={onBack}
         >
           <ArrowLeft className="size-4" />
@@ -731,14 +728,14 @@ function BuildDetailFallback({
         </Button>
       </div>
       <div className="px-6 py-5">
-        <Card className="rounded-lg border-slate-200 p-8 text-center shadow-sm">
-          <div className="mx-auto flex size-10 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
+        <Card className="rounded-lg border-border p-8 text-center shadow-sm">
+          <div className="mx-auto flex size-10 items-center justify-center rounded-lg bg-muted text-muted-foreground">
             <PackageCheck className="size-5" />
           </div>
-          <div className="mt-3 font-semibold text-slate-950">
+          <div className="mt-3 font-semibold text-foreground">
             {isFetching ? "正在加载构建详情" : "未找到构建记录"}
           </div>
-          <div className="mt-2 text-slate-500 text-sm">
+          <div className="mt-2 text-muted-foreground text-sm">
             {error instanceof Error ? error.message : "构建记录可能已被删除或当前账号无权限访问。"}
           </div>
         </Card>
@@ -762,11 +759,11 @@ function SummaryCard({
     <Card className="rounded-lg px-5 py-4 shadow-none">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <div className="font-medium text-slate-500 text-sm">{label}</div>
-          <div className="mt-2 truncate font-semibold text-slate-950 text-xl">{value}</div>
-          <div className="mt-1 truncate text-slate-500 text-xs">{description}</div>
+          <div className="font-medium text-muted-foreground text-sm">{label}</div>
+          <div className="mt-2 truncate font-semibold text-foreground text-xl">{value}</div>
+          <div className="mt-1 truncate text-muted-foreground text-xs">{description}</div>
         </div>
-        <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-500">
+        <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-border bg-muted text-muted-foreground">
           <Icon className="size-4" />
         </div>
       </div>
@@ -776,10 +773,10 @@ function SummaryCard({
 
 function SectionHeader({ description, title }: { description: string; title: string }) {
   return (
-    <div className="flex h-12 items-center justify-between border-slate-200 border-b px-4">
+    <div className="flex h-12 items-center justify-between border-border border-b px-4">
       <div>
-        <div className="font-semibold text-slate-900 text-sm">{title}</div>
-        <div className="text-slate-500 text-xs">{description}</div>
+        <div className="font-semibold text-foreground text-sm">{title}</div>
+        <div className="text-muted-foreground text-xs">{description}</div>
       </div>
     </div>
   );
@@ -803,27 +800,27 @@ function DetailItem({
   return (
     <div
       className={cn(
-        "flex min-w-0 items-start gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2",
+        "flex min-w-0 items-start gap-2 rounded-lg border border-border bg-muted px-3 py-2",
         wide && "md:col-span-2",
       )}
     >
-      <Icon className="mt-0.5 size-4 shrink-0 text-slate-400" />
+      <Icon className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
       <div className="min-w-0">
-        <div className="text-slate-500 text-xs">{label}</div>
+        <div className="text-muted-foreground text-xs">{label}</div>
         {onClick ? (
           <Button
             variant="link"
             type="button"
-            className="h-auto min-w-0 justify-start break-all p-0 text-left font-semibold text-blue-600 text-sm"
+            className="h-auto min-w-0 justify-start break-all p-0 text-left font-semibold text-primary text-sm"
             onClick={onClick}
           >
             {value || "-"}
           </Button>
         ) : (
-          <div className="break-all font-semibold text-slate-800 text-sm">{value || "-"}</div>
+          <div className="break-all font-semibold text-foreground text-sm">{value || "-"}</div>
         )}
         {description ? (
-          <div className="mt-0.5 break-all text-slate-500 text-xs">{description}</div>
+          <div className="mt-0.5 break-all text-muted-foreground text-xs">{description}</div>
         ) : null}
       </div>
     </div>

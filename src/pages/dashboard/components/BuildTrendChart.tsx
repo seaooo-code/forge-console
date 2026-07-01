@@ -4,6 +4,8 @@ import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { type EChartsOption, echarts } from "@/lib/echarts";
+import { getThemeChartColors } from "@/lib/theme-colors";
+import { useThemeStore } from "@/store/use-theme-store";
 
 import type { BuildTrendPoint } from "../types";
 
@@ -13,11 +15,17 @@ type BuildTrendChartProps = {
 
 export function BuildTrendChart({ data }: BuildTrendChartProps) {
   const chartRef = useRef<HTMLDivElement | null>(null);
+  const resolvedTheme = useThemeStore((s) => s.resolvedTheme);
 
-  const option = useMemo<EChartsOption>(
-    () => ({
+  // resolvedTheme is a required dep: getThemeChartColors() reads CSS variables
+  // off the DOM, so colors must be recomputed whenever the theme flips.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: theme-driven color re-read
+  const option = useMemo<EChartsOption>(() => {
+    const colors = getThemeChartColors();
+
+    return {
       animationDuration: 500,
-      color: ["#0f7ae5", "#11bec8"],
+      color: [colors.primary, colors.accent],
       grid: {
         bottom: 30,
         left: 28,
@@ -35,12 +43,12 @@ export function BuildTrendChart({ data }: BuildTrendChartProps) {
       },
       xAxis: {
         axisLabel: {
-          color: "#64748b",
+          color: colors.mutedForeground,
           fontSize: 12,
         },
         axisLine: {
           lineStyle: {
-            color: "#e5e7eb",
+            color: colors.border,
           },
         },
         axisTick: {
@@ -51,7 +59,7 @@ export function BuildTrendChart({ data }: BuildTrendChartProps) {
       },
       yAxis: {
         axisLabel: {
-          color: "#94a3b8",
+          color: colors.mutedForeground,
           fontSize: 11,
         },
         axisLine: {
@@ -59,7 +67,7 @@ export function BuildTrendChart({ data }: BuildTrendChartProps) {
         },
         splitLine: {
           lineStyle: {
-            color: "#eef2f7",
+            color: colors.border,
           },
         },
         type: "value",
@@ -85,9 +93,8 @@ export function BuildTrendChart({ data }: BuildTrendChartProps) {
           type: "bar",
         },
       ],
-    }),
-    [data],
-  );
+    };
+  }, [data, resolvedTheme]);
 
   useEffect(() => {
     if (!chartRef.current) {
@@ -107,24 +114,24 @@ export function BuildTrendChart({ data }: BuildTrendChartProps) {
   }, [option]);
 
   return (
-    <Card className="gap-0 rounded-lg border-slate-200 py-0 shadow-sm">
+    <Card className="gap-0 rounded-lg border-border py-0 shadow-sm">
       <CardHeader className="flex h-12 flex-row items-center justify-between border-b px-4 py-0">
         <div className="min-w-0">
-          <CardTitle className="text-slate-900 text-sm">构建趋势</CardTitle>
-          <div className="mt-1 text-slate-500 text-xs">近 7 天构建总量与成功数</div>
+          <CardTitle className="text-foreground text-sm">构建趋势</CardTitle>
+          <div className="mt-1 text-muted-foreground text-xs">近 7 天构建总量与成功数</div>
         </div>
         <div className="flex shrink-0 items-center gap-3">
-          <div className="hidden items-center gap-3 font-medium text-slate-500 text-xs sm:flex">
+          <div className="hidden items-center gap-3 font-medium text-muted-foreground text-xs sm:flex">
             <span className="inline-flex items-center gap-1.5">
-              <span className="size-2 rounded-full bg-blue-600" />
+              <span className="size-2 rounded-full bg-primary" />
               构建数
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <span className="size-2 rounded-full bg-cyan-500" />
+              <span className="size-2 rounded-full bg-chart-2" />
               成功数
             </span>
           </div>
-          <Button asChild variant="outline" size="sm" className="h-8 border-slate-200">
+          <Button asChild variant="outline" size="sm" className="h-8 border-border">
             <Link to="/builds">打开构建</Link>
           </Button>
         </div>
@@ -133,7 +140,7 @@ export function BuildTrendChart({ data }: BuildTrendChartProps) {
         {data.length > 0 ? (
           <div ref={chartRef} className="h-60 w-full" />
         ) : (
-          <div className="grid h-60 place-items-center rounded-md bg-slate-50 text-slate-500 text-sm">
+          <div className="grid h-60 place-items-center rounded-md bg-muted text-muted-foreground text-sm">
             暂无构建数据
           </div>
         )}

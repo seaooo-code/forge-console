@@ -26,8 +26,8 @@ export function RecentReleasesTable({ releases }: RecentReleasesTableProps) {
         cellRenderer: ({ data }: { data?: ReleaseRecord }) =>
           data ? (
             <div className="min-w-0 leading-tight">
-              <div className="truncate font-medium text-slate-800">{data.module}</div>
-              <div className="truncate text-slate-500 text-xs">{data.application}</div>
+              <div className="truncate font-medium text-foreground">{data.module}</div>
+              <div className="truncate text-muted-foreground text-xs">{data.application}</div>
             </div>
           ) : null,
         field: "module",
@@ -95,13 +95,13 @@ export function RecentReleasesTable({ releases }: RecentReleasesTableProps) {
   );
 
   return (
-    <Card className="gap-0 rounded-lg border-slate-200 py-0 shadow-sm">
+    <Card className="gap-0 rounded-lg border-border py-0 shadow-sm">
       <CardHeader className="flex h-12 flex-row items-center justify-between border-b px-4 py-0">
         <div className="min-w-0">
-          <CardTitle className="text-slate-900 text-sm">最近发布</CardTitle>
-          <div className="mt-1 text-slate-500 text-xs">发布记录与当前生效状态</div>
+          <CardTitle className="text-foreground text-sm">最近发布</CardTitle>
+          <div className="mt-1 text-muted-foreground text-xs">发布记录与当前生效状态</div>
         </div>
-        <Button asChild variant="outline" size="sm" className="h-8 shrink-0 border-slate-200">
+        <Button asChild variant="outline" size="sm" className="h-8 shrink-0 border-border">
           <Link to="/release-records">打开发布</Link>
         </Button>
       </CardHeader>
@@ -120,7 +120,9 @@ export function RecentReleasesTable({ releases }: RecentReleasesTableProps) {
             getRowId={({ data }) => data.id}
           />
         ) : (
-          <div className="grid h-52 place-items-center text-slate-500 text-sm">暂无发布记录</div>
+          <div className="grid h-52 place-items-center text-muted-foreground text-sm">
+            暂无发布记录
+          </div>
         )}
       </CardContent>
     </Card>

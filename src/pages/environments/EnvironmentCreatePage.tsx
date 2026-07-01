@@ -4,6 +4,7 @@ import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 
 import { fetchStorageConfigurationsSnapshot } from "@/api/storage-configurations";
+import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -133,25 +134,25 @@ export function EnvironmentCreatePage({
 
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)}>
-      <div className="border-slate-200 border-b bg-white px-6 py-5">
+      <div className="border-border border-b bg-card px-6 py-5">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div>
             <Button
               variant="ghost"
               type="button"
-              className="-ml-2 mb-3 h-8 gap-2 px-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+              className="-ml-2 mb-3 h-8 gap-2 px-2 text-muted-foreground hover:bg-muted hover:text-foreground"
               onClick={onBack}
             >
               <ArrowLeft className="size-4" />
               返回环境管理
             </Button>
             <div className="flex items-center gap-3">
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-white shadow-sm">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
                 <Layers3 className="size-5" />
               </div>
               <div>
-                <h1 className="font-semibold text-2xl text-slate-950 tracking-tight">{title}</h1>
-                <p className="mt-2 text-slate-600 text-sm">{description}</p>
+                <h1 className="font-semibold text-2xl text-foreground tracking-tight">{title}</h1>
+                <p className="mt-2 text-muted-foreground text-sm">{description}</p>
               </div>
             </div>
           </div>
@@ -159,7 +160,11 @@ export function EnvironmentCreatePage({
             <Button variant="outline" type="button" onClick={onBack}>
               取消
             </Button>
-            <Button type="submit" className="bg-blue-600 hover:bg-blue-700" disabled={isSubmitting}>
+            <Button
+              type="submit"
+              className="bg-primary hover:bg-primary/90"
+              disabled={isSubmitting}
+            >
               {isSubmitting ? <LoaderCircle className="size-4 animate-spin" /> : null}
               {isEditMode ? "保存修改" : "保存环境"}
             </Button>
@@ -168,19 +173,15 @@ export function EnvironmentCreatePage({
       </div>
 
       <div className="space-y-4 px-6 py-5">
-        {formError ? (
-          <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-red-600 text-sm">
-            {formError}
-          </div>
-        ) : null}
+        {formError ? <Alert variant="danger">{formError}</Alert> : null}
 
-        <Card className="rounded-lg border-slate-200 bg-white p-0 shadow-none">
+        <Card className="rounded-lg border-border bg-card p-0 shadow-none">
           <FormSectionHeader title="基础信息" description="定义环境唯一标识、名称和视觉标识" />
           <div className="grid gap-4 px-5 pb-5 xl:grid-cols-3">
             <Field label="环境 ID" required>
               <Input
                 readOnly={isEditMode}
-                className={isEditMode ? "bg-slate-50 text-slate-500" : undefined}
+                className={isEditMode ? "bg-muted text-muted-foreground" : undefined}
                 placeholder="例如：qa"
                 {...register("code")}
               />
@@ -214,7 +215,7 @@ export function EnvironmentCreatePage({
           </div>
         </Card>
 
-        <Card className="rounded-lg border-slate-200 bg-white p-0 shadow-none">
+        <Card className="rounded-lg border-border bg-card p-0 shadow-none">
           <FormSectionHeader title="存储关联" description="环境必须绑定一个已创建的存储配置" />
           <div className="grid gap-4 px-5 pb-5 xl:grid-cols-2">
             <Field label="存储配置" required>
@@ -275,9 +276,9 @@ function Field({
 }) {
   return (
     <div className="grid gap-2">
-      <span className="font-medium text-slate-700 text-sm">
+      <span className="font-medium text-foreground text-sm">
         {label}
-        {required ? <span className="ml-1 text-red-500">*</span> : null}
+        {required ? <span className="ml-1 text-destructive">*</span> : null}
       </span>
       {children}
     </div>
@@ -286,9 +287,9 @@ function Field({
 
 function FormSectionHeader({ description, title }: { description: string; title: string }) {
   return (
-    <div className="border-slate-200 border-b px-5 py-4">
-      <h2 className="font-semibold text-slate-900 text-sm">{title}</h2>
-      <p className="mt-1 text-slate-500 text-xs">{description}</p>
+    <div className="border-border border-b px-5 py-4">
+      <h2 className="font-semibold text-foreground text-sm">{title}</h2>
+      <p className="mt-1 text-muted-foreground text-xs">{description}</p>
     </div>
   );
 }
@@ -296,21 +297,21 @@ function FormSectionHeader({ description, title }: { description: string; title:
 function EnvironmentFormLoading({ onBack }: { onBack: () => void }) {
   return (
     <>
-      <div className="border-slate-200 border-b bg-white px-6 py-5">
+      <div className="border-border border-b bg-card px-6 py-5">
         <Button
           variant="ghost"
           type="button"
-          className="-ml-2 mb-3 h-8 gap-2 px-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+          className="-ml-2 mb-3 h-8 gap-2 px-2 text-muted-foreground hover:bg-muted hover:text-foreground"
           onClick={onBack}
         >
           <ArrowLeft className="size-4" />
           返回环境管理
         </Button>
-        <div className="h-8 w-40 animate-pulse rounded bg-slate-100" />
+        <div className="h-8 w-40 animate-pulse rounded bg-muted" />
       </div>
       <div className="space-y-4 px-6 py-5">
-        <Card className="h-48 animate-pulse rounded-lg border-slate-200 bg-white shadow-none" />
-        <Card className="h-48 animate-pulse rounded-lg border-slate-200 bg-white shadow-none" />
+        <Card className="h-48 animate-pulse rounded-lg border-border bg-card shadow-none" />
+        <Card className="h-48 animate-pulse rounded-lg border-border bg-card shadow-none" />
       </div>
     </>
   );
@@ -318,18 +319,18 @@ function EnvironmentFormLoading({ onBack }: { onBack: () => void }) {
 
 function EnvironmentFormNotFound({ onBack }: { onBack: () => void }) {
   return (
-    <div className="border-slate-200 border-b bg-white px-6 py-5">
+    <div className="border-border border-b bg-card px-6 py-5">
       <Button
         variant="ghost"
         type="button"
-        className="-ml-2 mb-3 h-8 gap-2 px-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+        className="-ml-2 mb-3 h-8 gap-2 px-2 text-muted-foreground hover:bg-muted hover:text-foreground"
         onClick={onBack}
       >
         <ArrowLeft className="size-4" />
         返回环境管理
       </Button>
-      <h1 className="font-semibold text-2xl text-slate-950 tracking-tight">环境不存在</h1>
-      <p className="mt-2 text-slate-600 text-sm">当前环境不存在或路径无效。</p>
+      <h1 className="font-semibold text-2xl text-foreground tracking-tight">环境不存在</h1>
+      <p className="mt-2 text-muted-foreground text-sm">当前环境不存在或路径无效。</p>
     </div>
   );
 }

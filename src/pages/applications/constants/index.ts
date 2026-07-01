@@ -35,53 +35,52 @@ export const emptyApplicationListFilters: ApplicationListFilters = {
 };
 
 export const applicationStatusClass: Record<ApplicationStatus, string> = {
-  已下线: "border-slate-200 bg-slate-50 text-slate-600",
-  维护中: "border-amber-200 bg-amber-50 text-amber-700",
-  运行中: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  已下线: "border-border bg-muted text-muted-foreground",
+  维护中: "border-warning/40 bg-warning/10 text-warning",
+  运行中: "border-success/30 bg-success/10 text-success",
 };
 
 export const applicationsGridTheme = themeQuartz.withParams({
-  accentColor: "#1677ff",
-  backgroundColor: "#ffffff",
-  borderColor: "#e5eaf2",
+  accentColor: "var(--primary)",
+  backgroundColor: "var(--card)",
+  borderColor: "var(--border)",
   borderRadius: 0,
-  browserColorScheme: "light",
+  browserColorScheme: "inherit",
   columnBorder: false,
-  fontFamily:
-    '"Roboto Flex Variable", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif',
+  fontFamily: "var(--app-font-sans)",
   fontSize: 13,
-  foregroundColor: "#334155",
-  headerBackgroundColor: "#f8fafc",
+  foregroundColor: "var(--card-foreground)",
+  headerBackgroundColor: "var(--surface-2)",
   headerFontSize: 12,
   headerFontWeight: 600,
-  headerTextColor: "#64748b",
-  oddRowBackgroundColor: "#ffffff",
-  rowBorder: { color: "#e8edf5", style: "solid", width: 1 },
-  rowHoverColor: "#f8fbff",
-  selectedRowBackgroundColor: "#eff6ff",
+  headerTextColor: "var(--muted-foreground)",
+  oddRowBackgroundColor: "var(--card)",
+  rowBorder: { color: "var(--border)", style: "solid", width: 1 },
+  rowHoverColor: "color-mix(in oklch, var(--primary) 8%, transparent)",
+  selectedRowBackgroundColor: "color-mix(in oklch, var(--primary) 12%, transparent)",
   spacing: 7,
   wrapperBorder: false,
   wrapperBorderRadius: 0,
 });
 
 export const applicationMetricToneClass: Record<ApplicationDetailMetric["tone"], string> = {
-  amber: "bg-amber-50 text-amber-600",
-  blue: "bg-blue-50 text-blue-600",
-  emerald: "bg-emerald-50 text-emerald-600",
-  rose: "bg-rose-50 text-rose-600",
-  slate: "bg-slate-100 text-slate-600",
+  amber: "bg-warning/10 text-warning",
+  blue: "bg-info/10 text-info",
+  emerald: "bg-success/10 text-success",
+  rose: "bg-destructive/10 text-destructive",
+  slate: "bg-muted text-muted-foreground",
 };
 
 export const applicationEnvironmentStatusClass: Record<
   ApplicationEnvironmentRecord["status"],
   string
 > = {
-  健康: "border-emerald-200 bg-emerald-50 text-emerald-700",
-  灰度中: "border-amber-200 bg-amber-50 text-amber-700",
-  维护中: "border-slate-200 bg-slate-50 text-slate-600",
+  健康: "border-success/30 bg-success/10 text-success",
+  灰度中: "border-warning/40 bg-warning/10 text-warning",
+  维护中: "border-border bg-muted text-muted-foreground",
 };
 
 export const applicationModuleKindClass: Record<ApplicationModuleRecord["kind"], string> = {
-  Common: "border-amber-200 bg-amber-50 text-amber-700",
-  Feature: "border-sky-200 bg-sky-50 text-sky-700",
+  Common: "border-warning/40 bg-warning/10 text-warning",
+  Feature: "border-info/30 bg-info/10 text-info",
 };

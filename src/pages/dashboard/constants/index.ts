@@ -21,38 +21,37 @@ import type {
 } from "../types";
 
 export const dashboardSummaryGridTheme = themeQuartz.withParams({
-  accentColor: "#1677ff",
-  backgroundColor: "#ffffff",
-  borderColor: "#eef2f7",
+  accentColor: "var(--primary)",
+  backgroundColor: "var(--card)",
+  borderColor: "var(--border)",
   borderRadius: 0,
-  browserColorScheme: "light",
+  browserColorScheme: "inherit",
   columnBorder: false,
-  fontFamily:
-    '"Roboto Flex Variable", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif',
+  fontFamily: "var(--app-font-sans)",
   fontSize: 13,
-  foregroundColor: "#334155",
-  headerBackgroundColor: "#ffffff",
+  foregroundColor: "var(--card-foreground)",
+  headerBackgroundColor: "var(--card)",
   headerFontSize: 12,
   headerFontWeight: 500,
-  headerTextColor: "#64748b",
-  oddRowBackgroundColor: "#ffffff",
-  rowBorder: { color: "#eef2f7", style: "solid", width: 1 },
-  rowHoverColor: "#f8fafc",
-  selectedRowBackgroundColor: "#eff6ff",
+  headerTextColor: "var(--muted-foreground)",
+  oddRowBackgroundColor: "var(--card)",
+  rowBorder: { color: "var(--border)", style: "solid", width: 1 },
+  rowHoverColor: "color-mix(in oklch, var(--primary) 8%, transparent)",
+  selectedRowBackgroundColor: "color-mix(in oklch, var(--primary) 12%, transparent)",
   spacing: 6,
   wrapperBorder: false,
   wrapperBorderRadius: 0,
 });
 
 export const metricIconToneClass: Record<SummaryMetric["iconTone"], string> = {
-  amber: "bg-amber-100 text-amber-600",
-  blue: "bg-blue-100 text-blue-600",
-  cyan: "bg-cyan-100 text-cyan-600",
-  emerald: "bg-emerald-100 text-emerald-600",
-  indigo: "bg-indigo-100 text-indigo-600",
-  red: "bg-red-100 text-red-600",
-  slate: "bg-slate-100 text-slate-600",
-  violet: "bg-violet-100 text-violet-600",
+  amber: "bg-warning/15 text-warning",
+  blue: "bg-info/15 text-info",
+  cyan: "bg-cyan-100 text-cyan-600 dark:bg-cyan-950/50 dark:text-cyan-300",
+  emerald: "bg-success/15 text-success",
+  indigo: "bg-primary/15 text-primary",
+  red: "bg-destructive/15 text-destructive",
+  slate: "bg-muted text-muted-foreground",
+  violet: "bg-violet-100 text-violet-600 dark:bg-violet-950/50 dark:text-violet-300",
 };
 
 export const metricIcons: Record<MetricIconName, LucideIcon> = {
@@ -67,10 +66,10 @@ export const metricIcons: Record<MetricIconName, LucideIcon> = {
 };
 
 export const recentBuildStatusClass: Record<RecentBuildRecord["status"], string> = {
-  failed: "bg-red-100 text-red-700",
-  queued: "bg-slate-100 text-slate-700",
-  running: "bg-blue-100 text-blue-700",
-  success: "bg-emerald-100 text-emerald-700",
+  failed: "bg-destructive/15 text-destructive",
+  queued: "bg-muted text-muted-foreground",
+  running: "bg-info/15 text-info",
+  success: "bg-success/15 text-success",
 };
 
 export const recentBuildStatusLabel: Record<RecentBuildRecord["status"], string> = {
@@ -81,8 +80,8 @@ export const recentBuildStatusLabel: Record<RecentBuildRecord["status"], string>
 };
 
 export const recentReleaseStatusClass: Record<ReleaseRecord["status"], string> = {
-  active: "bg-emerald-100 text-emerald-700",
-  inactive: "bg-slate-100 text-slate-700",
+  active: "bg-success/15 text-success",
+  inactive: "bg-muted text-muted-foreground",
 };
 
 export const recentReleaseStatusLabel: Record<ReleaseRecord["status"], string> = {
@@ -91,7 +90,7 @@ export const recentReleaseStatusLabel: Record<ReleaseRecord["status"], string> =
 };
 
 export const resourceStatusClass: Record<ResourceStatus["status"], string> = {
-  attention: "border-amber-200 bg-amber-50 text-amber-700",
-  healthy: "border-emerald-200 bg-emerald-50 text-emerald-700",
-  neutral: "border-slate-200 bg-slate-50 text-slate-700",
+  attention: "border-warning/40 bg-warning/10 text-warning",
+  healthy: "border-success/30 bg-success/10 text-success",
+  neutral: "border-border bg-muted text-muted-foreground",
 };

@@ -103,7 +103,7 @@ export function OwnerPicker<TUser extends OwnerSearchUser>({
         <Button
           type="button"
           variant="outline"
-          className="h-9 w-full justify-start gap-2 px-3 font-normal text-slate-900 hover:bg-white hover:text-slate-900"
+          className="h-9 w-full justify-start gap-2 px-3 font-normal text-foreground hover:bg-card hover:text-foreground"
           onClick={() => {
             setSelectedOwner(null);
             setIsOpen(true);
@@ -154,31 +154,31 @@ function OwnerSearchResults<TUser extends OwnerSearchUser>({
   }
 
   return (
-    <div className="absolute z-20 mt-1 max-h-72 w-full overflow-auto rounded-md border border-slate-200 bg-white py-1 shadow-lg">
+    <div className="absolute z-20 mt-1 max-h-72 w-full overflow-auto rounded-md border border-border bg-popover py-1 shadow-lg">
       {isLoading ? (
-        <div className="flex h-10 items-center gap-2 px-3 text-slate-500 text-sm">
+        <div className="flex h-10 items-center gap-2 px-3 text-muted-foreground text-sm">
           <LoaderCircle className="size-4 animate-spin" />
           搜索中
         </div>
       ) : null}
       {!isLoading && users.length === 0 ? (
-        <div className="px-3 py-2 text-slate-500 text-sm">未找到匹配人员</div>
+        <div className="px-3 py-2 text-muted-foreground text-sm">未找到匹配人员</div>
       ) : null}
       {users.map((user) => (
         <Button
           key={getOwnerKey(user)}
           type="button"
           variant="ghost"
-          className="h-auto w-full justify-start gap-3 rounded-none px-3 py-2 text-left font-normal hover:bg-slate-50"
+          className="h-auto w-full justify-start gap-3 rounded-none px-3 py-2 text-left font-normal hover:bg-muted"
           onClick={() => onSelect(user)}
         >
           <OwnerAvatar user={user} className="size-8" />
           <span className="min-w-0 flex-1">
-            <span className="block truncate font-medium text-slate-900 text-sm">
+            <span className="block truncate font-medium text-foreground text-sm">
               {getOwnerDisplayName(user)}
             </span>
             {user.email ? (
-              <span className="block truncate text-slate-500 text-xs">{user.email}</span>
+              <span className="block truncate text-muted-foreground text-xs">{user.email}</span>
             ) : null}
           </span>
         </Button>
@@ -206,7 +206,7 @@ function OwnerAvatar({
 
   return (
     <span
-      className={`${className} flex shrink-0 items-center justify-center rounded-full bg-rose-500 font-semibold text-white text-xs`}
+      className={`${className} flex shrink-0 items-center justify-center rounded-full bg-primary font-semibold text-primary-foreground text-xs`}
     >
       {getOwnerInitial(user)}
     </span>

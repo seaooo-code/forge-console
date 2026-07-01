@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Clock3, Database, type LucideIcon, Pencil, Plus, Server } from "lucide-react";
 
+import { EmptyState as StateEmptyState } from "@/components/common/StateBlock";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -33,15 +34,15 @@ export function EnvironmentsPage({
 
   return (
     <>
-      <div className="border-slate-200 border-b bg-white px-6 py-5">
+      <div className="border-border border-b bg-card px-6 py-5">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div>
-            <h1 className="font-semibold text-2xl text-slate-950 tracking-tight">环境管理</h1>
-            <p className="mt-2 text-slate-600 text-sm">管理运行环境和对应的对象存储配置</p>
+            <h1 className="font-semibold text-2xl text-foreground tracking-tight">环境管理</h1>
+            <p className="mt-2 text-muted-foreground text-sm">管理运行环境和对应的对象存储配置</p>
           </div>
           <Button
             type="button"
-            className="bg-blue-600 hover:bg-blue-700"
+            className="bg-primary hover:bg-primary/90"
             disabled={!canManageEnvironments}
             onClick={onCreateEnvironment}
           >
@@ -77,14 +78,14 @@ export function EnvironmentsPage({
 function EnvironmentsPageLoading() {
   return (
     <>
-      <div className="border-slate-200 border-b bg-white px-6 py-5">
-        <h1 className="font-semibold text-2xl text-slate-950 tracking-tight">环境管理</h1>
-        <p className="mt-2 text-slate-600 text-sm">管理运行环境和对应的对象存储配置</p>
+      <div className="border-border border-b bg-card px-6 py-5">
+        <h1 className="font-semibold text-2xl text-foreground tracking-tight">环境管理</h1>
+        <p className="mt-2 text-muted-foreground text-sm">管理运行环境和对应的对象存储配置</p>
       </div>
       <div className="space-y-4 px-6 py-5">
         <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           {["one", "two", "three", "four"].map((item) => (
-            <Card key={item} className="h-52 animate-pulse rounded-lg bg-white shadow-none" />
+            <Card key={item} className="h-52 animate-pulse rounded-lg bg-card shadow-none" />
           ))}
         </section>
       </div>
@@ -110,27 +111,27 @@ function EnvironmentCard({
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-start gap-3">
-          <div className="mt-1 flex size-8 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-500">
+          <div className="mt-1 flex size-8 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
             <Server className="size-4" />
           </div>
           <div className="min-w-0">
-            <div className="font-semibold text-slate-900 text-sm">{environment.name}</div>
+            <div className="font-semibold text-foreground text-sm">{environment.name}</div>
           </div>
         </div>
       </div>
 
-      <p className="min-h-10 text-slate-600 text-sm leading-5">{environment.description}</p>
+      <p className="min-h-10 text-muted-foreground text-sm leading-5">{environment.description}</p>
 
       <InfoMetric icon={Clock3} label="更新" value={environment.updatedAt} />
 
       <InfoMetric icon={Database} label="存储配置" value={environment.storageConfigurationName} />
 
-      <div className="flex justify-end border-slate-100 border-t pt-1">
+      <div className="flex justify-end border-border border-t pt-1">
         <Button
           variant="ghost"
           type="button"
           size="icon"
-          className="size-8 text-slate-500 hover:text-blue-600"
+          className="size-8 text-muted-foreground hover:text-primary"
           aria-label="编辑环境"
           disabled={!canManageEnvironments}
           onClick={() => onEditEnvironment(environment.id)}
@@ -153,11 +154,11 @@ function InfoMetric({
 }) {
   return (
     <div className="min-w-0 space-y-1">
-      <div className="flex items-center gap-1 text-slate-500">
+      <div className="flex items-center gap-1 text-muted-foreground">
         <Icon className="size-3.5 shrink-0" />
         <span>{label}</span>
       </div>
-      <div className="truncate font-semibold text-slate-800">{value}</div>
+      <div className="truncate font-semibold text-foreground">{value}</div>
     </div>
   );
 }
@@ -170,23 +171,22 @@ function EmptyState({
   onCreateEnvironment: () => void;
 }) {
   return (
-    <Card className="items-center rounded-lg border-slate-200 bg-white px-6 py-10 text-center shadow-none">
-      <div className="flex size-10 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
-        <Server className="size-5" />
-      </div>
-      <div>
-        <div className="font-semibold text-slate-900 text-sm">暂无环境</div>
-        <p className="mt-1 text-slate-500 text-sm">创建环境后再关联应用、组合包和发布流程。</p>
-      </div>
-      <Button
-        type="button"
-        className="bg-blue-600 hover:bg-blue-700"
-        disabled={!canManageEnvironments}
-        onClick={onCreateEnvironment}
-      >
-        <Plus className="size-4" />
-        新建环境
-      </Button>
-    </Card>
+    <StateEmptyState
+      icon={Server}
+      title="暂无环境"
+      description="创建环境后再关联应用、组合包和发布流程。"
+      className="border-border bg-card"
+      action={
+        <Button
+          type="button"
+          className="bg-primary hover:bg-primary/90"
+          disabled={!canManageEnvironments}
+          onClick={onCreateEnvironment}
+        >
+          <Plus className="size-4" />
+          新建环境
+        </Button>
+      }
+    />
   );
 }

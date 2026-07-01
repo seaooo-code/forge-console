@@ -1,16 +1,10 @@
 import { skipToken, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  ArrowLeft,
-  CheckCircle2,
-  CircleAlert,
-  CircleHelp,
-  CloudUpload,
-  LoaderCircle,
-} from "lucide-react";
+import { ArrowLeft, CircleHelp, CloudUpload, LoaderCircle } from "lucide-react";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { searchFeishuUsers } from "@/api/feishu-user-search";
 import { OwnerPicker } from "@/components/common/OwnerPicker";
+import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -173,25 +167,25 @@ export function StorageCreatePage({
 
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)}>
-      <div className="border-slate-200 border-b bg-white px-6 py-5">
+      <div className="border-border border-b bg-card px-6 py-5">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div>
             <Button
               variant="ghost"
               type="button"
-              className="-ml-2 mb-3 h-8 gap-2 px-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+              className="-ml-2 mb-3 h-8 gap-2 px-2 text-muted-foreground hover:bg-muted hover:text-foreground"
               onClick={onBack}
             >
               <ArrowLeft className="size-4" />
               返回存储管理
             </Button>
             <div className="flex items-center gap-3">
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-white shadow-sm">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
                 <CloudUpload className="size-5" />
               </div>
               <div>
-                <h1 className="font-semibold text-2xl text-slate-950 tracking-tight">{title}</h1>
-                <p className="mt-2 text-slate-600 text-sm">{description}</p>
+                <h1 className="font-semibold text-2xl text-foreground tracking-tight">{title}</h1>
+                <p className="mt-2 text-muted-foreground text-sm">{description}</p>
               </div>
             </div>
           </div>
@@ -201,7 +195,7 @@ export function StorageCreatePage({
             </Button>
             <Button
               type={isCurrentTestPassed ? "submit" : "button"}
-              className="bg-blue-600 hover:bg-blue-700"
+              className="bg-primary hover:bg-primary/90"
               disabled={isSubmitting || isTesting}
               onClick={isCurrentTestPassed ? undefined : handleTestConfiguration}
             >
@@ -213,25 +207,11 @@ export function StorageCreatePage({
       </div>
 
       <div className="space-y-4 px-6 py-5">
-        {formError ? (
-          <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-red-600 text-sm">
-            {formError}
-          </div>
-        ) : null}
-        {isCurrentTestPassed ? (
-          <div className="flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-700 text-sm">
-            <CheckCircle2 className="size-4 shrink-0" />
-            当前配置测试通过，可以保存。
-          </div>
-        ) : null}
-        {isTestStale ? (
-          <div className="flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-amber-700 text-sm">
-            <CircleAlert className="size-4 shrink-0" />
-            字段已变更，请重新测试后再保存。
-          </div>
-        ) : null}
+        {formError ? <Alert variant="danger">{formError}</Alert> : null}
+        {isCurrentTestPassed ? <Alert variant="success">当前配置测试通过，可以保存。</Alert> : null}
+        {isTestStale ? <Alert variant="warning">字段已变更，请重新测试后再保存。</Alert> : null}
 
-        <Card className="rounded-lg border-slate-200 bg-white p-0 shadow-none">
+        <Card className="rounded-lg border-border bg-card p-0 shadow-none">
           <FormSectionHeader title="基础信息" description="命名配置并选择对象存储适配器" />
           <div className="grid gap-4 px-5 pb-5 xl:grid-cols-3">
             <Field label="配置名称" required>
@@ -300,7 +280,7 @@ export function StorageCreatePage({
           </div>
         </Card>
 
-        <Card className="rounded-lg border-slate-200 bg-white p-0 shadow-none">
+        <Card className="rounded-lg border-border bg-card p-0 shadow-none">
           <FormSectionHeader title="接入配置" description="S3 兼容存储连接参数和公开访问地址" />
           <div className="grid gap-4 px-5 pb-5 xl:grid-cols-2">
             <Field label="Bucket" required>
@@ -357,9 +337,9 @@ function Field({
 }) {
   return (
     <div className="grid gap-2">
-      <span className="font-medium text-slate-700 text-sm">
+      <span className="font-medium text-foreground text-sm">
         {label}
-        {required ? <span className="ml-1 text-red-500">*</span> : null}
+        {required ? <span className="ml-1 text-destructive">*</span> : null}
       </span>
       {children}
     </div>
@@ -370,18 +350,18 @@ function RegionLabel() {
   return (
     <span className="inline-flex items-center gap-1">
       Region
-      <span className="font-normal text-slate-400 text-xs">可选</span>
+      <span className="font-normal text-muted-foreground text-xs">可选</span>
       <span className="group relative inline-flex">
         <Button
           variant="ghost"
           size="icon"
           type="button"
-          className="size-5 rounded-full p-0 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+          className="size-5 rounded-full p-0 text-muted-foreground hover:bg-muted hover:text-foreground"
           aria-label="Region 配置说明"
         >
           <CircleHelp className="size-3.5" />
         </Button>
-        <span className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 hidden w-80 -translate-x-1/2 rounded-md border border-slate-200 bg-white px-3 py-2 text-left font-normal text-slate-600 text-xs leading-5 shadow-lg group-focus-within:block group-hover:block">
+        <span className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 hidden w-80 -translate-x-1/2 rounded-md border border-border bg-card px-3 py-2 text-left font-normal text-muted-foreground text-xs leading-5 shadow-lg group-focus-within:block group-hover:block">
           AWS S3、阿里云 OSS、腾讯云 COS、华为云 OBS 通常需要填写 Region；MinIO、Ceph RGW
           等私有部署可按服务端配置填写或留空。
         </span>
@@ -392,9 +372,9 @@ function RegionLabel() {
 
 function FormSectionHeader({ description, title }: { description: string; title: string }) {
   return (
-    <div className="border-slate-200 border-b px-5 py-4">
-      <h2 className="font-semibold text-slate-900 text-sm">{title}</h2>
-      <p className="mt-1 text-slate-500 text-xs">{description}</p>
+    <div className="border-border border-b px-5 py-4">
+      <h2 className="font-semibold text-foreground text-sm">{title}</h2>
+      <p className="mt-1 text-muted-foreground text-xs">{description}</p>
     </div>
   );
 }
@@ -402,21 +382,21 @@ function FormSectionHeader({ description, title }: { description: string; title:
 function StorageFormLoading({ onBack }: { onBack: () => void }) {
   return (
     <>
-      <div className="border-slate-200 border-b bg-white px-6 py-5">
+      <div className="border-border border-b bg-card px-6 py-5">
         <Button
           variant="ghost"
           type="button"
-          className="-ml-2 mb-3 h-8 gap-2 px-2 text-slate-500"
+          className="-ml-2 mb-3 h-8 gap-2 px-2 text-muted-foreground"
           onClick={onBack}
         >
           <ArrowLeft className="size-4" />
           返回存储管理
         </Button>
-        <div className="h-8 w-40 animate-pulse rounded bg-slate-100" />
+        <div className="h-8 w-40 animate-pulse rounded bg-muted" />
       </div>
       <div className="space-y-4 px-6 py-5">
-        <Card className="h-48 animate-pulse rounded-lg border-slate-200 bg-white shadow-none" />
-        <Card className="h-64 animate-pulse rounded-lg border-slate-200 bg-white shadow-none" />
+        <Card className="h-48 animate-pulse rounded-lg border-border bg-card shadow-none" />
+        <Card className="h-64 animate-pulse rounded-lg border-border bg-card shadow-none" />
       </div>
     </>
   );
@@ -424,18 +404,18 @@ function StorageFormLoading({ onBack }: { onBack: () => void }) {
 
 function StorageFormNotFound({ onBack }: { onBack: () => void }) {
   return (
-    <div className="border-slate-200 border-b bg-white px-6 py-5">
+    <div className="border-border border-b bg-card px-6 py-5">
       <Button
         variant="ghost"
         type="button"
-        className="-ml-2 mb-3 h-8 gap-2 px-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+        className="-ml-2 mb-3 h-8 gap-2 px-2 text-muted-foreground hover:bg-muted hover:text-foreground"
         onClick={onBack}
       >
         <ArrowLeft className="size-4" />
         返回存储管理
       </Button>
-      <h1 className="font-semibold text-2xl text-slate-950 tracking-tight">存储配置不存在</h1>
-      <p className="mt-2 text-slate-600 text-sm">当前配置可能已被删除或路径无效。</p>
+      <h1 className="font-semibold text-2xl text-foreground tracking-tight">存储配置不存在</h1>
+      <p className="mt-2 text-muted-foreground text-sm">当前配置可能已被删除或路径无效。</p>
     </div>
   );
 }

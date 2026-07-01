@@ -23,6 +23,7 @@ import {
   ConsoleTableFooter,
 } from "@/components/common/ConsoleControls";
 import { consoleGridTheme } from "@/components/common/console-grid-theme";
+import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -89,7 +90,7 @@ export function ModulesPage({ onCreateModule, onEditModule, onOpenModule }: Modu
       {
         detail: "已接入真实仓库",
         icon: Boxes,
-        iconClass: "bg-blue-50 text-blue-600",
+        iconClass: "bg-info/10 text-info",
         id: "total",
         label: "模块总数",
         value: summary.total,
@@ -97,7 +98,7 @@ export function ModulesPage({ onCreateModule, onEditModule, onOpenModule }: Modu
       {
         detail: "依赖基础",
         icon: Layers3,
-        iconClass: "bg-amber-50 text-amber-600",
+        iconClass: "bg-warning/10 text-warning",
         id: "common",
         label: "通用模块",
         value: summary.common,
@@ -105,7 +106,7 @@ export function ModulesPage({ onCreateModule, onEditModule, onOpenModule }: Modu
       {
         detail: "业务模块",
         icon: Package,
-        iconClass: "bg-sky-50 text-sky-600",
+        iconClass: "bg-info/10 text-info",
         id: "feature",
         label: "功能模块",
         value: summary.feature,
@@ -186,10 +187,12 @@ export function ModulesPage({ onCreateModule, onEditModule, onOpenModule }: Modu
 
   return (
     <>
-      <div className="border-slate-200 border-b bg-white px-6 py-5">
+      <div className="border-border border-b bg-card px-6 py-5">
         <div>
-          <h1 className="font-semibold text-2xl text-slate-950 tracking-tight">模块管理</h1>
-          <p className="mt-2 text-slate-600 text-sm">管理模块仓库、归属应用、负责人和模块关系</p>
+          <h1 className="font-semibold text-2xl text-foreground tracking-tight">模块管理</h1>
+          <p className="mt-2 text-muted-foreground text-sm">
+            管理模块仓库、归属应用、负责人和模块关系
+          </p>
         </div>
       </div>
 
@@ -202,11 +205,11 @@ export function ModulesPage({ onCreateModule, onEditModule, onOpenModule }: Modu
               <Card key={item.id} className="rounded-lg px-5 py-4 shadow-none">
                 <div className="flex items-center justify-between gap-4">
                   <div className="space-y-2">
-                    <div className="font-medium text-slate-500 text-sm">{item.label}</div>
-                    <div className="font-semibold text-3xl text-slate-950 leading-none">
+                    <div className="font-medium text-muted-foreground text-sm">{item.label}</div>
+                    <div className="font-semibold text-3xl text-foreground leading-none">
                       {item.value}
                     </div>
-                    <div className="font-medium text-slate-400 text-xs">{item.detail}</div>
+                    <div className="font-medium text-muted-foreground text-xs">{item.detail}</div>
                   </div>
                   <div
                     className={cn(
@@ -222,8 +225,8 @@ export function ModulesPage({ onCreateModule, onEditModule, onOpenModule }: Modu
           })}
         </section>
 
-        <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-slate-200 border-b px-4 py-3">
+        <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-border border-b px-4 py-3">
             <div className="flex min-w-0 flex-wrap items-center gap-2">
               <ConsoleClearableFilterSelect
                 icon={Boxes}
@@ -274,7 +277,7 @@ export function ModulesPage({ onCreateModule, onEditModule, onOpenModule }: Modu
               </Button>
               <Button
                 type="button"
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-primary hover:bg-primary/90"
                 disabled={!canManageModules}
                 onClick={onCreateModule}
               >
@@ -342,11 +345,7 @@ export function ModulesPage({ onCreateModule, onEditModule, onOpenModule }: Modu
           }
         }}
       >
-        {deleteError ? (
-          <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-rose-600 text-sm">
-            {deleteError}
-          </div>
-        ) : null}
+        {deleteError ? <Alert variant="danger">{deleteError}</Alert> : null}
       </ConfirmDialog>
     </>
   );
@@ -364,14 +363,14 @@ function ModuleCell({ data }: ICellRendererParams<ModuleRecord>) {
       <div
         className={cn(
           "flex size-8 shrink-0 items-center justify-center rounded-md shadow-sm",
-          data.kind === "Common" ? "bg-amber-100 text-amber-600" : "bg-sky-100 text-sky-600",
+          data.kind === "Common" ? "bg-warning/10 text-warning" : "bg-info/10 text-info",
         )}
       >
         <Icon className="size-4" />
       </div>
       <div className="min-w-0 leading-tight">
-        <div className="truncate font-semibold text-slate-900">{data.name}</div>
-        <div className="text-slate-500 text-xs">
+        <div className="truncate font-semibold text-foreground">{data.name}</div>
+        <div className="text-muted-foreground text-xs">
           {data.kind === "Common" ? "通用模块" : "功能模块"}
         </div>
       </div>
@@ -403,19 +402,19 @@ function RepositoryCell({ value }: ICellRendererParams<ModuleRecord, string>) {
 
   return (
     <div className="flex min-w-0 items-center gap-2">
-      <GitFork className="size-3.5 shrink-0 text-slate-400" />
-      <span className="truncate font-mono text-slate-600 text-xs">{value}</span>
+      <GitFork className="size-3.5 shrink-0 text-muted-foreground" />
+      <span className="truncate font-mono text-muted-foreground text-xs">{value}</span>
     </div>
   );
 }
 
 function CommonModuleCell({ data }: ICellRendererParams<ModuleRecord>) {
   if (!data || data.kind === "Common") {
-    return <span className="text-slate-400 text-xs">-</span>;
+    return <span className="text-muted-foreground text-xs">-</span>;
   }
 
   return (
-    <span className="truncate text-slate-700 text-sm">
+    <span className="truncate text-foreground text-sm">
       {data.commonModuleName || data.commonModuleId || "-"}
     </span>
   );
@@ -432,12 +431,12 @@ function ActionsCell({
   }
 
   return (
-    <div className="flex h-full items-center gap-2 whitespace-nowrap font-medium text-blue-600 text-xs">
+    <div className="flex h-full items-center gap-2 whitespace-nowrap font-medium text-primary text-xs">
       <Button
         variant="link"
         type="button"
         disabled={!canManageModules}
-        className="h-auto gap-1 p-0 text-blue-600 text-xs hover:text-blue-700 disabled:text-slate-400"
+        className="h-auto gap-1 p-0 text-primary text-xs hover:text-primary/80 disabled:text-muted-foreground"
         onClick={(event) => {
           event.stopPropagation();
           onEditModule(data.id);
@@ -450,7 +449,7 @@ function ActionsCell({
         variant="link"
         type="button"
         disabled={!canManageModules}
-        className="h-auto gap-1 p-0 text-rose-600 text-xs hover:text-rose-700 disabled:text-slate-400"
+        className="h-auto gap-1 p-0 text-destructive text-xs hover:text-destructive/80 disabled:text-muted-foreground"
         onClick={(event) => {
           event.stopPropagation();
           onDeleteModule(data);

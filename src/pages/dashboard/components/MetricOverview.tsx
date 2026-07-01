@@ -15,7 +15,7 @@ export function MetricOverview({ metrics }: MetricOverviewProps) {
         const Icon = metricIcons[metric.icon];
 
         return (
-          <Card key={metric.id} className="gap-0 rounded-lg border-slate-200 py-0 shadow-sm">
+          <Card key={metric.id} className="gap-0 rounded-lg border-border py-0 shadow-sm">
             <CardContent className="px-4 py-4">
               <div className="flex items-start justify-between gap-3">
                 <div
@@ -29,17 +29,19 @@ export function MetricOverview({ metrics }: MetricOverviewProps) {
                 <span
                   className={cn(
                     "rounded-md px-2 py-1 font-semibold text-xs",
-                    metric.trendTone === "positive" && "bg-emerald-50 text-emerald-600",
-                    metric.trendTone === "negative" && "bg-red-50 text-red-600",
-                    metric.trendTone === "neutral" && "bg-slate-50 text-slate-600",
+                    metric.trendTone === "positive" && "bg-success/15 text-success",
+                    metric.trendTone === "negative" && "bg-destructive/15 text-destructive",
+                    metric.trendTone === "neutral" && "bg-muted text-muted-foreground",
                   )}
                 >
                   {metric.trend}
                 </span>
               </div>
-              <div className="mt-4 text-slate-500 text-xs">{metric.label}</div>
-              <div className="mt-1 font-semibold text-2xl text-slate-900">{metric.value}</div>
-              <div className="mt-1 truncate text-slate-500 text-xs">{metric.description}</div>
+              <div className="mt-4 text-muted-foreground text-xs">{metric.label}</div>
+              <div className="mt-1 font-semibold text-2xl text-foreground">{metric.value}</div>
+              <div className="mt-1 truncate text-muted-foreground text-xs">
+                {metric.description}
+              </div>
               <MiniSparkline values={metric.sparkline} />
             </CardContent>
           </Card>
@@ -53,7 +55,7 @@ function MiniSparkline({ values }: { values: number[] }) {
   const width = 132;
   const height = 34;
   if (values.length === 0) {
-    return <div className="mt-3 h-8.5 rounded bg-slate-50" />;
+    return <div className="mt-3 h-8.5 rounded bg-muted" />;
   }
 
   const min = Math.min(...values);
@@ -67,12 +69,12 @@ function MiniSparkline({ values }: { values: number[] }) {
   });
 
   return (
-    <svg className="mt-3 h-8.5 w-full" viewBox={`0 0 ${width} ${height}`} role="img">
+    <svg className="mt-3 h-8.5 w-full text-primary" viewBox={`0 0 ${width} ${height}`} role="img">
       <title>metric trend</title>
       <polyline
         fill="none"
         points={points.join(" ")}
-        stroke="#1677ff"
+        stroke="currentColor"
         strokeLinecap="round"
         strokeLinejoin="round"
         strokeWidth="2"

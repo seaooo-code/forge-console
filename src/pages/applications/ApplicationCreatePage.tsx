@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { searchFeishuUsers } from "@/api/feishu-user-search";
 import { OwnerPicker, type OwnerSearchUser } from "@/components/common/OwnerPicker";
+import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -178,25 +179,25 @@ export function ApplicationCreatePage({
 
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)}>
-      <div className="border-slate-200 border-b bg-white px-6 py-5">
+      <div className="border-border border-b bg-card px-6 py-5">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div>
             <Button
               variant="ghost"
               type="button"
-              className="-ml-2 mb-3 h-8 gap-2 px-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+              className="-ml-2 mb-3 h-8 gap-2 px-2 text-muted-foreground hover:bg-muted hover:text-foreground"
               onClick={onBack}
             >
               <ArrowLeft className="size-4" />
               返回应用管理
             </Button>
             <div className="flex items-center gap-3">
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-white shadow-sm">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
                 <PackagePlus className="size-5" />
               </div>
               <div>
-                <h1 className="font-semibold text-2xl text-slate-950 tracking-tight">{title}</h1>
-                <p className="mt-2 text-slate-600 text-sm">{description}</p>
+                <h1 className="font-semibold text-2xl text-foreground tracking-tight">{title}</h1>
+                <p className="mt-2 text-muted-foreground text-sm">{description}</p>
               </div>
             </div>
           </div>
@@ -205,21 +206,24 @@ export function ApplicationCreatePage({
             <Button variant="outline" type="button" onClick={onBack}>
               取消
             </Button>
-            <Button type="submit" className="bg-blue-600 hover:bg-blue-700" disabled={isSubmitting}>
+            <Button
+              type="submit"
+              className="bg-primary hover:bg-primary/90"
+              disabled={isSubmitting}
+            >
               {isSubmitting ? "保存中" : isEditMode ? "保存修改" : "创建应用"}
             </Button>
           </div>
         </div>
         {formError ? (
-          <div className="mt-4 flex items-start gap-2 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-rose-600 text-sm">
-            <CircleAlert className="mt-0.5 size-4 shrink-0" />
+          <Alert variant="danger" className="mt-4">
             {formError}
-          </div>
+          </Alert>
         ) : null}
       </div>
 
       <div className="px-6 py-5">
-        <Card className="gap-0 rounded-lg border-slate-200 py-0 shadow-sm">
+        <Card className="gap-0 rounded-lg border-border py-0 shadow-sm">
           <SectionHeader
             icon={MonitorSmartphone}
             title="应用接入信息"
@@ -228,8 +232,8 @@ export function ApplicationCreatePage({
           <div className="space-y-5 p-4">
             <section>
               <div className="mb-3 flex items-center gap-2">
-                <div className="h-4 w-1 rounded-full bg-blue-500" />
-                <h2 className="font-semibold text-slate-900 text-sm">基础信息</h2>
+                <div className="h-4 w-1 rounded-full bg-primary" />
+                <h2 className="font-semibold text-foreground text-sm">基础信息</h2>
               </div>
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-12">
                 <Field label="应用名称" className="xl:col-span-4">
@@ -292,10 +296,10 @@ export function ApplicationCreatePage({
               </div>
             </section>
 
-            <section className="border-slate-100 border-t pt-5">
+            <section className="border-border border-t pt-5">
               <div className="mb-3 flex items-center gap-2">
-                <div className="h-4 w-1 rounded-full bg-emerald-500" />
-                <h2 className="font-semibold text-slate-900 text-sm">接入范围</h2>
+                <div className="h-4 w-1 rounded-full bg-success" />
+                <h2 className="font-semibold text-foreground text-sm">接入范围</h2>
               </div>
               <Field label="接入平台">
                 <Controller
@@ -445,17 +449,17 @@ function ApplicationFormLoading({ onBack }: ApplicationFormFeedbackProps) {
       <Button
         variant="ghost"
         type="button"
-        className="-ml-2 h-8 gap-2 px-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+        className="-ml-2 h-8 gap-2 px-2 text-muted-foreground hover:bg-muted hover:text-foreground"
         onClick={onBack}
       >
         <ArrowLeft className="size-4" />
         返回应用管理
       </Button>
-      <Card className="rounded-lg border-slate-200 p-6 shadow-none">
+      <Card className="rounded-lg border-border p-6 shadow-none">
         <div className="space-y-3">
-          <div className="h-5 w-36 animate-pulse rounded bg-slate-100" />
-          <div className="h-10 w-full animate-pulse rounded bg-slate-100" />
-          <div className="h-40 w-full animate-pulse rounded bg-slate-100" />
+          <div className="h-5 w-36 animate-pulse rounded bg-muted" />
+          <div className="h-10 w-full animate-pulse rounded bg-muted" />
+          <div className="h-40 w-full animate-pulse rounded bg-muted" />
         </div>
       </Card>
     </div>
@@ -468,13 +472,13 @@ function ApplicationFormOptionsError({ onBack }: ApplicationFormFeedbackProps) {
       <Button
         variant="ghost"
         type="button"
-        className="-ml-2 h-8 gap-2 px-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+        className="-ml-2 h-8 gap-2 px-2 text-muted-foreground hover:bg-muted hover:text-foreground"
         onClick={onBack}
       >
         <ArrowLeft className="size-4" />
         返回应用管理
       </Button>
-      <Card className="rounded-lg border-rose-200 bg-rose-50 p-6 text-rose-700 shadow-none">
+      <Card className="rounded-lg border-destructive/30 bg-destructive/10 p-6 text-destructive shadow-none">
         <div className="flex items-start gap-2 text-sm">
           <CircleAlert className="mt-0.5 size-4 shrink-0" />
           应用选项加载失败，请刷新后重试
@@ -490,15 +494,15 @@ function ApplicationFormNotFound({ onBack }: ApplicationFormFeedbackProps) {
       <Button
         variant="ghost"
         type="button"
-        className="-ml-2 h-8 gap-2 px-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+        className="-ml-2 h-8 gap-2 px-2 text-muted-foreground hover:bg-muted hover:text-foreground"
         onClick={onBack}
       >
         <ArrowLeft className="size-4" />
         返回应用管理
       </Button>
-      <Card className="rounded-lg border-slate-200 bg-white p-6 shadow-none">
-        <div className="font-semibold text-slate-900 text-sm">应用不存在</div>
-        <p className="mt-1 text-slate-500 text-sm">当前应用可能已被删除或路径无效。</p>
+      <Card className="rounded-lg border-border bg-card p-6 shadow-none">
+        <div className="font-semibold text-foreground text-sm">应用不存在</div>
+        <p className="mt-1 text-muted-foreground text-sm">当前应用可能已被删除或路径无效。</p>
       </Card>
     </div>
   );
@@ -506,13 +510,13 @@ function ApplicationFormNotFound({ onBack }: ApplicationFormFeedbackProps) {
 
 function SectionHeader({ description, icon: Icon, title }: SectionHeaderProps) {
   return (
-    <div className="flex h-14 items-center gap-3 border-slate-200 border-b px-4">
-      <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-blue-50 text-blue-600">
+    <div className="flex h-14 items-center gap-3 border-border border-b px-4">
+      <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
         <Icon className="size-4" />
       </div>
       <div className="min-w-0">
-        <div className="font-semibold text-slate-900 text-sm">{title}</div>
-        <div className="truncate text-slate-500 text-xs">{description}</div>
+        <div className="font-semibold text-foreground text-sm">{title}</div>
+        <div className="truncate text-muted-foreground text-xs">{description}</div>
       </div>
     </div>
   );
@@ -521,7 +525,7 @@ function SectionHeader({ description, icon: Icon, title }: SectionHeaderProps) {
 function Field({ children, className, label }: FieldProps) {
   return (
     <div className={className}>
-      <div className="mb-2 font-medium text-slate-600 text-xs">{label}</div>
+      <div className="mb-2 font-medium text-muted-foreground text-xs">{label}</div>
       {children}
     </div>
   );
@@ -529,7 +533,7 @@ function Field({ children, className, label }: FieldProps) {
 
 function CheckOption({ checked, label, onCheckedChange }: CheckOptionProps) {
   return (
-    <div className="flex h-9 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 text-slate-700 text-sm">
+    <div className="flex h-9 items-center gap-2 rounded-md border border-border bg-card px-3 text-foreground text-sm">
       <Checkbox checked={checked} onCheckedChange={(value) => onCheckedChange?.(value === true)} />
       <span>{label}</span>
     </div>

@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuthStore } from "@/store/use-auth-store";
 
+import { ThemeToggle } from "./ThemeToggle";
+
 export function TopToolbar() {
   const navigate = useNavigate();
   const session = useAuthStore((state) => state.session);
@@ -31,12 +33,12 @@ export function TopToolbar() {
   };
 
   return (
-    <header className="sticky top-0 z-20 flex h-18 items-center justify-between gap-4 border-slate-200 border-b bg-white/95 px-6 backdrop-blur">
+    <header className="sticky top-0 z-20 flex h-18 items-center justify-between gap-4 border-border border-b bg-card/95 px-6 backdrop-blur">
       <div className="flex min-w-0 flex-1 items-center gap-3">
-        <div className="flex h-9 min-w-65 max-w-130 flex-1 items-center gap-2 rounded-md bg-slate-100 px-3 text-slate-500">
+        <div className="flex h-9 min-w-65 max-w-130 flex-1 items-center gap-2 rounded-md bg-muted px-3 text-muted-foreground">
           <Search className="size-4 shrink-0" />
           <Input
-            className="h-auto min-w-0 flex-1 border-0 bg-transparent px-0 py-0 text-sm shadow-none placeholder:text-slate-400 focus-visible:ring-0"
+            className="h-auto min-w-0 flex-1 border-0 bg-transparent px-0 py-0 text-sm shadow-none placeholder:text-muted-foreground focus-visible:ring-0"
             placeholder="搜索 任务 / 模块 / Bundle / 发布单 ..."
           />
         </div>
@@ -46,6 +48,7 @@ export function TopToolbar() {
         <Button variant="ghost" size="icon" aria-label="高级筛选">
           <SlidersHorizontal className="size-4" />
         </Button>
+        <ThemeToggle />
         <Button variant="ghost" size="icon" aria-label="帮助">
           <CircleHelp className="size-4" />
         </Button>
@@ -53,7 +56,7 @@ export function TopToolbar() {
           <Bell className="size-4" />
         </Button>
         <div className="flex items-center gap-2 pl-2">
-          <div className="flex size-9 items-center justify-center overflow-hidden rounded-full bg-slate-900 font-semibold text-white text-sm">
+          <div className="flex size-9 items-center justify-center overflow-hidden rounded-full bg-primary font-semibold text-primary-foreground text-sm">
             {avatarURL ? (
               <img alt={displayName} className="size-full object-cover" src={avatarURL} />
             ) : (
@@ -61,10 +64,12 @@ export function TopToolbar() {
             )}
           </div>
           <div className="hidden leading-tight xl:block">
-            <div className="max-w-36 truncate font-semibold text-slate-800 text-sm">
+            <div className="max-w-36 truncate font-semibold text-foreground text-sm">
               {displayName}
             </div>
-            {email ? <div className="max-w-42 truncate text-slate-500 text-xs">{email}</div> : null}
+            {email ? (
+              <div className="max-w-42 truncate text-muted-foreground text-xs">{email}</div>
+            ) : null}
           </div>
           <Button variant="ghost" size="icon" aria-label="退出登录" onClick={handleLogout}>
             <LogOut className="size-4" />

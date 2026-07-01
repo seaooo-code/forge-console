@@ -16,6 +16,7 @@ import {
 import { useEffect, useState } from "react";
 
 import { fetchModuleDetailSnapshot, moduleDetailQueryKey } from "@/api/modules";
+import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -144,23 +145,23 @@ export function ReleaseRecordDetailPage({
 
   return (
     <>
-      <div className="border-slate-200 border-b bg-white px-6 py-5">
+      <div className="border-border border-b bg-card px-6 py-5">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div>
             <Button
               variant="ghost"
               type="button"
-              className="-ml-2 mb-3 h-8 gap-2 px-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+              className="-ml-2 mb-3 h-8 gap-2 px-2 text-muted-foreground hover:bg-muted hover:text-foreground"
               onClick={onBack}
             >
               <ArrowLeft className="size-4" />
               返回发布记录
             </Button>
             <div className="flex flex-wrap items-center gap-3">
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-white shadow-sm">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
                 <RadioTower className="size-5" />
               </div>
-              <h1 className="font-semibold text-2xl text-slate-950 tracking-tight">
+              <h1 className="font-semibold text-2xl text-foreground tracking-tight">
                 发布 {formatShortRecordID(release.id)}
               </h1>
               <ReleaseStatusBadge status={release.status} />
@@ -173,7 +174,7 @@ export function ReleaseRecordDetailPage({
               <Button
                 variant="outline"
                 type="button"
-                className="border-rose-200 bg-white text-rose-700 hover:bg-rose-50 hover:text-rose-800"
+                className="border-destructive/30 bg-card text-destructive hover:bg-destructive/10 hover:text-destructive"
                 disabled={!canCreateRelease || inactivateMutation.isPending}
                 onClick={() => {
                   if (!window.confirm("失效后该定向标识会回退到比例灰度或全量发布，是否继续？")) {
@@ -195,14 +196,18 @@ export function ReleaseRecordDetailPage({
             <Button
               variant="outline"
               type="button"
-              className="border-slate-200 bg-white text-slate-700"
+              className="border-border bg-card text-foreground"
               onClick={() => onOpenBuild(release.buildRecordId)}
             >
               <PackageCheck className="size-4" />
               打开构建
             </Button>
             {release.artifactUrl ? (
-              <Button asChild type="button" className="bg-blue-600 text-white hover:bg-blue-700">
+              <Button
+                asChild
+                type="button"
+                className="bg-primary text-primary-foreground hover:bg-primary/90"
+              >
                 <a href={release.artifactUrl} target="_blank" rel="noreferrer">
                   <ExternalLink className="size-4" />
                   打开产物
@@ -215,7 +220,7 @@ export function ReleaseRecordDetailPage({
 
       <div className="space-y-4 px-6 py-5">
         {release.description ? (
-          <section className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-blue-800">
+          <Alert variant="info" icon={false} className="px-4 py-3">
             <div className="flex items-start gap-2">
               <Rocket className="mt-0.5 size-4 shrink-0" />
               <div>
@@ -225,24 +230,17 @@ export function ReleaseRecordDetailPage({
                 </div>
               </div>
             </div>
-          </section>
+          </Alert>
         ) : null}
 
         {inactivateError || inactivateMessage ? (
-          <section
-            className={cn(
-              "rounded-lg border px-4 py-3 text-sm",
-              inactivateError
-                ? "border-rose-200 bg-rose-50 text-rose-700"
-                : "border-emerald-200 bg-emerald-50 text-emerald-700",
-            )}
-          >
+          <Alert variant={inactivateError ? "danger" : "success"}>
             {inactivateError || inactivateMessage}
-          </section>
+          </Alert>
         ) : null}
 
         <section className="grid gap-4 xl:grid-cols-[1fr_1fr]">
-          <Card className="gap-0 rounded-lg border-slate-200 py-0 shadow-sm">
+          <Card className="gap-0 rounded-lg border-border py-0 shadow-sm">
             <SectionHeader title="发布信息" />
             <div className="grid gap-3 p-4 md:grid-cols-2">
               <DetailItem icon={CalendarClock} label="发布时间" value={release.createdAt} />
@@ -267,7 +265,7 @@ export function ReleaseRecordDetailPage({
             </div>
           </Card>
 
-          <Card className="gap-0 rounded-lg border-slate-200 py-0 shadow-sm">
+          <Card className="gap-0 rounded-lg border-border py-0 shadow-sm">
             <SectionHeader title="路由指向" />
             <div className="grid gap-3 p-4 md:grid-cols-2">
               <DetailItem
@@ -303,18 +301,18 @@ export function ReleaseRecordDetailPage({
         </section>
 
         {release.releaseType === "gray" && release.grayStrategy === "percentage" ? (
-          <Card className="gap-0 rounded-lg border-slate-200 py-0 shadow-sm">
+          <Card className="gap-0 rounded-lg border-border py-0 shadow-sm">
             <SectionHeader title="比例灰度" />
             <div className="grid gap-4 p-4 lg:grid-cols-[1fr_auto] lg:items-end">
               <div className="space-y-2">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
-                    <div className="font-medium text-slate-700 text-sm">当前比例</div>
-                    <div className="mt-1 text-slate-500 text-xs">
+                    <div className="font-medium text-foreground text-sm">当前比例</div>
+                    <div className="mt-1 text-muted-foreground text-xs">
                       当前生效比例为 {release.grayPercentage}%
                     </div>
                   </div>
-                  <Badge variant="outline" className="border-blue-200 text-blue-700">
+                  <Badge variant="outline" className="border-primary/30 text-primary">
                     {release.grayPercentage}%
                   </Badge>
                 </div>
@@ -332,21 +330,21 @@ export function ReleaseRecordDetailPage({
                     }}
                   />
                   {Number(grayPercentageInput) === 100 ? (
-                    <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-amber-800 text-xs">
+                    <Alert variant="warning" icon={false} className="px-3 py-2 text-xs">
                       更新为 100% 后会转为全量发布，并替换当前默认路由。
-                    </div>
+                    </Alert>
                   ) : null}
                 </div>
                 {grayPercentageError ? (
-                  <div className="text-red-600 text-xs">{grayPercentageError}</div>
+                  <div className="text-destructive text-xs">{grayPercentageError}</div>
                 ) : null}
                 {grayPercentageMessage ? (
-                  <div className="text-emerald-700 text-xs">{grayPercentageMessage}</div>
+                  <div className="text-success text-xs">{grayPercentageMessage}</div>
                 ) : null}
               </div>
               <Button
                 type="button"
-                className="bg-blue-600 text-white hover:bg-blue-700"
+                className="bg-primary text-primary-foreground hover:bg-primary/90"
                 disabled={!canCreateRelease || grayPercentageMutation.isPending}
                 onClick={() => {
                   const nextPercentage = Number(grayPercentageInput);
@@ -389,11 +387,11 @@ function ReleaseRecordDetailFallback({
 }) {
   return (
     <>
-      <div className="border-slate-200 border-b bg-white px-6 py-5">
+      <div className="border-border border-b bg-card px-6 py-5">
         <Button
           variant="ghost"
           type="button"
-          className="-ml-2 h-8 gap-2 px-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+          className="-ml-2 h-8 gap-2 px-2 text-muted-foreground hover:bg-muted hover:text-foreground"
           onClick={onBack}
         >
           <ArrowLeft className="size-4" />
@@ -401,14 +399,14 @@ function ReleaseRecordDetailFallback({
         </Button>
       </div>
       <div className="px-6 py-5">
-        <Card className="rounded-lg border-slate-200 p-8 text-center shadow-sm">
-          <div className="mx-auto flex size-10 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
+        <Card className="rounded-lg border-border p-8 text-center shadow-sm">
+          <div className="mx-auto flex size-10 items-center justify-center rounded-lg bg-muted text-muted-foreground">
             <RadioTower className="size-5" />
           </div>
-          <div className="mt-3 font-semibold text-slate-950">
+          <div className="mt-3 font-semibold text-foreground">
             {isFetching ? "正在加载发布记录详情" : "未找到发布记录"}
           </div>
-          <div className="mt-2 text-slate-500 text-sm">
+          <div className="mt-2 text-muted-foreground text-sm">
             {error instanceof Error ? error.message : "发布记录可能已被删除或当前账号无权限访问。"}
           </div>
         </Card>
@@ -419,9 +417,9 @@ function ReleaseRecordDetailFallback({
 
 function SectionHeader({ title }: { title: string }) {
   return (
-    <div className="flex h-12 items-center justify-between border-slate-200 border-b px-4">
+    <div className="flex h-12 items-center justify-between border-border border-b px-4">
       <div>
-        <div className="font-semibold text-slate-900 text-sm">{title}</div>
+        <div className="font-semibold text-foreground text-sm">{title}</div>
       </div>
     </div>
   );
@@ -445,27 +443,27 @@ function DetailItem({
   return (
     <div
       className={cn(
-        "flex min-w-0 items-start gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2",
+        "flex min-w-0 items-start gap-2 rounded-lg border border-border bg-muted px-3 py-2",
         wide && "md:col-span-2",
       )}
     >
-      <Icon className="mt-0.5 size-4 shrink-0 text-slate-400" />
+      <Icon className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
       <div className="min-w-0">
-        <div className="text-slate-500 text-xs">{label}</div>
+        <div className="text-muted-foreground text-xs">{label}</div>
         {onClick ? (
           <Button
             variant="link"
             type="button"
-            className="h-auto min-w-0 justify-start break-all p-0 text-left font-semibold text-blue-600 text-sm"
+            className="h-auto min-w-0 justify-start break-all p-0 text-left font-semibold text-primary text-sm"
             onClick={onClick}
           >
             {value || "-"}
           </Button>
         ) : (
-          <div className="break-all font-semibold text-slate-800 text-sm">{value || "-"}</div>
+          <div className="break-all font-semibold text-foreground text-sm">{value || "-"}</div>
         )}
         {description ? (
-          <div className="mt-0.5 break-all text-slate-500 text-xs">{description}</div>
+          <div className="mt-0.5 break-all text-muted-foreground text-xs">{description}</div>
         ) : null}
       </div>
     </div>
@@ -490,7 +488,7 @@ function ReleaseStatusBadge({ status }: { status: ReleaseRecordStatus }) {
 
 function ReleaseTypeBadge({ release }: { release: ReleaseRecordDetail }) {
   return (
-    <Badge variant="outline" className="border-slate-200 font-medium text-slate-600">
+    <Badge variant="outline" className="border-border font-medium text-muted-foreground">
       {getReleaseRecordTypeLabel(release)}
     </Badge>
   );

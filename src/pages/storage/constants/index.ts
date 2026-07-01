@@ -23,11 +23,11 @@ export const storageAdapterOptions: StorageAdapterOption[] = [
 ];
 
 export const adapterToneClass: Record<StorageAdapter, string> = {
-  S3: "bg-blue-600 text-white",
+  S3: "bg-primary text-primary-foreground",
 };
 
 export const statusClass: Record<StorageStatus, string> = {
-  已停用: "border-slate-200 bg-slate-50 text-slate-600",
-  异常: "border-red-200 bg-red-50 text-red-600",
-  正常: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  已停用: "border-border bg-muted text-muted-foreground",
+  异常: "border-destructive/30 bg-destructive/10 text-destructive",
+  正常: "border-success/30 bg-success/10 text-success",
 };

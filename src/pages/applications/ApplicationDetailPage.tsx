@@ -23,6 +23,7 @@ import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { consoleGridTheme } from "@/components/common/console-grid-theme";
 import { EnvironmentBadge } from "@/components/common/EnvironmentBadge";
 import { OwnerPicker } from "@/components/common/OwnerPicker";
+import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -306,23 +307,23 @@ export function ApplicationDetailPage({
 
   return (
     <>
-      <div className="border-slate-200 border-b bg-white px-6 py-5">
+      <div className="border-border border-b bg-card px-6 py-5">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div>
             <Button
               variant="ghost"
               type="button"
-              className="-ml-2 mb-3 h-8 gap-2 px-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+              className="-ml-2 mb-3 h-8 gap-2 px-2 text-muted-foreground hover:bg-muted hover:text-foreground"
               onClick={onBack}
             >
               <ArrowLeft className="size-4" />
               返回应用管理
             </Button>
             <div className="flex flex-wrap items-center gap-3">
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-rose-500 text-white shadow-sm">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
                 <Smartphone className="size-5" />
               </div>
-              <h1 className="font-semibold text-2xl text-slate-950 tracking-tight">
+              <h1 className="font-semibold text-2xl text-foreground tracking-tight">
                 {application.name}
               </h1>
               <span
@@ -333,11 +334,11 @@ export function ApplicationDetailPage({
               >
                 {application.status}
               </span>
-              <Badge variant="outline" className="border-slate-200 font-mono text-slate-600">
+              <Badge variant="outline" className="border-border font-mono text-muted-foreground">
                 {application.slug}
               </Badge>
             </div>
-            <p className="mt-2 text-slate-600 text-sm">{detail.description}</p>
+            <p className="mt-2 text-muted-foreground text-sm">{detail.description}</p>
           </div>
 
           <div className="space-y-3 xl:w-150">
@@ -365,8 +366,8 @@ export function ApplicationDetailPage({
                 type="button"
                 className={cn(
                   nextStatus === "offline"
-                    ? "border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-700"
-                    : "border-emerald-200 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700",
+                    ? "border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                    : "border-success/30 text-success hover:bg-success/10 hover:text-success",
                 )}
                 disabled={!canUpdateStatus || isUpdatingStatus}
                 onClick={() => {
@@ -378,11 +379,7 @@ export function ApplicationDetailPage({
                 {isUpdatingStatus ? "处理中" : `${statusActionLabel}应用`}
               </Button>
             </div>
-            {actionError ? (
-              <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-rose-600 text-sm">
-                {actionError}
-              </div>
-            ) : null}
+            {actionError ? <Alert variant="danger">{actionError}</Alert> : null}
           </div>
         </div>
       </div>
@@ -404,11 +401,7 @@ export function ApplicationDetailPage({
           void handleUpdateApplicationStatus();
         }}
       >
-        {actionError ? (
-          <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-rose-600 text-sm">
-            {actionError}
-          </div>
-        ) : null}
+        {actionError ? <Alert variant="danger">{actionError}</Alert> : null}
       </ConfirmDialog>
 
       <div className="space-y-4 px-6 py-5">
@@ -419,8 +412,8 @@ export function ApplicationDetailPage({
         </section>
 
         <section className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
-          <Card className="gap-0 rounded-lg border-slate-200 py-0 shadow-sm">
-            <div className="flex h-12 items-center border-slate-200 border-b px-4 font-semibold text-slate-900 text-sm">
+          <Card className="gap-0 rounded-lg border-border py-0 shadow-sm">
+            <div className="flex h-12 items-center border-border border-b px-4 font-semibold text-foreground text-sm">
               应用接入配置
             </div>
             <div className="grid gap-3 p-4 md:grid-cols-2">
@@ -428,10 +421,10 @@ export function ApplicationDetailPage({
             </div>
           </Card>
 
-          <Card className="gap-0 rounded-lg border-slate-200 py-0 shadow-sm">
-            <div className="flex h-12 items-center justify-between border-slate-200 border-b px-4">
-              <div className="font-semibold text-slate-900 text-sm">成员权限</div>
-              <Badge variant="outline" className="border-slate-200 text-slate-500">
+          <Card className="gap-0 rounded-lg border-border py-0 shadow-sm">
+            <div className="flex h-12 items-center justify-between border-border border-b px-4">
+              <div className="font-semibold text-foreground text-sm">成员权限</div>
+              <Badge variant="outline" className="border-border text-muted-foreground">
                 {detail.members.length} 人
               </Badge>
             </div>
@@ -483,7 +476,7 @@ export function ApplicationDetailPage({
                     />
                     <Button
                       type="submit"
-                      className="gap-2 bg-blue-600 text-white hover:bg-blue-700"
+                      className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
                       disabled={!selectedMemberUserId || isMutatingMember}
                     >
                       <Plus className="size-4" />
@@ -491,17 +484,13 @@ export function ApplicationDetailPage({
                     </Button>
                   </div>
                   {memberFormErrors.memberName ? (
-                    <div className="text-rose-600 text-xs">
+                    <div className="text-destructive text-xs">
                       {memberFormErrors.memberName.message}
                     </div>
                   ) : null}
                 </form>
               ) : null}
-              {memberActionError ? (
-                <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-rose-600 text-sm">
-                  {memberActionError}
-                </div>
-              ) : null}
+              {memberActionError ? <Alert variant="danger">{memberActionError}</Alert> : null}
               {detail.members.map((member) => (
                 <MemberRow
                   key={member.id}
@@ -527,7 +516,7 @@ export function ApplicationDetailPage({
 
         <ClientIntegrationSection clientIntegration={detail.clientIntegration} />
 
-        <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+        <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
           <TableHeader title="环境绑定" description="宿主应用已启用环境" />
           <AgGridReact<ApplicationEnvironmentRecord>
             rowData={detail.environments}
@@ -543,7 +532,7 @@ export function ApplicationDetailPage({
           />
         </section>
 
-        <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+        <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
           <TableHeader title="接入模块" description="当前应用关联的 RN Bundle 模块" />
           <AgGridReact<ApplicationModuleRecord>
             rowData={detail.modules}
@@ -580,11 +569,7 @@ export function ApplicationDetailPage({
           void handleConfirmRoleChange();
         }}
       >
-        {memberActionError ? (
-          <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-rose-600 text-sm">
-            {memberActionError}
-          </div>
-        ) : null}
+        {memberActionError ? <Alert variant="danger">{memberActionError}</Alert> : null}
       </ConfirmDialog>
       <ConfirmDialog
         isOpen={deleteMemberTarget !== null}
@@ -608,11 +593,7 @@ export function ApplicationDetailPage({
           void handleConfirmDeleteMember();
         }}
       >
-        {memberActionError ? (
-          <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-rose-600 text-sm">
-            {memberActionError}
-          </div>
-        ) : null}
+        {memberActionError ? <Alert variant="danger">{memberActionError}</Alert> : null}
       </ConfirmDialog>
     </>
   );
@@ -628,11 +609,11 @@ function InfoPill({
   value: string;
 }) {
   return (
-    <div className="flex min-w-0 items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
-      <Icon className="size-4 shrink-0 text-slate-400" />
+    <div className="flex min-w-0 items-center gap-2 rounded-lg border border-border bg-muted px-3 py-2">
+      <Icon className="size-4 shrink-0 text-muted-foreground" />
       <div className="min-w-0">
-        <div className="text-slate-500 text-xs">{label}</div>
-        <div className="truncate font-semibold text-slate-800 text-sm">{value}</div>
+        <div className="text-muted-foreground text-xs">{label}</div>
+        <div className="truncate font-semibold text-foreground text-sm">{value}</div>
       </div>
     </div>
   );
@@ -648,12 +629,12 @@ function OwnerInfoPill({
   name: string;
 }) {
   return (
-    <div className="flex min-w-0 items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+    <div className="flex min-w-0 items-center gap-2 rounded-lg border border-border bg-muted px-3 py-2">
       <OwnerAvatar avatarUrl={avatarUrl} name={name} />
       <div className="min-w-0">
-        <div className="text-slate-500 text-xs">负责人</div>
-        <div className="truncate font-semibold text-slate-800 text-sm">{name}</div>
-        {email ? <div className="truncate text-slate-500 text-xs">{email}</div> : null}
+        <div className="text-muted-foreground text-xs">负责人</div>
+        <div className="truncate font-semibold text-foreground text-sm">{name}</div>
+        {email ? <div className="truncate text-muted-foreground text-xs">{email}</div> : null}
       </div>
     </div>
   );
@@ -665,7 +646,7 @@ function OwnerAvatar({ avatarUrl, name }: { avatarUrl: string; name: string }) {
   }
 
   return (
-    <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-rose-500 font-semibold text-white text-xs">
+    <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary font-semibold text-primary-foreground text-xs">
       {name.slice(0, 1).toUpperCase()}
     </span>
   );
@@ -673,11 +654,11 @@ function OwnerAvatar({ avatarUrl, name }: { avatarUrl: string; name: string }) {
 
 function MetricCard({ metric }: { metric: ApplicationDetailMetric }) {
   return (
-    <Card className="gap-3 rounded-lg border-slate-200 p-4 shadow-none">
+    <Card className="gap-3 rounded-lg border-border p-4 shadow-none">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="font-medium text-slate-500 text-xs">{metric.label}</div>
-          <div className="mt-2 font-semibold text-2xl text-slate-950">{metric.value}</div>
+          <div className="font-medium text-muted-foreground text-xs">{metric.label}</div>
+          <div className="mt-2 font-semibold text-2xl text-foreground">{metric.value}</div>
         </div>
         <div
           className={cn(
@@ -688,7 +669,7 @@ function MetricCard({ metric }: { metric: ApplicationDetailMetric }) {
           <RadioTower className="size-4" />
         </div>
       </div>
-      <div className="text-slate-500 text-xs">{metric.detail}</div>
+      <div className="text-muted-foreground text-xs">{metric.detail}</div>
     </Card>
   );
 }
@@ -703,13 +684,13 @@ function ConfigItem({
   value: string;
 }) {
   return (
-    <div className="flex min-w-0 gap-3 rounded-md border border-slate-200 bg-white px-3 py-3">
-      <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-500">
+    <div className="flex min-w-0 gap-3 rounded-md border border-border bg-card px-3 py-3">
+      <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
         <Icon className="size-4" />
       </div>
       <div className="min-w-0">
-        <div className="font-medium text-slate-500 text-xs">{label}</div>
-        <div className="mt-1 break-all font-semibold text-slate-800 text-sm">{value}</div>
+        <div className="font-medium text-muted-foreground text-xs">{label}</div>
+        <div className="mt-1 break-all font-semibold text-foreground text-sm">{value}</div>
       </div>
     </div>
   );
@@ -729,14 +710,14 @@ function MemberRow({
   onRoleChange: (member: ApplicationMemberRecord, role: ApplicationMemberRecord["role"]) => void;
 }) {
   return (
-    <div className="flex items-center justify-between gap-3 rounded-md border border-slate-200 bg-slate-50 px-3 py-2.5">
+    <div className="flex items-center justify-between gap-3 rounded-md border border-border bg-muted px-3 py-2.5">
       <div className="flex min-w-0 items-center gap-2">
         <MemberAvatar member={member} />
         <div className="min-w-0">
-          <div className="truncate font-semibold text-slate-900 text-sm">
+          <div className="truncate font-semibold text-foreground text-sm">
             {memberDisplayName(member)}
           </div>
-          <div className="mt-0.5 truncate text-slate-500 text-xs">
+          <div className="mt-0.5 truncate text-muted-foreground text-xs">
             {member.email || member.team || member.userId}
           </div>
         </div>
@@ -748,7 +729,7 @@ function MemberRow({
             disabled={disabled}
             onValueChange={(role) => onRoleChange(member, role as ApplicationMemberRecord["role"])}
           >
-            <SelectTrigger className="h-8 w-30 bg-white">
+            <SelectTrigger className="h-8 w-30 bg-card">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -763,7 +744,7 @@ function MemberRow({
             type="button"
             variant="outline"
             size="icon"
-            className="size-8 border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+            className="size-8 border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive"
             disabled={disabled}
             aria-label="移除成员权限"
             onClick={() => onDelete(member)}
@@ -772,7 +753,7 @@ function MemberRow({
           </Button>
         </div>
       ) : (
-        <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700">
+        <Badge variant="outline" className="border-info/30 bg-info/10 text-info">
           {member.role}
         </Badge>
       )}
@@ -787,7 +768,7 @@ function MemberAvatar({ member }: { member: ApplicationMemberRecord }) {
   }
 
   return (
-    <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-blue-600 font-semibold text-white text-xs">
+    <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary font-semibold text-primary-foreground text-xs">
       {name.trim().slice(0, 1).toUpperCase()}
     </span>
   );
@@ -811,10 +792,10 @@ function upsertMemberInList(
 
 function TableHeader({ description, title }: { description: string; title: string }) {
   return (
-    <div className="flex h-12 items-center justify-between border-slate-200 border-b px-4">
+    <div className="flex h-12 items-center justify-between border-border border-b px-4">
       <div>
-        <div className="font-semibold text-slate-900 text-sm">{title}</div>
-        <div className="text-slate-500 text-xs">{description}</div>
+        <div className="font-semibold text-foreground text-sm">{title}</div>
+        <div className="text-muted-foreground text-xs">{description}</div>
       </div>
     </div>
   );
@@ -856,10 +837,10 @@ function ModuleNameCell({ data }: ICellRendererParams<ApplicationModuleRecord>) 
 
   return (
     <div className="flex min-w-0 items-center gap-2">
-      <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-sky-50 text-sky-600">
+      <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-info/10 text-info">
         <Boxes className="size-3.5" />
       </div>
-      <div className="min-w-0 font-semibold text-slate-900">{data.name}</div>
+      <div className="min-w-0 font-semibold text-foreground">{data.name}</div>
     </div>
   );
 }
@@ -885,11 +866,11 @@ function ModuleKindCell({
 
 function ModuleCommonCell({ data }: ICellRendererParams<ApplicationModuleRecord>) {
   if (!data || data.kind === "Common") {
-    return <span className="text-slate-400 text-xs">-</span>;
+    return <span className="text-muted-foreground text-xs">-</span>;
   }
 
   return (
-    <span className="truncate text-slate-700 text-sm">
+    <span className="truncate text-foreground text-sm">
       {data.commonModuleName || data.commonModuleId || "-"}
     </span>
   );
@@ -907,26 +888,28 @@ function ApplicationDetailFallback({
       <Button
         variant="ghost"
         type="button"
-        className="-ml-2 h-8 gap-2 px-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+        className="-ml-2 h-8 gap-2 px-2 text-muted-foreground hover:bg-muted hover:text-foreground"
         onClick={onBack}
       >
         <ArrowLeft className="size-4" />
         返回应用管理
       </Button>
 
-      <Card className="rounded-lg border-slate-200 p-6 shadow-none">
+      <Card className="rounded-lg border-border p-6 shadow-none">
         {isFetching ? (
           <div className="space-y-3">
-            <div className="h-5 w-36 animate-pulse rounded bg-slate-100" />
-            <div className="h-10 w-full animate-pulse rounded bg-slate-100" />
-            <div className="h-32 w-full animate-pulse rounded bg-slate-100" />
+            <div className="h-5 w-36 animate-pulse rounded bg-muted" />
+            <div className="h-10 w-full animate-pulse rounded bg-muted" />
+            <div className="h-32 w-full animate-pulse rounded bg-muted" />
           </div>
         ) : (
           <div className="flex items-start gap-3">
-            <CircleAlert className="mt-0.5 size-5 shrink-0 text-amber-500" />
+            <CircleAlert className="mt-0.5 size-5 shrink-0 text-warning" />
             <div>
-              <div className="font-semibold text-slate-900">未找到应用详情</div>
-              <div className="mt-1 text-slate-500 text-sm">当前接口没有返回对应的宿主应用。</div>
+              <div className="font-semibold text-foreground">未找到应用详情</div>
+              <div className="mt-1 text-muted-foreground text-sm">
+                当前接口没有返回对应的宿主应用。
+              </div>
             </div>
           </div>
         )}

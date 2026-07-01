@@ -18,6 +18,8 @@ import { Controller, useForm } from "react-hook-form";
 import { fetchModulesSnapshot, modulesRootQueryKey } from "@/api/modules";
 import { ConsoleTableFooter } from "@/components/common/ConsoleControls";
 import { consoleGridTheme } from "@/components/common/console-grid-theme";
+import { Modal, ModalFooter, ModalHeader } from "@/components/common/Modal";
+import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -272,9 +274,9 @@ export function BuildsPage({ onOpenBuild }: BuildsPageProps) {
 
   return (
     <>
-      <div className="border-slate-200 border-b bg-white px-6 py-5">
-        <h1 className="font-semibold text-2xl text-slate-950 tracking-tight">构建管理</h1>
-        <p className="mt-2 text-slate-600 text-sm">
+      <div className="border-border border-b bg-card px-6 py-5">
+        <h1 className="font-semibold text-2xl text-foreground tracking-tight">构建管理</h1>
+        <p className="mt-2 text-muted-foreground text-sm">
           汇总所有模块构建执行，支持手动新增构建并跟踪流水线触发结果
         </p>
       </div>
@@ -285,19 +287,20 @@ export function BuildsPage({ onOpenBuild }: BuildsPageProps) {
             <Card key={item.id} className="rounded-lg px-5 py-4 shadow-none">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <div className="font-medium text-slate-500 text-sm">{item.label}</div>
-                  <div className="mt-2 font-semibold text-3xl text-slate-950 leading-none">
+                  <div className="font-medium text-muted-foreground text-sm">{item.label}</div>
+                  <div className="mt-2 font-semibold text-3xl text-foreground leading-none">
                     {item.value}
                   </div>
                 </div>
                 <div
                   className={cn(
                     "flex size-5 shrink-0 items-center justify-center rounded border",
-                    item.tone === "emerald" && "border-emerald-200 bg-emerald-50 text-emerald-600",
-                    item.tone === "red" && "border-red-200 bg-red-50 text-red-600",
-                    item.tone === "amber" && "border-amber-200 bg-amber-50 text-amber-600",
-                    item.tone === "blue" && "border-blue-200 bg-blue-50 text-blue-600",
-                    item.tone === "sky" && "border-sky-200 bg-sky-50 text-sky-600",
+                    item.tone === "emerald" && "border-success/30 bg-success/10 text-success",
+                    item.tone === "red" &&
+                      "border-destructive/30 bg-destructive/10 text-destructive",
+                    item.tone === "amber" && "border-warning/40 bg-warning/10 text-warning",
+                    item.tone === "blue" && "border-info/30 bg-info/10 text-info",
+                    item.tone === "sky" && "border-info/30 bg-info/10 text-info",
                   )}
                 >
                   <Circle className="size-2 fill-current" />
@@ -307,16 +310,16 @@ export function BuildsPage({ onOpenBuild }: BuildsPageProps) {
           ))}
         </section>
 
-        <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-slate-200 border-b px-4 py-3">
+        <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-border border-b px-4 py-3">
             <div className="flex min-w-0 flex-wrap items-center gap-2">
-              <span className="font-medium text-slate-500 text-sm">最近构建</span>
+              <span className="font-medium text-muted-foreground text-sm">最近构建</span>
             </div>
 
             <div className="flex shrink-0 items-center gap-2">
               <Button
                 type="button"
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-primary hover:bg-primary/90"
                 disabled={!canCreateBuild}
                 onClick={() => {
                   setBuildError("");
@@ -339,14 +342,14 @@ export function BuildsPage({ onOpenBuild }: BuildsPageProps) {
               </Button>
             </div>
             {releaseSuccess ? (
-              <div className="basis-full rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-emerald-700 text-sm">
+              <Alert variant="success" className="basis-full">
                 {releaseSuccess}
-              </div>
+              </Alert>
             ) : null}
             {buildSuccess ? (
-              <div className="basis-full rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-emerald-700 text-sm">
+              <Alert variant="success" className="basis-full">
                 {buildSuccess}
-              </div>
+              </Alert>
             ) : null}
           </div>
 
@@ -450,12 +453,12 @@ function BuildCell({ data }: ICellRendererParams<BuildRunRecord>) {
     return null;
   }
 
-  return <span className="truncate font-semibold text-blue-600 text-sm">{data.createdAt}</span>;
+  return <span className="truncate font-semibold text-primary text-sm">{data.createdAt}</span>;
 }
 
 function BuildIDCell({ value }: ICellRendererParams<BuildRunRecord, string>) {
   return value ? (
-    <span className="truncate font-mono font-semibold text-slate-700 text-xs">
+    <span className="truncate font-mono font-semibold text-foreground text-xs">
       #{value.trim().slice(-8)}
     </span>
   ) : null;
@@ -468,8 +471,8 @@ function BranchCell({ data }: ICellRendererParams<BuildRunRecord>) {
 
   return (
     <span className="inline-flex min-w-0 items-center gap-1.5">
-      <GitBranch className="size-3.5 shrink-0 text-slate-400" />
-      <span className="truncate font-mono text-slate-700 text-xs">
+      <GitBranch className="size-3.5 shrink-0 text-muted-foreground" />
+      <span className="truncate font-mono text-foreground text-xs">
         {data.branch} · {data.commit}
       </span>
     </span>
@@ -478,7 +481,7 @@ function BranchCell({ data }: ICellRendererParams<BuildRunRecord>) {
 
 function TriggerCell({ value }: ICellRendererParams<BuildRunRecord, BuildTriggerType>) {
   return value ? (
-    <span className="font-medium text-slate-700 text-xs">{buildTriggerLabels[value]}</span>
+    <span className="font-medium text-foreground text-xs">{buildTriggerLabels[value]}</span>
   ) : null;
 }
 
@@ -523,7 +526,7 @@ function ActionsCell({
         variant="outline"
         type="button"
         size="sm"
-        className="h-8 gap-1.5 border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700"
+        className="h-8 gap-1.5 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary"
         disabled={!canPublish}
         onClick={(event) => {
           event.stopPropagation();
@@ -637,148 +640,133 @@ function BuildCreateDialog({
   }
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/40 px-4 backdrop-blur-xs">
-      <section
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="build-create-dialog-title"
-        aria-describedby="build-create-dialog-description"
-        className="w-full max-w-lg rounded-lg border border-slate-200 bg-white p-5 shadow-xl"
-      >
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <div className="space-y-2">
-            <h2 id="build-create-dialog-title" className="font-semibold text-lg text-slate-950">
-              新增构建
-            </h2>
-            <p id="build-create-dialog-description" className="text-slate-600 text-sm leading-6">
-              选择模块、分支与环境后提交构建，产物会上传到环境绑定的存储配置。
-            </p>
-          </div>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      labelledBy="build-create-dialog-title"
+      describedBy="build-create-dialog-description"
+      className="max-w-lg"
+    >
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <ModalHeader
+          title="新增构建"
+          description="选择模块、分支与环境后提交构建，产物会上传到环境绑定的存储配置。"
+          titleId="build-create-dialog-title"
+          descriptionId="build-create-dialog-description"
+        />
 
-          <div className="mt-4 space-y-4">
-            <Field label="模块" inputId="build-create-module">
-              <Controller
-                control={control}
-                name="moduleId"
-                rules={{ required: "请选择模块" }}
-                render={({ field }) => (
-                  <Select
-                    value={field.value}
-                    onValueChange={(value) => {
-                      field.onChange(value);
-                      const nextModule = moduleOptions.find((module) => module.value === value);
-                      setValue("branch", nextModule?.defaultBranch ?? "");
-                    }}
-                  >
-                    <SelectTrigger id="build-create-module" className="w-full">
-                      <SelectValue placeholder={isModulesFetching ? "模块加载中" : "选择模块"} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {moduleOptions.map((module) => (
-                        <SelectItem key={module.value} value={module.value}>
-                          {module.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-              {selectedModule ? (
-                <div className="truncate text-slate-500 text-xs">
-                  {selectedModule.applicationName || "-"} ·{" "}
-                  {selectedModule.repositoryFullName || "-"}
-                </div>
-              ) : null}
-              {errors.moduleId ? (
-                <div className="text-rose-600 text-xs">{errors.moduleId.message}</div>
-              ) : null}
-            </Field>
-
-            <Field label="分支" inputId="build-create-branch">
-              <Input
-                id="build-create-branch"
-                placeholder={selectedModule?.defaultBranch || "输入 Git 分支"}
-                {...register("branch", {
-                  validate: (value) => (value.trim() ? true : "请输入分支"),
-                })}
-              />
-              {errors.branch ? (
-                <div className="text-rose-600 text-xs">{errors.branch.message}</div>
-              ) : null}
-            </Field>
-
-            <Field label="环境" inputId="build-create-environment">
-              <Controller
-                control={control}
-                name="environment"
-                rules={{ required: "请选择环境" }}
-                render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger id="build-create-environment" className="w-full">
-                      <SelectValue
-                        placeholder={isEnvironmentsFetching ? "环境加载中" : "选择环境"}
-                      />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {environmentOptions.map((environment) => (
-                        <SelectItem key={environment.value} value={environment.value}>
-                          {environment.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-              {errors.environment ? (
-                <div className="text-rose-600 text-xs">{errors.environment.message}</div>
-              ) : null}
-            </Field>
-
-            {submitError ? (
-              <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-rose-600 text-sm">
-                {submitError}
-              </div>
-            ) : null}
-            {!isModulesFetching && !hasModuleOptions ? (
-              <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-amber-700 text-sm">
-                暂无可用模块，请先在模块管理中创建模块。
-              </div>
-            ) : null}
-            {!isEnvironmentsFetching && !hasEnvironmentOptions ? (
-              <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-amber-700 text-sm">
-                暂无可用环境，请先在环境管理中创建环境。
-              </div>
-            ) : null}
-          </div>
-
-          <div className="mt-5 flex justify-end gap-2">
-            <Button variant="outline" type="button" disabled={isSubmitting} onClick={onClose}>
-              取消
-            </Button>
-            <Button
-              type="submit"
-              className="bg-blue-600 text-white hover:bg-blue-700"
-              disabled={
-                isSubmitting ||
-                isModulesFetching ||
-                isEnvironmentsFetching ||
-                !hasModuleOptions ||
-                !hasEnvironmentOptions
-              }
-            >
-              {isSubmitting ? (
-                <>
-                  <LoaderCircle className="size-4 animate-spin" />
-                  提交中
-                </>
-              ) : (
-                "提交构建"
+        <div className="mt-4 space-y-4">
+          <Field label="模块" inputId="build-create-module">
+            <Controller
+              control={control}
+              name="moduleId"
+              rules={{ required: "请选择模块" }}
+              render={({ field }) => (
+                <Select
+                  value={field.value}
+                  onValueChange={(value) => {
+                    field.onChange(value);
+                    const nextModule = moduleOptions.find((module) => module.value === value);
+                    setValue("branch", nextModule?.defaultBranch ?? "");
+                  }}
+                >
+                  <SelectTrigger id="build-create-module" className="w-full">
+                    <SelectValue placeholder={isModulesFetching ? "模块加载中" : "选择模块"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {moduleOptions.map((module) => (
+                      <SelectItem key={module.value} value={module.value}>
+                        {module.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               )}
-            </Button>
-          </div>
-        </form>
-      </section>
-    </div>
+            />
+            {selectedModule ? (
+              <div className="truncate text-muted-foreground text-xs">
+                {selectedModule.applicationName || "-"} · {selectedModule.repositoryFullName || "-"}
+              </div>
+            ) : null}
+            {errors.moduleId ? (
+              <div className="text-destructive text-xs">{errors.moduleId.message}</div>
+            ) : null}
+          </Field>
+
+          <Field label="分支" inputId="build-create-branch">
+            <Input
+              id="build-create-branch"
+              placeholder={selectedModule?.defaultBranch || "输入 Git 分支"}
+              {...register("branch", {
+                validate: (value) => (value.trim() ? true : "请输入分支"),
+              })}
+            />
+            {errors.branch ? (
+              <div className="text-destructive text-xs">{errors.branch.message}</div>
+            ) : null}
+          </Field>
+
+          <Field label="环境" inputId="build-create-environment">
+            <Controller
+              control={control}
+              name="environment"
+              rules={{ required: "请选择环境" }}
+              render={({ field }) => (
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger id="build-create-environment" className="w-full">
+                    <SelectValue placeholder={isEnvironmentsFetching ? "环境加载中" : "选择环境"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {environmentOptions.map((environment) => (
+                      <SelectItem key={environment.value} value={environment.value}>
+                        {environment.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+            {errors.environment ? (
+              <div className="text-destructive text-xs">{errors.environment.message}</div>
+            ) : null}
+          </Field>
+
+          {submitError ? <Alert variant="danger">{submitError}</Alert> : null}
+          {!isModulesFetching && !hasModuleOptions ? (
+            <Alert variant="warning">暂无可用模块，请先在模块管理中创建模块。</Alert>
+          ) : null}
+          {!isEnvironmentsFetching && !hasEnvironmentOptions ? (
+            <Alert variant="warning">暂无可用环境，请先在环境管理中创建环境。</Alert>
+          ) : null}
+        </div>
+
+        <ModalFooter>
+          <Button variant="outline" type="button" disabled={isSubmitting} onClick={onClose}>
+            取消
+          </Button>
+          <Button
+            type="submit"
+            className="bg-primary text-primary-foreground hover:bg-primary/90"
+            disabled={
+              isSubmitting ||
+              isModulesFetching ||
+              isEnvironmentsFetching ||
+              !hasModuleOptions ||
+              !hasEnvironmentOptions
+            }
+          >
+            {isSubmitting ? (
+              <>
+                <LoaderCircle className="size-4 animate-spin" />
+                提交中
+              </>
+            ) : (
+              "提交构建"
+            )}
+          </Button>
+        </ModalFooter>
+      </form>
+    </Modal>
   );
 }
 
@@ -846,226 +834,214 @@ function BuildReleaseDialog({
   }
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/40 px-4 backdrop-blur-xs">
-      <section
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="build-release-dialog-title"
-        aria-describedby="build-release-dialog-description"
-        className="w-full max-w-lg rounded-lg border border-slate-200 bg-white p-5 shadow-xl"
-      >
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <div className="space-y-2">
-            <h2 id="build-release-dialog-title" className="font-semibold text-lg text-slate-950">
-              发布构建
-            </h2>
-            <p id="build-release-dialog-description" className="text-slate-600 text-sm leading-6">
-              将 {build.createdAt} 创建的构建发布到 {build.version} 环境，发布后会更新访问路由指向。
-            </p>
-          </div>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      labelledBy="build-release-dialog-title"
+      describedBy="build-release-dialog-description"
+      className="max-w-lg"
+    >
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <ModalHeader
+          title="发布构建"
+          titleId="build-release-dialog-title"
+          descriptionId="build-release-dialog-description"
+          description={`将 ${build.createdAt} 创建的构建发布到 ${build.version} 环境，发布后会更新访问路由指向。`}
+        />
 
-          <div className="mt-4 space-y-4">
-            <Field label="发布类型" inputId="build-release-type">
+        <div className="mt-4 space-y-4">
+          <Field label="发布类型" inputId="build-release-type">
+            <Controller
+              control={control}
+              name="releaseType"
+              render={({ field }) => (
+                <Select
+                  value={field.value}
+                  onValueChange={(value: BuildReleaseType) => field.onChange(value)}
+                >
+                  <SelectTrigger id="build-release-type" className="w-full">
+                    <SelectValue placeholder="选择发布类型" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="full">全量</SelectItem>
+                    <SelectItem value="gray">灰度</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+            />
+          </Field>
+
+          {releaseType === "gray" ? (
+            <Field label="灰度方式" inputId="build-release-gray-strategy">
               <Controller
                 control={control}
-                name="releaseType"
+                name="grayStrategy"
                 render={({ field }) => (
                   <Select
                     value={field.value}
-                    onValueChange={(value: BuildReleaseType) => field.onChange(value)}
+                    onValueChange={(value: BuildReleaseGrayStrategy) => field.onChange(value)}
                   >
-                    <SelectTrigger id="build-release-type" className="w-full">
-                      <SelectValue placeholder="选择发布类型" />
+                    <SelectTrigger id="build-release-gray-strategy" className="w-full">
+                      <SelectValue placeholder="选择灰度方式" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="full">全量</SelectItem>
-                      <SelectItem value="gray">灰度</SelectItem>
+                      <SelectItem value="targeted">定向</SelectItem>
+                      <SelectItem value="percentage">比例</SelectItem>
                     </SelectContent>
                   </Select>
                 )}
               />
             </Field>
+          ) : null}
 
-            {releaseType === "gray" ? (
-              <Field label="灰度方式" inputId="build-release-gray-strategy">
-                <Controller
-                  control={control}
-                  name="grayStrategy"
-                  render={({ field }) => (
-                    <Select
-                      value={field.value}
-                      onValueChange={(value: BuildReleaseGrayStrategy) => field.onChange(value)}
-                    >
-                      <SelectTrigger id="build-release-gray-strategy" className="w-full">
-                        <SelectValue placeholder="选择灰度方式" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="targeted">定向</SelectItem>
-                        <SelectItem value="percentage">比例</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-              </Field>
-            ) : null}
+          {releaseType === "gray" && grayStrategy === "targeted" ? (
+            <Field label="定向标识" inputId="build-release-identifier">
+              <Input
+                id="build-release-identifier"
+                placeholder="输入用户、设备或实验标识"
+                {...register("identifier", {
+                  validate: (value) =>
+                    releaseType !== "gray" || grayStrategy !== "targeted" || value.trim()
+                      ? true
+                      : "请输入定向标识",
+                })}
+              />
+              {errors.identifier ? (
+                <div className="text-destructive text-xs">{errors.identifier.message}</div>
+              ) : null}
+            </Field>
+          ) : null}
 
-            {releaseType === "gray" && grayStrategy === "targeted" ? (
-              <Field label="定向标识" inputId="build-release-identifier">
+          {releaseType === "gray" && grayStrategy === "targeted" ? (
+            <Field label="过期时间" inputId="build-release-expires-at">
+              <div className="grid gap-2">
                 <Input
-                  id="build-release-identifier"
-                  placeholder="输入用户、设备或实验标识"
-                  {...register("identifier", {
-                    validate: (value) =>
-                      releaseType !== "gray" || grayStrategy !== "targeted" || value.trim()
-                        ? true
-                        : "请输入定向标识",
+                  id="build-release-expires-at"
+                  type="datetime-local"
+                  {...register("expiresAt", {
+                    validate: (value) => {
+                      if (releaseType !== "gray" || grayStrategy !== "targeted") {
+                        return true;
+                      }
+                      if (!value) {
+                        return "请选择过期时间";
+                      }
+                      const expiresAt = new Date(value);
+                      if (Number.isNaN(expiresAt.getTime())) {
+                        return "请选择有效过期时间";
+                      }
+                      return expiresAt.getTime() > Date.now() ? true : "过期时间必须晚于当前时间";
+                    },
                   })}
                 />
-                {errors.identifier ? (
-                  <div className="text-rose-600 text-xs">{errors.identifier.message}</div>
-                ) : null}
-              </Field>
-            ) : null}
-
-            {releaseType === "gray" && grayStrategy === "targeted" ? (
-              <Field label="过期时间" inputId="build-release-expires-at">
-                <div className="grid gap-2">
-                  <Input
-                    id="build-release-expires-at"
-                    type="datetime-local"
-                    {...register("expiresAt", {
-                      validate: (value) => {
-                        if (releaseType !== "gray" || grayStrategy !== "targeted") {
-                          return true;
-                        }
-                        if (!value) {
-                          return "请选择过期时间";
-                        }
-                        const expiresAt = new Date(value);
-                        if (Number.isNaN(expiresAt.getTime())) {
-                          return "请选择有效过期时间";
-                        }
-                        return expiresAt.getTime() > Date.now() ? true : "过期时间必须晚于当前时间";
-                      },
-                    })}
-                  />
-                  <div className="flex flex-wrap gap-2">
-                    {[7, 15, 30].map((days) => (
-                      <Button
-                        key={days}
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="h-8 border-slate-200 bg-white text-slate-700"
-                        onClick={() =>
-                          setValue("expiresAt", targetedGrayExpiresAt(days), {
-                            shouldDirty: true,
-                            shouldValidate: true,
-                          })
-                        }
-                      >
-                        {days} 天
-                      </Button>
-                    ))}
-                  </div>
-                  {errors.expiresAt ? (
-                    <div className="text-rose-600 text-xs">{errors.expiresAt.message}</div>
-                  ) : null}
+                <div className="flex flex-wrap gap-2">
+                  {[7, 15, 30].map((days) => (
+                    <Button
+                      key={days}
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-8 border-border bg-card text-foreground"
+                      onClick={() =>
+                        setValue("expiresAt", targetedGrayExpiresAt(days), {
+                          shouldDirty: true,
+                          shouldValidate: true,
+                        })
+                      }
+                    >
+                      {days} 天
+                    </Button>
+                  ))}
                 </div>
-              </Field>
-            ) : null}
+                {errors.expiresAt ? (
+                  <div className="text-destructive text-xs">{errors.expiresAt.message}</div>
+                ) : null}
+              </div>
+            </Field>
+          ) : null}
 
-            {releaseType === "gray" && grayStrategy === "percentage" ? (
-              <Field label="初始比例" inputId="build-release-gray-percentage">
-                <Controller
-                  control={control}
-                  name="grayPercentage"
-                  rules={{
-                    max: { message: "初始比例不能超过 99", value: 99 },
-                    min: { message: "初始比例不能小于 0", value: 0 },
-                  }}
-                  render={({ field }) => {
-                    const value =
-                      typeof field.value === "number" && !Number.isNaN(field.value)
-                        ? field.value
-                        : 0;
-                    const updateValue = (nextValue: number) =>
-                      field.onChange(Math.min(99, Math.max(0, nextValue)));
+          {releaseType === "gray" && grayStrategy === "percentage" ? (
+            <Field label="初始比例" inputId="build-release-gray-percentage">
+              <Controller
+                control={control}
+                name="grayPercentage"
+                rules={{
+                  max: { message: "初始比例不能超过 99", value: 99 },
+                  min: { message: "初始比例不能小于 0", value: 0 },
+                }}
+                render={({ field }) => {
+                  const value =
+                    typeof field.value === "number" && !Number.isNaN(field.value) ? field.value : 0;
+                  const updateValue = (nextValue: number) =>
+                    field.onChange(Math.min(99, Math.max(0, nextValue)));
 
-                    return (
-                      <div className="grid gap-2">
-                        <div className="flex items-center gap-3">
-                          <input
-                            id="build-release-gray-percentage"
-                            type="range"
-                            min={0}
-                            max={99}
-                            value={value}
-                            onChange={(event) => updateValue(Number(event.target.value))}
-                            className="h-2 flex-1 accent-blue-600"
-                          />
-                          <Input
-                            type="number"
-                            min={0}
-                            max={99}
-                            value={value}
-                            onChange={(event) => updateValue(Number(event.target.value))}
-                            className="w-24"
-                          />
-                        </div>
-                        {errors.grayPercentage ? (
-                          <div className="text-rose-600 text-xs">
-                            {errors.grayPercentage.message}
-                          </div>
-                        ) : null}
+                  return (
+                    <div className="grid gap-2">
+                      <div className="flex items-center gap-3">
+                        <input
+                          id="build-release-gray-percentage"
+                          type="range"
+                          min={0}
+                          max={99}
+                          value={value}
+                          onChange={(event) => updateValue(Number(event.target.value))}
+                          className="h-2 flex-1 accent-primary"
+                        />
+                        <Input
+                          type="number"
+                          min={0}
+                          max={99}
+                          value={value}
+                          onChange={(event) => updateValue(Number(event.target.value))}
+                          className="w-24"
+                        />
                       </div>
-                    );
-                  }}
-                />
-              </Field>
-            ) : null}
+                      {errors.grayPercentage ? (
+                        <div className="text-destructive text-xs">
+                          {errors.grayPercentage.message}
+                        </div>
+                      ) : null}
+                    </div>
+                  );
+                }}
+              />
+            </Field>
+          ) : null}
 
-            {isDuplicateFullRelease ? (
-              <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-amber-700 text-sm">
-                该构建已有生效中的全量发布，不能重复提交全量发布。
-              </div>
-            ) : null}
-            {isRollbackFullRelease ? (
-              <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-amber-700 text-sm">
-                当前生效构建创建于 {activeFullRelease?.build?.createdAt}
-                ，早于它的构建发布会回退访问路由。
-              </div>
-            ) : null}
+          {isDuplicateFullRelease ? (
+            <Alert variant="warning">该构建已有生效中的全量发布，不能重复提交全量发布。</Alert>
+          ) : null}
+          {isRollbackFullRelease ? (
+            <Alert variant="warning">
+              当前生效构建创建于 {activeFullRelease?.build?.createdAt}
+              ，早于它的构建发布会回退访问路由。
+            </Alert>
+          ) : null}
 
-            {submitError ? (
-              <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-rose-600 text-sm">
-                {submitError}
-              </div>
-            ) : null}
-          </div>
+          {submitError ? <Alert variant="danger">{submitError}</Alert> : null}
+        </div>
 
-          <div className="mt-5 flex justify-end gap-2">
-            <Button variant="outline" type="button" disabled={isSubmitting} onClick={onClose}>
-              取消
-            </Button>
-            <Button
-              type="submit"
-              className="bg-blue-600 text-white hover:bg-blue-700"
-              disabled={isSubmitting || isDuplicateFullRelease}
-            >
-              {isSubmitting ? (
-                <>
-                  <LoaderCircle className="size-4 animate-spin" />
-                  发布中
-                </>
-              ) : (
-                "确认发布"
-              )}
-            </Button>
-          </div>
-        </form>
-      </section>
-    </div>
+        <ModalFooter>
+          <Button variant="outline" type="button" disabled={isSubmitting} onClick={onClose}>
+            取消
+          </Button>
+          <Button
+            type="submit"
+            className="bg-primary text-primary-foreground hover:bg-primary/90"
+            disabled={isSubmitting || isDuplicateFullRelease}
+          >
+            {isSubmitting ? (
+              <>
+                <LoaderCircle className="size-4 animate-spin" />
+                发布中
+              </>
+            ) : (
+              "确认发布"
+            )}
+          </Button>
+        </ModalFooter>
+      </form>
+    </Modal>
   );
 }
 
@@ -1099,7 +1075,7 @@ function Field({
 }) {
   return (
     <div className="space-y-1.5">
-      <label htmlFor={inputId} className="font-medium text-slate-600 text-xs">
+      <label htmlFor={inputId} className="font-medium text-muted-foreground text-xs">
         {label}
       </label>
       {children}

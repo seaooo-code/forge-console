@@ -5,6 +5,7 @@ import { fetchAuthSession } from "@/api/feishu-auth";
 import { Card } from "@/components/ui/card";
 import { FeishuCallbackPage, LoginPage } from "@/pages/auth";
 import { useAuthStore } from "@/store/use-auth-store";
+import { useSystemThemeSync } from "@/store/use-system-theme-sync";
 
 import { ConsoleLayout, ConsoleRouteNotFound } from "./layouts/ConsoleLayout";
 
@@ -85,6 +86,7 @@ const feishuCallbackPath = "/login/feishu/callback";
 
 export function App() {
   const location = useLocation();
+  useSystemThemeSync();
   const isSessionLoading = useAuthStore((state) => state.isSessionLoading);
   const session = useAuthStore((state) => state.session);
   const clearSession = useAuthStore((state) => state.clearSession);
@@ -149,8 +151,8 @@ function isAuthRoute(path: string) {
 
 function SessionLoadingPage() {
   return (
-    <main className="grid min-h-screen place-items-center bg-slate-50 px-6 text-slate-900">
-      <Card className="h-24 w-full max-w-sm animate-pulse rounded-lg border-slate-200 bg-white shadow-sm" />
+    <main className="grid min-h-screen place-items-center bg-background px-6 text-foreground">
+      <Card className="h-24 w-full max-w-sm animate-pulse bg-card shadow-sm" />
     </main>
   );
 }

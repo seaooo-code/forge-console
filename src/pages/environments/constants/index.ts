@@ -10,11 +10,11 @@ export const defaultForm: EnvironmentFormState = {
 };
 
 export const environmentToneClass: Record<EnvironmentCardTone, string> = {
-  amber: "border-t-amber-500",
-  blue: "border-t-blue-500",
-  emerald: "border-t-emerald-500",
-  rose: "border-t-rose-500",
-  sky: "border-t-sky-500",
+  amber: "border-t-amber-500 dark:border-t-amber-400",
+  blue: "border-t-blue-500 dark:border-t-blue-400",
+  emerald: "border-t-emerald-500 dark:border-t-emerald-400",
+  rose: "border-t-rose-500 dark:border-t-rose-400",
+  sky: "border-t-sky-500 dark:border-t-sky-400",
 };
 
 export const toneOptions: Array<{ label: string; value: EnvironmentCardTone }> = [

@@ -1,9 +1,10 @@
 import { skipToken, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Box, CircleAlert, GitFork, LoaderCircle, PackagePlus } from "lucide-react";
+import { ArrowLeft, Box, GitFork, LoaderCircle, PackagePlus } from "lucide-react";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { searchFeishuUsers } from "@/api/feishu-user-search";
 import { OwnerPicker } from "@/components/common/OwnerPicker";
+import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -232,25 +233,25 @@ export function ModuleCreatePage({
 
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)}>
-      <div className="border-slate-200 border-b bg-white px-6 py-5">
+      <div className="border-border border-b bg-card px-6 py-5">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div>
             <Button
               variant="ghost"
               type="button"
-              className="-ml-2 mb-3 h-8 gap-2 px-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+              className="-ml-2 mb-3 h-8 gap-2 px-2 text-muted-foreground hover:bg-muted hover:text-foreground"
               onClick={onBack}
             >
               <ArrowLeft className="size-4" />
               返回模块管理
             </Button>
             <div className="flex items-center gap-3">
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-white shadow-sm">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
                 <PackagePlus className="size-5" />
               </div>
               <div>
-                <h1 className="font-semibold text-2xl text-slate-950 tracking-tight">{title}</h1>
-                <p className="mt-2 text-slate-600 text-sm">{description}</p>
+                <h1 className="font-semibold text-2xl text-foreground tracking-tight">{title}</h1>
+                <p className="mt-2 text-muted-foreground text-sm">{description}</p>
               </div>
             </div>
           </div>
@@ -259,35 +260,40 @@ export function ModuleCreatePage({
             <Button variant="outline" type="button" onClick={onBack}>
               取消
             </Button>
-            <Button type="submit" className="bg-blue-600 hover:bg-blue-700" disabled={isSubmitting}>
+            <Button
+              type="submit"
+              className="bg-primary hover:bg-primary/90"
+              disabled={isSubmitting}
+            >
               {isSubmitting ? <LoaderCircle className="size-4 animate-spin" /> : null}
               {isEditMode ? "保存修改" : "创建模块"}
             </Button>
           </div>
         </div>
         {formError ? (
-          <div className="mt-4 flex items-start gap-2 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-rose-600 text-sm">
-            <CircleAlert className="mt-0.5 size-4 shrink-0" />
+          <Alert variant="danger" className="mt-4">
             {formError}
-          </div>
+          </Alert>
         ) : null}
       </div>
 
       <div className="px-6 py-5">
-        <Card className="gap-0 rounded-lg border-slate-200 py-0 shadow-sm">
+        <Card className="gap-0 rounded-lg border-border py-0 shadow-sm">
           <SectionHeader title="模块基础信息" description="模块唯一标识、关联应用和仓库地址" />
           <div className="space-y-5 p-4">
             <section>
               <div className="mb-3 flex items-center gap-2">
-                <div className="h-4 w-1 rounded-full bg-blue-500" />
-                <h2 className="font-semibold text-slate-900 text-sm">基础信息</h2>
+                <div className="h-4 w-1 rounded-full bg-primary" />
+                <h2 className="font-semibold text-foreground text-sm">基础信息</h2>
               </div>
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-12">
                 <Field label="模块 ID" className="xl:col-span-4">
                   <Input
                     readOnly={isEditMode}
                     aria-disabled={isEditMode}
-                    className={isEditMode ? "cursor-not-allowed bg-slate-50 text-slate-500" : ""}
+                    className={
+                      isEditMode ? "cursor-not-allowed bg-muted text-muted-foreground" : ""
+                    }
                     placeholder="例如：module-profile"
                     {...moduleIdField}
                     onChange={(event) => {
@@ -393,17 +399,17 @@ export function ModuleCreatePage({
                       )}
                     />
                     {commonModuleOptions.length === 0 ? (
-                      <p className="mt-2 text-amber-600 text-xs">请先为当前应用创建通用模块</p>
+                      <p className="mt-2 text-warning text-xs">请先为当前应用创建通用模块</p>
                     ) : null}
                   </Field>
                 ) : null}
               </div>
             </section>
 
-            <section className="border-slate-100 border-t pt-5">
+            <section className="border-border border-t pt-5">
               <div className="mb-3 flex items-center gap-2">
-                <div className="h-4 w-1 rounded-full bg-emerald-500" />
-                <h2 className="font-semibold text-slate-900 text-sm">仓库信息</h2>
+                <div className="h-4 w-1 rounded-full bg-success" />
+                <h2 className="font-semibold text-foreground text-sm">仓库信息</h2>
               </div>
               <Field label="Git 仓库" className="max-w-3xl">
                 <Controller
@@ -606,7 +612,7 @@ function RepositoryPicker({
   return (
     <div className="relative">
       <div className="flex items-center gap-2">
-        <GitFork className="size-4 shrink-0 text-slate-400" />
+        <GitFork className="size-4 shrink-0 text-muted-foreground" />
         <Input
           value={keyword}
           placeholder="搜索 GitHub 授权仓库，例如 org/repo"
@@ -623,39 +629,39 @@ function RepositoryPicker({
         />
       </div>
       {value ? (
-        <div className="mt-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-slate-600 text-xs">
+        <div className="mt-2 rounded-md border border-border bg-muted px-3 py-2 text-muted-foreground text-xs">
           已绑定 {value.fullName}
           {value.defaultBranch ? ` · 默认分支 ${value.defaultBranch}` : ""}
         </div>
       ) : null}
       {isOpen && keyword.trim().length >= 2 && selectedFullName !== keyword ? (
-        <div className="absolute z-20 mt-1 max-h-72 w-full overflow-auto rounded-md border border-slate-200 bg-white py-1 shadow-lg">
+        <div className="absolute z-20 mt-1 max-h-72 w-full overflow-auto rounded-md border border-border bg-card py-1 shadow-lg">
           {isLoading ? (
-            <div className="flex h-10 items-center gap-2 px-3 text-slate-500 text-sm">
+            <div className="flex h-10 items-center gap-2 px-3 text-muted-foreground text-sm">
               <LoaderCircle className="size-4 animate-spin" />
               搜索中
             </div>
           ) : null}
           {!isLoading && error ? (
-            <div className="px-3 py-2 text-rose-600 text-sm">{error}</div>
+            <div className="px-3 py-2 text-destructive text-sm">{error}</div>
           ) : null}
           {!isLoading && !error && repositories.length === 0 ? (
-            <div className="px-3 py-2 text-slate-500 text-sm">未找到匹配仓库</div>
+            <div className="px-3 py-2 text-muted-foreground text-sm">未找到匹配仓库</div>
           ) : null}
           {repositories.map((repository) => (
             <Button
               key={`${repository.provider}-${repository.id}`}
               type="button"
               variant="ghost"
-              className="h-auto w-full justify-start rounded-none px-3 py-2 text-left font-normal hover:bg-slate-50"
+              className="h-auto w-full justify-start rounded-none px-3 py-2 text-left font-normal hover:bg-muted"
               onClick={() => handleRepositorySelect(repository)}
             >
               <span className="min-w-0">
-                <span className="block truncate font-medium text-slate-900 text-sm">
+                <span className="block truncate font-medium text-foreground text-sm">
                   {repository.fullName}
                 </span>
                 {repository.defaultBranch ? (
-                  <span className="block truncate text-slate-500 text-xs">
+                  <span className="block truncate text-muted-foreground text-xs">
                     默认分支 {repository.defaultBranch}
                   </span>
                 ) : null}
@@ -674,17 +680,17 @@ function ModuleFormLoading({ onBack }: { onBack: () => void }) {
       <Button
         variant="ghost"
         type="button"
-        className="-ml-2 h-8 gap-2 px-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+        className="-ml-2 h-8 gap-2 px-2 text-muted-foreground hover:bg-muted hover:text-foreground"
         onClick={onBack}
       >
         <ArrowLeft className="size-4" />
         返回模块管理
       </Button>
-      <Card className="rounded-lg border-slate-200 p-6 shadow-none">
+      <Card className="rounded-lg border-border p-6 shadow-none">
         <div className="space-y-3">
-          <div className="h-5 w-36 animate-pulse rounded bg-slate-100" />
-          <div className="h-10 w-full animate-pulse rounded bg-slate-100" />
-          <div className="h-40 w-full animate-pulse rounded bg-slate-100" />
+          <div className="h-5 w-36 animate-pulse rounded bg-muted" />
+          <div className="h-10 w-full animate-pulse rounded bg-muted" />
+          <div className="h-40 w-full animate-pulse rounded bg-muted" />
         </div>
       </Card>
     </div>
@@ -697,15 +703,15 @@ function ModuleFormNotFound({ onBack }: { onBack: () => void }) {
       <Button
         variant="ghost"
         type="button"
-        className="-ml-2 h-8 gap-2 px-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+        className="-ml-2 h-8 gap-2 px-2 text-muted-foreground hover:bg-muted hover:text-foreground"
         onClick={onBack}
       >
         <ArrowLeft className="size-4" />
         返回模块管理
       </Button>
-      <Card className="rounded-lg border-slate-200 bg-white p-6 shadow-none">
-        <div className="font-semibold text-slate-900 text-sm">模块不存在</div>
-        <p className="mt-1 text-slate-500 text-sm">当前模块可能已被删除或路径无效。</p>
+      <Card className="rounded-lg border-border bg-card p-6 shadow-none">
+        <div className="font-semibold text-foreground text-sm">模块不存在</div>
+        <p className="mt-1 text-muted-foreground text-sm">当前模块可能已被删除或路径无效。</p>
       </Card>
     </div>
   );
@@ -720,43 +726,45 @@ function ModuleCodeSourceRequired({
 }) {
   return (
     <>
-      <div className="border-slate-200 border-b bg-white px-6 py-5">
+      <div className="border-border border-b bg-card px-6 py-5">
         <Button
           variant="ghost"
           type="button"
-          className="-ml-2 mb-3 h-8 gap-2 px-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+          className="-ml-2 mb-3 h-8 gap-2 px-2 text-muted-foreground hover:bg-muted hover:text-foreground"
           onClick={onBack}
         >
           <ArrowLeft className="size-4" />
           返回模块管理
         </Button>
         <div className="flex items-center gap-3">
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-white shadow-sm">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
             <PackagePlus className="size-5" />
           </div>
           <div>
-            <h1 className="font-semibold text-2xl text-slate-950 tracking-tight">新建模块</h1>
-            <p className="mt-2 text-slate-600 text-sm">登记新的模块仓库，并绑定归属应用与负责人</p>
+            <h1 className="font-semibold text-2xl text-foreground tracking-tight">新建模块</h1>
+            <p className="mt-2 text-muted-foreground text-sm">
+              登记新的模块仓库，并绑定归属应用与负责人
+            </p>
           </div>
         </div>
       </div>
 
       <div className="px-6 py-5">
-        <Card className="rounded-lg border-amber-200 bg-amber-50 p-5 text-amber-800 shadow-none">
+        <Card className="rounded-lg border-warning/40 bg-warning/10 p-5 text-warning shadow-none">
           <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div className="min-w-0">
               <div className="flex items-center gap-2 font-semibold text-sm">
                 <GitFork className="size-4 shrink-0" />
                 需要先安装代码源
               </div>
-              <p className="mt-2 max-w-2xl text-amber-700 text-sm leading-6">
+              <p className="mt-2 max-w-2xl text-warning text-sm leading-6">
                 当前账号还没有可用的代码源授权。新建模块需要从已授权仓库中选择 Git
                 仓库，请先到代码源管理安装 GitHub App。
               </p>
             </div>
             <Button
               type="button"
-              className="shrink-0 bg-amber-700 text-white hover:bg-amber-800"
+              className="shrink-0 bg-warning text-warning-foreground hover:bg-warning/90"
               onClick={onOpenCodeSources}
             >
               去代码源管理
@@ -770,13 +778,13 @@ function ModuleCodeSourceRequired({
 
 function SectionHeader({ description, title }: { description: string; title: string }) {
   return (
-    <div className="flex h-14 items-center gap-3 border-slate-200 border-b px-4">
-      <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-blue-50 text-blue-600">
+    <div className="flex h-14 items-center gap-3 border-border border-b px-4">
+      <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
         <Box className="size-4" />
       </div>
       <div className="min-w-0">
-        <div className="font-semibold text-slate-900 text-sm">{title}</div>
-        <div className="truncate text-slate-500 text-xs">{description}</div>
+        <div className="font-semibold text-foreground text-sm">{title}</div>
+        <div className="truncate text-muted-foreground text-xs">{description}</div>
       </div>
     </div>
   );
@@ -793,7 +801,7 @@ function Field({
 }) {
   return (
     <div className={className}>
-      <div className="mb-2 font-medium text-slate-600 text-xs">{label}</div>
+      <div className="mb-2 font-medium text-muted-foreground text-xs">{label}</div>
       {children}
     </div>
   );

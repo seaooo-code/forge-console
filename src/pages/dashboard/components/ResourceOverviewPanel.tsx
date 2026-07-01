@@ -21,9 +21,9 @@ type ResourceOverviewPanelProps = {
 
 export function ResourceOverviewPanel({ resources }: ResourceOverviewPanelProps) {
   return (
-    <Card className="gap-0 rounded-lg border-slate-200 py-0 shadow-sm">
+    <Card className="gap-0 rounded-lg border-border py-0 shadow-sm">
       <CardHeader className="h-12 border-b px-4 py-0">
-        <CardTitle className="flex h-full items-center text-slate-900 text-sm">平台资源</CardTitle>
+        <CardTitle className="flex h-full items-center text-foreground text-sm">平台资源</CardTitle>
       </CardHeader>
       <CardContent className="grid gap-3 px-4 py-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
         {resources.map((resource) => {
@@ -33,18 +33,18 @@ export function ResourceOverviewPanel({ resources }: ResourceOverviewPanelProps)
             <Link
               key={resource.id}
               to={resource.href}
-              className="rounded-lg border border-slate-200 bg-white px-3 py-3 transition-colors hover:border-blue-200 hover:bg-blue-50/40"
+              className="rounded-lg border border-border bg-card px-3 py-3 transition-colors hover:border-primary/30 hover:bg-primary/10"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex min-w-0 items-center gap-2">
-                  <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-slate-100 text-slate-600">
+                  <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground">
                     <Icon className="size-4" />
                   </span>
                   <div className="min-w-0">
-                    <div className="truncate font-medium text-slate-900 text-sm">
+                    <div className="truncate font-medium text-foreground text-sm">
                       {resource.label}
                     </div>
-                    <div className="mt-1 truncate text-slate-500 text-xs">
+                    <div className="mt-1 truncate text-muted-foreground text-xs">
                       {resource.description}
                     </div>
                   </div>
@@ -58,7 +58,7 @@ export function ResourceOverviewPanel({ resources }: ResourceOverviewPanelProps)
                   {resource.statusLabel}
                 </span>
               </div>
-              <div className="mt-3 font-semibold text-2xl text-slate-900">{resource.value}</div>
+              <div className="mt-3 font-semibold text-2xl text-foreground">{resource.value}</div>
             </Link>
           );
         })}

@@ -53,20 +53,22 @@ export function FeishuCallbackPage() {
   }, [navigate, searchParams, setSession]);
 
   return (
-    <main className="grid min-h-screen place-items-center bg-slate-50 px-6 text-slate-900">
-      <Card className="w-full max-w-md rounded-lg border-slate-200 bg-white shadow-sm">
+    <main className="grid min-h-screen place-items-center bg-background px-6 text-foreground">
+      <Card className="w-full max-w-md rounded-lg border-border bg-card shadow-sm">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
             {error ? (
-              <AlertTriangle className="size-5 text-amber-600" />
+              <AlertTriangle className="size-5 text-warning" />
             ) : (
-              <Loader2 className="size-5 animate-spin text-slate-500" />
+              <Loader2 className="size-5 animate-spin text-muted-foreground" />
             )}
             飞书登录
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-slate-600 text-sm">{error || "正在校验授权结果并同步用户信息。"}</p>
+          <p className="text-muted-foreground text-sm">
+            {error || "正在校验授权结果并同步用户信息。"}
+          </p>
           {error ? (
             <Button
               onClick={() => navigate("/login", { replace: true })}

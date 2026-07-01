@@ -15,6 +15,8 @@ import {
 } from "lucide-react";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
+import { Modal, ModalFooter, ModalHeader } from "@/components/common/Modal";
+import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -85,13 +87,13 @@ export function ModuleDetailPage({ moduleId, onBack, onEditModule }: ModuleDetai
 
   return (
     <>
-      <div className="border-slate-200 border-b bg-white px-6 py-5">
+      <div className="border-border border-b bg-card px-6 py-5">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div>
             <Button
               variant="ghost"
               type="button"
-              className="-ml-2 mb-3 h-8 gap-2 px-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+              className="-ml-2 mb-3 h-8 gap-2 px-2 text-muted-foreground hover:bg-muted hover:text-foreground"
               onClick={onBack}
             >
               <ArrowLeft className="size-4" />
@@ -100,13 +102,15 @@ export function ModuleDetailPage({ moduleId, onBack, onEditModule }: ModuleDetai
             <div className="flex flex-wrap items-center gap-3">
               <div
                 className={cn(
-                  "flex size-10 shrink-0 items-center justify-center rounded-lg text-white shadow-sm",
-                  module.kind === "Common" ? "bg-amber-500" : "bg-sky-600",
+                  "flex size-10 shrink-0 items-center justify-center rounded-lg shadow-sm",
+                  module.kind === "Common"
+                    ? "bg-warning text-warning-foreground"
+                    : "bg-info text-info-foreground",
                 )}
               >
                 <ModuleIcon className="size-5" />
               </div>
-              <h1 className="font-semibold text-2xl text-slate-950 tracking-tight">
+              <h1 className="font-semibold text-2xl text-foreground tracking-tight">
                 {module.name}
               </h1>
               <span
@@ -117,11 +121,11 @@ export function ModuleDetailPage({ moduleId, onBack, onEditModule }: ModuleDetai
               >
                 {module.kind}
               </span>
-              <Badge variant="outline" className="border-slate-200 font-mono text-slate-600">
+              <Badge variant="outline" className="border-border font-mono text-muted-foreground">
                 {module.id}
               </Badge>
             </div>
-            <p className="mt-2 text-slate-600 text-sm">
+            <p className="mt-2 text-muted-foreground text-sm">
               {module.kind === "Common"
                 ? "通用模块提供应用内功能模块的基础依赖。"
                 : "功能模块绑定宿主应用，并依赖同应用下的通用模块。"}
@@ -137,7 +141,7 @@ export function ModuleDetailPage({ moduleId, onBack, onEditModule }: ModuleDetai
             <div className="flex justify-end gap-2">
               <Button
                 type="button"
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-primary hover:bg-primary/90"
                 onClick={() => {
                   setBuildError("");
                   setBuildSuccess("");
@@ -152,18 +156,14 @@ export function ModuleDetailPage({ moduleId, onBack, onEditModule }: ModuleDetai
                 编辑配置
               </Button>
             </div>
-            {buildSuccess ? (
-              <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-emerald-700 text-sm">
-                {buildSuccess}
-              </div>
-            ) : null}
+            {buildSuccess ? <Alert variant="success">{buildSuccess}</Alert> : null}
           </div>
         </div>
       </div>
 
       <div className="space-y-4 px-6 py-5">
         <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
-          <Card className="gap-0 rounded-lg border-slate-200 py-0 shadow-sm">
+          <Card className="gap-0 rounded-lg border-border py-0 shadow-sm">
             <SectionHeader title="仓库绑定" description="模块代码源与默认分支" />
             <div className="grid gap-3 p-4 md:grid-cols-2">
               <DetailItem icon={GitFork} label="仓库" value={module.repository} />
@@ -175,7 +175,7 @@ export function ModuleDetailPage({ moduleId, onBack, onEditModule }: ModuleDetai
             </div>
           </Card>
 
-          <Card className="gap-0 rounded-lg border-slate-200 py-0 shadow-sm">
+          <Card className="gap-0 rounded-lg border-border py-0 shadow-sm">
             <SectionHeader title="模块关系" description="应用归属与通用模块依赖" />
             <div className="grid gap-3 p-4">
               <DetailItem icon={Boxes} label="关联应用" value={module.applicationName} />
@@ -230,11 +230,11 @@ function InfoPill({
   value: string;
 }) {
   return (
-    <div className="flex min-w-0 items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
-      <Icon className="size-4 shrink-0 text-slate-400" />
+    <div className="flex min-w-0 items-center gap-2 rounded-lg border border-border bg-muted px-3 py-2">
+      <Icon className="size-4 shrink-0 text-muted-foreground" />
       <div className="min-w-0">
-        <div className="text-slate-500 text-xs">{label}</div>
-        <div className="truncate font-semibold text-slate-800 text-sm">{value}</div>
+        <div className="text-muted-foreground text-xs">{label}</div>
+        <div className="truncate font-semibold text-foreground text-sm">{value}</div>
       </div>
     </div>
   );
@@ -242,13 +242,13 @@ function InfoPill({
 
 function OwnerInfoPill({ module }: { module: ModuleRecord }) {
   return (
-    <div className="flex min-w-0 items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+    <div className="flex min-w-0 items-center gap-2 rounded-lg border border-border bg-muted px-3 py-2">
       <OwnerAvatar avatarUrl={module.ownerAvatarUrl} name={module.owner} />
       <div className="min-w-0">
-        <div className="text-slate-500 text-xs">负责人</div>
-        <div className="truncate font-semibold text-slate-800 text-sm">{module.owner || "-"}</div>
+        <div className="text-muted-foreground text-xs">负责人</div>
+        <div className="truncate font-semibold text-foreground text-sm">{module.owner || "-"}</div>
         {module.ownerEmail ? (
-          <div className="truncate text-slate-500 text-xs">{module.ownerEmail}</div>
+          <div className="truncate text-muted-foreground text-xs">{module.ownerEmail}</div>
         ) : null}
       </div>
     </div>
@@ -261,7 +261,7 @@ function OwnerAvatar({ avatarUrl, name }: { avatarUrl: string; name: string }) {
   }
 
   return (
-    <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-rose-500 font-semibold text-white text-xs">
+    <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary font-semibold text-primary-foreground text-xs">
       {name.slice(0, 1).toUpperCase() || <UserRound className="size-4" />}
     </span>
   );
@@ -269,10 +269,10 @@ function OwnerAvatar({ avatarUrl, name }: { avatarUrl: string; name: string }) {
 
 function SectionHeader({ description, title }: { description: string; title: string }) {
   return (
-    <div className="flex h-12 items-center justify-between border-slate-200 border-b px-4">
+    <div className="flex h-12 items-center justify-between border-border border-b px-4">
       <div>
-        <div className="font-semibold text-slate-900 text-sm">{title}</div>
-        <div className="text-slate-500 text-xs">{description}</div>
+        <div className="font-semibold text-foreground text-sm">{title}</div>
+        <div className="text-muted-foreground text-xs">{description}</div>
       </div>
     </div>
   );
@@ -292,16 +292,16 @@ function DetailItem({
   return (
     <div
       className={cn(
-        "flex min-w-0 gap-3 rounded-md border border-slate-200 bg-white px-3 py-3",
+        "flex min-w-0 gap-3 rounded-md border border-border bg-card px-3 py-3",
         wide && "md:col-span-2",
       )}
     >
-      <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-500">
+      <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
         <Icon className="size-4" />
       </div>
       <div className="min-w-0">
-        <div className="font-medium text-slate-500 text-xs">{label}</div>
-        <div className="mt-1 break-all font-semibold text-slate-800 text-sm">{value || "-"}</div>
+        <div className="font-medium text-muted-foreground text-xs">{label}</div>
+        <div className="mt-1 break-all font-semibold text-foreground text-sm">{value || "-"}</div>
       </div>
     </div>
   );
@@ -323,11 +323,11 @@ function PublishedBuildsPanel({
   records: ReleasePointerRecord[];
 }) {
   return (
-    <Card className="gap-0 rounded-lg border-slate-200 py-0 shadow-sm">
+    <Card className="gap-0 rounded-lg border-border py-0 shadow-sm">
       <SectionHeader title="已发布构建" description="当前模块已发布的全量和标识构建" />
       {records.length > 0 ? (
         <div className="overflow-hidden">
-          <div className="hidden border-slate-200 border-b bg-slate-50 px-4 py-2 font-medium text-slate-500 text-xs xl:grid xl:grid-cols-[110px_170px_110px_100px_minmax(140px,1fr)_92px_120px]">
+          <div className="hidden border-border border-b bg-muted px-4 py-2 font-medium text-muted-foreground text-xs xl:grid xl:grid-cols-[110px_170px_110px_100px_minmax(140px,1fr)_92px_120px]">
             <span>构建 ID</span>
             <span>发布时间</span>
             <span>环境</span>
@@ -336,32 +336,34 @@ function PublishedBuildsPanel({
             <span>状态</span>
             <span>操作人</span>
           </div>
-          <div className="divide-y divide-slate-200">
+          <div className="divide-y divide-border">
             {records.map((record) => (
               <div
                 key={record.id}
                 className="grid gap-2 px-4 py-3 text-sm xl:grid-cols-[110px_170px_110px_100px_minmax(140px,1fr)_92px_120px] xl:items-center"
               >
                 <PublishedBuildField label="构建 ID">
-                  <span className="font-mono font-semibold text-slate-800 text-xs">
+                  <span className="font-mono font-semibold text-foreground text-xs">
                     {formatShortRecordID(record.buildRecordId)}
                   </span>
                 </PublishedBuildField>
                 <PublishedBuildField label="发布时间">
-                  <span className="font-mono text-slate-600 text-xs">{record.createdAt}</span>
+                  <span className="font-mono text-muted-foreground text-xs">
+                    {record.createdAt}
+                  </span>
                 </PublishedBuildField>
                 <PublishedBuildField label="环境">
-                  <span className="truncate font-medium text-slate-700">
+                  <span className="truncate font-medium text-foreground">
                     {record.environmentName}
                   </span>
                 </PublishedBuildField>
                 <PublishedBuildField label="发布类型">
-                  <span className="font-medium text-slate-700 text-xs">
+                  <span className="font-medium text-foreground text-xs">
                     {getReleaseRecordTypeLabel(record)}
                   </span>
                 </PublishedBuildField>
                 <PublishedBuildField label="标识">
-                  <span className="truncate text-slate-600">
+                  <span className="truncate text-muted-foreground">
                     {getReleaseRecordTargetLabel(record)}
                   </span>
                 </PublishedBuildField>
@@ -369,14 +371,14 @@ function PublishedBuildsPanel({
                   <ReleaseStatusBadge status={record.status} />
                 </PublishedBuildField>
                 <PublishedBuildField label="操作人">
-                  <span className="truncate text-slate-600">{record.operator}</span>
+                  <span className="truncate text-muted-foreground">{record.operator}</span>
                 </PublishedBuildField>
               </div>
             ))}
           </div>
         </div>
       ) : (
-        <div className="px-4 py-8 text-center text-slate-500 text-sm">
+        <div className="px-4 py-8 text-center text-muted-foreground text-sm">
           {isFetching ? "正在加载已发布构建" : "暂无已发布构建"}
         </div>
       )}
@@ -387,7 +389,7 @@ function PublishedBuildsPanel({
 function PublishedBuildField({ children, label }: { children: ReactNode; label: string }) {
   return (
     <div className="grid min-w-0 grid-cols-[72px_minmax(0,1fr)] items-center gap-2 xl:block">
-      <span className="font-medium text-slate-500 text-xs xl:hidden">{label}</span>
+      <span className="font-medium text-muted-foreground text-xs xl:hidden">{label}</span>
       <div className="min-w-0">{children}</div>
     </div>
   );
@@ -462,81 +464,69 @@ function ModuleBuildDialog({
   }
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/40 px-4 backdrop-blur-xs">
-      <section
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="module-build-dialog-title"
-        aria-describedby="module-build-dialog-description"
-        className="w-full max-w-lg rounded-lg border border-slate-200 bg-white p-5 shadow-xl"
-      >
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <div className="space-y-2">
-            <h2 id="module-build-dialog-title" className="font-semibold text-lg text-slate-950">
-              新增构建
-            </h2>
-            <p id="module-build-dialog-description" className="text-slate-600 text-sm leading-6">
-              为「{module.name}」创建构建记录，产物将上传到所选环境绑定的存储配置。
-            </p>
-          </div>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      labelledBy="module-build-dialog-title"
+      describedBy="module-build-dialog-description"
+      className="max-w-lg"
+    >
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <ModalHeader
+          title="新增构建"
+          titleId="module-build-dialog-title"
+          descriptionId="module-build-dialog-description"
+          description={`为「${module.name}」创建构建记录，产物将上传到所选环境绑定的存储配置。`}
+        />
 
-          <div className="mt-4 space-y-4">
-            <Field label="分支" inputId="module-build-branch">
-              <Input
-                id="module-build-branch"
-                placeholder={module.defaultBranch || "输入 Git 分支"}
-                {...register("branch")}
-              />
-            </Field>
-            <Field label="环境" inputId="module-build-environment">
-              <Controller
-                control={control}
-                name="environment"
-                render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger id="module-build-environment" className="w-full">
-                      <SelectValue
-                        placeholder={isEnvironmentsFetching ? "环境加载中" : "选择环境"}
-                      />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {environmentOptions.map((environment) => (
-                        <SelectItem key={environment.value} value={environment.value}>
-                          {environment.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-            </Field>
-            {submitError ? (
-              <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-rose-600 text-sm">
-                {submitError}
-              </div>
-            ) : null}
-            {!isEnvironmentsFetching && !hasEnvironmentOptions ? (
-              <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-amber-700 text-sm">
-                暂无可用环境，请先在环境管理中创建环境。
-              </div>
-            ) : null}
-          </div>
+        <div className="mt-4 space-y-4">
+          <Field label="分支" inputId="module-build-branch">
+            <Input
+              id="module-build-branch"
+              placeholder={module.defaultBranch || "输入 Git 分支"}
+              {...register("branch")}
+            />
+          </Field>
+          <Field label="环境" inputId="module-build-environment">
+            <Controller
+              control={control}
+              name="environment"
+              render={({ field }) => (
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger id="module-build-environment" className="w-full">
+                    <SelectValue placeholder={isEnvironmentsFetching ? "环境加载中" : "选择环境"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {environmentOptions.map((environment) => (
+                      <SelectItem key={environment.value} value={environment.value}>
+                        {environment.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+          </Field>
+          {submitError ? <Alert variant="danger">{submitError}</Alert> : null}
+          {!isEnvironmentsFetching && !hasEnvironmentOptions ? (
+            <Alert variant="warning">暂无可用环境，请先在环境管理中创建环境。</Alert>
+          ) : null}
+        </div>
 
-          <div className="mt-5 flex justify-end gap-2">
-            <Button variant="outline" type="button" disabled={isSubmitting} onClick={onClose}>
-              取消
-            </Button>
-            <Button
-              type="submit"
-              className="bg-blue-600 text-white hover:bg-blue-700"
-              disabled={isSubmitting || isEnvironmentsFetching || !hasEnvironmentOptions}
-            >
-              {isSubmitting ? "提交中" : "提交构建"}
-            </Button>
-          </div>
-        </form>
-      </section>
-    </div>
+        <ModalFooter>
+          <Button variant="outline" type="button" disabled={isSubmitting} onClick={onClose}>
+            取消
+          </Button>
+          <Button
+            type="submit"
+            className="bg-primary text-primary-foreground hover:bg-primary/90"
+            disabled={isSubmitting || isEnvironmentsFetching || !hasEnvironmentOptions}
+          >
+            {isSubmitting ? "提交中" : "提交构建"}
+          </Button>
+        </ModalFooter>
+      </form>
+    </Modal>
   );
 }
 
@@ -551,7 +541,7 @@ function Field({
 }) {
   return (
     <div className="space-y-1.5">
-      <label htmlFor={inputId} className="font-medium text-slate-600 text-xs">
+      <label htmlFor={inputId} className="font-medium text-muted-foreground text-xs">
         {label}
       </label>
       {children}
@@ -565,26 +555,26 @@ function ModuleDetailFallback({ isFetching, onBack }: { isFetching: boolean; onB
       <Button
         variant="ghost"
         type="button"
-        className="-ml-2 h-8 gap-2 px-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+        className="-ml-2 h-8 gap-2 px-2 text-muted-foreground hover:bg-muted hover:text-foreground"
         onClick={onBack}
       >
         <ArrowLeft className="size-4" />
         返回模块管理
       </Button>
 
-      <Card className="rounded-lg border-slate-200 p-6 shadow-none">
+      <Card className="rounded-lg border-border p-6 shadow-none">
         {isFetching ? (
           <div className="space-y-3">
-            <div className="h-5 w-36 animate-pulse rounded bg-slate-100" />
-            <div className="h-10 w-full animate-pulse rounded bg-slate-100" />
-            <div className="h-32 w-full animate-pulse rounded bg-slate-100" />
+            <div className="h-5 w-36 animate-pulse rounded bg-muted" />
+            <div className="h-10 w-full animate-pulse rounded bg-muted" />
+            <div className="h-32 w-full animate-pulse rounded bg-muted" />
           </div>
         ) : (
           <div className="flex items-start gap-3">
-            <CircleAlert className="mt-0.5 size-5 shrink-0 text-amber-500" />
+            <CircleAlert className="mt-0.5 size-5 shrink-0 text-warning" />
             <div>
-              <div className="font-semibold text-slate-900">未找到模块详情</div>
-              <div className="mt-1 text-slate-500 text-sm">当前接口没有返回对应的模块。</div>
+              <div className="font-semibold text-foreground">未找到模块详情</div>
+              <div className="mt-1 text-muted-foreground text-sm">当前接口没有返回对应的模块。</div>
             </div>
           </div>
         )}

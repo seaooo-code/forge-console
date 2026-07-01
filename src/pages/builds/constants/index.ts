@@ -1,11 +1,11 @@
 import type { BuildRunStatus, BuildTriggerType } from "../types";
 
 export const buildStatusClass: Record<BuildRunStatus, string> = {
-  canceled: "border-slate-200 bg-slate-50 text-slate-600",
-  failed: "border-red-200 bg-red-50 text-red-600",
-  queued: "border-amber-200 bg-amber-50 text-amber-700",
-  running: "border-sky-200 bg-sky-50 text-sky-700",
-  success: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  canceled: "border-border bg-muted text-muted-foreground",
+  failed: "border-destructive/30 bg-destructive/10 text-destructive",
+  queued: "border-warning/40 bg-warning/10 text-warning",
+  running: "border-info/30 bg-info/10 text-info",
+  success: "border-success/30 bg-success/10 text-success",
 };
 
 export const buildStatusLabels: Record<BuildRunStatus, string> = {

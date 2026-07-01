@@ -17,6 +17,7 @@ import { fetchStorageConfigurationsSnapshot } from "@/api/storage-configurations
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { ConsoleTableFooter } from "@/components/common/ConsoleControls";
 import { consoleGridTheme } from "@/components/common/console-grid-theme";
+import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -147,18 +148,18 @@ export function StoragePage({ onCreateStorage, onEditStorage }: StoragePageProps
 
   return (
     <>
-      <div className="border-slate-200 border-b bg-white px-6 py-5">
+      <div className="border-border border-b bg-card px-6 py-5">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div>
-            <div className="text-slate-500 text-xs">平台 / 存储管理</div>
-            <h1 className="mt-2 font-semibold text-2xl text-slate-950 tracking-tight">存储管理</h1>
-            <p className="mt-2 text-slate-600 text-sm">
+            <div className="text-muted-foreground text-xs">平台 / 存储管理</div>
+            <h1 className="mt-2 font-semibold text-2xl text-foreground tracking-tight">存储管理</h1>
+            <p className="mt-2 text-muted-foreground text-sm">
               S3-Compatible 对象存储配置，统一管理 Bundle 产物上传与分发入口
             </p>
           </div>
           <Button
             type="button"
-            className="shrink-0 bg-blue-600 hover:bg-blue-700"
+            className="shrink-0 bg-primary hover:bg-primary/90"
             disabled={!canManageStorage}
             onClick={onCreateStorage}
           >
@@ -169,15 +170,17 @@ export function StoragePage({ onCreateStorage, onEditStorage }: StoragePageProps
       </div>
 
       <div className="px-6 py-5">
-        <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-slate-200 border-b px-4 py-3">
+        <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-border border-b px-4 py-3">
             <div className="flex min-w-0 items-center gap-2">
-              <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-blue-50 text-blue-600">
+              <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
                 <Database className="size-4" />
               </div>
               <div className="min-w-0">
-                <h2 className="font-semibold text-slate-900 text-sm">存储配置列表</h2>
-                <p className="text-slate-500 text-xs">共 {snapshot.configurations.length} 条配置</p>
+                <h2 className="font-semibold text-foreground text-sm">存储配置列表</h2>
+                <p className="text-muted-foreground text-xs">
+                  共 {snapshot.configurations.length} 条配置
+                </p>
               </div>
             </div>
           </div>
@@ -232,11 +235,7 @@ export function StoragePage({ onCreateStorage, onEditStorage }: StoragePageProps
           }
         }}
       >
-        {deleteError ? (
-          <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-rose-600 text-sm">
-            {deleteError}
-          </div>
-        ) : null}
+        {deleteError ? <Alert variant="danger">{deleteError}</Alert> : null}
       </ConfirmDialog>
     </>
   );
@@ -245,15 +244,15 @@ export function StoragePage({ onCreateStorage, onEditStorage }: StoragePageProps
 function StoragePageLoading() {
   return (
     <>
-      <div className="border-slate-200 border-b bg-white px-6 py-5">
-        <div className="text-slate-500 text-xs">平台 / 存储管理</div>
-        <h1 className="mt-2 font-semibold text-2xl text-slate-950 tracking-tight">存储管理</h1>
-        <p className="mt-2 text-slate-600 text-sm">
+      <div className="border-border border-b bg-card px-6 py-5">
+        <div className="text-muted-foreground text-xs">平台 / 存储管理</div>
+        <h1 className="mt-2 font-semibold text-2xl text-foreground tracking-tight">存储管理</h1>
+        <p className="mt-2 text-muted-foreground text-sm">
           S3-Compatible 对象存储配置，统一管理 Bundle 产物上传与分发入口
         </p>
       </div>
       <div className="px-6 py-5">
-        <Card className="h-96 animate-pulse rounded-lg border-slate-200 bg-white shadow-none" />
+        <Card className="h-96 animate-pulse rounded-lg border-border bg-card shadow-none" />
       </div>
     </>
   );
@@ -275,15 +274,15 @@ function StorageNameCell({ data }: ICellRendererParams<StorageConfigRecord>) {
         <Cloud className="size-4" />
       </div>
       <div className="min-w-0">
-        <div className="truncate font-semibold text-slate-900 text-sm">{data.name}</div>
-        <div className="truncate text-slate-500 text-xs">{data.id}</div>
+        <div className="truncate font-semibold text-foreground text-sm">{data.name}</div>
+        <div className="truncate text-muted-foreground text-xs">{data.id}</div>
       </div>
     </div>
   );
 }
 
 function OwnerCell({ value }: ICellRendererParams<StorageConfigRecord, string>) {
-  return <span className="truncate text-slate-700 text-sm">{value || "-"}</span>;
+  return <span className="truncate text-foreground text-sm">{value || "-"}</span>;
 }
 
 function BucketCell({ value }: ICellRendererParams<StorageConfigRecord, string>) {
@@ -293,12 +292,12 @@ function BucketCell({ value }: ICellRendererParams<StorageConfigRecord, string>)
 
   return (
     <div className="flex min-w-0 items-center gap-1.5">
-      <span className="truncate font-mono text-slate-700 text-xs">{value}</span>
+      <span className="truncate font-mono text-foreground text-xs">{value}</span>
       <Button
         variant="ghost"
         type="button"
         size="icon"
-        className="size-6 shrink-0 text-slate-400 hover:text-slate-700"
+        className="size-6 shrink-0 text-muted-foreground hover:text-foreground"
         aria-label="复制 Bucket"
         onClick={() => void navigator.clipboard?.writeText(value)}
       >
@@ -309,11 +308,11 @@ function BucketCell({ value }: ICellRendererParams<StorageConfigRecord, string>)
 }
 
 function EndpointCell({ value }: ICellRendererParams<StorageConfigRecord, string>) {
-  return <span className="truncate font-mono text-slate-600 text-xs">{value}</span>;
+  return <span className="truncate font-mono text-muted-foreground text-xs">{value}</span>;
 }
 
 function PublicBaseUrlCell({ value }: ICellRendererParams<StorageConfigRecord, string>) {
-  return <span className="truncate font-mono text-slate-600 text-xs">{value || "-"}</span>;
+  return <span className="truncate font-mono text-muted-foreground text-xs">{value || "-"}</span>;
 }
 
 function StatusCell({ value }: ICellRendererParams<StorageConfigRecord, StorageStatus>) {
@@ -358,7 +357,7 @@ function ActionsCell({
         variant="ghost"
         type="button"
         size="icon"
-        className="size-8 text-slate-500 hover:text-blue-600"
+        className="size-8 text-muted-foreground hover:text-primary"
         aria-label="编辑存储配置"
         disabled={!canManageStorage}
         onClick={() => onEditStorage?.(data.id)}
@@ -369,7 +368,7 @@ function ActionsCell({
         variant="ghost"
         type="button"
         size="icon"
-        className="size-8 text-slate-500 hover:text-red-600"
+        className="size-8 text-muted-foreground hover:text-destructive"
         aria-label="删除存储配置"
         disabled={!canManageStorage}
         onClick={() => onDeleteStorage?.(data)}

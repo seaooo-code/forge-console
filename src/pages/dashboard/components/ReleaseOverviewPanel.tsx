@@ -18,34 +18,34 @@ export function ReleaseOverviewPanel({ releases }: ReleaseOverviewPanelProps) {
   const latestRelease = releases[0];
 
   return (
-    <Card className="gap-0 rounded-lg border-slate-200 py-0 shadow-sm">
+    <Card className="gap-0 rounded-lg border-border py-0 shadow-sm">
       <CardHeader className="flex h-12 flex-row items-center justify-between border-b px-4 py-0">
         <div className="min-w-0">
-          <CardTitle className="text-slate-900 text-sm">发布概览</CardTitle>
-          <div className="mt-1 text-slate-500 text-xs">当前发布目标与状态分布</div>
+          <CardTitle className="text-foreground text-sm">发布概览</CardTitle>
+          <div className="mt-1 text-muted-foreground text-xs">当前发布目标与状态分布</div>
         </div>
-        <Button asChild variant="outline" size="sm" className="h-8 shrink-0 border-slate-200">
+        <Button asChild variant="outline" size="sm" className="h-8 shrink-0 border-border">
           <Link to="/release-records">打开发布</Link>
         </Button>
       </CardHeader>
       <CardContent className="space-y-4 px-4 py-4">
         <div className="grid grid-cols-2 gap-3">
+          <StatusTile label="生效中" value={activeCount} className="bg-success/15 text-success" />
           <StatusTile
-            label="生效中"
-            value={activeCount}
-            className="bg-emerald-50 text-emerald-700"
+            label="已失效"
+            value={inactiveCount}
+            className="bg-muted text-muted-foreground"
           />
-          <StatusTile label="已失效" value={inactiveCount} className="bg-slate-50 text-slate-700" />
         </div>
 
         {latestRelease ? (
-          <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3">
+          <div className="rounded-lg border border-border bg-muted px-3 py-3">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
-                <div className="truncate font-medium text-slate-900 text-sm">
+                <div className="truncate font-medium text-foreground text-sm">
                   {latestRelease.module}
                 </div>
-                <div className="mt-1 truncate text-slate-500 text-xs">
+                <div className="mt-1 truncate text-muted-foreground text-xs">
                   {latestRelease.application} / {latestRelease.id}
                 </div>
               </div>
@@ -58,7 +58,7 @@ export function ReleaseOverviewPanel({ releases }: ReleaseOverviewPanelProps) {
                 {recentReleaseStatusLabel[latestRelease.status]}
               </span>
             </div>
-            <div className="mt-3 flex flex-wrap items-center gap-2 text-slate-500 text-xs">
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-muted-foreground text-xs">
               <EnvironmentBadge
                 className="h-5 px-2 py-0.5 font-medium"
                 environment={latestRelease.environment}
@@ -68,7 +68,7 @@ export function ReleaseOverviewPanel({ releases }: ReleaseOverviewPanelProps) {
             </div>
           </div>
         ) : (
-          <div className="grid h-24 place-items-center rounded-lg bg-slate-50 text-slate-500 text-sm">
+          <div className="grid h-24 place-items-center rounded-lg bg-muted text-muted-foreground text-sm">
             暂无发布记录
           </div>
         )}

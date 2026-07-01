@@ -24,6 +24,6 @@ export const navIconMap: Record<string, LucideIcon> = {
 };
 
 export const statusClass: Record<MemberStatus, string> = {
-  停用: "border-slate-200 bg-slate-100 text-slate-600",
-  启用: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  停用: "border-border bg-muted text-muted-foreground",
+  启用: "border-success/30 bg-success/10 text-success",
 };

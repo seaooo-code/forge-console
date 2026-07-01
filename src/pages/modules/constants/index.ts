@@ -19,8 +19,8 @@ export const defaultForm: ModuleFormState = {
 };
 
 export const kindClass: Record<ModuleKind, string> = {
-  Common: "border-amber-200 bg-amber-50 text-amber-700",
-  Feature: "border-sky-200 bg-sky-50 text-sky-700",
+  Common: "border-warning/40 bg-warning/10 text-warning",
+  Feature: "border-info/30 bg-info/10 text-info",
 };
 
 export const kindOptions: Array<{ label: string; value: ModuleKind }> = [

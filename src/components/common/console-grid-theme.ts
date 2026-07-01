@@ -1,24 +1,26 @@
 import { themeQuartz } from "@/lib/ag-grid";
 
+// Colors are driven by the app's CSS custom properties (see index.css), so the
+// grid follows the global light/dark theme with a single definition — no
+// per-consumer theme switching required.
 export const consoleGridTheme = themeQuartz.withParams({
-  accentColor: "#1677ff",
-  backgroundColor: "#ffffff",
-  borderColor: "#e5eaf2",
+  accentColor: "var(--primary)",
+  backgroundColor: "var(--card)",
+  borderColor: "var(--border)",
   borderRadius: 0,
-  browserColorScheme: "light",
+  browserColorScheme: "inherit",
   columnBorder: false,
-  fontFamily:
-    '"Roboto Flex Variable", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif',
+  fontFamily: "var(--app-font-sans)",
   fontSize: 13,
-  foregroundColor: "#334155",
-  headerBackgroundColor: "#f8fafc",
+  foregroundColor: "var(--card-foreground)",
+  headerBackgroundColor: "var(--surface-2)",
   headerFontSize: 12,
   headerFontWeight: 600,
-  headerTextColor: "#64748b",
-  oddRowBackgroundColor: "#ffffff",
-  rowBorder: { color: "#e8edf5", style: "solid", width: 1 },
-  rowHoverColor: "#f8fbff",
-  selectedRowBackgroundColor: "#eff6ff",
+  headerTextColor: "var(--muted-foreground)",
+  oddRowBackgroundColor: "var(--card)",
+  rowBorder: { color: "var(--border)", style: "solid", width: 1 },
+  rowHoverColor: "color-mix(in oklch, var(--primary) 8%, transparent)",
+  selectedRowBackgroundColor: "color-mix(in oklch, var(--primary) 12%, transparent)",
   spacing: 7,
   wrapperBorder: false,
   wrapperBorderRadius: 0,

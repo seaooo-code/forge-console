@@ -22,6 +22,7 @@ import {
   ConsoleSearchInput,
   ConsoleTableFooter,
 } from "@/components/common/ConsoleControls";
+import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -134,7 +135,7 @@ export function ApplicationsPage({
       {
         detail: "全部启用",
         icon: AppWindow,
-        iconClass: "bg-blue-50 text-blue-600",
+        iconClass: "bg-info/10 text-info",
         id: "total",
         label: "应用总数",
         value: summary.total,
@@ -142,7 +143,7 @@ export function ApplicationsPage({
       {
         detail: percentage(summary.running, summary.total),
         icon: Activity,
-        iconClass: "bg-emerald-50 text-emerald-600",
+        iconClass: "bg-success/10 text-success",
         id: "running",
         label: "运行中",
         value: summary.running,
@@ -150,7 +151,7 @@ export function ApplicationsPage({
       {
         detail: percentage(summary.maintenance, summary.total),
         icon: Wrench,
-        iconClass: "bg-amber-50 text-amber-600",
+        iconClass: "bg-warning/10 text-warning",
         id: "maintenance",
         label: "维护中",
         value: summary.maintenance,
@@ -158,7 +159,7 @@ export function ApplicationsPage({
       {
         detail: "归档",
         icon: ArchiveX,
-        iconClass: "bg-slate-100 text-slate-500",
+        iconClass: "bg-muted text-muted-foreground",
         id: "offline",
         label: "已下线",
         value: summary.offline,
@@ -270,10 +271,12 @@ export function ApplicationsPage({
 
   return (
     <>
-      <div className="border-slate-200 border-b bg-white px-6 py-5">
+      <div className="border-border border-b bg-card px-6 py-5">
         <div>
-          <h1 className="font-semibold text-2xl text-slate-950 tracking-tight">应用管理</h1>
-          <p className="mt-2 text-slate-600 text-sm">管理 RN Bundle 平台接入的所有宿主应用</p>
+          <h1 className="font-semibold text-2xl text-foreground tracking-tight">应用管理</h1>
+          <p className="mt-2 text-muted-foreground text-sm">
+            管理 RN Bundle 平台接入的所有宿主应用
+          </p>
         </div>
       </div>
 
@@ -286,11 +289,11 @@ export function ApplicationsPage({
               <Card key={item.id} className="rounded-lg px-5 py-4 shadow-none">
                 <div className="flex items-center justify-between gap-4">
                   <div className="space-y-2">
-                    <div className="font-medium text-slate-500 text-sm">{item.label}</div>
-                    <div className="font-semibold text-3xl text-slate-950 leading-none">
+                    <div className="font-medium text-muted-foreground text-sm">{item.label}</div>
+                    <div className="font-semibold text-3xl text-foreground leading-none">
                       {item.value}
                     </div>
-                    <div className="font-medium text-slate-400 text-xs">{item.detail}</div>
+                    <div className="font-medium text-muted-foreground text-xs">{item.detail}</div>
                   </div>
                   <div
                     className={cn(
@@ -306,8 +309,8 @@ export function ApplicationsPage({
           })}
         </section>
 
-        <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-slate-200 border-b px-4 py-3">
+        <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-border border-b px-4 py-3">
             <div className="flex min-w-0 flex-wrap items-center gap-2">
               <ConsoleClearableFilterSelect
                 icon={MonitorSmartphone}
@@ -352,7 +355,7 @@ export function ApplicationsPage({
                 <RefreshCw className={isFetching ? "size-4 animate-spin" : "size-4"} />
               </Button>
               <Button
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-primary hover:bg-primary/90"
                 disabled={!canCreateApplication}
                 onClick={onCreateApplication}
               >
@@ -422,11 +425,7 @@ export function ApplicationsPage({
           }
         }}
       >
-        {statusActionError ? (
-          <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-rose-600 text-sm">
-            {statusActionError}
-          </div>
-        ) : null}
+        {statusActionError ? <Alert variant="danger">{statusActionError}</Alert> : null}
       </ConfirmDialog>
       <ConfirmDialog
         isOpen={deleteTarget !== null}
@@ -467,34 +466,22 @@ export function ApplicationsPage({
           }
         }}
       >
-        {isCheckingDelete ? (
-          <div className="rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-blue-700 text-sm">
-            正在检查应用依赖
-          </div>
-        ) : null}
-        {isDeleteCheckError ? (
-          <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-rose-600 text-sm">
-            依赖检查失败，请稍后重试
-          </div>
-        ) : null}
-        {deleteCheck?.message ? (
-          <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-slate-600 text-sm">
-            {deleteCheck.message}
-          </div>
-        ) : null}
+        {isCheckingDelete ? <Alert variant="info">正在检查应用依赖</Alert> : null}
+        {isDeleteCheckError ? <Alert variant="danger">依赖检查失败，请稍后重试</Alert> : null}
+        {deleteCheck?.message ? <Alert variant="default">{deleteCheck.message}</Alert> : null}
         {deleteCheck && deleteCheck.dependencies.length > 0 ? (
-          <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-amber-700 text-sm">
+          <Alert variant="warning">
             <div className="font-medium">存在依赖，不能删除</div>
             <div className="mt-2 space-y-1">
               {deleteCheck.dependencies.map((dependency) => (
                 <div key={dependency.id} className="flex min-w-0 items-start gap-2">
-                  <span className="shrink-0 rounded bg-amber-100 px-1.5 py-0.5 font-medium text-amber-800 text-xs">
+                  <span className="shrink-0 rounded bg-warning/20 px-1.5 py-0.5 font-medium text-warning text-xs">
                     {dependency.type}
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="block truncate">{dependency.name}</span>
                     {dependency.description ? (
-                      <span className="block truncate text-amber-600 text-xs">
+                      <span className="block truncate text-warning/80 text-xs">
                         {dependency.description}
                       </span>
                     ) : null}
@@ -502,18 +489,12 @@ export function ApplicationsPage({
                 </div>
               ))}
             </div>
-          </div>
+          </Alert>
         ) : null}
         {deleteCheck?.deletable && deleteCheck.dependencies.length === 0 ? (
-          <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-emerald-700 text-sm">
-            依赖检查通过，确认后将彻底删除。
-          </div>
+          <Alert variant="success">依赖检查通过，确认后将彻底删除。</Alert>
         ) : null}
-        {deleteError ? (
-          <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-rose-600 text-sm">
-            {deleteError}
-          </div>
-        ) : null}
+        {deleteError ? <Alert variant="danger">{deleteError}</Alert> : null}
       </ConfirmDialog>
     </>
   );
@@ -522,17 +503,17 @@ export function ApplicationsPage({
 function ApplicationsPageLoading() {
   return (
     <>
-      <div className="border-slate-200 border-b bg-white px-6 py-5">
-        <h1 className="font-semibold text-2xl text-slate-950 tracking-tight">应用管理</h1>
-        <p className="mt-2 text-slate-600 text-sm">管理 RN Bundle 平台接入的所有宿主应用</p>
+      <div className="border-border border-b bg-card px-6 py-5">
+        <h1 className="font-semibold text-2xl text-foreground tracking-tight">应用管理</h1>
+        <p className="mt-2 text-muted-foreground text-sm">管理 RN Bundle 平台接入的所有宿主应用</p>
       </div>
       <div className="space-y-4 px-6 py-5">
         <section className="grid gap-3 xl:grid-cols-4">
           {["total", "running", "maintenance", "offline"].map((item) => (
-            <Card key={item} className="h-32 animate-pulse rounded-lg bg-white shadow-none" />
+            <Card key={item} className="h-32 animate-pulse rounded-lg bg-card shadow-none" />
           ))}
         </section>
-        <Card className="h-96 animate-pulse rounded-lg border-slate-200 bg-white shadow-none" />
+        <Card className="h-96 animate-pulse rounded-lg border-border bg-card shadow-none" />
       </div>
     </>
   );
@@ -545,12 +526,12 @@ function AppNameCell({ data }: ICellRendererParams<HostApplication>) {
 
   return (
     <div className="flex h-full items-center gap-3">
-      <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-rose-500 text-white shadow-sm">
+      <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground shadow-sm">
         <Smartphone className="size-4" />
       </div>
       <div className="min-w-0 leading-tight">
-        <div className="truncate font-semibold text-slate-900">{data.name}</div>
-        <div className="font-mono text-slate-500 text-xs">{data.slug}</div>
+        <div className="truncate font-semibold text-foreground">{data.name}</div>
+        <div className="font-mono text-muted-foreground text-xs">{data.slug}</div>
       </div>
     </div>
   );
@@ -586,9 +567,9 @@ function OwnerCell({ data }: ICellRendererParams<HostApplication>) {
     <div className="flex h-full min-w-0 items-center gap-2">
       <OwnerAvatar name={owner} src={data.ownerAvatarUrl} />
       <div className="min-w-0">
-        <div className="truncate font-medium text-slate-800 text-sm">{owner}</div>
+        <div className="truncate font-medium text-foreground text-sm">{owner}</div>
         {data.ownerEmail ? (
-          <div className="truncate text-slate-500 text-xs">{data.ownerEmail}</div>
+          <div className="truncate text-muted-foreground text-xs">{data.ownerEmail}</div>
         ) : null}
       </div>
     </div>
@@ -601,7 +582,7 @@ function OwnerAvatar({ name, src }: { name: string; src: string }) {
   }
 
   return (
-    <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-rose-500 font-semibold text-white text-xs">
+    <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary font-semibold text-primary-foreground text-xs">
       {name.slice(0, 1).toUpperCase()}
     </span>
   );
@@ -630,7 +611,7 @@ function ActionsCell({
       <Button
         variant="link"
         type="button"
-        className="h-auto p-0 text-blue-600 text-xs hover:text-blue-700"
+        className="h-auto p-0 text-primary text-xs hover:text-primary/80"
         onClick={() => {
           if (data) {
             onConfigureApplication?.(data.slug);
@@ -644,10 +625,10 @@ function ActionsCell({
         type="button"
         disabled={!canManage}
         className={cn(
-          "h-auto gap-1 p-0 text-xs disabled:text-slate-400",
+          "h-auto gap-1 p-0 text-xs disabled:text-muted-foreground",
           isOffline
-            ? "text-emerald-600 hover:text-emerald-700"
-            : "text-slate-600 hover:text-slate-800",
+            ? "text-success hover:text-success/80"
+            : "text-muted-foreground hover:text-foreground",
         )}
         onClick={() => {
           if (data) {
@@ -662,7 +643,7 @@ function ActionsCell({
         variant="link"
         type="button"
         disabled={!canManage}
-        className="h-auto gap-1 p-0 text-rose-600 text-xs hover:text-rose-700 disabled:text-slate-400"
+        className="h-auto gap-1 p-0 text-destructive text-xs hover:text-destructive/80 disabled:text-muted-foreground"
         onClick={() => {
           if (data) {
             onDeleteApplication?.(data);

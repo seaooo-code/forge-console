@@ -63,17 +63,17 @@ export function DashboardPage() {
 
   return (
     <>
-      <div className="border-slate-200 border-b bg-white px-6 py-5">
+      <div className="border-border border-b bg-card px-6 py-5">
         <div className="flex flex-col gap-4 2xl:flex-row 2xl:items-start 2xl:justify-between">
           <div>
-            <h1 className="font-semibold text-2xl text-slate-950 tracking-tight">平台运行概览</h1>
-            <p className="mt-2 text-slate-600 text-sm">
+            <h1 className="font-semibold text-2xl text-foreground tracking-tight">平台运行概览</h1>
+            <p className="mt-2 text-muted-foreground text-sm">
               关注当前已接入的应用、模块、构建、发布和平台资源状态
             </p>
           </div>
           <div className="flex flex-col items-start gap-3 2xl:items-end">
             <DashboardContextControls />
-            <div className="text-slate-400 text-xs">
+            <div className="text-muted-foreground text-xs">
               数据更新时间 {formatUpdatedAt(snapshot.updatedAt)}
             </div>
           </div>
@@ -121,11 +121,11 @@ function DashboardErrorState({
 }) {
   return (
     <>
-      <div className="border-slate-200 border-b bg-white px-6 py-5">
+      <div className="border-border border-b bg-card px-6 py-5">
         <div className="flex flex-col gap-4 2xl:flex-row 2xl:items-start 2xl:justify-between">
           <div>
-            <h1 className="font-semibold text-2xl text-slate-950 tracking-tight">平台运行概览</h1>
-            <p className="mt-2 text-slate-600 text-sm">
+            <h1 className="font-semibold text-2xl text-foreground tracking-tight">平台运行概览</h1>
+            <p className="mt-2 text-muted-foreground text-sm">
               关注当前已接入的应用、模块、构建、发布和平台资源状态
             </p>
           </div>
@@ -133,15 +133,15 @@ function DashboardErrorState({
         </div>
       </div>
       <div className="px-6 py-5">
-        <Card className="rounded-lg border-amber-200 bg-amber-50 px-5 py-5 shadow-sm">
+        <Card className="rounded-lg border-warning/40 bg-warning/10 px-5 py-5 shadow-sm">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex min-w-0 gap-3">
-              <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-white text-amber-600">
+              <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-card text-warning">
                 <TriangleAlert className="size-5" />
               </span>
               <div className="min-w-0">
-                <div className="font-semibold text-amber-950 text-sm">仪表盘数据加载失败</div>
-                <div className="mt-1 text-amber-800 text-sm">
+                <div className="font-semibold text-foreground text-sm">仪表盘数据加载失败</div>
+                <div className="mt-1 text-muted-foreground text-sm">
                   {error instanceof Error ? error.message : "无法获取仪表盘聚合数据"}
                 </div>
               </div>
@@ -170,8 +170,8 @@ function DashboardContextControls() {
 
   return (
     <div className="flex flex-wrap items-center gap-3">
-      <div className="flex h-10 shrink-0 items-center gap-2 rounded-md border border-slate-200 bg-white px-4 font-semibold text-slate-700 text-sm shadow-sm">
-        <span className="size-2.5 rounded-full bg-emerald-500" />
+      <div className="flex h-10 shrink-0 items-center gap-2 rounded-md border border-border bg-card px-4 font-semibold text-foreground text-sm shadow-sm">
+        <span className="size-2.5 rounded-full bg-success" />
         {project}
       </div>
 
@@ -179,7 +179,7 @@ function DashboardContextControls() {
         value={environment}
         onValueChange={(value) => setEnvironment(value as MiCarEnvironmentCode)}
       >
-        <SelectTrigger className="h-10 shrink-0 gap-2 border-slate-200 bg-white px-4 font-medium text-slate-700 shadow-sm">
+        <SelectTrigger className="h-10 shrink-0 gap-2 border-border bg-card px-4 font-medium text-foreground shadow-sm">
           <span>环境:</span>
           <SelectValue />
         </SelectTrigger>
@@ -205,13 +205,13 @@ function SummaryPill({
   value: string;
 }) {
   return (
-    <div className="flex min-w-0 items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3">
-      <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-white text-slate-600 shadow-xs">
+    <div className="flex min-w-0 items-center gap-3 rounded-lg border border-border bg-muted px-3 py-3">
+      <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-card text-muted-foreground shadow-xs">
         <Icon className="size-4" />
       </span>
       <div className="min-w-0">
-        <div className="truncate text-slate-500 text-xs">{label}</div>
-        <div className="mt-0.5 truncate font-semibold text-slate-900 text-sm">{value}</div>
+        <div className="truncate text-muted-foreground text-xs">{label}</div>
+        <div className="mt-0.5 truncate font-semibold text-foreground text-sm">{value}</div>
       </div>
     </div>
   );
@@ -220,21 +220,21 @@ function SummaryPill({
 function DashboardSkeleton() {
   return (
     <>
-      <div className="border-slate-200 border-b bg-white px-6 py-5">
+      <div className="border-border border-b bg-card px-6 py-5">
         <div className="flex flex-col gap-4 2xl:flex-row 2xl:items-start 2xl:justify-between">
           <div>
-            <div className="h-7 w-42 animate-pulse rounded bg-slate-100" />
-            <div className="mt-3 h-4 w-80 max-w-full animate-pulse rounded bg-slate-100" />
+            <div className="h-7 w-42 animate-pulse rounded bg-muted" />
+            <div className="mt-3 h-4 w-80 max-w-full animate-pulse rounded bg-muted" />
           </div>
           <div className="flex flex-wrap gap-3">
-            <div className="h-10 w-32 animate-pulse rounded bg-slate-100" />
-            <div className="h-10 w-36 animate-pulse rounded bg-slate-100" />
+            <div className="h-10 w-32 animate-pulse rounded bg-muted" />
+            <div className="h-10 w-36 animate-pulse rounded bg-muted" />
           </div>
         </div>
         <div className="mt-5 grid gap-3 md:grid-cols-3">
-          <Card className="h-16 animate-pulse rounded-lg border-slate-200 bg-slate-50 shadow-none" />
-          <Card className="h-16 animate-pulse rounded-lg border-slate-200 bg-slate-50 shadow-none" />
-          <Card className="h-16 animate-pulse rounded-lg border-slate-200 bg-slate-50 shadow-none" />
+          <Card className="h-16 animate-pulse rounded-lg border-border bg-muted shadow-none" />
+          <Card className="h-16 animate-pulse rounded-lg border-border bg-muted shadow-none" />
+          <Card className="h-16 animate-pulse rounded-lg border-border bg-muted shadow-none" />
         </div>
       </div>
       <div className="space-y-4 px-6 py-5">
@@ -242,13 +242,13 @@ function DashboardSkeleton() {
           {metricSkeletonKeys.map((key) => (
             <Card
               key={`metric-skeleton-${key}`}
-              className="h-39 animate-pulse rounded-lg border-slate-200 bg-white shadow-sm"
+              className="h-39 animate-pulse rounded-lg border-border bg-card shadow-sm"
             />
           ))}
         </div>
         <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
-          <Card className="h-86 animate-pulse rounded-lg border-slate-200 bg-white shadow-sm" />
-          <Card className="h-86 animate-pulse rounded-lg border-slate-200 bg-white shadow-sm" />
+          <Card className="h-86 animate-pulse rounded-lg border-border bg-card shadow-sm" />
+          <Card className="h-86 animate-pulse rounded-lg border-border bg-card shadow-sm" />
         </div>
       </div>
     </>

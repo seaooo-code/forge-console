@@ -8,13 +8,13 @@ type ClientIntegrationSectionProps = {
 export function ClientIntegrationSection({ clientIntegration }: ClientIntegrationSectionProps) {
   if (!clientIntegration) {
     return (
-      <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+      <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
         <SectionHeader title="客户端接入信息" description="客户端获取 manifest 的接口说明" />
         <div className="flex items-start gap-3 p-4">
-          <CircleAlert className="mt-0.5 size-4 shrink-0 text-amber-500" />
+          <CircleAlert className="mt-0.5 size-4 shrink-0 text-warning" />
           <div>
-            <div className="font-semibold text-slate-900 text-sm">暂无接入信息</div>
-            <div className="mt-1 text-slate-500 text-xs">
+            <div className="font-semibold text-foreground text-sm">暂无接入信息</div>
+            <div className="mt-1 text-muted-foreground text-xs">
               应用详情接口返回 clientIntegration 后，这里会展示客户端请求 manifest
               的域名、路径、请求字段和响应字段。
             </div>
@@ -27,7 +27,7 @@ export function ClientIntegrationSection({ clientIntegration }: ClientIntegratio
   const { endpoint } = clientIntegration;
 
   return (
-    <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+    <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
       <SectionHeader
         title="客户端接入信息"
         description={endpoint.description || "客户端获取 manifest 的接口说明"}
@@ -39,9 +39,9 @@ export function ClientIntegrationSection({ clientIntegration }: ClientIntegratio
           <InfoItem icon={Code2} label="请求方法" value={endpoint.method} />
         </div>
         {endpoint.exampleUrl ? (
-          <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-3">
-            <div className="font-medium text-slate-500 text-xs">示例请求</div>
-            <div className="mt-1 break-all font-mono text-slate-800 text-sm">
+          <div className="rounded-md border border-border bg-muted px-3 py-3">
+            <div className="font-medium text-muted-foreground text-xs">示例请求</div>
+            <div className="mt-1 break-all font-mono text-foreground text-sm">
               {endpoint.exampleUrl}
             </div>
           </div>
@@ -63,13 +63,13 @@ function InfoItem({
   value: string;
 }) {
   return (
-    <div className="flex min-w-0 gap-3 rounded-md border border-slate-200 bg-white px-3 py-3">
-      <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-500">
+    <div className="flex min-w-0 gap-3 rounded-md border border-border bg-card px-3 py-3">
+      <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
         <Icon className="size-4" />
       </div>
       <div className="min-w-0">
-        <div className="font-medium text-slate-500 text-xs">{label}</div>
-        <div className="mt-1 break-all font-semibold text-slate-800 text-sm">{value}</div>
+        <div className="font-medium text-muted-foreground text-xs">{label}</div>
+        <div className="mt-1 break-all font-semibold text-foreground text-sm">{value}</div>
       </div>
     </div>
   );
@@ -83,15 +83,15 @@ function FieldDescriptionTable({
   title: string;
 }) {
   return (
-    <div className="overflow-hidden rounded-md border border-slate-200">
-      <div className="flex h-10 items-center border-slate-200 border-b bg-slate-50 px-3 font-semibold text-slate-900 text-sm">
+    <div className="overflow-hidden rounded-md border border-border">
+      <div className="flex h-10 items-center border-border border-b bg-muted px-3 font-semibold text-foreground text-sm">
         {title}
       </div>
       {fields.length ? (
         <div className="overflow-x-auto">
           <table className="w-full min-w-180 table-fixed border-collapse text-left text-sm">
-            <thead className="bg-white text-slate-500 text-xs">
-              <tr className="border-slate-200 border-b">
+            <thead className="bg-card text-muted-foreground text-xs">
+              <tr className="border-border border-b">
                 <th className="w-52 px-3 py-2 font-medium">字段</th>
                 <th className="w-24 px-3 py-2 font-medium">类型</th>
                 <th className="w-20 px-3 py-2 font-medium">必填</th>
@@ -99,16 +99,16 @@ function FieldDescriptionTable({
                 <th className="w-56 px-3 py-2 font-medium">示例</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-border">
               {fields.map((field) => (
-                <tr key={`${title}-${field.name}`} className="bg-white">
-                  <td className="break-all px-3 py-2 font-mono text-slate-900">{field.name}</td>
-                  <td className="break-all px-3 py-2 text-slate-600">{field.type || "-"}</td>
-                  <td className="px-3 py-2 text-slate-600">
+                <tr key={`${title}-${field.name}`} className="bg-card">
+                  <td className="break-all px-3 py-2 font-mono text-foreground">{field.name}</td>
+                  <td className="break-all px-3 py-2 text-muted-foreground">{field.type || "-"}</td>
+                  <td className="px-3 py-2 text-muted-foreground">
                     {field.required === undefined ? "-" : field.required ? "是" : "否"}
                   </td>
-                  <td className="px-3 py-2 text-slate-700">{field.description}</td>
-                  <td className="break-all px-3 py-2 font-mono text-slate-600">
+                  <td className="px-3 py-2 text-foreground">{field.description}</td>
+                  <td className="break-all px-3 py-2 font-mono text-muted-foreground">
                     {field.example || "-"}
                   </td>
                 </tr>
@@ -117,7 +117,7 @@ function FieldDescriptionTable({
           </table>
         </div>
       ) : (
-        <div className="px-3 py-4 text-slate-500 text-sm">后端未返回字段说明。</div>
+        <div className="px-3 py-4 text-muted-foreground text-sm">后端未返回字段说明。</div>
       )}
     </div>
   );
@@ -125,10 +125,10 @@ function FieldDescriptionTable({
 
 function SectionHeader({ description, title }: { description: string; title: string }) {
   return (
-    <div className="flex h-12 items-center justify-between border-slate-200 border-b px-4">
+    <div className="flex h-12 items-center justify-between border-border border-b px-4">
       <div>
-        <div className="font-semibold text-slate-900 text-sm">{title}</div>
-        <div className="text-slate-500 text-xs">{description}</div>
+        <div className="font-semibold text-foreground text-sm">{title}</div>
+        <div className="text-muted-foreground text-xs">{description}</div>
       </div>
     </div>
   );
