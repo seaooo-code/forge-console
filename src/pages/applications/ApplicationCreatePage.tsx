@@ -1,9 +1,10 @@
 import { skipToken, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, CircleAlert, MonitorSmartphone, PackagePlus } from "lucide-react";
+import { PackagePlus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { searchFeishuUsers } from "@/api/feishu-user-search";
 import { OwnerPicker, type OwnerSearchUser } from "@/components/common/OwnerPicker";
+import { FormActions, FormLayout, PageHeader, SectionCard } from "@/components/layout";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -38,7 +39,6 @@ import type {
   EnvironmentCode,
   EnvironmentFormState,
   FieldProps,
-  SectionHeaderProps,
 } from "./types";
 import { parseApplicationStatusCode } from "./utils";
 
@@ -178,179 +178,182 @@ export function ApplicationCreatePage({
   };
 
   return (
-    <form onSubmit={handleSubmit(handleFormSubmit)}>
-      <div className="border-border border-b bg-card px-6 py-5">
-        <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-          <div>
-            <Button
-              variant="ghost"
-              type="button"
-              className="-ml-2 mb-3 h-8 gap-2 px-2 text-muted-foreground hover:bg-muted hover:text-foreground"
-              onClick={onBack}
-            >
-              <ArrowLeft className="size-4" />
-              返回应用管理
-            </Button>
-            <div className="flex items-center gap-3">
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
-                <PackagePlus className="size-5" />
-              </div>
-              <div>
-                <h1 className="font-semibold text-2xl text-foreground tracking-tight">{title}</h1>
-                <p className="mt-2 text-muted-foreground text-sm">{description}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex shrink-0 items-center gap-2">
-            <Button variant="outline" type="button" onClick={onBack}>
+    <form className="flex flex-col gap-6" onSubmit={handleSubmit(handleFormSubmit)}>
+      <PageHeader
+        onBack={onBack}
+        backLabel="返回应用管理"
+        breadcrumbs={[{ label: "应用管理", href: "/apps" }, { label: title }]}
+        title={
+          <span className="flex items-center gap-2">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-xs">
+              <PackagePlus className="size-5" />
+            </span>
+            <span>{title}</span>
+          </span>
+        }
+        description={description}
+        actions={
+          <>
+            <Button variant="outline" type="button" onClick={onBack} size="sm">
               取消
             </Button>
-            <Button
-              type="submit"
-              className="bg-primary hover:bg-primary/90"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? "保存中" : isEditMode ? "保存修改" : "创建应用"}
+            <Button type="submit" size="sm" disabled={isSubmitting} loading={isSubmitting}>
+              {isEditMode ? "保存修改" : "创建应用"}
             </Button>
-          </div>
-        </div>
-        {formError ? (
-          <Alert variant="danger" className="mt-4">
-            {formError}
-          </Alert>
-        ) : null}
-      </div>
+          </>
+        }
+      />
 
-      <div className="px-6 py-5">
-        <Card className="gap-0 rounded-lg border-border py-0 shadow-sm">
-          <SectionHeader
-            icon={MonitorSmartphone}
-            title="应用接入信息"
-            description="应用唯一标识、平台、负责人和启用环境"
-          />
-          <div className="space-y-5 p-4">
-            <section>
-              <div className="mb-3 flex items-center gap-2">
-                <div className="h-4 w-1 rounded-full bg-primary" />
-                <h2 className="font-semibold text-foreground text-sm">基础信息</h2>
-              </div>
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-12">
-                <Field label="应用名称" className="xl:col-span-4">
-                  <Input placeholder="输入应用名称" {...register("name")} />
-                </Field>
-                <Field label="应用标识" className="xl:col-span-4">
-                  <Input
-                    aria-disabled={isEditMode}
-                    className={isEditMode ? "cursor-not-allowed opacity-50" : undefined}
-                    placeholder="例如 mi-car-global"
-                    readOnly={isEditMode}
-                    {...register("slug")}
-                  />
-                </Field>
-                <Field label="负责人" className="xl:col-span-4">
-                  <Controller
-                    control={control}
-                    name="owner"
-                    render={({ field }) => (
-                      <OwnerPicker
-                        inputName={field.name}
-                        inputRef={field.ref}
-                        value={field.value}
-                        searchUsers={searchFeishuUsers}
-                        onBlur={field.onBlur}
-                        onChange={handleOwnerChange}
-                        onSelect={handleOwnerSelect}
-                      />
-                    )}
-                  />
-                </Field>
-                <Field label="应用状态" className="xl:col-span-4">
-                  <Controller
-                    control={control}
-                    name="status"
-                    render={({ field }) => (
-                      <Select
-                        value={field.value}
-                        onValueChange={(value) =>
-                          field.onChange(parseApplicationStatusCode(value) ?? "")
+      {formError ? (
+        <Alert variant="danger" className="border-destructive/30 bg-destructive/10">
+          {formError}
+        </Alert>
+      ) : null}
+
+      <SectionCard
+        title="基础信息"
+        description="应用唯一标识、平台、负责人和启用环境"
+        actions={
+          <span className="rounded-md bg-primary/10 px-2 py-0.5 font-medium text-primary text-xs">
+            必填
+          </span>
+        }
+      >
+        <FormLayout>
+          <Field label="应用名称" className="md:col-span-1">
+            <Input placeholder="输入应用名称" {...register("name")} />
+          </Field>
+          <Field label="应用标识" className="md:col-span-1">
+            <Input
+              aria-disabled={isEditMode}
+              className={isEditMode ? "cursor-not-allowed opacity-50" : undefined}
+              placeholder="例如 mi-car-global"
+              readOnly={isEditMode}
+              {...register("slug")}
+            />
+          </Field>
+          <Field label="负责人" className="md:col-span-1">
+            <Controller
+              control={control}
+              name="owner"
+              render={({ field }) => (
+                <OwnerPicker
+                  inputName={field.name}
+                  inputRef={field.ref}
+                  value={field.value}
+                  searchUsers={searchFeishuUsers}
+                  onBlur={field.onBlur}
+                  onChange={handleOwnerChange}
+                  onSelect={handleOwnerSelect}
+                />
+              )}
+            />
+          </Field>
+          <Field label="应用状态" className="md:col-span-1">
+            <Controller
+              control={control}
+              name="status"
+              render={({ field }) => (
+                <Select
+                  value={field.value}
+                  onValueChange={(value) => field.onChange(parseApplicationStatusCode(value) ?? "")}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {statusOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+          </Field>
+          <Field label="应用描述" className="md:col-span-2">
+            <Input placeholder="输入应用说明" {...register("description")} />
+          </Field>
+        </FormLayout>
+      </SectionCard>
+
+      <SectionCard
+        title="接入范围"
+        description="选择应用支持的平台与启用的环境"
+        actions={
+          <span className="rounded-md bg-success/10 px-2 py-0.5 font-medium text-success text-xs">
+            必填
+          </span>
+        }
+      >
+        <div className="space-y-5">
+          <Field label="接入平台">
+            <Controller
+              control={control}
+              name="platforms"
+              render={({ field }) => (
+                <div className="grid gap-2 md:grid-cols-3">
+                  {platformOptions.map((platform) => {
+                    const selectedPlatforms = field.value ?? [];
+                    return (
+                      <CheckOption
+                        key={platform.value}
+                        checked={selectedPlatforms.includes(platform.value)}
+                        label={platform.label}
+                        onCheckedChange={(checked) =>
+                          field.onChange(
+                            checked
+                              ? Array.from(new Set([...selectedPlatforms, platform.value]))
+                              : selectedPlatforms.filter((item) => item !== platform.value),
+                          )
                         }
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {statusOptions.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                  />
-                </Field>
-                <Field label="应用描述" className="md:col-span-2 xl:col-span-8">
-                  <Input placeholder="输入应用说明" {...register("description")} />
-                </Field>
-              </div>
-            </section>
+                      />
+                    );
+                  })}
+                </div>
+              )}
+            />
+          </Field>
 
-            <section className="border-border border-t pt-5">
-              <div className="mb-3 flex items-center gap-2">
-                <div className="h-4 w-1 rounded-full bg-success" />
-                <h2 className="font-semibold text-foreground text-sm">接入范围</h2>
-              </div>
-              <Field label="接入平台">
+          <Field label="环境接入">
+            <div className="grid gap-2 md:grid-cols-3 xl:grid-cols-5">
+              {environmentOptions.map((environment) => (
                 <Controller
+                  key={environment.value}
                   control={control}
-                  name="platforms"
+                  name={`environments.${environment.value}` as ApplicationEnvironmentFieldPath}
                   render={({ field }) => (
-                    <div className="grid gap-2 md:grid-cols-3">
-                      {platformOptions.map((platform) => {
-                        const selectedPlatforms = field.value ?? [];
-
-                        return (
-                          <CheckOption
-                            key={platform.value}
-                            checked={selectedPlatforms.includes(platform.value)}
-                            label={platform.label}
-                            onCheckedChange={(checked) =>
-                              field.onChange(
-                                checked
-                                  ? Array.from(new Set([...selectedPlatforms, platform.value]))
-                                  : selectedPlatforms.filter((item) => item !== platform.value),
-                              )
-                            }
-                          />
-                        );
-                      })}
-                    </div>
+                    <CheckOption
+                      checked={Boolean(field.value)}
+                      label={environment.label}
+                      onCheckedChange={field.onChange}
+                    />
                   )}
                 />
-              </Field>
-              <Field label="环境接入" className="mt-4">
-                <div className="grid gap-2 md:grid-cols-3 xl:grid-cols-5">
-                  {environmentOptions.map((environment) => (
-                    <Controller
-                      key={environment.value}
-                      control={control}
-                      name={`environments.${environment.value}` as ApplicationEnvironmentFieldPath}
-                      render={({ field }) => (
-                        <CheckOption
-                          checked={Boolean(field.value)}
-                          label={environment.label}
-                          onCheckedChange={field.onChange}
-                        />
-                      )}
-                    />
-                  ))}
-                </div>
-              </Field>
-            </section>
-          </div>
-        </Card>
-      </div>
+              ))}
+            </div>
+          </Field>
+        </div>
+      </SectionCard>
+
+      <FormActions
+        hint={
+          isEditMode
+            ? "保存后立即生效，影响所有访问该应用的客户端"
+            : "创建后可继续在详情页调整接入配置"
+        }
+        primary={
+          <Button type="submit" size="sm" disabled={isSubmitting} loading={isSubmitting}>
+            {isEditMode ? "保存修改" : "创建应用"}
+          </Button>
+        }
+        secondary={
+          <Button variant="outline" type="button" size="sm" onClick={onBack}>
+            取消
+          </Button>
+        }
+      />
     </form>
   );
 }
@@ -445,17 +448,9 @@ function buildApplicationInput(
 
 function ApplicationFormLoading({ onBack }: ApplicationFormFeedbackProps) {
   return (
-    <div className="space-y-4 px-6 py-5">
-      <Button
-        variant="ghost"
-        type="button"
-        className="-ml-2 h-8 gap-2 px-2 text-muted-foreground hover:bg-muted hover:text-foreground"
-        onClick={onBack}
-      >
-        <ArrowLeft className="size-4" />
-        返回应用管理
-      </Button>
-      <Card className="rounded-lg border-border p-6 shadow-none">
+    <div className="flex flex-col gap-6">
+      <PageHeader onBack={onBack} backLabel="返回应用管理" title="加载中" />
+      <Card className="rounded-xl border-border p-6 shadow-xs">
         <div className="space-y-3">
           <div className="h-5 w-36 animate-pulse rounded bg-muted" />
           <div className="h-10 w-full animate-pulse rounded bg-muted" />
@@ -468,39 +463,20 @@ function ApplicationFormLoading({ onBack }: ApplicationFormFeedbackProps) {
 
 function ApplicationFormOptionsError({ onBack }: ApplicationFormFeedbackProps) {
   return (
-    <div className="space-y-4 px-6 py-5">
-      <Button
-        variant="ghost"
-        type="button"
-        className="-ml-2 h-8 gap-2 px-2 text-muted-foreground hover:bg-muted hover:text-foreground"
-        onClick={onBack}
-      >
-        <ArrowLeft className="size-4" />
-        返回应用管理
-      </Button>
-      <Card className="rounded-lg border-destructive/30 bg-destructive/10 p-6 text-destructive shadow-none">
-        <div className="flex items-start gap-2 text-sm">
-          <CircleAlert className="mt-0.5 size-4 shrink-0" />
-          应用选项加载失败，请刷新后重试
-        </div>
-      </Card>
+    <div className="flex flex-col gap-6">
+      <PageHeader onBack={onBack} backLabel="返回应用管理" title="应用选项加载失败" />
+      <Alert variant="danger" className="border-destructive/30 bg-destructive/10">
+        应用选项加载失败，请刷新后重试
+      </Alert>
     </div>
   );
 }
 
 function ApplicationFormNotFound({ onBack }: ApplicationFormFeedbackProps) {
   return (
-    <div className="space-y-4 px-6 py-5">
-      <Button
-        variant="ghost"
-        type="button"
-        className="-ml-2 h-8 gap-2 px-2 text-muted-foreground hover:bg-muted hover:text-foreground"
-        onClick={onBack}
-      >
-        <ArrowLeft className="size-4" />
-        返回应用管理
-      </Button>
-      <Card className="rounded-lg border-border bg-card p-6 shadow-none">
+    <div className="flex flex-col gap-6">
+      <PageHeader onBack={onBack} backLabel="返回应用管理" title="应用不存在" />
+      <Card className="rounded-xl border-border bg-card p-6 shadow-xs">
         <div className="font-semibold text-foreground text-sm">应用不存在</div>
         <p className="mt-1 text-muted-foreground text-sm">当前应用可能已被删除或路径无效。</p>
       </Card>
@@ -508,24 +484,10 @@ function ApplicationFormNotFound({ onBack }: ApplicationFormFeedbackProps) {
   );
 }
 
-function SectionHeader({ description, icon: Icon, title }: SectionHeaderProps) {
-  return (
-    <div className="flex h-14 items-center gap-3 border-border border-b px-4">
-      <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
-        <Icon className="size-4" />
-      </div>
-      <div className="min-w-0">
-        <div className="font-semibold text-foreground text-sm">{title}</div>
-        <div className="truncate text-muted-foreground text-xs">{description}</div>
-      </div>
-    </div>
-  );
-}
-
 function Field({ children, className, label }: FieldProps) {
   return (
     <div className={className}>
-      <div className="mb-2 font-medium text-muted-foreground text-xs">{label}</div>
+      <div className="mb-1.5 font-medium text-foreground text-sm">{label}</div>
       {children}
     </div>
   );

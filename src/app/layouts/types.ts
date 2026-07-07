@@ -4,6 +4,8 @@ export type NavItem = {
   label: string;
   href: string;
   icon: NavIconName;
+  /** Optional small badge / counter shown on the right of the item. */
+  meta?: string;
 };
 
 export type NavGroup = {
@@ -20,5 +22,4 @@ export type NavIconName =
   | "environment"
   | "module"
   | "releaseRecord"
-  | "settings"
   | "storage";

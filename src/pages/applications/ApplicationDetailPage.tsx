@@ -4,7 +4,6 @@ import { AgGridReact } from "ag-grid-react";
 import {
   Activity,
   ArchiveX,
-  ArrowLeft,
   Boxes,
   CircleAlert,
   type LucideIcon,
@@ -23,6 +22,7 @@ import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { consoleGridTheme } from "@/components/common/console-grid-theme";
 import { EnvironmentBadge } from "@/components/common/EnvironmentBadge";
 import { OwnerPicker } from "@/components/common/OwnerPicker";
+import { PageHeader, SectionCard } from "@/components/layout";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -306,43 +306,65 @@ export function ApplicationDetailPage({
   };
 
   return (
-    <>
-      <div className="border-border border-b bg-card px-6 py-5">
-        <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-          <div>
-            <Button
-              variant="ghost"
-              type="button"
-              className="-ml-2 mb-3 h-8 gap-2 px-2 text-muted-foreground hover:bg-muted hover:text-foreground"
-              onClick={onBack}
+    <div className="flex flex-col gap-6">
+      <PageHeader
+        onBack={onBack}
+        backLabel="返回应用管理"
+        breadcrumbs={[{ label: "应用管理", href: "/apps" }, { label: application.name }]}
+        eyebrow={
+          <div className="flex flex-wrap items-center gap-2">
+            <span
+              className={cn(
+                "inline-flex h-6 items-center rounded border px-2 font-medium text-xs leading-none",
+                applicationStatusClass[application.status],
+              )}
             >
-              <ArrowLeft className="size-4" />
-              返回应用管理
-            </Button>
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
-                <Smartphone className="size-5" />
-              </div>
-              <h1 className="font-semibold text-2xl text-foreground tracking-tight">
-                {application.name}
-              </h1>
-              <span
-                className={cn(
-                  "inline-flex h-6 items-center rounded border px-2 font-medium text-xs leading-none",
-                  applicationStatusClass[application.status],
-                )}
-              >
-                {application.status}
-              </span>
-              <Badge variant="outline" className="border-border font-mono text-muted-foreground">
-                {application.slug}
-              </Badge>
-            </div>
-            <p className="mt-2 text-muted-foreground text-sm">{detail.description}</p>
+              {application.status}
+            </span>
+            <Badge variant="outline" className="border-border font-mono text-muted-foreground">
+              {application.slug}
+            </Badge>
           </div>
-
-          <div className="space-y-3 xl:w-150">
-            <div className="grid min-w-0 gap-2 text-sm md:grid-cols-2">
+        }
+        title={
+          <span className="flex items-center gap-3">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-xs">
+              <Smartphone className="size-5" />
+            </span>
+            <span className="font-semibold text-2xl text-foreground tracking-tight">
+              {application.name}
+            </span>
+          </span>
+        }
+        description={detail.description}
+        actions={
+          <>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={!canEditApplication}
+              onClick={() => onEditApplication(application.slug)}
+            >
+              <PenLine className="size-3.5" />
+              编辑配置
+            </Button>
+            <Button
+              variant={nextStatus === "offline" ? "danger-outline" : "outline"}
+              size="sm"
+              disabled={!canUpdateStatus || isUpdatingStatus}
+              onClick={() => {
+                setActionError("");
+                setIsStatusDialogOpen(true);
+              }}
+            >
+              <StatusActionIcon className="size-3.5" />
+              {isUpdatingStatus ? "处理中" : `${statusActionLabel}应用`}
+            </Button>
+          </>
+        }
+        below={
+          <div className="flex flex-col gap-3">
+            <div className="grid min-w-0 gap-2 text-sm md:grid-cols-3">
               <InfoPill icon={MonitorSmartphone} label="平台" value={application.platform} />
               <OwnerInfoPill
                 avatarUrl={application.ownerAvatarUrl}
@@ -351,38 +373,10 @@ export function ApplicationDetailPage({
               />
               <InfoPill icon={PackageCheck} label="App Key" value={detail.appKey} />
             </div>
-            <div className="flex flex-wrap justify-end gap-2">
-              <Button
-                variant="outline"
-                type="button"
-                disabled={!canEditApplication}
-                onClick={() => onEditApplication(application.slug)}
-              >
-                <PenLine className="size-4" />
-                编辑配置
-              </Button>
-              <Button
-                variant="outline"
-                type="button"
-                className={cn(
-                  nextStatus === "offline"
-                    ? "border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                    : "border-success/30 text-success hover:bg-success/10 hover:text-success",
-                )}
-                disabled={!canUpdateStatus || isUpdatingStatus}
-                onClick={() => {
-                  setActionError("");
-                  setIsStatusDialogOpen(true);
-                }}
-              >
-                <StatusActionIcon className="size-4" />
-                {isUpdatingStatus ? "处理中" : `${statusActionLabel}应用`}
-              </Button>
-            </div>
             {actionError ? <Alert variant="danger">{actionError}</Alert> : null}
           </div>
-        </div>
-      </div>
+        }
+      />
       <ConfirmDialog
         isOpen={isStatusDialogOpen}
         isPending={isUpdatingStatus}
@@ -404,150 +398,150 @@ export function ApplicationDetailPage({
         {actionError ? <Alert variant="danger">{actionError}</Alert> : null}
       </ConfirmDialog>
 
-      <div className="space-y-4 px-6 py-5">
-        <section className="grid gap-3 xl:grid-cols-4">
-          {detail.metrics.map((metric) => (
-            <MetricCard key={metric.id} metric={metric} />
-          ))}
-        </section>
+      <section className="grid gap-3 xl:grid-cols-4">
+        {detail.metrics.map((metric) => (
+          <MetricCard key={metric.id} metric={metric} />
+        ))}
+      </section>
 
-        <section className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
-          <Card className="gap-0 rounded-lg border-border py-0 shadow-sm">
-            <div className="flex h-12 items-center border-border border-b px-4 font-semibold text-foreground text-sm">
-              应用接入配置
-            </div>
-            <div className="grid gap-3 p-4 md:grid-cols-2">
-              <ConfigItem icon={PackageCheck} label="App Key" value={detail.appKey} />
-            </div>
-          </Card>
+      <section className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
+        <SectionCard title="应用接入配置" description="接入 RN Bundle 平台所需的关键凭证">
+          <div className="grid gap-3 md:grid-cols-2">
+            <ConfigItem icon={PackageCheck} label="App Key" value={detail.appKey} />
+          </div>
+        </SectionCard>
 
-          <Card className="gap-0 rounded-lg border-border py-0 shadow-sm">
-            <div className="flex h-12 items-center justify-between border-border border-b px-4">
-              <div className="font-semibold text-foreground text-sm">成员权限</div>
-              <Badge variant="outline" className="border-border text-muted-foreground">
-                {detail.members.length} 人
-              </Badge>
-            </div>
-            <div className="space-y-3 p-4">
-              {canManageMembers ? (
-                <form className="space-y-2" onSubmit={handleAddMember}>
-                  <div className="grid gap-2 md:grid-cols-[1fr_8.5rem_auto]">
-                    <Controller
-                      control={memberFormControl}
-                      name="memberName"
-                      rules={{
-                        validate: () => Boolean(selectedMemberUserId) || "请选择成员",
-                      }}
-                      render={({ field }) => (
-                        <OwnerPicker<FeishuUserSearchResult>
-                          value={field.value}
-                          inputName={field.name}
-                          inputRef={field.ref}
-                          placeholder="搜索成员姓名、邮箱或账号"
-                          searchUsers={searchFeishuUsers}
-                          onBlur={field.onBlur}
-                          onChange={(value) => {
-                            field.onChange(value);
-                            setMemberFormValue("userId", "", { shouldValidate: true });
-                          }}
-                          onSelect={(user) => {
-                            setMemberFormValue("userId", user.id, { shouldValidate: true });
-                          }}
-                        />
-                      )}
-                    />
-                    <Controller
-                      control={memberFormControl}
-                      name="role"
-                      render={({ field }) => (
-                        <Select value={field.value} onValueChange={field.onChange}>
-                          <SelectTrigger className="w-full">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {applicationMemberRoleOptions.map((option) => (
-                              <SelectItem key={option.value} value={option.value}>
-                                {option.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      )}
-                    />
-                    <Button
-                      type="submit"
-                      className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
-                      disabled={!selectedMemberUserId || isMutatingMember}
-                    >
-                      <Plus className="size-4" />
-                      添加
-                    </Button>
+        <SectionCard
+          title="成员权限"
+          description="维护应用成员的角色与接入权限"
+          actions={
+            <Badge variant="outline" className="border-border text-muted-foreground">
+              {detail.members.length} 人
+            </Badge>
+          }
+        >
+          <div className="space-y-3">
+            {canManageMembers ? (
+              <form className="space-y-2" onSubmit={handleAddMember}>
+                <div className="grid gap-2 md:grid-cols-[1fr_8.5rem_auto]">
+                  <Controller
+                    control={memberFormControl}
+                    name="memberName"
+                    rules={{
+                      validate: () => Boolean(selectedMemberUserId) || "请选择成员",
+                    }}
+                    render={({ field }) => (
+                      <OwnerPicker<FeishuUserSearchResult>
+                        value={field.value}
+                        inputName={field.name}
+                        inputRef={field.ref}
+                        placeholder="搜索成员姓名、邮箱或账号"
+                        searchUsers={searchFeishuUsers}
+                        onBlur={field.onBlur}
+                        onChange={(value) => {
+                          field.onChange(value);
+                          setMemberFormValue("userId", "", { shouldValidate: true });
+                        }}
+                        onSelect={(user) => {
+                          setMemberFormValue("userId", user.id, { shouldValidate: true });
+                        }}
+                      />
+                    )}
+                  />
+                  <Controller
+                    control={memberFormControl}
+                    name="role"
+                    render={({ field }) => (
+                      <Select value={field.value} onValueChange={field.onChange}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {applicationMemberRoleOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  <Button
+                    type="submit"
+                    disabled={!selectedMemberUserId || isMutatingMember}
+                    loading={isMutatingMember}
+                  >
+                    <Plus className="size-4" />
+                    添加
+                  </Button>
+                </div>
+                {memberFormErrors.memberName ? (
+                  <div className="text-destructive text-xs">
+                    {memberFormErrors.memberName.message}
                   </div>
-                  {memberFormErrors.memberName ? (
-                    <div className="text-destructive text-xs">
-                      {memberFormErrors.memberName.message}
-                    </div>
-                  ) : null}
-                </form>
-              ) : null}
-              {memberActionError ? <Alert variant="danger">{memberActionError}</Alert> : null}
-              {detail.members.map((member) => (
-                <MemberRow
-                  key={member.id}
-                  canManage={canManageMembers}
-                  disabled={isMutatingMember}
-                  member={member}
-                  onDelete={(target) => {
-                    setMemberActionError("");
-                    setDeleteMemberTarget(target);
-                  }}
-                  onRoleChange={(target, role) => {
-                    if (target.role === role) {
-                      return;
-                    }
-                    setMemberActionError("");
-                    setRoleChangeTarget({ member: target, role });
-                  }}
-                />
-              ))}
-            </div>
-          </Card>
-        </section>
+                ) : null}
+              </form>
+            ) : null}
+            {memberActionError ? <Alert variant="danger">{memberActionError}</Alert> : null}
+            {detail.members.map((member) => (
+              <MemberRow
+                key={member.id}
+                canManage={canManageMembers}
+                disabled={isMutatingMember}
+                member={member}
+                onDelete={(target) => {
+                  setMemberActionError("");
+                  setDeleteMemberTarget(target);
+                }}
+                onRoleChange={(target, role) => {
+                  if (target.role === role) {
+                    return;
+                  }
+                  setMemberActionError("");
+                  setRoleChangeTarget({ member: target, role });
+                }}
+              />
+            ))}
+          </div>
+        </SectionCard>
+      </section>
 
-        <ClientIntegrationSection clientIntegration={detail.clientIntegration} />
+      <ClientIntegrationSection clientIntegration={detail.clientIntegration} />
 
-        <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
-          <TableHeader title="环境绑定" description="宿主应用已启用环境" />
+      <SectionCard title="环境绑定" description="宿主应用已启用环境" padding="none">
+        <div className="px-2 pb-2">
           <AgGridReact<ApplicationEnvironmentRecord>
             rowData={detail.environments}
             columnDefs={environmentColumnDefs}
             defaultColDef={defaultColDef}
             domLayout="autoHeight"
-            headerHeight={46}
+            headerHeight={40}
             rowHeight={54}
             theme={consoleGridTheme}
             suppressCellFocus
             suppressContextMenu
             getRowId={({ data }) => data.id}
           />
-        </section>
+        </div>
+      </SectionCard>
 
-        <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
-          <TableHeader title="接入模块" description="当前应用关联的 RN Bundle 模块" />
+      <SectionCard title="接入模块" description="当前应用关联的 RN Bundle 模块" padding="none">
+        <div className="px-2 pb-2">
           <AgGridReact<ApplicationModuleRecord>
             rowData={detail.modules}
             columnDefs={moduleColumnDefs}
             defaultColDef={defaultColDef}
             domLayout="autoHeight"
-            headerHeight={46}
+            headerHeight={40}
             rowHeight={58}
             theme={consoleGridTheme}
             suppressCellFocus
             suppressContextMenu
             getRowId={({ data }) => data.id}
           />
-        </section>
-      </div>
+        </div>
+      </SectionCard>
+
       <ConfirmDialog
         isOpen={roleChangeTarget !== null}
         isPending={isMutatingMember}
@@ -595,7 +589,7 @@ export function ApplicationDetailPage({
       >
         {memberActionError ? <Alert variant="danger">{memberActionError}</Alert> : null}
       </ConfirmDialog>
-    </>
+    </div>
   );
 }
 
@@ -789,18 +783,6 @@ function upsertMemberInList(
 
   return members.map((member, index) => (index === existingIndex ? nextMember : member));
 }
-
-function TableHeader({ description, title }: { description: string; title: string }) {
-  return (
-    <div className="flex h-12 items-center justify-between border-border border-b px-4">
-      <div>
-        <div className="font-semibold text-foreground text-sm">{title}</div>
-        <div className="text-muted-foreground text-xs">{description}</div>
-      </div>
-    </div>
-  );
-}
-
 function EnvironmentCell({
   value,
 }: ICellRendererParams<ApplicationEnvironmentRecord, ApplicationEnvironmentRecord["environment"]>) {
@@ -884,18 +866,9 @@ function ApplicationDetailFallback({
   onBack: () => void;
 }) {
   return (
-    <div className="space-y-4 px-6 py-5">
-      <Button
-        variant="ghost"
-        type="button"
-        className="-ml-2 h-8 gap-2 px-2 text-muted-foreground hover:bg-muted hover:text-foreground"
-        onClick={onBack}
-      >
-        <ArrowLeft className="size-4" />
-        返回应用管理
-      </Button>
-
-      <Card className="rounded-lg border-border p-6 shadow-none">
+    <div className="flex flex-col gap-6">
+      <PageHeader onBack={onBack} backLabel="返回应用管理" title="应用详情" />
+      <Card className="rounded-xl border-border p-6 shadow-xs">
         {isFetching ? (
           <div className="space-y-3">
             <div className="h-5 w-36 animate-pulse rounded bg-muted" />

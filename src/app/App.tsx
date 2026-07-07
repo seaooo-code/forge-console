@@ -69,10 +69,6 @@ const ModuleDetailPage = lazy(async () => ({
   default: (await import("@/pages/modules")).ModuleDetailPage,
 }));
 
-const SettingsPage = lazy(async () => ({
-  default: (await import("@/pages/settings")).SettingsPage,
-}));
-
 const StorageCreatePage = lazy(async () => ({
   default: (await import("@/pages/storage")).StorageCreatePage,
 }));
@@ -184,7 +180,6 @@ function ConsoleRoutes() {
         <Route path="environments/new" element={<EnvironmentCreateRoute />} />
         <Route path="environments/:environmentId/edit" element={<EnvironmentEditRoute />} />
         <Route path="access-tokens" element={<AccessTokensPage />} />
-        <Route path="settings" element={<SettingsPage />} />
         <Route path="*" element={<ConsoleRouteNotFound />} />
       </Route>
     </Routes>

@@ -1,6 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import type { ColDef, ICellRendererParams, RowClickedEvent } from "ag-grid-community";
-import { AgGridReact } from "ag-grid-react";
+import type { ColDef, ICellRendererParams } from "ag-grid-community";
 import {
   Activity,
   AppWindow,
@@ -14,14 +13,22 @@ import {
   Wrench,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+
 import { searchFeishuUsers } from "@/api/feishu-user-search";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import {
   ConsoleClearableFilterSelect,
   ConsoleOwnerSearchFilter,
   ConsoleSearchInput,
-  ConsoleTableFooter,
 } from "@/components/common/ConsoleControls";
+import {
+  DataTable,
+  FilterBar,
+  KpiCard,
+  PageEmptyState,
+  PageHeader,
+  TablePagination,
+} from "@/components/layout";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -38,13 +45,11 @@ import {
   fetchApplicationsSnapshot,
   updateApplicationStatus,
 } from "./api/applications-snapshot";
-import {
-  applicationStatusClass,
-  applicationsGridTheme,
-  emptyApplicationListFilters,
-} from "./constants";
+import { applicationStatusClass, emptyApplicationListFilters } from "./constants";
 import { useApplicationOptions } from "./hooks";
 import type { ApplicationListFilters, ApplicationStatusCode, HostApplication } from "./types";
+
+const PAGE_SIZE = 20;
 
 type ApplicationsPageProps = {
   onConfigureApplication: (applicationSlug: string) => void;
@@ -62,8 +67,11 @@ export function ApplicationsPage({
   const canCreateApplication = Boolean(session?.capabilities.canCreateApplication);
   const canManageApplications = Boolean(session?.capabilities.canManageApplications);
   const [filters, setFilters] = useState<ApplicationListFilters>(emptyApplicationListFilters);
+  const [page, setPage] = useState(1);
   const {
     data: snapshot,
+    error,
+    isError,
     isFetching,
     refetch,
   } = useQuery({
@@ -97,15 +105,10 @@ export function ApplicationsPage({
     setDeleteTarget(application);
     setDeleteError("");
   }, []);
-  const updateFilters = useCallback(
-    (patch: Partial<ApplicationListFilters>) => {
-      setFilters({
-        ...filters,
-        ...patch,
-      });
-    },
-    [filters],
-  );
+  const updateFilters = useCallback((patch: Partial<ApplicationListFilters>) => {
+    setFilters((current) => ({ ...current, ...patch }));
+    setPage(1);
+  }, []);
 
   useEffect(() => {
     setKeywordInput(filters.keyword);
@@ -130,12 +133,11 @@ export function ApplicationsPage({
     }
 
     const { summary } = snapshot;
-
     return [
       {
-        detail: "全部启用",
+        detail: "全部接入",
         icon: AppWindow,
-        iconClass: "bg-info/10 text-info",
+        iconTone: "info" as const,
         id: "total",
         label: "应用总数",
         value: summary.total,
@@ -143,7 +145,7 @@ export function ApplicationsPage({
       {
         detail: percentage(summary.running, summary.total),
         icon: Activity,
-        iconClass: "bg-success/10 text-success",
+        iconTone: "success" as const,
         id: "running",
         label: "运行中",
         value: summary.running,
@@ -151,7 +153,7 @@ export function ApplicationsPage({
       {
         detail: percentage(summary.maintenance, summary.total),
         icon: Wrench,
-        iconClass: "bg-warning/10 text-warning",
+        iconTone: "warning" as const,
         id: "maintenance",
         label: "维护中",
         value: summary.maintenance,
@@ -159,7 +161,7 @@ export function ApplicationsPage({
       {
         detail: "归档",
         icon: ArchiveX,
-        iconClass: "bg-muted text-muted-foreground",
+        iconTone: "muted" as const,
         id: "offline",
         label: "已下线",
         value: summary.offline,
@@ -180,38 +182,38 @@ export function ApplicationsPage({
       {
         cellRenderer: AppNameCell,
         field: "name",
-        flex: 1.45,
+        flex: 1.6,
         headerName: "应用",
-        minWidth: 260,
+        minWidth: 280,
       },
       {
         field: "platform",
         flex: 1.05,
         headerName: "平台",
-        minWidth: 210,
+        minWidth: 180,
       },
       {
         cellRenderer: OwnerCell,
         field: "owner",
-        flex: 0.8,
+        flex: 0.9,
         headerName: "负责人",
-        minWidth: 160,
+        minWidth: 180,
       },
       {
         field: "moduleCount",
-        flex: 0.55,
-        headerName: "模块数",
-        minWidth: 92,
+        flex: 0.5,
+        headerName: "模块",
+        minWidth: 80,
       },
       {
         field: "environmentCount",
-        flex: 0.55,
-        headerName: "环境数",
-        minWidth: 92,
+        flex: 0.5,
+        headerName: "环境",
+        minWidth: 80,
       },
       {
         field: "createdAt",
-        flex: 0.85,
+        flex: 0.8,
         headerName: "创建时间",
         minWidth: 130,
       },
@@ -245,20 +247,24 @@ export function ApplicationsPage({
     ],
   );
 
-  const defaultColDef = useMemo<ColDef<HostApplication>>(
-    () => ({
-      cellClass: "flex items-center",
-      cellStyle: {
-        alignItems: "center",
-        display: "flex",
-      },
-      resizable: false,
-      sortable: false,
-      suppressHeaderMenuButton: true,
-      suppressMovable: true,
-    }),
-    [],
-  );
+  if (isError && !snapshot) {
+    return (
+      <div className="flex flex-col gap-6">
+        <PageHeader title="应用管理" description="管理 RN Bundle 平台接入的所有宿主应用" />
+        <PageEmptyState
+          icon={AppWindow}
+          title="加载应用列表失败"
+          description={error instanceof Error ? error.message : "请稍后重试"}
+          action={
+            <Button type="button" onClick={() => void refetch()}>
+              <RefreshCw className="size-4" />
+              重试
+            </Button>
+          }
+        />
+      </div>
+    );
+  }
 
   if (!snapshot) {
     return <ApplicationsPageLoading />;
@@ -270,123 +276,109 @@ export function ApplicationsPage({
     statusActionTarget?.status === "已下线" ? "running" : "offline";
 
   return (
-    <>
-      <div className="border-border border-b bg-card px-6 py-5">
-        <div>
-          <h1 className="font-semibold text-2xl text-foreground tracking-tight">应用管理</h1>
-          <p className="mt-2 text-muted-foreground text-sm">
-            管理 RN Bundle 平台接入的所有宿主应用
-          </p>
-        </div>
-      </div>
+    <div className="flex flex-col gap-6">
+      <PageHeader
+        title="应用管理"
+        description="管理 RN Bundle 平台接入的所有宿主应用"
+        actions={
+          <>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                void refetch();
+              }}
+              loading={isFetching}
+            >
+              <RefreshCw className="size-3.5" />
+              刷新
+            </Button>
+            <Button size="sm" disabled={!canCreateApplication} onClick={onCreateApplication}>
+              <Plus className="size-4" />
+              新建应用
+            </Button>
+          </>
+        }
+      />
 
-      <div className="space-y-4 px-6 py-5">
-        <section className="grid gap-3 xl:grid-cols-4">
-          {stats.map((item) => {
-            const Icon = item.icon;
+      <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        {stats.map((item) => {
+          const Icon = item.icon;
+          return (
+            <KpiCard
+              key={item.id}
+              icon={Icon}
+              label={item.label}
+              value={item.value}
+              detail={item.detail}
+              tone={item.iconTone}
+            />
+          );
+        })}
+      </section>
 
-            return (
-              <Card key={item.id} className="rounded-lg px-5 py-4 shadow-none">
-                <div className="flex items-center justify-between gap-4">
-                  <div className="space-y-2">
-                    <div className="font-medium text-muted-foreground text-sm">{item.label}</div>
-                    <div className="font-semibold text-3xl text-foreground leading-none">
-                      {item.value}
-                    </div>
-                    <div className="font-medium text-muted-foreground text-xs">{item.detail}</div>
-                  </div>
-                  <div
-                    className={cn(
-                      "flex size-10 shrink-0 items-center justify-center rounded-lg",
-                      item.iconClass,
-                    )}
-                  >
-                    <Icon className="size-5" />
-                  </div>
-                </div>
-              </Card>
-            );
-          })}
-        </section>
-
-        <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-border border-b px-4 py-3">
-            <div className="flex min-w-0 flex-wrap items-center gap-2">
-              <ConsoleClearableFilterSelect
-                icon={MonitorSmartphone}
-                label="平台"
-                value={filters.platform}
-                options={platformFilterOptions}
-                clearLabel="清空平台筛选"
-                onClear={() => updateFilters({ platform: "" })}
-                onValueChange={(value) => updateFilters({ platform: value })}
-              />
-              <ConsoleClearableFilterSelect
-                icon={CircleDot}
-                label="状态"
-                value={filters.status}
-                options={statusFilterOptions}
-                clearLabel="清空状态筛选"
-                onClear={() => updateFilters({ status: "" })}
-                onValueChange={(value) => updateFilters({ status: value as ApplicationStatusCode })}
-              />
-              <ConsoleOwnerSearchFilter
-                value={filters.owner}
-                searchUsers={searchFeishuUsers}
-                onValueChange={(owner) => updateFilters({ owner })}
-              />
-              <ConsoleSearchInput
-                value={keywordInput}
-                placeholder="搜索应用名称"
-                onChange={setKeywordInput}
-              />
-            </div>
-
-            <div className="flex shrink-0 items-center gap-2">
-              <Button
-                variant="outline"
-                type="button"
-                size="icon"
-                aria-label="刷新应用列表"
-                onClick={() => {
-                  void refetch();
-                }}
-              >
-                <RefreshCw className={isFetching ? "size-4 animate-spin" : "size-4"} />
-              </Button>
-              <Button
-                className="bg-primary hover:bg-primary/90"
-                disabled={!canCreateApplication}
-                onClick={onCreateApplication}
-              >
-                <Plus className="size-4" />
-                新建应用
-              </Button>
-            </div>
-          </div>
-
-          <AgGridReact<HostApplication>
-            rowData={applications}
-            columnDefs={columnDefs}
-            defaultColDef={defaultColDef}
-            domLayout="autoHeight"
-            headerHeight={44}
-            rowHeight={58}
-            theme={applicationsGridTheme}
-            suppressCellFocus
-            suppressContextMenu
-            getRowId={({ data }) => data.id}
-            rowClass="cursor-pointer"
-            onRowClicked={(event) => {
-              if (event.data && !isApplicationRowActionEvent(event)) {
-                onOpenApplication(event.data.slug);
-              }
-            }}
+      <FilterBar
+        label="筛选"
+        primary={
+          <>
+            <ConsoleClearableFilterSelect
+              icon={MonitorSmartphone}
+              label="平台"
+              value={filters.platform}
+              options={platformFilterOptions}
+              clearLabel="清空平台筛选"
+              onClear={() => updateFilters({ platform: "" })}
+              onValueChange={(value) => updateFilters({ platform: value })}
+            />
+            <ConsoleClearableFilterSelect
+              icon={CircleDot}
+              label="状态"
+              value={filters.status}
+              options={statusFilterOptions}
+              clearLabel="清空状态筛选"
+              onClear={() => updateFilters({ status: "" })}
+              onValueChange={(value) => updateFilters({ status: value as ApplicationStatusCode })}
+            />
+            <ConsoleOwnerSearchFilter
+              value={filters.owner}
+              searchUsers={searchFeishuUsers}
+              onValueChange={(owner) => updateFilters({ owner })}
+            />
+          </>
+        }
+        search={
+          <ConsoleSearchInput
+            value={keywordInput}
+            placeholder="搜索应用名称"
+            onChange={setKeywordInput}
           />
+        }
+      />
 
-          <ConsoleTableFooter total={applications.length} />
-        </section>
-      </div>
+      <DataTable
+        rows={applications}
+        columnDefs={columnDefs}
+        getRowId={({ data }) => data.id}
+        rowActionSelector="[data-application-row-action]"
+        onRowClicked={(event) => {
+          if (event.data) {
+            onOpenApplication(event.data.slug);
+          }
+        }}
+      />
+
+      <Card className="rounded-xl border-border bg-card py-0 shadow-xs">
+        <TablePagination
+          page={page}
+          pageSize={PAGE_SIZE}
+          total={applications.length}
+          onPageChange={setPage}
+          onPageSizeChange={() => {
+            // hook left here for future wiring; current snapshot returns the full list
+          }}
+        />
+      </Card>
+
       <ConfirmDialog
         isOpen={statusActionTarget !== null}
         isPending={isUpdatingStatus}
@@ -496,26 +488,24 @@ export function ApplicationsPage({
         ) : null}
         {deleteError ? <Alert variant="danger">{deleteError}</Alert> : null}
       </ConfirmDialog>
-    </>
+    </div>
   );
 }
 
 function ApplicationsPageLoading() {
   return (
-    <>
-      <div className="border-border border-b bg-card px-6 py-5">
-        <h1 className="font-semibold text-2xl text-foreground tracking-tight">应用管理</h1>
-        <p className="mt-2 text-muted-foreground text-sm">管理 RN Bundle 平台接入的所有宿主应用</p>
+    <div className="flex flex-col gap-6">
+      <Card className="h-22 animate-pulse rounded-xl border-border bg-card shadow-xs" />
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        {["total", "running", "maintenance", "offline"].map((item) => (
+          <Card
+            key={item}
+            className="h-28 animate-pulse rounded-xl border-border bg-card shadow-xs"
+          />
+        ))}
       </div>
-      <div className="space-y-4 px-6 py-5">
-        <section className="grid gap-3 xl:grid-cols-4">
-          {["total", "running", "maintenance", "offline"].map((item) => (
-            <Card key={item} className="h-32 animate-pulse rounded-lg bg-card shadow-none" />
-          ))}
-        </section>
-        <Card className="h-96 animate-pulse rounded-lg border-border bg-card shadow-none" />
-      </div>
-    </>
+      <Card className="h-96 animate-pulse rounded-xl border-border bg-card shadow-xs" />
+    </div>
   );
 }
 
@@ -526,7 +516,7 @@ function AppNameCell({ data }: ICellRendererParams<HostApplication>) {
 
   return (
     <div className="flex h-full items-center gap-3">
-      <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground shadow-sm">
+      <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground shadow-xs">
         <Smartphone className="size-4" />
       </div>
       <div className="min-w-0 leading-tight">
@@ -655,11 +645,6 @@ function ActionsCell({
       </Button>
     </div>
   );
-}
-
-function isApplicationRowActionEvent(event: RowClickedEvent<HostApplication>) {
-  const target = event.event?.target;
-  return target instanceof Element && Boolean(target.closest("[data-application-row-action]"));
 }
 
 function percentage(value: number, total: number) {

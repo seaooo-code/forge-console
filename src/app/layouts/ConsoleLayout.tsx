@@ -2,6 +2,7 @@ import { Suspense, useCallback, useEffect, useMemo } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router";
 
 import { navGroups } from "@/app/navigation";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
 import { AppSidebar } from "./components/AppSidebar";
@@ -37,12 +38,14 @@ export function ConsoleLayout() {
       <div className="flex min-h-screen flex-col lg:flex-row">
         <AppSidebar navGroups={navGroups} onNavigate={handleNavigate} />
 
-        <section className="min-w-0 flex-1">
+        <section className="flex min-w-0 flex-1 flex-col">
           <TopToolbar />
 
-          <Suspense fallback={<PageFallback />}>
-            <Outlet />
-          </Suspense>
+          <div className="flex-1 px-6 py-6 lg:px-8 lg:py-8">
+            <Suspense fallback={<PageFallback />}>
+              <Outlet />
+            </Suspense>
+          </div>
         </section>
       </div>
     </main>
@@ -66,7 +69,7 @@ function findNavItem(path: string) {
 
 function PageFallback() {
   return (
-    <div className="space-y-4 px-6 py-5">
+    <div className="flex flex-col gap-6">
       <Card className="h-22 animate-pulse bg-card shadow-none" />
       <Card className="h-96 animate-pulse bg-card shadow-none" />
     </div>
@@ -84,6 +87,9 @@ export function ConsoleRouteNotFound() {
         <Card className="bg-card p-6 text-muted-foreground text-sm shadow-none">
           请从左侧导航重新选择页面。
         </Card>
+        <Button variant="link" type="button" className="mt-3 text-primary">
+          返回首页
+        </Button>
       </div>
     </>
   );

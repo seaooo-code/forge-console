@@ -1,9 +1,10 @@
-import { Bell, CircleHelp, LogOut, Search, SlidersHorizontal } from "lucide-react";
+import { LogOut, Search } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 
 import { logoutAuthSession } from "@/api/feishu-auth";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/use-auth-store";
 
 import { ThemeToggle } from "./ThemeToggle";
@@ -33,50 +34,134 @@ export function TopToolbar() {
   };
 
   return (
-    <header className="sticky top-0 z-20 flex h-18 items-center justify-between gap-4 border-border border-b bg-card/95 px-6 backdrop-blur">
-      <div className="flex min-w-0 flex-1 items-center gap-3">
-        <div className="flex h-9 min-w-65 max-w-130 flex-1 items-center gap-2 rounded-md bg-muted px-3 text-muted-foreground">
-          <Search className="size-4 shrink-0" />
+    <header className="sticky top-0 z-20 flex h-14 items-center gap-4 border-border border-b bg-card/95 px-6 backdrop-blur">
+      <div className="flex min-w-0 flex-1 items-center">
+        <search
+          className={cn(
+            "flex h-9 max-w-130 min-w-65 flex-1 items-center gap-2 rounded-md bg-muted px-3 text-muted-foreground transition-colors",
+            "focus-within:bg-background focus-within:ring-2 focus-within:ring-ring/40",
+          )}
+        >
+          <Search className="size-3.5 shrink-0" />
           <Input
-            className="h-auto min-w-0 flex-1 border-0 bg-transparent px-0 py-0 text-sm shadow-none placeholder:text-muted-foreground focus-visible:ring-0"
+            disabled
+            aria-label="全局搜索（即将推出）"
+            className="h-auto min-w-0 flex-1 cursor-not-allowed border-0 bg-transparent px-0 py-0 text-sm shadow-none placeholder:text-muted-foreground focus-visible:ring-0 disabled:opacity-100"
             placeholder="搜索 任务 / 模块 / Bundle / 发布单 ..."
           />
-        </div>
+          <kbd className="hidden rounded border border-border bg-card px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground md:inline">
+            ⌘K
+          </kbd>
+        </search>
       </div>
 
-      <div className="flex shrink-0 items-center gap-2">
-        <Button variant="ghost" size="icon" aria-label="高级筛选">
-          <SlidersHorizontal className="size-4" />
-        </Button>
+      <div className="flex shrink-0 items-center gap-1.5">
         <ThemeToggle />
-        <Button variant="ghost" size="icon" aria-label="帮助">
-          <CircleHelp className="size-4" />
-        </Button>
-        <Button variant="ghost" size="icon" aria-label="通知">
-          <Bell className="size-4" />
-        </Button>
-        <div className="flex items-center gap-2 pl-2">
-          <div className="flex size-9 items-center justify-center overflow-hidden rounded-full bg-primary font-semibold text-primary-foreground text-sm">
-            {avatarURL ? (
-              <img alt={displayName} className="size-full object-cover" src={avatarURL} />
-            ) : (
-              initials
-            )}
-          </div>
-          <div className="hidden leading-tight xl:block">
-            <div className="max-w-36 truncate font-semibold text-foreground text-sm">
-              {displayName}
-            </div>
-            {email ? (
-              <div className="max-w-42 truncate text-muted-foreground text-xs">{email}</div>
-            ) : null}
-          </div>
-          <Button variant="ghost" size="icon" aria-label="退出登录" onClick={handleLogout}>
-            <LogOut className="size-4" />
-          </Button>
-        </div>
+        <UserMenu
+          avatarURL={avatarURL}
+          displayName={displayName}
+          email={email}
+          initials={initials}
+          onLogout={handleLogout}
+        />
       </div>
     </header>
+  );
+}
+
+type UserMenuProps = {
+  avatarURL?: string;
+  displayName: string;
+  email?: string;
+  initials: string;
+  onLogout: () => void;
+};
+
+function UserMenu({ avatarURL, displayName, email, initials, onLogout }: UserMenuProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKey);
+    };
+  }, [isOpen]);
+
+  return (
+    <div className="relative" ref={containerRef}>
+      <button
+        type="button"
+        aria-haspopup="menu"
+        aria-expanded={isOpen}
+        onClick={() => setIsOpen((open) => !open)}
+        className="flex items-center gap-2.5 rounded-md p-1 pr-2 transition-colors hover:bg-muted"
+      >
+        <div className="flex size-7 items-center justify-center overflow-hidden rounded-full bg-primary font-semibold text-primary-foreground text-xs ring-1 ring-inset ring-primary/30">
+          {avatarURL ? (
+            <img alt={displayName} className="size-full object-cover" src={avatarURL} />
+          ) : (
+            initials
+          )}
+        </div>
+        <div className="hidden text-left leading-tight xl:block">
+          <div className="max-w-32 truncate font-semibold text-foreground text-sm">
+            {displayName}
+          </div>
+          {email ? (
+            <div className="max-w-44 truncate text-muted-foreground text-xs">{email}</div>
+          ) : null}
+        </div>
+      </button>
+
+      {isOpen ? (
+        <div
+          role="menu"
+          className="absolute right-0 z-30 mt-2 w-56 overflow-hidden rounded-lg border border-border bg-popover p-1 text-popover-foreground shadow-lg"
+        >
+          <div className="flex items-center gap-2.5 border-border border-b px-3 py-2.5">
+            <div className="flex size-9 items-center justify-center overflow-hidden rounded-full bg-primary font-semibold text-primary-foreground text-xs">
+              {avatarURL ? (
+                <img alt={displayName} className="size-full object-cover" src={avatarURL} />
+              ) : (
+                initials
+              )}
+            </div>
+            <div className="min-w-0 leading-tight">
+              <div className="truncate font-semibold text-foreground text-sm">{displayName}</div>
+              {email ? <div className="truncate text-muted-foreground text-xs">{email}</div> : null}
+            </div>
+          </div>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setIsOpen(false);
+              onLogout();
+            }}
+            className="mt-1 flex w-full items-center gap-2 rounded-md px-3 py-2 text-destructive text-sm transition-colors hover:bg-destructive/10"
+          >
+            <LogOut className="size-4" />
+            退出登录
+          </button>
+        </div>
+      ) : null}
+    </div>
   );
 }
 

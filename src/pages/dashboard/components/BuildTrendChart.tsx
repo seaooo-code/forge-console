@@ -114,7 +114,7 @@ export function BuildTrendChart({ data }: BuildTrendChartProps) {
   }, [option]);
 
   return (
-    <Card className="gap-0 rounded-lg border-border py-0 shadow-sm">
+    <Card className="gap-0 rounded-xl border-border py-0 shadow-xs">
       <CardHeader className="flex h-12 flex-row items-center justify-between border-b px-4 py-0">
         <div className="min-w-0">
           <CardTitle className="text-foreground text-sm">构建趋势</CardTitle>
@@ -131,14 +131,14 @@ export function BuildTrendChart({ data }: BuildTrendChartProps) {
               成功数
             </span>
           </div>
-          <Button asChild variant="outline" size="sm" className="h-8 border-border">
+          <Button asChild variant="outline" size="sm" className="h-8">
             <Link to="/builds">打开构建</Link>
           </Button>
         </div>
       </CardHeader>
       <CardContent className="px-4 py-4">
         {data.length > 0 ? (
-          <div ref={chartRef} className="h-60 w-full" />
+          <div ref={chartRef} className="h-64 w-full" />
         ) : (
           <div className="grid h-60 place-items-center rounded-md bg-muted text-muted-foreground text-sm">
             暂无构建数据

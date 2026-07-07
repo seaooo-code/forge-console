@@ -1,4 +1,4 @@
-import { Card, CardContent } from "@/components/ui/card";
+import { KpiCard } from "@/components/layout";
 import { cn } from "@/lib/utils";
 
 import { metricIcons, metricIconToneClass } from "../constants";
@@ -13,38 +13,31 @@ export function MetricOverview({ metrics }: MetricOverviewProps) {
     <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
       {metrics.map((metric) => {
         const Icon = metricIcons[metric.icon];
+        const trendTone = metric.trendTone ?? "neutral";
 
         return (
-          <Card key={metric.id} className="gap-0 rounded-lg border-border py-0 shadow-sm">
-            <CardContent className="px-4 py-4">
-              <div className="flex items-start justify-between gap-3">
-                <div
-                  className={cn(
-                    "flex size-9 items-center justify-center rounded-lg",
-                    metricIconToneClass[metric.iconTone],
-                  )}
-                >
-                  <Icon className="size-4" />
-                </div>
-                <span
-                  className={cn(
-                    "rounded-md px-2 py-1 font-semibold text-xs",
-                    metric.trendTone === "positive" && "bg-success/15 text-success",
-                    metric.trendTone === "negative" && "bg-destructive/15 text-destructive",
-                    metric.trendTone === "neutral" && "bg-muted text-muted-foreground",
-                  )}
-                >
-                  {metric.trend}
-                </span>
-              </div>
-              <div className="mt-4 text-muted-foreground text-xs">{metric.label}</div>
-              <div className="mt-1 font-semibold text-2xl text-foreground">{metric.value}</div>
-              <div className="mt-1 truncate text-muted-foreground text-xs">
-                {metric.description}
-              </div>
-              <MiniSparkline values={metric.sparkline} />
-            </CardContent>
-          </Card>
+          <KpiCard
+            key={metric.id}
+            icon={Icon}
+            label={metric.label}
+            value={metric.value}
+            detail={metric.description}
+            toneClassName={metricIconToneClass[metric.iconTone]}
+            trend={
+              <span
+                className={cn(
+                  "rounded-md px-2 py-0.5 font-semibold text-[11px]",
+                  trendTone === "positive" && "bg-success/15 text-success",
+                  trendTone === "negative" && "bg-destructive/15 text-destructive",
+                  trendTone === "neutral" && "bg-muted text-muted-foreground",
+                )}
+              >
+                {metric.trend}
+              </span>
+            }
+          >
+            <MiniSparkline values={metric.sparkline} />
+          </KpiCard>
         );
       })}
     </section>
@@ -55,25 +48,26 @@ function MiniSparkline({ values }: { values: number[] }) {
   const width = 132;
   const height = 34;
   if (values.length === 0) {
-    return <div className="mt-3 h-8.5 rounded bg-muted" />;
+    return <div className="h-8.5 rounded bg-muted" />;
   }
 
   const min = Math.min(...values);
   const max = Math.max(...values);
   const range = max - min || 1;
-  const points = values.map((value, index) => {
-    const x = (index / Math.max(values.length - 1, 1)) * width;
-    const y = height - ((value - min) / range) * (height - 8) - 4;
-
-    return `${x},${y}`;
-  });
+  const points = values
+    .map((value, index) => {
+      const x = (index / Math.max(values.length - 1, 1)) * width;
+      const y = height - ((value - min) / range) * (height - 8) - 4;
+      return `${x},${y}`;
+    })
+    .join(" ");
 
   return (
-    <svg className="mt-3 h-8.5 w-full text-primary" viewBox={`0 0 ${width} ${height}`} role="img">
+    <svg className="h-8.5 w-full text-primary" role="img" viewBox={`0 0 ${width} ${height}`}>
       <title>metric trend</title>
       <polyline
         fill="none"
-        points={points.join(" ")}
+        points={points}
         stroke="currentColor"
         strokeLinecap="round"
         strokeLinejoin="round"

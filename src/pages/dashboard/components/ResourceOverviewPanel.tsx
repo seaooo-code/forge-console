@@ -21,7 +21,7 @@ type ResourceOverviewPanelProps = {
 
 export function ResourceOverviewPanel({ resources }: ResourceOverviewPanelProps) {
   return (
-    <Card className="gap-0 rounded-lg border-border py-0 shadow-sm">
+    <Card className="gap-0 rounded-xl border-border py-0 shadow-xs">
       <CardHeader className="h-12 border-b px-4 py-0">
         <CardTitle className="flex h-full items-center text-foreground text-sm">平台资源</CardTitle>
       </CardHeader>

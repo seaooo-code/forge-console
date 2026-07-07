@@ -18,7 +18,7 @@ export function ReleaseOverviewPanel({ releases }: ReleaseOverviewPanelProps) {
   const latestRelease = releases[0];
 
   return (
-    <Card className="gap-0 rounded-lg border-border py-0 shadow-sm">
+    <Card className="gap-0 rounded-xl border-border py-0 shadow-xs">
       <CardHeader className="flex h-12 flex-row items-center justify-between border-b px-4 py-0">
         <div className="min-w-0">
           <CardTitle className="text-foreground text-sm">发布概览</CardTitle>

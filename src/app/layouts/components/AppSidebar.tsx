@@ -8,11 +8,11 @@ import {
   KeyRound,
   Layers3,
   ServerCog,
-  Settings,
 } from "lucide-react";
-
+import { miCarEnvironmentBadgeClass } from "@/components/common/EnvironmentBadge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useDashboardContextStore } from "@/pages/dashboard/model/use-dashboard-context-store";
 
 import { useConsoleLayoutStore } from "../model/use-console-layout-store";
 import type { NavGroup, NavIconName, NavItem } from "../types";
@@ -26,7 +26,6 @@ const navIcons: Record<NavIconName, LucideIcon> = {
   environment: Layers3,
   module: Boxes,
   releaseRecord: ServerCog,
-  settings: Settings,
   storage: Database,
 };
 
@@ -38,11 +37,13 @@ type AppSidebarProps = {
 export function AppSidebar({ navGroups, onNavigate }: AppSidebarProps) {
   const activeNavId = useConsoleLayoutStore((state) => state.activeNavId);
   const setActiveNavId = useConsoleLayoutStore((state) => state.setActiveNavId);
+  const project = useDashboardContextStore((state) => state.project);
+  const environment = useDashboardContextStore((state) => state.environment);
 
   return (
-    <aside className="flex min-h-screen w-full flex-col border-border border-r bg-card text-foreground lg:sticky lg:top-0 lg:h-screen lg:w-62 lg:shrink-0">
-      <div className="flex h-18 items-center gap-3 border-border border-b px-5">
-        <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary font-semibold text-primary-foreground text-xs">
+    <aside className="flex h-full w-full flex-col border-border border-r bg-card text-foreground lg:sticky lg:top-0 lg:h-screen lg:w-64 lg:shrink-0">
+      <div className="flex h-14 items-center gap-3 border-border border-b px-5">
+        <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary font-bold text-primary-foreground text-sm ring-1 ring-inset ring-primary/30">
           RN
         </div>
         <div className="min-w-0">
@@ -51,57 +52,114 @@ export function AppSidebar({ navGroups, onNavigate }: AppSidebarProps) {
         </div>
       </div>
 
-      <nav className="flex-1 space-y-3 overflow-y-auto px-3 py-4">
+      <nav className="flex-1 space-y-5 overflow-y-auto px-3 py-4">
         {navGroups.map((group) => (
-          <div key={group.label} className="space-y-0.5">
-            <div className="px-3 pb-1 font-medium text-muted-foreground text-xs uppercase tracking-wide">
+          <div key={group.label} className="space-y-1">
+            <div className="px-3 font-medium text-[11px] text-muted-foreground/70 uppercase tracking-wider">
               {group.label}
             </div>
-            {group.items.map((item) => {
-              const Icon = navIcons[item.icon];
-              const active = activeNavId === item.id;
-
-              return (
-                <Button
-                  key={item.id}
-                  variant="ghost"
-                  type="button"
-                  className={cn(
-                    "relative flex h-9 w-full justify-start gap-3 rounded-md px-3 pr-12 text-left font-medium text-sm transition-colors",
-                    active
-                      ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25 hover:bg-primary hover:text-primary-foreground"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                  )}
-                  onClick={() => {
-                    setActiveNavId(item.id);
-                    onNavigate(item);
-                  }}
-                >
-                  <Icon className="size-4 shrink-0" />
-                  <span className="truncate">{item.label}</span>
-                  {item.isMock ? (
-                    <span
-                      className={cn(
-                        "absolute top-1 right-1.5 rounded px-1.5 py-0.5 font-medium text-[10px] leading-none",
-                        active
-                          ? "bg-primary-foreground/20 text-primary-foreground"
-                          : "bg-warning/15 text-warning",
-                      )}
-                      title="暂未接真实接口"
-                    >
-                      未接
-                    </span>
-                  ) : null}
-                </Button>
-              );
-            })}
+            {group.items.map((item) => (
+              <NavLink
+                key={item.id}
+                item={item}
+                active={activeNavId === item.id}
+                icon={navIcons[item.icon]}
+                onClick={() => {
+                  setActiveNavId(item.id);
+                  onNavigate(item);
+                }}
+              />
+            ))}
           </div>
         ))}
       </nav>
 
-      <div className="flex items-center justify-between gap-3 border-border border-t px-5 py-3 text-muted-foreground text-xs">
-        <span>v2.8.4 · build 20260609</span>
+      <div className="border-border border-t px-4 py-3">
+        <div className="flex items-center gap-2.5 rounded-lg bg-muted px-3 py-2">
+          <span className="size-2 shrink-0 rounded-full bg-success" />
+          <div className="min-w-0 flex-1">
+            <div className="truncate font-medium text-foreground text-xs">{project}</div>
+            <div className="mt-0.5 flex items-center gap-1.5">
+              <span
+                className={cn(
+                  "inline-flex h-4 items-center rounded border px-1.5 font-semibold text-[10px] leading-none",
+                  miCarEnvironmentBadgeClass[environment],
+                )}
+              >
+                {environment}
+              </span>
+            </div>
+          </div>
+        </div>
+        <div className="mt-2 text-center text-[10px] text-muted-foreground/70">
+          v2.8.4 · build 20260609
+        </div>
       </div>
     </aside>
+  );
+}
+
+type NavLinkProps = {
+  active: boolean;
+  icon: LucideIcon;
+  item: NavItem;
+  onClick: () => void;
+};
+
+function NavLink({ active, icon: Icon, item, onClick }: NavLinkProps) {
+  return (
+    <Button
+      variant="ghost"
+      type="button"
+      onClick={onClick}
+      aria-current={active ? "page" : undefined}
+      className={cn(
+        "group relative h-10 w-full justify-start gap-3 overflow-hidden rounded-lg px-3 text-left transition-colors",
+        active
+          ? "bg-primary/10 text-primary"
+          : "text-muted-foreground hover:bg-muted hover:text-foreground",
+      )}
+    >
+      {/* Active indicator: 3px solid bar on the left edge */}
+      <span
+        aria-hidden="true"
+        className={cn(
+          "absolute top-1.5 bottom-1.5 left-0 w-0.75 rounded-full transition-all",
+          active ? "bg-primary" : "bg-transparent",
+        )}
+      />
+      <span
+        className={cn(
+          "flex size-7 shrink-0 items-center justify-center rounded-md transition-colors",
+          active ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground",
+        )}
+      >
+        <Icon className="size-3.5" />
+      </span>
+      <span className="min-w-0 flex-1 leading-tight">
+        <span className="block truncate font-medium text-sm">{item.label}</span>
+      </span>
+      {item.isMock ? (
+        <span
+          className={cn(
+            "shrink-0 rounded px-1.5 py-0.5 font-medium text-[10px] leading-none",
+            active ? "bg-primary/15 text-primary" : "bg-warning/15 text-warning",
+          )}
+          title="暂未接真实接口"
+        >
+          未接
+        </span>
+      ) : null}
+      {item.meta ? (
+        <span
+          className={cn(
+            "shrink-0 rounded-md px-1.5 py-0.5 font-medium text-[11px] tabular-nums leading-none",
+            active ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground",
+          )}
+        >
+          {item.meta}
+        </span>
+      ) : null}
+    </Button>
   );
 }
