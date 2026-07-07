@@ -1,22 +1,19 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ColDef, ICellRendererParams } from "ag-grid-community";
-import { AgGridReact } from "ag-grid-react";
 import {
   CheckCircle2,
   Cloud,
   Copy,
-  Database,
   Pencil,
   Plus,
   RotateCw,
   Trash2,
   TriangleAlert,
 } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
+import { type ReactNode, useCallback, useMemo, useState } from "react";
 import { fetchStorageConfigurationsSnapshot } from "@/api/storage-configurations";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
-import { ConsoleTableFooter } from "@/components/common/ConsoleControls";
-import { consoleGridTheme } from "@/components/common/console-grid-theme";
+import { DataTable, FilterBar, PageHeader, TablePagination } from "@/components/layout";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -27,6 +24,9 @@ import type { StorageConfigRecord, StorageStatus } from "@/types/storage";
 import { storageSnapshotQueryKey } from "./api/storage-query-keys";
 import { deleteStorageConfiguration } from "./api/storage-snapshot";
 import { adapterToneClass, statusClass } from "./constants";
+
+const PAGE_SIZE = 20;
+const storageBreadcrumbs = [{ label: "平台" }, { label: "存储管理" }];
 
 type StoragePageProps = {
   onCreateStorage: () => void;
@@ -44,6 +44,7 @@ export function StoragePage({ onCreateStorage, onEditStorage }: StoragePageProps
   const [deleteTarget, setDeleteTarget] = useState<StorageConfigRecord | null>(null);
   const [deleteError, setDeleteError] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
+  const [page, setPage] = useState(1);
   const handleRequestDeleteStorage = useCallback((storage: StorageConfigRecord) => {
     setDeleteTarget(storage);
     setDeleteError("");
@@ -127,79 +128,52 @@ export function StoragePage({ onCreateStorage, onEditStorage }: StoragePageProps
     [canManageStorage, handleRequestDeleteStorage, onEditStorage],
   );
 
-  const defaultColDef = useMemo<ColDef<StorageConfigRecord>>(
-    () => ({
-      cellClass: "flex items-center",
-      cellStyle: {
-        alignItems: "center",
-        display: "flex",
-      },
-      resizable: false,
-      sortable: false,
-      suppressHeaderMenuButton: true,
-      suppressMovable: true,
-    }),
-    [],
-  );
-
   if (!snapshot) {
     return <StoragePageLoading />;
   }
 
   return (
     <>
-      <div className="border-border border-b bg-card px-6 py-5">
-        <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-          <div>
-            <div className="text-muted-foreground text-xs">平台 / 存储管理</div>
-            <h1 className="mt-2 font-semibold text-2xl text-foreground tracking-tight">存储管理</h1>
-            <p className="mt-2 text-muted-foreground text-sm">
-              S3-Compatible 对象存储配置，统一管理 Bundle 产物上传与分发入口
-            </p>
-          </div>
-          <Button
-            type="button"
-            className="shrink-0 bg-primary hover:bg-primary/90"
-            disabled={!canManageStorage}
-            onClick={onCreateStorage}
-          >
-            <Plus className="size-4" />
-            新增存储配置
-          </Button>
-        </div>
-      </div>
+      <div className="flex flex-col gap-6">
+        <StorageHeader
+          actions={
+            <Button type="button" size="sm" disabled={!canManageStorage} onClick={onCreateStorage}>
+              <Plus className="size-4" />
+              新增存储配置
+            </Button>
+          }
+        />
 
-      <div className="px-6 py-5">
-        <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-border border-b px-4 py-3">
-            <div className="flex min-w-0 items-center gap-2">
-              <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
-                <Database className="size-4" />
-              </div>
-              <div className="min-w-0">
-                <h2 className="font-semibold text-foreground text-sm">存储配置列表</h2>
-                <p className="text-muted-foreground text-xs">
-                  共 {snapshot.configurations.length} 条配置
-                </p>
-              </div>
-            </div>
-          </div>
+        <FilterBar
+          label="存储配置列表"
+          actions={
+            <span className="text-muted-foreground text-xs">
+              共{" "}
+              <span className="font-semibold text-foreground">
+                {snapshot.configurations.length}
+              </span>{" "}
+              条配置
+            </span>
+          }
+        />
 
-          <AgGridReact<StorageConfigRecord>
-            rowData={snapshot.configurations}
-            columnDefs={columnDefs}
-            defaultColDef={defaultColDef}
-            domLayout="autoHeight"
-            headerHeight={44}
-            rowHeight={58}
-            theme={consoleGridTheme}
-            suppressCellFocus
-            suppressContextMenu
-            getRowId={({ data }) => data.id}
+        <DataTable
+          rows={snapshot.configurations}
+          columnDefs={columnDefs}
+          getRowId={({ data }) => data.id}
+        />
+
+        <Card className="rounded-xl border-border bg-card py-0 shadow-xs">
+          <TablePagination
+            page={page}
+            pageSize={PAGE_SIZE}
+            total={snapshot.configurations.length}
+            onPageChange={setPage}
+            onPageSizeChange={() => {
+              // hook left here for future wiring; current snapshot returns the full list
+            }}
           />
-
-          <ConsoleTableFooter total={snapshot.configurations.length} />
-        </section>
+        </Card>
       </div>
       <ConfirmDialog
         isOpen={deleteTarget !== null}
@@ -243,18 +217,21 @@ export function StoragePage({ onCreateStorage, onEditStorage }: StoragePageProps
 
 function StoragePageLoading() {
   return (
-    <>
-      <div className="border-border border-b bg-card px-6 py-5">
-        <div className="text-muted-foreground text-xs">平台 / 存储管理</div>
-        <h1 className="mt-2 font-semibold text-2xl text-foreground tracking-tight">存储管理</h1>
-        <p className="mt-2 text-muted-foreground text-sm">
-          S3-Compatible 对象存储配置，统一管理 Bundle 产物上传与分发入口
-        </p>
-      </div>
-      <div className="px-6 py-5">
-        <Card className="h-96 animate-pulse rounded-lg border-border bg-card shadow-none" />
-      </div>
-    </>
+    <div className="flex flex-col gap-6">
+      <StorageHeader />
+      <Card className="h-96 animate-pulse rounded-xl border-border bg-card shadow-xs" />
+    </div>
+  );
+}
+
+function StorageHeader({ actions }: { actions?: ReactNode }) {
+  return (
+    <PageHeader
+      breadcrumbs={storageBreadcrumbs}
+      title="存储管理"
+      description="S3-Compatible 对象存储配置，统一管理 Bundle 产物上传与分发入口"
+      actions={actions}
+    />
   );
 }
 

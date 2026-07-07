@@ -63,7 +63,7 @@ export function DataTable<TRow>({
         getRowId={getRowId}
         suppressCellFocus
         suppressContextMenu
-        rowClass="cursor-pointer"
+        rowClass={onRowClicked ? "cursor-pointer" : undefined}
         onRowClicked={(event) => {
           if (!onRowClicked) {
             return;

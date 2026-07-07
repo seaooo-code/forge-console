@@ -1,12 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import type { ColDef, ICellRendererParams } from "ag-grid-community";
-import { AgGridReact } from "ag-grid-react";
 import { Circle, RefreshCw, Rocket, ShieldCheck } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
-import { ConsoleTableFooter } from "@/components/common/ConsoleControls";
-import { consoleGridTheme } from "@/components/common/console-grid-theme";
 import { EnvironmentBadge } from "@/components/common/EnvironmentBadge";
+import { DataTable, FilterBar, KpiCard, PageHeader, TablePagination } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -22,6 +20,8 @@ import {
 } from "./constants";
 import type { ReleasePointerRecord, ReleaseRecordStatus } from "./types";
 
+const PAGE_SIZE = 20;
+
 type ReleaseRecordsPageProps = {
   onOpenRelease: (releaseId: string) => void;
 };
@@ -35,13 +35,35 @@ export function ReleaseRecordsPage({ onOpenRelease }: ReleaseRecordsPageProps) {
     queryFn: () => fetchReleaseRecordsSnapshot(),
     queryKey: releaseRecordsSnapshotQueryKey,
   });
+  const [page, setPage] = useState(1);
   const stats = useMemo(
     () =>
       snapshot
         ? [
-            { id: "total", label: "总发布", value: snapshot.summary.total, tone: "sky" },
-            { id: "active", label: "生效中", value: snapshot.summary.active, tone: "emerald" },
-            { id: "inactive", label: "已失效", value: snapshot.summary.inactive, tone: "slate" },
+            {
+              detail: "全部发布记录",
+              icon: Rocket,
+              id: "total",
+              label: "总发布",
+              tone: "info" as const,
+              value: snapshot.summary.total,
+            },
+            {
+              detail: "当前可访问",
+              icon: ShieldCheck,
+              id: "active",
+              label: "生效中",
+              tone: "success" as const,
+              value: snapshot.summary.active,
+            },
+            {
+              detail: "已被替换",
+              icon: Circle,
+              id: "inactive",
+              label: "已失效",
+              tone: "muted" as const,
+              value: snapshot.summary.inactive,
+            },
           ]
         : [],
     [snapshot],
@@ -119,102 +141,66 @@ export function ReleaseRecordsPage({ onOpenRelease }: ReleaseRecordsPageProps) {
     ],
     [],
   );
-  const defaultColDef = useMemo<ColDef<ReleasePointerRecord>>(
-    () => ({
-      cellClass: "flex items-center",
-      cellStyle: {
-        alignItems: "center",
-        display: "flex",
-      },
-      resizable: false,
-      sortable: false,
-      suppressHeaderMenuButton: true,
-      suppressMovable: true,
-    }),
-    [],
-  );
 
   if (!snapshot) {
     return null;
   }
 
   return (
-    <>
-      <div className="border-border border-b bg-card px-6 py-5">
-        <h1 className="font-semibold text-2xl text-foreground tracking-tight">发布记录</h1>
-        <p className="mt-2 text-muted-foreground text-sm">记录构建产物发布后的访问路由指向变更</p>
-      </div>
+    <div className="flex flex-col gap-6">
+      <PageHeader title="发布记录" description="记录构建产物发布后的访问路由指向变更" />
 
-      <div className="space-y-4 px-6 py-5">
-        <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {stats.map((item) => (
-            <Card key={item.id} className="rounded-lg px-5 py-4 shadow-none">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <div className="font-medium text-muted-foreground text-sm">{item.label}</div>
-                  <div className="mt-2 font-semibold text-3xl text-foreground leading-none">
-                    {item.value}
-                  </div>
-                </div>
-                <div
-                  className={cn(
-                    "flex size-5 shrink-0 items-center justify-center rounded border",
-                    item.tone === "emerald" && "border-success/30 bg-success/10 text-success",
-                    item.tone === "red" &&
-                      "border-destructive/30 bg-destructive/10 text-destructive",
-                    item.tone === "sky" && "border-info/30 bg-info/10 text-info",
-                    item.tone === "slate" && "border-border bg-muted text-muted-foreground",
-                  )}
-                >
-                  <Circle className="size-2 fill-current" />
-                </div>
-              </div>
-            </Card>
-          ))}
-        </section>
-
-        <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-border border-b px-4 py-3">
-            <div className="flex min-w-0 flex-wrap items-center gap-2">
-              <span className="font-medium text-muted-foreground text-sm">最近发布</span>
-            </div>
-
-            <div className="flex shrink-0 items-center gap-2">
-              <Button
-                variant="outline"
-                size="icon"
-                aria-label="刷新发布记录"
-                disabled={isFetching}
-                onClick={() => void refetch()}
-              >
-                <RefreshCw className="size-4" />
-              </Button>
-            </div>
-          </div>
-
-          <AgGridReact<ReleasePointerRecord>
-            rowData={snapshot.records}
-            columnDefs={columnDefs}
-            defaultColDef={defaultColDef}
-            domLayout="autoHeight"
-            headerHeight={44}
-            rowHeight={58}
-            theme={consoleGridTheme}
-            suppressCellFocus
-            suppressContextMenu
-            getRowId={({ data }) => data.id}
-            rowClass="cursor-pointer"
-            onRowClicked={({ data }) => {
-              if (data) {
-                onOpenRelease(data.id);
-              }
-            }}
+      <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        {stats.map((item) => (
+          <KpiCard
+            key={item.id}
+            icon={item.icon}
+            label={item.label}
+            value={item.value}
+            detail={item.detail}
+            tone={item.tone}
           />
+        ))}
+      </section>
 
-          <ConsoleTableFooter total={snapshot.records.length} />
-        </section>
-      </div>
-    </>
+      <FilterBar
+        label="最近发布"
+        actions={
+          <Button
+            variant="outline"
+            size="icon"
+            aria-label="刷新发布记录"
+            disabled={isFetching}
+            onClick={() => void refetch()}
+          >
+            <RefreshCw className="size-4" />
+          </Button>
+        }
+      />
+
+      <DataTable
+        rows={snapshot.records}
+        columnDefs={columnDefs}
+        getRowId={({ data }) => data.id}
+        onRowClicked={({ data }) => {
+          if (data) {
+            onOpenRelease(data.id);
+          }
+        }}
+      />
+
+      <Card className="rounded-xl border-border bg-card py-0 shadow-xs">
+        <TablePagination
+          page={page}
+          pageSize={PAGE_SIZE}
+          total={snapshot.records.length}
+          onPageChange={setPage}
+          onPageSizeChange={() => {
+            // hook left here for future wiring; current snapshot returns the full list
+          }}
+        />
+      </Card>
+    </div>
   );
 }
 

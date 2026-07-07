@@ -1,6 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import type { ColDef, ICellRendererParams, RowClickedEvent } from "ag-grid-community";
-import { AgGridReact } from "ag-grid-react";
+import type { ColDef, ICellRendererParams } from "ag-grid-community";
 import {
   Activity,
   Circle,
@@ -16,9 +15,8 @@ import { type ReactNode, useCallback, useEffect, useMemo, useState } from "react
 import { Controller, useForm } from "react-hook-form";
 
 import { fetchModulesSnapshot, modulesRootQueryKey } from "@/api/modules";
-import { ConsoleTableFooter } from "@/components/common/ConsoleControls";
-import { consoleGridTheme } from "@/components/common/console-grid-theme";
 import { Modal, ModalFooter, ModalHeader } from "@/components/common/Modal";
+import { DataTable, FilterBar, KpiCard, PageHeader, TablePagination } from "@/components/layout";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -54,6 +52,8 @@ import type {
   BuildRunStatus,
   BuildTriggerType,
 } from "./types";
+
+const PAGE_SIZE = 20;
 
 type BuildsPageProps = {
   onOpenBuild: (buildId: string) => void;
@@ -108,6 +108,7 @@ export function BuildsPage({ onOpenBuild }: BuildsPageProps) {
   const [releaseBuild, setReleaseBuild] = useState<BuildRunRecord | null>(null);
   const [releaseError, setReleaseError] = useState("");
   const [releaseSuccess, setReleaseSuccess] = useState("");
+  const [page, setPage] = useState(1);
   const buildsById = useMemo(
     () => new Map(snapshot?.builds.map((build) => [build.id, build]) ?? []),
     [snapshot],
@@ -160,11 +161,46 @@ export function BuildsPage({ onOpenBuild }: BuildsPageProps) {
     () =>
       snapshot
         ? [
-            { id: "total", label: "总构建", value: snapshot.summary.total, tone: "sky" },
-            { id: "running", label: "构建中", value: snapshot.summary.running, tone: "blue" },
-            { id: "success", label: "成功", value: snapshot.summary.success, tone: "emerald" },
-            { id: "failed", label: "失败", value: snapshot.summary.failed, tone: "red" },
-            { id: "queued", label: "排队中", value: snapshot.summary.queued, tone: "amber" },
+            {
+              detail: "全部构建记录",
+              icon: Activity,
+              id: "total",
+              label: "总构建",
+              tone: "info" as const,
+              value: snapshot.summary.total,
+            },
+            {
+              detail: "正在执行",
+              icon: LoaderCircle,
+              id: "running",
+              label: "构建中",
+              tone: "info" as const,
+              value: snapshot.summary.running,
+            },
+            {
+              detail: "产物可发布",
+              icon: PackageCheck,
+              id: "success",
+              label: "成功",
+              tone: "success" as const,
+              value: snapshot.summary.success,
+            },
+            {
+              detail: "需要排查",
+              icon: Circle,
+              id: "failed",
+              label: "失败",
+              tone: "destructive" as const,
+              value: snapshot.summary.failed,
+            },
+            {
+              detail: "等待执行",
+              icon: Clock3,
+              id: "queued",
+              label: "排队中",
+              tone: "warning" as const,
+              value: snapshot.summary.queued,
+            },
           ]
         : [],
     [snapshot],
@@ -253,20 +289,6 @@ export function BuildsPage({ onOpenBuild }: BuildsPageProps) {
     ],
     [canCreateRelease, openReleaseDialog],
   );
-  const defaultColDef = useMemo<ColDef<BuildRunRecord>>(
-    () => ({
-      cellClass: "flex items-center",
-      cellStyle: {
-        alignItems: "center",
-        display: "flex",
-      },
-      resizable: false,
-      sortable: false,
-      suppressHeaderMenuButton: true,
-      suppressMovable: true,
-    }),
-    [],
-  );
 
   if (!snapshot) {
     return null;
@@ -274,52 +296,32 @@ export function BuildsPage({ onOpenBuild }: BuildsPageProps) {
 
   return (
     <>
-      <div className="border-border border-b bg-card px-6 py-5">
-        <h1 className="font-semibold text-2xl text-foreground tracking-tight">构建管理</h1>
-        <p className="mt-2 text-muted-foreground text-sm">
-          汇总所有模块构建执行，支持手动新增构建并跟踪流水线触发结果
-        </p>
-      </div>
+      <div className="flex flex-col gap-6">
+        <PageHeader
+          title="构建管理"
+          description="汇总所有模块构建执行，支持手动新增构建并跟踪流水线触发结果"
+        />
 
-      <div className="space-y-4 px-6 py-5">
         <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
           {stats.map((item) => (
-            <Card key={item.id} className="rounded-lg px-5 py-4 shadow-none">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <div className="font-medium text-muted-foreground text-sm">{item.label}</div>
-                  <div className="mt-2 font-semibold text-3xl text-foreground leading-none">
-                    {item.value}
-                  </div>
-                </div>
-                <div
-                  className={cn(
-                    "flex size-5 shrink-0 items-center justify-center rounded border",
-                    item.tone === "emerald" && "border-success/30 bg-success/10 text-success",
-                    item.tone === "red" &&
-                      "border-destructive/30 bg-destructive/10 text-destructive",
-                    item.tone === "amber" && "border-warning/40 bg-warning/10 text-warning",
-                    item.tone === "blue" && "border-info/30 bg-info/10 text-info",
-                    item.tone === "sky" && "border-info/30 bg-info/10 text-info",
-                  )}
-                >
-                  <Circle className="size-2 fill-current" />
-                </div>
-              </div>
-            </Card>
+            <KpiCard
+              key={item.id}
+              icon={item.icon}
+              label={item.label}
+              value={item.value}
+              detail={item.detail}
+              tone={item.tone}
+            />
           ))}
         </section>
 
-        <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-border border-b px-4 py-3">
-            <div className="flex min-w-0 flex-wrap items-center gap-2">
-              <span className="font-medium text-muted-foreground text-sm">最近构建</span>
-            </div>
-
-            <div className="flex shrink-0 items-center gap-2">
+        <FilterBar
+          label="最近构建"
+          actions={
+            <>
               <Button
                 type="button"
-                className="bg-primary hover:bg-primary/90"
+                size="sm"
                 disabled={!canCreateBuild}
                 onClick={() => {
                   setBuildError("");
@@ -340,40 +342,36 @@ export function BuildsPage({ onOpenBuild }: BuildsPageProps) {
               >
                 <RefreshCw className="size-4" />
               </Button>
-            </div>
-            {releaseSuccess ? (
-              <Alert variant="success" className="basis-full">
-                {releaseSuccess}
-              </Alert>
-            ) : null}
-            {buildSuccess ? (
-              <Alert variant="success" className="basis-full">
-                {buildSuccess}
-              </Alert>
-            ) : null}
-          </div>
+            </>
+          }
+        />
 
-          <AgGridReact<BuildRunRecord>
-            rowData={snapshot.builds}
-            columnDefs={columnDefs}
-            defaultColDef={defaultColDef}
-            domLayout="autoHeight"
-            headerHeight={44}
-            rowHeight={58}
-            theme={consoleGridTheme}
-            suppressCellFocus
-            suppressContextMenu
-            getRowId={({ data }) => data.id}
-            rowClass="cursor-pointer"
-            onRowClicked={(event) => {
-              if (event.data && !isBuildRowActionEvent(event)) {
-                onOpenBuild(event.data.id);
-              }
+        {releaseSuccess ? <Alert variant="success">{releaseSuccess}</Alert> : null}
+        {buildSuccess ? <Alert variant="success">{buildSuccess}</Alert> : null}
+
+        <DataTable
+          rows={snapshot.builds}
+          columnDefs={columnDefs}
+          getRowId={({ data }) => data.id}
+          rowActionSelector="[data-build-row-action]"
+          onRowClicked={(event) => {
+            if (event.data) {
+              onOpenBuild(event.data.id);
+            }
+          }}
+        />
+
+        <Card className="rounded-xl border-border bg-card py-0 shadow-xs">
+          <TablePagination
+            page={page}
+            pageSize={PAGE_SIZE}
+            total={snapshot.builds.length}
+            onPageChange={setPage}
+            onPageSizeChange={() => {
+              // hook left here for future wiring; current snapshot returns the full list
             }}
           />
-
-          <ConsoleTableFooter total={snapshot.builds.length} />
-        </section>
+        </Card>
       </div>
 
       <BuildCreateDialog
@@ -538,11 +536,6 @@ function ActionsCell({
       </Button>
     </div>
   );
-}
-
-function isBuildRowActionEvent(event: RowClickedEvent<BuildRunRecord>) {
-  const target = event.event?.target;
-  return target instanceof Element && Boolean(target.closest("[data-build-row-action]"));
 }
 
 function buildReleaseTargetKey(moduleId: string, environment: string) {

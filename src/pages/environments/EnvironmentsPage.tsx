@@ -1,7 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { Clock3, Database, type LucideIcon, Pencil, Plus, Server } from "lucide-react";
+import type { ReactNode } from "react";
 
 import { EmptyState as StateEmptyState } from "@/components/common/StateBlock";
+import { PageHeader } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -11,6 +13,8 @@ import { environmentsSnapshotQueryKey } from "./api/environment-query-keys";
 import { fetchEnvironmentsSnapshot } from "./api/environments-snapshot";
 import { environmentToneClass } from "./constants";
 import type { RuntimeEnvironment } from "./types";
+
+const environmentBreadcrumbs = [{ label: "平台" }, { label: "环境管理" }];
 
 type EnvironmentsPageProps = {
   onCreateEnvironment: () => void;
@@ -33,63 +37,63 @@ export function EnvironmentsPage({
   }
 
   return (
-    <>
-      <div className="border-border border-b bg-card px-6 py-5">
-        <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-          <div>
-            <h1 className="font-semibold text-2xl text-foreground tracking-tight">环境管理</h1>
-            <p className="mt-2 text-muted-foreground text-sm">管理运行环境和对应的对象存储配置</p>
-          </div>
+    <div className="flex flex-col gap-6">
+      <EnvironmentsHeader
+        actions={
           <Button
             type="button"
-            className="bg-primary hover:bg-primary/90"
+            size="sm"
             disabled={!canManageEnvironments}
             onClick={onCreateEnvironment}
           >
             <Plus className="size-4" />
             新建环境
           </Button>
-        </div>
-      </div>
+        }
+      />
 
-      <div className="space-y-4 px-6 py-5">
-        {snapshot.environments.length === 0 ? (
-          <EmptyState
+      {snapshot.environments.length === 0 ? (
+        <EmptyState
+          canManageEnvironments={canManageEnvironments}
+          onCreateEnvironment={onCreateEnvironment}
+        />
+      ) : null}
+
+      <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        {snapshot.environments.map((environment) => (
+          <EnvironmentCard
+            key={environment.id}
             canManageEnvironments={canManageEnvironments}
-            onCreateEnvironment={onCreateEnvironment}
+            environment={environment}
+            onEditEnvironment={onEditEnvironment}
           />
-        ) : null}
-
-        <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          {snapshot.environments.map((environment) => (
-            <EnvironmentCard
-              key={environment.id}
-              canManageEnvironments={canManageEnvironments}
-              environment={environment}
-              onEditEnvironment={onEditEnvironment}
-            />
-          ))}
-        </section>
-      </div>
-    </>
+        ))}
+      </section>
+    </div>
   );
 }
 
 function EnvironmentsPageLoading() {
   return (
-    <>
-      <div className="border-border border-b bg-card px-6 py-5">
-        <h1 className="font-semibold text-2xl text-foreground tracking-tight">环境管理</h1>
-        <p className="mt-2 text-muted-foreground text-sm">管理运行环境和对应的对象存储配置</p>
-      </div>
-      <div className="space-y-4 px-6 py-5">
-        <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          {["one", "two", "three", "four"].map((item) => (
-            <Card key={item} className="h-52 animate-pulse rounded-lg bg-card shadow-none" />
-          ))}
-        </section>
-      </div>
-    </>
+    <div className="flex flex-col gap-6">
+      <EnvironmentsHeader />
+      <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        {["one", "two", "three", "four"].map((item) => (
+          <Card key={item} className="h-52 animate-pulse rounded-xl bg-card shadow-xs" />
+        ))}
+      </section>
+    </div>
+  );
+}
+
+function EnvironmentsHeader({ actions }: { actions?: ReactNode }) {
+  return (
+    <PageHeader
+      breadcrumbs={environmentBreadcrumbs}
+      title="环境管理"
+      description="管理运行环境和对应的对象存储配置"
+      actions={actions}
+    />
   );
 }
 
@@ -105,7 +109,7 @@ function EnvironmentCard({
   return (
     <Card
       className={cn(
-        "gap-4 rounded-lg border-t-4 px-4 py-4 shadow-none",
+        "gap-4 rounded-xl border-t-4 px-4 py-4 shadow-xs",
         environmentToneClass[environment.tone],
       )}
     >

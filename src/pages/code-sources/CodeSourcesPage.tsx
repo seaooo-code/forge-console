@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { ErrorState } from "@/components/common/StateBlock";
+import { PageHeader } from "@/components/layout";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,8 @@ import type { CodeSourceApp, CodeSourceProvider } from "./types";
 const providerIcons: Record<CodeSourceProvider, LucideIcon> = {
   github: GitFork,
 };
+
+const codeSourcesBreadcrumbs = [{ label: "平台" }, { label: "代码源管理" }];
 
 export function CodeSourcesPage() {
   const queryClient = useQueryClient();
@@ -97,17 +100,9 @@ export function CodeSourcesPage() {
 
   return (
     <>
-      <div className="border-border border-b bg-card px-6 py-5">
-        <div>
-          <div className="text-muted-foreground text-xs">平台 / 代码源管理</div>
-          <h1 className="mt-2 font-semibold text-2xl text-foreground tracking-tight">代码源管理</h1>
-          <p className="mt-2 text-muted-foreground text-sm">
-            创建或移除 GitHub App 授权，用于后续仓库绑定
-          </p>
-        </div>
-      </div>
+      <div className="flex flex-col gap-6">
+        <CodeSourcesHeader />
 
-      <div className="space-y-4 px-6 py-5">
         {message ? <Alert variant="info">{message}</Alert> : null}
         {errorMessage ? <Alert variant="danger">{errorMessage}</Alert> : null}
 
@@ -129,6 +124,7 @@ export function CodeSourcesPage() {
           ))}
         </section>
       </div>
+
       <ConfirmDialog
         isOpen={deleteTarget !== null}
         isPending={isDeleting}
@@ -179,20 +175,20 @@ export function CodeSourcesPage() {
 
 function CodeSourcesPageError({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
-    <>
-      <div className="border-border border-b bg-card px-6 py-5">
-        <div>
-          <div className="text-muted-foreground text-xs">平台 / 代码源管理</div>
-          <h1 className="mt-2 font-semibold text-2xl text-foreground tracking-tight">代码源管理</h1>
-          <p className="mt-2 text-muted-foreground text-sm">
-            创建或移除 GitHub App 授权，用于后续仓库绑定
-          </p>
-        </div>
-      </div>
-      <div className="px-6 py-5">
-        <ErrorState title="代码源接口不可用" message={message} onRetry={onRetry} />
-      </div>
-    </>
+    <div className="flex flex-col gap-6">
+      <CodeSourcesHeader />
+      <ErrorState title="代码源接口不可用" message={message} onRetry={onRetry} />
+    </div>
+  );
+}
+
+function CodeSourcesHeader() {
+  return (
+    <PageHeader
+      breadcrumbs={codeSourcesBreadcrumbs}
+      title="代码源管理"
+      description="创建或移除 GitHub App 授权，用于后续仓库绑定"
+    />
   );
 }
 
@@ -213,16 +209,14 @@ function submitGitHubAppManifest(actionURL: string, manifest: string) {
 
 function CodeSourcesPageLoading() {
   return (
-    <>
-      <div className="border-border border-b bg-card px-6 py-5">
-        <div className="h-16 max-w-xl animate-pulse rounded-lg bg-muted" />
-      </div>
-      <div className="grid gap-4 px-6 py-5 xl:grid-cols-2">
+    <div className="flex flex-col gap-6">
+      <CodeSourcesHeader />
+      <div className="grid gap-4 xl:grid-cols-2">
         {["github"].map((item) => (
-          <Card key={item} className="h-42 animate-pulse rounded-lg bg-card shadow-none" />
+          <Card key={item} className="h-42 animate-pulse rounded-xl bg-card shadow-xs" />
         ))}
       </div>
-    </>
+    </div>
   );
 }
 
@@ -244,7 +238,7 @@ function CodeSourceAppCard({
   const isConfigured = app.configurationStatus === "configured";
 
   return (
-    <Card className="rounded-lg border-border bg-card p-5 shadow-none">
+    <Card className="rounded-xl border-border bg-card p-5 shadow-xs">
       <div className="flex flex-col gap-5">
         <div className="flex items-start justify-between gap-4">
           <div className="flex min-w-0 items-start gap-3">

@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
+import { PageHeader } from "@/components/layout";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -35,6 +36,8 @@ const defaultForm: AccessTokenFormState = {
   expiresAt: "",
   name: "",
 };
+
+const accessTokenBreadcrumbs = [{ label: "平台" }, { label: "访问令牌" }];
 
 export function AccessTokensPage() {
   const queryClient = useQueryClient();
@@ -141,156 +144,152 @@ export function AccessTokensPage() {
 
   return (
     <>
-      <div className="border-border border-b bg-card px-6 py-5">
-        <div>
-          <div className="text-muted-foreground text-xs">平台 / 访问令牌</div>
-          <h1 className="mt-2 font-semibold text-2xl text-foreground tracking-tight">访问令牌</h1>
-          <p className="mt-2 text-muted-foreground text-sm">
-            管理产物 manifest 与后端下载接口访问凭据
-          </p>
-        </div>
-      </div>
+      <div className="flex flex-col gap-6">
+        <AccessTokensHeader />
 
-      <div className="grid gap-4 px-6 py-5 xl:grid-cols-[minmax(0,1fr)_23rem]">
-        <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-border border-b px-4 py-3">
-            <div className="flex min-w-0 items-center gap-2">
-              <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
-                <KeyRound className="size-4" />
-              </div>
-              <div className="min-w-0">
-                <h2 className="font-semibold text-foreground text-sm">产物访问令牌</h2>
-                <p className="text-muted-foreground text-xs">共 {snapshot.tokens.length} 条令牌</p>
-              </div>
-            </div>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => void refetch()}
-              className="gap-1.5"
-            >
-              <RotateCw className="size-4" />
-              刷新
-            </Button>
-          </div>
-
-          {message ? (
-            <div className="border-border border-b px-4 py-3">
-              <Alert variant="info">{message}</Alert>
-            </div>
-          ) : null}
-          {errorMessage ? (
-            <div className="border-border border-b px-4 py-3">
-              <Alert variant="danger">{errorMessage}</Alert>
-            </div>
-          ) : null}
-
-          {snapshot.tokens.length === 0 ? (
-            <div className="px-4 py-12 text-center">
-              <div className="mx-auto flex size-10 items-center justify-center rounded-md bg-muted text-muted-foreground">
-                <KeyRound className="size-5" />
-              </div>
-              <div className="mt-3 font-medium text-foreground text-sm">暂无产物访问令牌</div>
-            </div>
-          ) : (
-            <div className="divide-y divide-border">
-              {snapshot.tokens.map((token) => (
-                <AccessTokenRow
-                  key={token.id}
-                  token={token}
-                  canManageAccessTokens={canManageAccessTokens}
-                  isPending={pendingStatusTokenId === token.id}
-                  onDelete={(target) => setDeleteTarget(target)}
-                  onStatusChange={(target, status) => void handleStatusChange(target, status)}
-                />
-              ))}
-            </div>
-          )}
-        </section>
-
-        <Card className="h-fit rounded-lg border-border bg-card p-5 shadow-sm">
-          <div className="flex items-center gap-2">
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-success/10 text-success">
-              <Plus className="size-4" />
-            </div>
-            <div>
-              <h2 className="font-semibold text-foreground text-sm">新增令牌</h2>
-              <p className="text-muted-foreground text-xs">先生成明文令牌，再保存访问配置</p>
-            </div>
-          </div>
-
-          <form className="mt-5 space-y-4" onSubmit={handleSubmit(handleCreate)}>
-            <div className="rounded-lg border border-border bg-muted p-3">
-              <div className="flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="font-medium text-foreground text-xs">明文令牌</div>
-                  <div className="mt-1 text-muted-foreground text-xs">
-                    服务端生成，保存后只在弹窗中再次提示复制
-                  </div>
-                </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled={!canManageAccessTokens || isGenerating || isCreating}
-                  onClick={() => void handleGenerate()}
-                >
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_23rem]">
+          <section className="overflow-hidden rounded-xl border border-border bg-card shadow-xs">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-border border-b px-4 py-3">
+              <div className="flex min-w-0 items-center gap-2">
+                <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
                   <KeyRound className="size-4" />
-                  {isGenerating ? "生成中" : "生成令牌"}
-                </Button>
+                </div>
+                <div className="min-w-0">
+                  <h2 className="font-semibold text-foreground text-sm">产物访问令牌</h2>
+                  <p className="text-muted-foreground text-xs">
+                    共 {snapshot.tokens.length} 条令牌
+                  </p>
+                </div>
               </div>
-              {generatedToken ? (
-                <div className="mt-3 flex flex-col gap-2">
-                  <code className="min-w-0 overflow-x-auto rounded-md border border-border bg-card px-3 py-2 font-mono text-foreground text-xs">
-                    {generatedToken}
-                  </code>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => void refetch()}
+                className="gap-1.5"
+              >
+                <RotateCw className="size-4" />
+                刷新
+              </Button>
+            </div>
+
+            {message ? (
+              <div className="border-border border-b px-4 py-3">
+                <Alert variant="info">{message}</Alert>
+              </div>
+            ) : null}
+            {errorMessage ? (
+              <div className="border-border border-b px-4 py-3">
+                <Alert variant="danger">{errorMessage}</Alert>
+              </div>
+            ) : null}
+
+            {snapshot.tokens.length === 0 ? (
+              <div className="px-4 py-12 text-center">
+                <div className="mx-auto flex size-10 items-center justify-center rounded-md bg-muted text-muted-foreground">
+                  <KeyRound className="size-5" />
+                </div>
+                <div className="mt-3 font-medium text-foreground text-sm">暂无产物访问令牌</div>
+              </div>
+            ) : (
+              <div className="divide-y divide-border">
+                {snapshot.tokens.map((token) => (
+                  <AccessTokenRow
+                    key={token.id}
+                    token={token}
+                    canManageAccessTokens={canManageAccessTokens}
+                    isPending={pendingStatusTokenId === token.id}
+                    onDelete={(target) => setDeleteTarget(target)}
+                    onStatusChange={(target, status) => void handleStatusChange(target, status)}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+
+          <Card className="h-fit rounded-xl border-border bg-card p-5 shadow-xs">
+            <div className="flex items-center gap-2">
+              <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-success/10 text-success">
+                <Plus className="size-4" />
+              </div>
+              <div>
+                <h2 className="font-semibold text-foreground text-sm">新增令牌</h2>
+                <p className="text-muted-foreground text-xs">先生成明文令牌，再保存访问配置</p>
+              </div>
+            </div>
+
+            <form className="mt-5 space-y-4" onSubmit={handleSubmit(handleCreate)}>
+              <div className="rounded-lg border border-border bg-muted p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="font-medium text-foreground text-xs">明文令牌</div>
+                    <div className="mt-1 text-muted-foreground text-xs">
+                      服务端生成，保存后只在弹窗中再次提示复制
+                    </div>
+                  </div>
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="w-fit"
-                    onClick={() => void navigator.clipboard?.writeText(generatedToken)}
+                    disabled={!canManageAccessTokens || isGenerating || isCreating}
+                    onClick={() => void handleGenerate()}
                   >
-                    <Copy className="size-4" />
-                    复制
+                    <KeyRound className="size-4" />
+                    {isGenerating ? "生成中" : "生成令牌"}
                   </Button>
                 </div>
-              ) : null}
-            </div>
-            <Controller
-              control={control}
-              name="name"
-              rules={{ required: "请输入令牌名称" }}
-              render={({ field }) => (
-                <Field id="access-token-name" label="名称" error={errors.name?.message}>
-                  <Input {...field} id="access-token-name" placeholder="Bundle 客户端" />
-                </Field>
-              )}
-            />
-            <Controller
-              control={control}
-              name="expiresAt"
-              render={({ field }) => (
-                <Field
-                  id="access-token-expires-at"
-                  label="过期时间"
-                  error={errors.expiresAt?.message}
-                >
-                  <Input {...field} id="access-token-expires-at" type="datetime-local" />
-                </Field>
-              )}
-            />
-            <Button
-              type="submit"
-              disabled={!canManageAccessTokens || isCreating || !generatedToken}
-              className="w-full bg-primary hover:bg-primary/90"
-            >
-              <Plus className="size-4" />
-              {isCreating ? "创建中" : "保存令牌"}
-            </Button>
-          </form>
-        </Card>
+                {generatedToken ? (
+                  <div className="mt-3 flex flex-col gap-2">
+                    <code className="min-w-0 overflow-x-auto rounded-md border border-border bg-card px-3 py-2 font-mono text-foreground text-xs">
+                      {generatedToken}
+                    </code>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="w-fit"
+                      onClick={() => void navigator.clipboard?.writeText(generatedToken)}
+                    >
+                      <Copy className="size-4" />
+                      复制
+                    </Button>
+                  </div>
+                ) : null}
+              </div>
+              <Controller
+                control={control}
+                name="name"
+                rules={{ required: "请输入令牌名称" }}
+                render={({ field }) => (
+                  <Field id="access-token-name" label="名称" error={errors.name?.message}>
+                    <Input {...field} id="access-token-name" placeholder="Bundle 客户端" />
+                  </Field>
+                )}
+              />
+              <Controller
+                control={control}
+                name="expiresAt"
+                render={({ field }) => (
+                  <Field
+                    id="access-token-expires-at"
+                    label="过期时间"
+                    error={errors.expiresAt?.message}
+                  >
+                    <Input {...field} id="access-token-expires-at" type="datetime-local" />
+                  </Field>
+                )}
+              />
+              <Button
+                type="submit"
+                disabled={!canManageAccessTokens || isCreating || !generatedToken}
+                className="w-full bg-primary hover:bg-primary/90"
+              >
+                <Plus className="size-4" />
+                {isCreating ? "创建中" : "保存令牌"}
+              </Button>
+            </form>
+          </Card>
+        </div>
       </div>
 
       <ConfirmDialog
@@ -472,49 +471,43 @@ function Field({
 
 function AccessTokensPageError({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
-    <>
-      <div className="border-border border-b bg-card px-6 py-5">
-        <div>
-          <div className="text-muted-foreground text-xs">平台 / 访问令牌</div>
-          <h1 className="mt-2 font-semibold text-2xl text-foreground tracking-tight">访问令牌</h1>
-          <p className="mt-2 text-muted-foreground text-sm">
-            管理产物 manifest 与后端下载接口访问凭据
-          </p>
-        </div>
-      </div>
-      <div className="px-6 py-5">
-        <Card className="rounded-lg border-destructive/30 bg-destructive/10 p-5 text-destructive shadow-none">
-          <div className="font-medium text-sm">访问令牌接口不可用</div>
-          <div className="mt-2 text-sm">{message}</div>
-          <Button
-            type="button"
-            variant="outline"
-            className="mt-4 border-destructive/30 bg-card text-destructive hover:bg-destructive/10"
-            onClick={onRetry}
-          >
-            重试
-          </Button>
-        </Card>
-      </div>
-    </>
+    <div className="flex flex-col gap-6">
+      <AccessTokensHeader />
+      <Card className="rounded-xl border-destructive/30 bg-destructive/10 p-5 text-destructive shadow-xs">
+        <div className="font-medium text-sm">访问令牌接口不可用</div>
+        <div className="mt-2 text-sm">{message}</div>
+        <Button
+          type="button"
+          variant="outline"
+          className="mt-4 border-destructive/30 bg-card text-destructive hover:bg-destructive/10"
+          onClick={onRetry}
+        >
+          重试
+        </Button>
+      </Card>
+    </div>
   );
 }
 
 function AccessTokensPageLoading() {
   return (
-    <>
-      <div className="border-border border-b bg-card px-6 py-5">
-        <div>
-          <div className="h-3 w-24 rounded bg-muted" />
-          <div className="mt-3 h-7 w-32 rounded bg-muted" />
-          <div className="mt-3 h-4 w-72 rounded bg-muted" />
-        </div>
+    <div className="flex flex-col gap-6">
+      <AccessTokensHeader />
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_23rem]">
+        <Card className="h-72 animate-pulse rounded-xl border-border bg-card shadow-xs" />
+        <Card className="h-72 animate-pulse rounded-xl border-border bg-card shadow-xs" />
       </div>
-      <div className="grid gap-4 px-6 py-5 xl:grid-cols-[minmax(0,1fr)_23rem]">
-        <div className="h-72 rounded-lg border border-border bg-card" />
-        <div className="h-72 rounded-lg border border-border bg-card" />
-      </div>
-    </>
+    </div>
+  );
+}
+
+function AccessTokensHeader() {
+  return (
+    <PageHeader
+      breadcrumbs={accessTokenBreadcrumbs}
+      title="访问令牌"
+      description="管理产物 manifest 与后端下载接口访问凭据"
+    />
   );
 }
 
