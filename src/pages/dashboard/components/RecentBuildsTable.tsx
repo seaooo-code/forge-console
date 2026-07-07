@@ -96,7 +96,7 @@ export function RecentBuildsTable({ builds }: RecentBuildsTableProps) {
 
   return (
     <Card className="gap-0 rounded-xl border-border py-0 shadow-xs">
-      <CardHeader className="flex h-12 flex-row items-center justify-between border-b px-4 py-0">
+      <CardHeader className="flex min-h-16 flex-row items-center justify-between border-b px-5 py-3">
         <div className="min-w-0">
           <CardTitle className="text-foreground text-sm">最近构建</CardTitle>
           <div className="mt-1 text-muted-foreground text-xs">最新构建记录和执行状态</div>
@@ -112,8 +112,8 @@ export function RecentBuildsTable({ builds }: RecentBuildsTableProps) {
             columnDefs={columnDefs}
             defaultColDef={defaultColDef}
             domLayout="autoHeight"
-            headerHeight={40}
-            rowHeight={48}
+            headerHeight={44}
+            rowHeight={56}
             theme={dashboardSummaryGridTheme}
             suppressCellFocus
             suppressContextMenu

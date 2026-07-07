@@ -1,15 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { Activity, ChevronDown, Clock3, Layers3, type LucideIcon, RotateCw } from "lucide-react";
+import { Activity, Clock3, Layers3, type LucideIcon } from "lucide-react";
 import { PageErrorState, PageHeader, PageSkeleton } from "@/components/layout";
-import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { type MiCarEnvironmentCode, miCarEnvironmentFilterOptions } from "@/types/environments";
 
 import { dashboardSnapshotQueryKey, fetchDashboardSnapshot } from "./api/dashboard-snapshot";
 import { BuildTrendChart } from "./components/BuildTrendChart";
@@ -18,14 +9,12 @@ import { RecentBuildsTable } from "./components/RecentBuildsTable";
 import { RecentReleasesTable } from "./components/RecentReleasesTable";
 import { ReleaseOverviewPanel } from "./components/ReleaseOverviewPanel";
 import { ResourceOverviewPanel } from "./components/ResourceOverviewPanel";
-import { useDashboardContextStore } from "./model/use-dashboard-context-store";
 
 export function DashboardPage() {
   const {
     data: snapshot,
     error,
     isError,
-    isFetching,
     refetch,
   } = useQuery({
     queryFn: fetchDashboardSnapshot,
@@ -70,22 +59,6 @@ export function DashboardPage() {
       <PageHeader
         title="平台运行概览"
         description="关注当前已接入的应用、模块、构建、发布和平台资源状态"
-        actions={
-          <>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                void refetch();
-              }}
-              loading={isFetching}
-            >
-              <RotateCw className="size-3.5" />
-              刷新
-            </Button>
-            <DashboardContextControls />
-          </>
-        }
         below={
           <div className="grid gap-3 md:grid-cols-3">
             <SummaryPill icon={Activity} label="构建成功率" value={buildSuccessRate} />
@@ -116,39 +89,6 @@ export function DashboardPage() {
       <div className="text-right text-muted-foreground text-xs">
         数据更新时间 {formatUpdatedAt(snapshot.updatedAt)}
       </div>
-    </div>
-  );
-}
-
-function DashboardContextControls() {
-  const environment = useDashboardContextStore((state) => state.environment);
-  const project = useDashboardContextStore((state) => state.project);
-  const setEnvironment = useDashboardContextStore((state) => state.setEnvironment);
-
-  return (
-    <div className="flex items-center gap-2">
-      <span className="hidden items-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-1.5 text-foreground text-xs sm:inline-flex">
-        <span className="size-1.5 rounded-full bg-success" />
-        {project}
-      </span>
-
-      <Select
-        value={environment}
-        onValueChange={(value) => setEnvironment(value as MiCarEnvironmentCode)}
-      >
-        <SelectTrigger className="h-8 gap-1.5 border-border bg-card px-2.5 text-xs">
-          <span className="text-muted-foreground">环境</span>
-          <SelectValue />
-          <ChevronDown className="size-3.5 text-muted-foreground" />
-        </SelectTrigger>
-        <SelectContent>
-          {miCarEnvironmentFilterOptions.map((option) => (
-            <SelectItem key={option.value} value={option.value}>
-              {option.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
     </div>
   );
 }

@@ -1,17 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ColDef, ICellRendererParams } from "ag-grid-community";
-import { AgGridReact } from "ag-grid-react";
-import {
-  Box,
-  Boxes,
-  GitFork,
-  Layers3,
-  Package,
-  Pencil,
-  Plus,
-  RefreshCw,
-  Trash2,
-} from "lucide-react";
+import { Box, Boxes, GitFork, Layers3, Package, Pencil, Plus, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { fetchGlobalEnums, globalEnumsQueryKey } from "@/api/enums";
 import { searchFeishuUsers } from "@/api/feishu-user-search";
@@ -20,9 +9,8 @@ import {
   ConsoleClearableFilterSelect,
   ConsoleOwnerSearchFilter,
   ConsoleSearchInput,
-  ConsoleTableFooter,
 } from "@/components/common/ConsoleControls";
-import { consoleGridTheme } from "@/components/common/console-grid-theme";
+import { DataTable, FilterBar, KpiCard, PageHeader, TablePagination } from "@/components/layout";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -38,6 +26,8 @@ import {
 } from "./api/modules-snapshot";
 import { kindClass } from "./constants";
 import type { ModuleKind, ModuleListFilters, ModuleRecord } from "./types";
+
+const PAGE_SIZE = 20;
 
 type ModulesPageProps = {
   onCreateModule: () => void;
@@ -61,14 +51,11 @@ export function ModulesPage({ onCreateModule, onEditModule, onOpenModule }: Modu
     kind: "",
     owner: "",
   });
+  const [page, setPage] = useState(1);
   const [deleteTarget, setDeleteTarget] = useState<ModuleRecord | null>(null);
   const [deleteError, setDeleteError] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
-  const {
-    data: snapshot,
-    isFetching,
-    refetch,
-  } = useQuery({
+  const { data: snapshot } = useQuery({
     queryFn: () => fetchModulesSnapshot(filters),
     queryKey: modulesSnapshotQueryKey(filters),
   });
@@ -93,6 +80,7 @@ export function ModulesPage({ onCreateModule, onEditModule, onOpenModule }: Modu
         iconClass: "bg-info/10 text-info",
         id: "total",
         label: "模块总数",
+        tone: "info" as const,
         value: summary.total,
       },
       {
@@ -101,6 +89,7 @@ export function ModulesPage({ onCreateModule, onEditModule, onOpenModule }: Modu
         iconClass: "bg-warning/10 text-warning",
         id: "common",
         label: "通用模块",
+        tone: "warning" as const,
         value: summary.common,
       },
       {
@@ -109,6 +98,7 @@ export function ModulesPage({ onCreateModule, onEditModule, onOpenModule }: Modu
         iconClass: "bg-info/10 text-info",
         id: "feature",
         label: "功能模块",
+        tone: "info" as const,
         value: summary.feature,
       },
     ];
@@ -168,147 +158,88 @@ export function ModulesPage({ onCreateModule, onEditModule, onOpenModule }: Modu
     [canManageModules, onEditModule],
   );
 
-  const defaultColDef = useMemo<ColDef<ModuleRecord>>(
-    () => ({
-      cellClass: "flex items-center",
-      cellStyle: {
-        alignItems: "center",
-        display: "flex",
-      },
-      resizable: false,
-      sortable: false,
-      suppressHeaderMenuButton: true,
-      suppressMovable: true,
-    }),
-    [],
-  );
-
   const modules = snapshot?.modules ?? [];
+  const updateFilters = (patch: Partial<ModuleListFilters>) => {
+    setFilters((current) => ({ ...current, ...patch }));
+    setPage(1);
+  };
 
   return (
-    <>
-      <div className="border-border border-b bg-card px-6 py-5">
-        <div>
-          <h1 className="font-semibold text-2xl text-foreground tracking-tight">模块管理</h1>
-          <p className="mt-2 text-muted-foreground text-sm">
-            管理模块仓库、归属应用、负责人和模块关系
-          </p>
-        </div>
-      </div>
+    <div className="flex flex-col gap-6">
+      <PageHeader title="模块管理" description="管理模块仓库、归属应用、负责人和模块关系" />
 
-      <div className="space-y-4 px-6 py-5">
-        <section className="grid gap-3 xl:grid-cols-3">
-          {stats.map((item) => {
-            const Icon = item.icon;
-
-            return (
-              <Card key={item.id} className="rounded-lg px-5 py-4 shadow-none">
-                <div className="flex items-center justify-between gap-4">
-                  <div className="space-y-2">
-                    <div className="font-medium text-muted-foreground text-sm">{item.label}</div>
-                    <div className="font-semibold text-3xl text-foreground leading-none">
-                      {item.value}
-                    </div>
-                    <div className="font-medium text-muted-foreground text-xs">{item.detail}</div>
-                  </div>
-                  <div
-                    className={cn(
-                      "flex size-10 shrink-0 items-center justify-center rounded-lg",
-                      item.iconClass,
-                    )}
-                  >
-                    <Icon className="size-5" />
-                  </div>
-                </div>
-              </Card>
-            );
-          })}
-        </section>
-
-        <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-border border-b px-4 py-3">
-            <div className="flex min-w-0 flex-wrap items-center gap-2">
-              <ConsoleClearableFilterSelect
-                icon={Boxes}
-                label="类型"
-                value={filters.kind}
-                options={kindOptions}
-                clearLabel="清空类型筛选"
-                onClear={() =>
-                  setFilters((current) => ({
-                    ...current,
-                    kind: "",
-                  }))
-                }
-                onValueChange={(value) =>
-                  setFilters((current) => ({
-                    ...current,
-                    kind: value as ModuleKind,
-                  }))
-                }
-              />
-              <ConsoleOwnerSearchFilter
-                value={filters.owner}
-                searchUsers={searchFeishuUsers}
-                onValueChange={(owner) =>
-                  setFilters((current) => ({
-                    ...current,
-                    owner,
-                  }))
-                }
-              />
-              <ConsoleSearchInput
-                value={filters.keyword}
-                placeholder="搜索模块 / 仓库 / 应用"
-                onChange={(keyword) => setFilters((current) => ({ ...current, keyword }))}
-              />
-            </div>
-
-            <div className="flex shrink-0 items-center gap-2">
-              <Button
-                variant="outline"
-                size="icon"
-                aria-label="刷新模块列表"
-                onClick={() => {
-                  void refetch();
-                }}
-              >
-                <RefreshCw className={isFetching ? "size-4 animate-spin" : "size-4"} />
-              </Button>
-              <Button
-                type="button"
-                className="bg-primary hover:bg-primary/90"
-                disabled={!canManageModules}
-                onClick={onCreateModule}
-              >
-                <Plus className="size-4" />
-                新建模块
-              </Button>
-            </div>
-          </div>
-
-          <AgGridReact<ModuleRecord>
-            rowData={modules}
-            columnDefs={columnDefs}
-            defaultColDef={defaultColDef}
-            domLayout="autoHeight"
-            headerHeight={44}
-            rowHeight={64}
-            theme={consoleGridTheme}
-            suppressCellFocus
-            suppressContextMenu
-            getRowId={({ data }) => data.id}
-            rowClass="cursor-pointer"
-            onRowClicked={({ data }) => {
-              if (data) {
-                onOpenModule(data.id);
-              }
-            }}
+      <section className="grid gap-3 md:grid-cols-3">
+        {stats.map((item) => (
+          <KpiCard
+            key={item.id}
+            icon={item.icon}
+            label={item.label}
+            value={item.value}
+            detail={item.detail}
+            tone={item.tone}
+            toneClassName={item.iconClass}
           />
+        ))}
+      </section>
 
-          <ConsoleTableFooter total={modules.length} />
-        </section>
-      </div>
+      <FilterBar
+        label="筛选"
+        primary={
+          <>
+            <ConsoleClearableFilterSelect
+              icon={Boxes}
+              label="类型"
+              value={filters.kind}
+              options={kindOptions}
+              clearLabel="清空类型筛选"
+              onClear={() => updateFilters({ kind: "" })}
+              onValueChange={(value) => updateFilters({ kind: value as ModuleKind })}
+            />
+            <ConsoleOwnerSearchFilter
+              value={filters.owner}
+              searchUsers={searchFeishuUsers}
+              onValueChange={(owner) => updateFilters({ owner })}
+            />
+          </>
+        }
+        search={
+          <ConsoleSearchInput
+            value={filters.keyword}
+            placeholder="搜索模块 / 仓库 / 应用"
+            onChange={(keyword) => updateFilters({ keyword })}
+          />
+        }
+        actions={
+          <Button size="sm" disabled={!canManageModules} onClick={onCreateModule}>
+            <Plus className="size-4" />
+            新建模块
+          </Button>
+        }
+      />
+
+      <DataTable
+        rows={modules}
+        columnDefs={columnDefs}
+        getRowId={({ data }) => data.id}
+        rowActionSelector="[data-module-row-action]"
+        onRowClicked={(event) => {
+          if (event.data) {
+            onOpenModule(event.data.id);
+          }
+        }}
+      />
+
+      <Card className="rounded-xl border-border bg-card py-0 shadow-xs">
+        <TablePagination
+          page={page}
+          pageSize={PAGE_SIZE}
+          total={modules.length}
+          onPageChange={setPage}
+          onPageSizeChange={() => {
+            // hook left here for future wiring; current snapshot returns the full list
+          }}
+        />
+      </Card>
 
       <ConfirmDialog
         isOpen={deleteTarget !== null}
@@ -347,7 +278,7 @@ export function ModulesPage({ onCreateModule, onEditModule, onOpenModule }: Modu
       >
         {deleteError ? <Alert variant="danger">{deleteError}</Alert> : null}
       </ConfirmDialog>
-    </>
+    </div>
   );
 }
 
@@ -431,7 +362,10 @@ function ActionsCell({
   }
 
   return (
-    <div className="flex h-full items-center gap-2 whitespace-nowrap font-medium text-primary text-xs">
+    <div
+      className="flex h-full items-center gap-2 whitespace-nowrap font-medium text-primary text-xs"
+      data-module-row-action="true"
+    >
       <Button
         variant="link"
         type="button"

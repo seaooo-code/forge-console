@@ -9,10 +9,8 @@ import {
   Layers3,
   ServerCog,
 } from "lucide-react";
-import { miCarEnvironmentBadgeClass } from "@/components/common/EnvironmentBadge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useDashboardContextStore } from "@/pages/dashboard/model/use-dashboard-context-store";
 
 import { useConsoleLayoutStore } from "../model/use-console-layout-store";
 import type { NavGroup, NavIconName, NavItem } from "../types";
@@ -37,8 +35,6 @@ type AppSidebarProps = {
 export function AppSidebar({ navGroups, onNavigate }: AppSidebarProps) {
   const activeNavId = useConsoleLayoutStore((state) => state.activeNavId);
   const setActiveNavId = useConsoleLayoutStore((state) => state.setActiveNavId);
-  const project = useDashboardContextStore((state) => state.project);
-  const environment = useDashboardContextStore((state) => state.environment);
 
   return (
     <aside className="flex h-full w-full flex-col border-border border-r bg-card text-foreground lg:sticky lg:top-0 lg:h-screen lg:w-64 lg:shrink-0">
@@ -75,23 +71,7 @@ export function AppSidebar({ navGroups, onNavigate }: AppSidebarProps) {
       </nav>
 
       <div className="border-border border-t px-4 py-3">
-        <div className="flex items-center gap-2.5 rounded-lg bg-muted px-3 py-2">
-          <span className="size-2 shrink-0 rounded-full bg-success" />
-          <div className="min-w-0 flex-1">
-            <div className="truncate font-medium text-foreground text-xs">{project}</div>
-            <div className="mt-0.5 flex items-center gap-1.5">
-              <span
-                className={cn(
-                  "inline-flex h-4 items-center rounded border px-1.5 font-semibold text-[10px] leading-none",
-                  miCarEnvironmentBadgeClass[environment],
-                )}
-              >
-                {environment}
-              </span>
-            </div>
-          </div>
-        </div>
-        <div className="mt-2 text-center text-[10px] text-muted-foreground/70">
+        <div className="text-center text-[10px] text-muted-foreground/70">
           v2.8.4 · build 20260609
         </div>
       </div>

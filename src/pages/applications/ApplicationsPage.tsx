@@ -72,7 +72,6 @@ export function ApplicationsPage({
     data: snapshot,
     error,
     isError,
-    isFetching,
     refetch,
   } = useQuery({
     queryFn: () => fetchApplicationsSnapshot(filters),
@@ -277,29 +276,7 @@ export function ApplicationsPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader
-        title="应用管理"
-        description="管理 RN Bundle 平台接入的所有宿主应用"
-        actions={
-          <>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                void refetch();
-              }}
-              loading={isFetching}
-            >
-              <RefreshCw className="size-3.5" />
-              刷新
-            </Button>
-            <Button size="sm" disabled={!canCreateApplication} onClick={onCreateApplication}>
-              <Plus className="size-4" />
-              新建应用
-            </Button>
-          </>
-        }
-      />
+      <PageHeader title="应用管理" description="管理 RN Bundle 平台接入的所有宿主应用" />
 
       <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         {stats.map((item) => {
@@ -352,6 +329,12 @@ export function ApplicationsPage({
             placeholder="搜索应用名称"
             onChange={setKeywordInput}
           />
+        }
+        actions={
+          <Button size="sm" disabled={!canCreateApplication} onClick={onCreateApplication}>
+            <Plus className="size-4" />
+            新建应用
+          </Button>
         }
       />
 
