@@ -27,8 +27,6 @@ const providerIcons: Record<CodeSourceProvider, LucideIcon> = {
   github: GitFork,
 };
 
-const codeSourcesBreadcrumbs = [{ label: "平台" }, { label: "代码源管理" }];
-
 export function CodeSourcesPage() {
   const queryClient = useQueryClient();
   const session = useAuthStore((state) => state.session);
@@ -184,11 +182,7 @@ function CodeSourcesPageError({ message, onRetry }: { message: string; onRetry: 
 
 function CodeSourcesHeader() {
   return (
-    <PageHeader
-      breadcrumbs={codeSourcesBreadcrumbs}
-      title="代码源管理"
-      description="创建或移除 GitHub App 授权，用于后续仓库绑定"
-    />
+    <PageHeader title="代码源管理" description="创建或移除 GitHub App 授权，用于后续仓库绑定" />
   );
 }
 

@@ -10,7 +10,7 @@ import {
   Trash2,
   TriangleAlert,
 } from "lucide-react";
-import { type ReactNode, useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { fetchStorageConfigurationsSnapshot } from "@/api/storage-configurations";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { DataTable, FilterBar, PageHeader, TablePagination } from "@/components/layout";
@@ -26,7 +26,6 @@ import { deleteStorageConfiguration } from "./api/storage-snapshot";
 import { adapterToneClass, statusClass } from "./constants";
 
 const PAGE_SIZE = 20;
-const storageBreadcrumbs = [{ label: "平台" }, { label: "存储管理" }];
 
 type StoragePageProps = {
   onCreateStorage: () => void;
@@ -135,25 +134,29 @@ export function StoragePage({ onCreateStorage, onEditStorage }: StoragePageProps
   return (
     <>
       <div className="flex flex-col gap-6">
-        <StorageHeader
-          actions={
-            <Button type="button" size="sm" disabled={!canManageStorage} onClick={onCreateStorage}>
-              <Plus className="size-4" />
-              新增存储配置
-            </Button>
-          }
-        />
+        <StorageHeader />
 
         <FilterBar
           label="存储配置列表"
           actions={
-            <span className="text-muted-foreground text-xs">
-              共{" "}
-              <span className="font-semibold text-foreground">
-                {snapshot.configurations.length}
-              </span>{" "}
-              条配置
-            </span>
+            <>
+              <span className="text-muted-foreground text-xs">
+                共{" "}
+                <span className="font-semibold text-foreground">
+                  {snapshot.configurations.length}
+                </span>{" "}
+                条配置
+              </span>
+              <Button
+                type="button"
+                size="sm"
+                disabled={!canManageStorage}
+                onClick={onCreateStorage}
+              >
+                <Plus className="size-4" />
+                新增存储配置
+              </Button>
+            </>
           }
         />
 
@@ -224,13 +227,11 @@ function StoragePageLoading() {
   );
 }
 
-function StorageHeader({ actions }: { actions?: ReactNode }) {
+function StorageHeader() {
   return (
     <PageHeader
-      breadcrumbs={storageBreadcrumbs}
       title="存储管理"
       description="S3-Compatible 对象存储配置，统一管理 Bundle 产物上传与分发入口"
-      actions={actions}
     />
   );
 }

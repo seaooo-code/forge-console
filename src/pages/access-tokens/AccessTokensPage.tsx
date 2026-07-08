@@ -37,8 +37,6 @@ const defaultForm: AccessTokenFormState = {
   name: "",
 };
 
-const accessTokenBreadcrumbs = [{ label: "平台" }, { label: "访问令牌" }];
-
 export function AccessTokensPage() {
   const queryClient = useQueryClient();
   const session = useAuthStore((state) => state.session);
@@ -502,13 +500,7 @@ function AccessTokensPageLoading() {
 }
 
 function AccessTokensHeader() {
-  return (
-    <PageHeader
-      breadcrumbs={accessTokenBreadcrumbs}
-      title="访问令牌"
-      description="管理产物 manifest 与后端下载接口访问凭据"
-    />
-  );
+  return <PageHeader title="访问令牌" description="管理产物 manifest 与后端下载接口访问凭据" />;
 }
 
 function buildCreateInput(

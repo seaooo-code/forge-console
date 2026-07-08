@@ -19,7 +19,7 @@ export function ReleaseOverviewPanel({ releases }: ReleaseOverviewPanelProps) {
 
   return (
     <Card className="gap-0 rounded-xl border-border py-0 shadow-xs">
-      <CardHeader className="flex h-12 flex-row items-center justify-between border-b px-4 py-0">
+      <CardHeader className="flex min-h-16 flex-row items-center justify-between border-b px-5 py-3">
         <div className="min-w-0">
           <CardTitle className="text-foreground text-sm">发布概览</CardTitle>
           <div className="mt-1 text-muted-foreground text-xs">当前发布目标与状态分布</div>

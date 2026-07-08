@@ -57,6 +57,13 @@ export function DataTable<TRow>({
         rowData={rows}
         columnDefs={columnDefs}
         theme={consoleGridTheme}
+        defaultColDef={{
+          cellClass: "flex items-center",
+          cellStyle: {
+            alignItems: "center",
+            display: "flex",
+          },
+        }}
         domLayout="autoHeight"
         headerHeight={40}
         rowHeight={56}

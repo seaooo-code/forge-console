@@ -115,7 +115,7 @@ export function BuildTrendChart({ data }: BuildTrendChartProps) {
 
   return (
     <Card className="gap-0 rounded-xl border-border py-0 shadow-xs">
-      <CardHeader className="flex h-12 flex-row items-center justify-between border-b px-4 py-0">
+      <CardHeader className="flex min-h-16 flex-row items-center justify-between border-b px-5 py-3">
         <div className="min-w-0">
           <CardTitle className="text-foreground text-sm">构建趋势</CardTitle>
           <div className="mt-1 text-muted-foreground text-xs">近 7 天构建总量与成功数</div>
