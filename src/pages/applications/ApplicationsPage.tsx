@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ColDef, ICellRendererParams } from "ag-grid-community";
 import {
   Activity,
@@ -75,8 +75,13 @@ export function ApplicationsPage({
     isFetching,
     refetch,
   } = useQuery({
+    placeholderData: keepPreviousData,
     queryFn: () => fetchApplicationsSnapshot(filters),
     queryKey: applicationsSnapshotQueryKey(filters),
+  });
+  const { data: overviewSnapshot, refetch: refetchOverview } = useQuery({
+    queryFn: () => fetchApplicationsSnapshot(),
+    queryKey: applicationsSnapshotQueryKey(),
   });
   const { data: applicationOptions } = useApplicationOptions();
   const [keywordInput, setKeywordInput] = useState(filters.keyword);
@@ -128,11 +133,11 @@ export function ApplicationsPage({
   }, [filters.keyword, keywordInput, updateFilters]);
 
   const stats = useMemo(() => {
-    if (!snapshot) {
+    if (!overviewSnapshot) {
       return [];
     }
 
-    const { summary } = snapshot;
+    const { summary } = overviewSnapshot;
     return [
       {
         detail: "全部接入",
@@ -167,7 +172,7 @@ export function ApplicationsPage({
         value: summary.offline,
       },
     ];
-  }, [snapshot]);
+  }, [overviewSnapshot]);
   const platformFilterOptions = useMemo(
     () => applicationOptions?.platforms ?? [],
     [applicationOptions?.platforms],
@@ -340,7 +345,10 @@ export function ApplicationsPage({
               size="icon"
               aria-label="刷新应用列表"
               disabled={isFetching}
-              onClick={() => void refetch()}
+              onClick={() => {
+                void refetch();
+                void refetchOverview();
+              }}
             >
               <RefreshCw className="size-4" />
             </Button>

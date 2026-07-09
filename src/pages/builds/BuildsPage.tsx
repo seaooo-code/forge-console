@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ColDef, ICellRendererParams } from "ag-grid-community";
 import {
   Activity,
@@ -106,8 +106,13 @@ export function BuildsPage({ onOpenBuild }: BuildsPageProps) {
     isFetching,
     refetch,
   } = useQuery({
+    placeholderData: keepPreviousData,
     queryFn: () => fetchBuildsSnapshot(filters),
     queryKey: buildsSnapshotQueryKey(filters),
+  });
+  const { data: overviewSnapshot, refetch: refetchOverview } = useQuery({
+    queryFn: () => fetchBuildsSnapshot(),
+    queryKey: buildsSnapshotQueryKey(),
   });
   const { data: modulesSnapshot, isFetching: isModulesFetching } = useQuery({
     queryFn: () => fetchModulesSnapshot(),
@@ -181,7 +186,7 @@ export function BuildsPage({ onOpenBuild }: BuildsPageProps) {
   }, []);
   const stats = useMemo(
     () =>
-      snapshot
+      overviewSnapshot
         ? [
             {
               detail: "全部构建记录",
@@ -189,7 +194,7 @@ export function BuildsPage({ onOpenBuild }: BuildsPageProps) {
               id: "total",
               label: "总构建",
               tone: "info" as const,
-              value: snapshot.summary.total,
+              value: overviewSnapshot.summary.total,
             },
             {
               detail: "正在执行",
@@ -197,7 +202,7 @@ export function BuildsPage({ onOpenBuild }: BuildsPageProps) {
               id: "running",
               label: "构建中",
               tone: "info" as const,
-              value: snapshot.summary.running,
+              value: overviewSnapshot.summary.running,
             },
             {
               detail: "产物可发布",
@@ -205,7 +210,7 @@ export function BuildsPage({ onOpenBuild }: BuildsPageProps) {
               id: "success",
               label: "成功",
               tone: "success" as const,
-              value: snapshot.summary.success,
+              value: overviewSnapshot.summary.success,
             },
             {
               detail: "需要排查",
@@ -213,7 +218,7 @@ export function BuildsPage({ onOpenBuild }: BuildsPageProps) {
               id: "failed",
               label: "失败",
               tone: "destructive" as const,
-              value: snapshot.summary.failed,
+              value: overviewSnapshot.summary.failed,
             },
             {
               detail: "等待执行",
@@ -221,11 +226,11 @@ export function BuildsPage({ onOpenBuild }: BuildsPageProps) {
               id: "queued",
               label: "排队中",
               tone: "warning" as const,
-              value: snapshot.summary.queued,
+              value: overviewSnapshot.summary.queued,
             },
           ]
         : [],
-    [snapshot],
+    [overviewSnapshot],
   );
   const columnDefs = useMemo<ColDef<BuildRunRecord>[]>(
     () => [
@@ -404,7 +409,10 @@ export function BuildsPage({ onOpenBuild }: BuildsPageProps) {
                 size="icon"
                 aria-label="刷新构建列表"
                 disabled={isFetching}
-                onClick={() => void refetch()}
+                onClick={() => {
+                  void refetch();
+                  void refetchOverview();
+                }}
               >
                 <RefreshCw className="size-4" />
               </Button>

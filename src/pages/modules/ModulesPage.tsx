@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ColDef, ICellRendererParams } from "ag-grid-community";
 import {
   Box,
@@ -70,8 +70,13 @@ export function ModulesPage({ onCreateModule, onEditModule, onOpenModule }: Modu
     isFetching,
     refetch,
   } = useQuery({
+    placeholderData: keepPreviousData,
     queryFn: () => fetchModulesSnapshot(filters),
     queryKey: modulesSnapshotQueryKey(filters),
+  });
+  const { data: overviewSnapshot, refetch: refetchOverview } = useQuery({
+    queryFn: () => fetchModulesSnapshot(),
+    queryKey: modulesRootQueryKey,
   });
   const { data: globalEnums } = useQuery({
     queryFn: fetchGlobalEnums,
@@ -81,7 +86,7 @@ export function ModulesPage({ onCreateModule, onEditModule, onOpenModule }: Modu
   const kindOptions = useMemo(() => globalEnums?.moduleKinds ?? [], [globalEnums]);
 
   const stats = useMemo(() => {
-    const summary = snapshot?.summary ?? {
+    const summary = overviewSnapshot?.summary ?? {
       common: 0,
       feature: 0,
       total: 0,
@@ -116,7 +121,7 @@ export function ModulesPage({ onCreateModule, onEditModule, onOpenModule }: Modu
         value: summary.feature,
       },
     ];
-  }, [snapshot]);
+  }, [overviewSnapshot]);
 
   const columnDefs = useMemo<ColDef<ModuleRecord>[]>(
     () => [
@@ -232,7 +237,10 @@ export function ModulesPage({ onCreateModule, onEditModule, onOpenModule }: Modu
               size="icon"
               aria-label="刷新模块列表"
               disabled={isFetching}
-              onClick={() => void refetch()}
+              onClick={() => {
+                void refetch();
+                void refetchOverview();
+              }}
             >
               <RefreshCw className="size-4" />
             </Button>
@@ -244,6 +252,7 @@ export function ModulesPage({ onCreateModule, onEditModule, onOpenModule }: Modu
         rows={modules}
         columnDefs={columnDefs}
         getRowId={({ data }) => data.id}
+        loading={isFetching}
         rowActionSelector="[data-module-row-action]"
         onRowClicked={(event) => {
           if (event.data) {

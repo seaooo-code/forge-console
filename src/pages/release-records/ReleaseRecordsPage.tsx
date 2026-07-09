@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ColDef, ICellRendererParams } from "ag-grid-community";
 import {
   Box,
@@ -92,8 +92,13 @@ export function ReleaseRecordsPage({ onOpenRelease }: ReleaseRecordsPageProps) {
     isFetching,
     refetch,
   } = useQuery({
+    placeholderData: keepPreviousData,
     queryFn: () => fetchReleaseRecordsSnapshot(filters),
     queryKey: releaseRecordsSnapshotQueryKeyWithFilters(filters),
+  });
+  const { data: overviewSnapshot, refetch: refetchOverview } = useQuery({
+    queryFn: () => fetchReleaseRecordsSnapshot(),
+    queryKey: releaseRecordsSnapshotQueryKey,
   });
   const { data: buildsSnapshot, isFetching: isBuildsFetching } = useQuery({
     queryFn: () => fetchBuildsSnapshot(),
@@ -136,7 +141,7 @@ export function ReleaseRecordsPage({ onOpenRelease }: ReleaseRecordsPageProps) {
   };
   const stats = useMemo(
     () =>
-      snapshot
+      overviewSnapshot
         ? [
             {
               detail: "全部发布记录",
@@ -144,7 +149,7 @@ export function ReleaseRecordsPage({ onOpenRelease }: ReleaseRecordsPageProps) {
               id: "total",
               label: "总发布",
               tone: "info" as const,
-              value: snapshot.summary.total,
+              value: overviewSnapshot.summary.total,
             },
             {
               detail: "当前可访问",
@@ -152,7 +157,7 @@ export function ReleaseRecordsPage({ onOpenRelease }: ReleaseRecordsPageProps) {
               id: "active",
               label: "生效中",
               tone: "success" as const,
-              value: snapshot.summary.active,
+              value: overviewSnapshot.summary.active,
             },
             {
               detail: "已被替换",
@@ -160,11 +165,11 @@ export function ReleaseRecordsPage({ onOpenRelease }: ReleaseRecordsPageProps) {
               id: "inactive",
               label: "已失效",
               tone: "muted" as const,
-              value: snapshot.summary.inactive,
+              value: overviewSnapshot.summary.inactive,
             },
           ]
         : [],
-    [snapshot],
+    [overviewSnapshot],
   );
   const columnDefs = useMemo<ColDef<ReleasePointerRecord>[]>(
     () => [
@@ -327,7 +332,10 @@ export function ReleaseRecordsPage({ onOpenRelease }: ReleaseRecordsPageProps) {
               size="icon"
               aria-label="刷新发布记录"
               disabled={isFetching}
-              onClick={() => void refetch()}
+              onClick={() => {
+                void refetch();
+                void refetchOverview();
+              }}
             >
               <RefreshCw className="size-4" />
             </Button>
