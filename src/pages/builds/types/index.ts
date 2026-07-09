@@ -1,30 +1,30 @@
-export type BuildRunStatus = "canceled" | "failed" | "queued" | "running" | "success";
+import type {
+  BuildCreateFormState as SharedBuildCreateFormState,
+  BuildCreateInput as SharedBuildCreateInput,
+  BuildCreateResult as SharedBuildCreateResult,
+  BuildListFilters as SharedBuildListFilters,
+  BuildRunRecord as SharedBuildRunRecord,
+  BuildRunStatus as SharedBuildRunStatus,
+  BuildsSnapshot as SharedBuildsSnapshot,
+  BuildTriggerType as SharedBuildTriggerType,
+} from "@/types/builds";
+import type {
+  BuildReleaseFormState as SharedBuildReleaseFormState,
+  BuildReleaseGrayStrategy as SharedBuildReleaseGrayStrategy,
+  BuildReleaseType as SharedBuildReleaseType,
+} from "@/types/releases";
 
-export type BuildTriggerType = "manual" | "pipeline";
+export type BuildRunStatus = SharedBuildRunStatus;
 
-export type BuildReleaseType = "full" | "gray";
+export type BuildTriggerType = SharedBuildTriggerType;
 
-export type BuildReleaseGrayStrategy = "percentage" | "targeted";
+export type BuildReleaseType = SharedBuildReleaseType;
 
-export type BuildRunRecord = {
-  application: string;
-  artifact: string;
-  branch: string;
-  commit: string;
-  createdAt: string;
-  createdAtRaw: string;
-  duration: string;
-  environment: string;
-  id: string;
-  module: string;
-  moduleId: string;
-  operator: string;
-  startedAt: string;
-  status: BuildRunStatus;
-  triggerId: string;
-  triggerType: BuildTriggerType;
-  version: string;
-};
+export type BuildReleaseGrayStrategy = SharedBuildReleaseGrayStrategy;
+
+export type BuildRunRecord = SharedBuildRunRecord;
+
+export type BuildListFilters = SharedBuildListFilters;
 
 export type BuildArtifactTreeNode = {
   children?: BuildArtifactTreeNode[];
@@ -69,34 +69,12 @@ export type BuildRecordDetail = BuildRunRecord & {
   workerId: string;
 };
 
-export type BuildsSnapshot = {
-  builds: BuildRunRecord[];
-  summary: {
-    failed: number;
-    queued: number;
-    running: number;
-    success: number;
-    total: number;
-  };
-};
+export type BuildsSnapshot = SharedBuildsSnapshot;
 
-export type BuildReleaseFormState = {
-  expiresAt: string;
-  grayPercentage: number;
-  grayStrategy: BuildReleaseGrayStrategy;
-  identifier: string;
-  releaseType: BuildReleaseType;
-};
+export type BuildReleaseFormState = SharedBuildReleaseFormState;
 
-export type BuildCreateFormState = {
-  branch: string;
-  environment: string;
-  moduleId: string;
-};
+export type BuildCreateFormState = SharedBuildCreateFormState;
 
-export type BuildCreateInput = BuildCreateFormState;
+export type BuildCreateInput = SharedBuildCreateInput;
 
-export type BuildCreateResult = {
-  createdAt: string;
-  id: string;
-};
+export type BuildCreateResult = SharedBuildCreateResult;

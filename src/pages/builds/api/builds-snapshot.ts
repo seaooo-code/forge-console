@@ -1,18 +1,13 @@
 import type {
   BuildArtifactTree,
   BuildArtifactTreeNode,
-  BuildCreateInput,
-  BuildCreateResult,
   BuildRecordDetail,
-  BuildReleaseFormState,
   BuildRunRecord,
   BuildRunStatus,
-  BuildsSnapshot,
   BuildTriggerType,
 } from "../types";
 
 export const buildDetailQueryKey = (buildId: string) => ["build-detail", buildId] as const;
-export const buildsSnapshotQueryKey = ["builds-snapshot"] as const;
 
 type BuildRecordAPIStatus = "failed" | "pending" | "running" | "succeeded";
 type BuildRecordAPITriggerType = BuildTriggerType;
@@ -67,30 +62,8 @@ type BuildArtifactTreeNodeAPIRecord = {
   type: "directory" | "file";
 };
 
-type BuildsAPIResponse = {
-  builds: BuildRecordAPIRecord[];
-  summary: {
-    failed: number;
-    pending: number;
-    running: number;
-    succeeded: number;
-    total: number;
-  };
-};
-
 type BuildDetailAPIResponse = {
   build: BuildRecordAPIRecord;
-};
-
-type CreateBuildReleaseInput = BuildReleaseFormState & {
-  buildRecordId: string;
-};
-
-type ReleaseDetailAPIResponse = {
-  release: {
-    createdAt: string;
-    id: string;
-  };
 };
 
 type APIErrorPayload = {
@@ -114,69 +87,12 @@ const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8080"
   "",
 );
 
-export async function fetchBuildsSnapshot(): Promise<BuildsSnapshot> {
-  const payload = await fetchJSON<BuildsAPIResponse>("/api/v1/builds");
-
-  return {
-    builds: payload.builds.map(normalizeBuildRecord),
-    summary: {
-      failed: payload.summary.failed,
-      queued: payload.summary.pending,
-      running: payload.summary.running,
-      success: payload.summary.succeeded,
-      total: payload.summary.total,
-    },
-  };
-}
-
 export async function fetchBuildDetail(buildId: string): Promise<BuildRecordDetail> {
   const payload = await fetchJSON<BuildDetailAPIResponse>(
     `/api/v1/builds/${encodeURIComponent(buildId)}`,
   );
 
   return normalizeBuildDetail(payload.build);
-}
-
-export async function createBuild(input: BuildCreateInput): Promise<BuildCreateResult> {
-  const payload = await fetchJSON<BuildDetailAPIResponse>("/api/v1/builds", {
-    body: JSON.stringify({
-      branch: input.branch.trim(),
-      environment: input.environment,
-      moduleId: input.moduleId,
-      triggerType: "manual",
-    }),
-    method: "POST",
-  });
-
-  return {
-    createdAt: formatRecordNumber(payload.build.createdAt),
-    id: payload.build.id,
-  };
-}
-
-export async function createBuildRelease(input: CreateBuildReleaseInput): Promise<string> {
-  const payload = await fetchJSON<ReleaseDetailAPIResponse>("/api/v1/releases", {
-    body: JSON.stringify({
-      buildRecordId: input.buildRecordId,
-      expiresAt:
-        input.releaseType === "gray" && input.grayStrategy === "targeted"
-          ? new Date(input.expiresAt).toISOString()
-          : undefined,
-      grayPercentage:
-        input.releaseType === "gray" && input.grayStrategy === "percentage"
-          ? input.grayPercentage
-          : 0,
-      grayStrategy: input.releaseType === "gray" ? input.grayStrategy : "",
-      identifier:
-        input.releaseType === "gray" && input.grayStrategy === "targeted"
-          ? input.identifier.trim()
-          : "",
-      releaseType: input.releaseType,
-    }),
-    method: "POST",
-  });
-
-  return formatRecordNumber(payload.release.createdAt);
 }
 
 async function fetchJSON<T>(path: string, init?: RequestInit): Promise<T> {

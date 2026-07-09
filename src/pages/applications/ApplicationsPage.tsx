@@ -72,6 +72,7 @@ export function ApplicationsPage({
     data: snapshot,
     error,
     isError,
+    isFetching,
     refetch,
   } = useQuery({
     queryFn: () => fetchApplicationsSnapshot(filters),
@@ -321,20 +322,29 @@ export function ApplicationsPage({
               searchUsers={searchFeishuUsers}
               onValueChange={(owner) => updateFilters({ owner })}
             />
+            <ConsoleSearchInput
+              value={keywordInput}
+              placeholder="搜索应用名称"
+              onChange={setKeywordInput}
+            />
           </>
         }
-        search={
-          <ConsoleSearchInput
-            value={keywordInput}
-            placeholder="搜索应用名称"
-            onChange={setKeywordInput}
-          />
-        }
         actions={
-          <Button size="sm" disabled={!canCreateApplication} onClick={onCreateApplication}>
-            <Plus className="size-4" />
-            新建应用
-          </Button>
+          <>
+            <Button size="sm" disabled={!canCreateApplication} onClick={onCreateApplication}>
+              <Plus className="size-4" />
+              新建应用
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              aria-label="刷新应用列表"
+              disabled={isFetching}
+              onClick={() => void refetch()}
+            >
+              <RefreshCw className="size-4" />
+            </Button>
+          </>
         }
       />
 

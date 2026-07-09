@@ -1,6 +1,16 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ColDef, ICellRendererParams } from "ag-grid-community";
-import { Box, Boxes, GitFork, Layers3, Package, Pencil, Plus, Trash2 } from "lucide-react";
+import {
+  Box,
+  Boxes,
+  GitFork,
+  Layers3,
+  Package,
+  Pencil,
+  Plus,
+  RefreshCw,
+  Trash2,
+} from "lucide-react";
 import { useMemo, useState } from "react";
 import { fetchGlobalEnums, globalEnumsQueryKey } from "@/api/enums";
 import { searchFeishuUsers } from "@/api/feishu-user-search";
@@ -55,7 +65,11 @@ export function ModulesPage({ onCreateModule, onEditModule, onOpenModule }: Modu
   const [deleteTarget, setDeleteTarget] = useState<ModuleRecord | null>(null);
   const [deleteError, setDeleteError] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
-  const { data: snapshot } = useQuery({
+  const {
+    data: snapshot,
+    isFetching,
+    refetch,
+  } = useQuery({
     queryFn: () => fetchModulesSnapshot(filters),
     queryKey: modulesSnapshotQueryKey(filters),
   });
@@ -200,20 +214,29 @@ export function ModulesPage({ onCreateModule, onEditModule, onOpenModule }: Modu
               searchUsers={searchFeishuUsers}
               onValueChange={(owner) => updateFilters({ owner })}
             />
+            <ConsoleSearchInput
+              value={filters.keyword}
+              placeholder="搜索模块 / 仓库 / 应用"
+              onChange={(keyword) => updateFilters({ keyword })}
+            />
           </>
         }
-        search={
-          <ConsoleSearchInput
-            value={filters.keyword}
-            placeholder="搜索模块 / 仓库 / 应用"
-            onChange={(keyword) => updateFilters({ keyword })}
-          />
-        }
         actions={
-          <Button size="sm" disabled={!canManageModules} onClick={onCreateModule}>
-            <Plus className="size-4" />
-            新建模块
-          </Button>
+          <>
+            <Button size="sm" disabled={!canManageModules} onClick={onCreateModule}>
+              <Plus className="size-4" />
+              新建模块
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              aria-label="刷新模块列表"
+              disabled={isFetching}
+              onClick={() => void refetch()}
+            >
+              <RefreshCw className="size-4" />
+            </Button>
+          </>
         }
       />
 

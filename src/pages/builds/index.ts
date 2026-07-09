@@ -1,4 +1,4 @@
-export { buildDetailQueryKey, buildsSnapshotQueryKey, createBuild } from "./api/builds-snapshot";
+export { buildDetailQueryKey } from "./api/builds-snapshot";
 export { BuildDetailPage } from "./BuildDetailPage";
 export { BuildsPage } from "./BuildsPage";
 export type {
@@ -6,5 +6,6 @@ export type {
   BuildCreateInput,
   BuildCreateResult,
   BuildRecordDetail,
+  BuildRunRecord,
   BuildsSnapshot,
 } from "./types";

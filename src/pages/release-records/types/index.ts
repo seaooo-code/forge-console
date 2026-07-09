@@ -5,8 +5,10 @@ export type ReleaseRecordType = "full" | "gray";
 export type ReleaseGrayStrategy = "" | "percentage" | "targeted";
 
 export type ReleaseRecordsFilters = {
-  environment?: string;
-  moduleId?: string;
+  environment: string;
+  moduleId: string;
+  releaseType: ReleaseRecordType | "";
+  status: ReleaseRecordStatus | "";
 };
 
 export type ReleasePointerRecord = {

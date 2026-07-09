@@ -14,7 +14,10 @@ import {
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 
+import { buildsSnapshotQueryKey, createBuild, fetchBuildsSnapshot } from "@/api/builds";
 import { fetchModulesSnapshot, modulesRootQueryKey } from "@/api/modules";
+import { createBuildRelease } from "@/api/releases";
+import { ConsoleClearableFilterSelect } from "@/components/common/ConsoleControls";
 import { Modal, ModalFooter, ModalHeader } from "@/components/common/Modal";
 import { DataTable, FilterBar, KpiCard, PageHeader, TablePagination } from "@/components/layout";
 import { Alert } from "@/components/ui/alert";
@@ -36,15 +39,10 @@ import {
 } from "@/pages/release-records";
 import { useAuthStore } from "@/store/use-auth-store";
 
-import {
-  buildsSnapshotQueryKey,
-  createBuild,
-  createBuildRelease,
-  fetchBuildsSnapshot,
-} from "./api/builds-snapshot";
 import { buildStatusClass, buildTriggerLabels } from "./constants";
 import type {
   BuildCreateFormState,
+  BuildListFilters,
   BuildReleaseFormState,
   BuildReleaseGrayStrategy,
   BuildReleaseType,
@@ -54,6 +52,25 @@ import type {
 } from "./types";
 
 const PAGE_SIZE = 20;
+
+const emptyBuildListFilters: BuildListFilters = {
+  environment: "",
+  moduleId: "",
+  status: "",
+  triggerType: "",
+};
+
+const buildStatusFilterOptions = [
+  { label: "排队中", value: "pending" },
+  { label: "构建中", value: "running" },
+  { label: "成功", value: "succeeded" },
+  { label: "失败", value: "failed" },
+];
+
+const buildTriggerFilterOptions = [
+  { label: "手动触发", value: "manual" },
+  { label: "流水线触发", value: "pipeline" },
+];
 
 type BuildsPageProps = {
   onOpenBuild: (buildId: string) => void;
@@ -82,13 +99,15 @@ export function BuildsPage({ onOpenBuild }: BuildsPageProps) {
   const session = useAuthStore((state) => state.session);
   const canCreateBuild = Boolean(session?.capabilities.canCreateBuild);
   const canCreateRelease = Boolean(session?.capabilities.canCreateRelease);
+  const [filters, setFilters] = useState<BuildListFilters>(emptyBuildListFilters);
+  const [page, setPage] = useState(1);
   const {
     data: snapshot,
     isFetching,
     refetch,
   } = useQuery({
-    queryFn: fetchBuildsSnapshot,
-    queryKey: buildsSnapshotQueryKey,
+    queryFn: () => fetchBuildsSnapshot(filters),
+    queryKey: buildsSnapshotQueryKey(filters),
   });
   const { data: modulesSnapshot, isFetching: isModulesFetching } = useQuery({
     queryFn: () => fetchModulesSnapshot(),
@@ -108,7 +127,10 @@ export function BuildsPage({ onOpenBuild }: BuildsPageProps) {
   const [releaseBuild, setReleaseBuild] = useState<BuildRunRecord | null>(null);
   const [releaseError, setReleaseError] = useState("");
   const [releaseSuccess, setReleaseSuccess] = useState("");
-  const [page, setPage] = useState(1);
+  const updateFilters = useCallback((patch: Partial<BuildListFilters>) => {
+    setFilters((current) => ({ ...current, ...patch }));
+    setPage(1);
+  }, []);
   const buildsById = useMemo(
     () => new Map(snapshot?.builds.map((build) => [build.id, build]) ?? []),
     [snapshot],
@@ -317,6 +339,50 @@ export function BuildsPage({ onOpenBuild }: BuildsPageProps) {
 
         <FilterBar
           label="最近构建"
+          primary={
+            <>
+              <ConsoleClearableFilterSelect
+                icon={Activity}
+                label="状态"
+                value={filters.status}
+                options={buildStatusFilterOptions}
+                clearLabel="清空状态筛选"
+                onClear={() => updateFilters({ status: "" })}
+                onValueChange={(status) =>
+                  updateFilters({ status: status as BuildListFilters["status"] })
+                }
+              />
+              <ConsoleClearableFilterSelect
+                icon={PackageCheck}
+                label="模块"
+                value={filters.moduleId}
+                options={moduleOptions}
+                clearLabel="清空模块筛选"
+                onClear={() => updateFilters({ moduleId: "" })}
+                onValueChange={(moduleId) => updateFilters({ moduleId })}
+              />
+              <ConsoleClearableFilterSelect
+                icon={Rocket}
+                label="环境"
+                value={filters.environment}
+                options={environmentOptions}
+                clearLabel="清空环境筛选"
+                onClear={() => updateFilters({ environment: "" })}
+                onValueChange={(environment) => updateFilters({ environment })}
+              />
+              <ConsoleClearableFilterSelect
+                icon={GitBranch}
+                label="来源"
+                value={filters.triggerType}
+                options={buildTriggerFilterOptions}
+                clearLabel="清空来源筛选"
+                onClear={() => updateFilters({ triggerType: "" })}
+                onValueChange={(triggerType) =>
+                  updateFilters({ triggerType: triggerType as BuildListFilters["triggerType"] })
+                }
+              />
+            </>
+          }
           actions={
             <>
               <Button
@@ -398,7 +464,7 @@ export function BuildsPage({ onOpenBuild }: BuildsPageProps) {
             });
             setBuildSuccess(`构建已提交：${build.createdAt}`);
             setIsCreateBuildDialogOpen(false);
-            await queryClient.invalidateQueries({ queryKey: buildsSnapshotQueryKey });
+            await queryClient.invalidateQueries({ queryKey: buildsSnapshotQueryKey() });
           } catch (error) {
             setBuildError(error instanceof Error ? error.message : "提交构建失败，请稍后重试");
           }
@@ -435,7 +501,7 @@ export function BuildsPage({ onOpenBuild }: BuildsPageProps) {
             });
             setReleaseSuccess(`发布已生效：${releaseCreatedAt}`);
             closeReleaseDialog();
-            await queryClient.invalidateQueries({ queryKey: buildsSnapshotQueryKey });
+            await queryClient.invalidateQueries({ queryKey: buildsSnapshotQueryKey() });
             await queryClient.invalidateQueries({ queryKey: releaseRecordsSnapshotQueryKey });
           } catch (error) {
             setReleaseError(error instanceof Error ? error.message : "发布失败，请稍后重试");

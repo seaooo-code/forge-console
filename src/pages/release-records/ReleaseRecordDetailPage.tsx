@@ -155,7 +155,7 @@ export function ReleaseRecordDetailPage({
               onClick={onBack}
             >
               <ArrowLeft className="size-4" />
-              返回发布记录
+              返回发布管理
             </Button>
             <div className="flex flex-wrap items-center gap-3">
               <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
@@ -395,7 +395,7 @@ function ReleaseRecordDetailFallback({
           onClick={onBack}
         >
           <ArrowLeft className="size-4" />
-          返回发布记录
+          返回发布管理
         </Button>
       </div>
       <div className="px-6 py-5">

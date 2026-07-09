@@ -11,8 +11,17 @@ import type {
 export const releaseRecordDetailQueryKey = (releaseId: string) =>
   ["release-record-detail", releaseId] as const;
 export const releaseRecordsSnapshotQueryKey = ["release-records-snapshot"] as const;
-export const releaseRecordsSnapshotQueryKeyWithFilters = (filters: ReleaseRecordsFilters) =>
-  [...releaseRecordsSnapshotQueryKey, filters] as const;
+export const releaseRecordsSnapshotQueryKeyWithFilters = (
+  filters?: Partial<ReleaseRecordsFilters>,
+) => {
+  const normalizedFilters = normalizeReleaseRecordsFilters(filters);
+
+  if (!hasReleaseRecordsFilters(normalizedFilters)) {
+    return releaseRecordsSnapshotQueryKey;
+  }
+
+  return [...releaseRecordsSnapshotQueryKey, normalizedFilters] as const;
+};
 
 type ReleaseRecordAPIStatus = ReleaseRecordStatus;
 type ReleaseRecordAPIType = ReleaseRecordType;
@@ -70,17 +79,22 @@ const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8080"
 );
 
 export async function fetchReleaseRecordsSnapshot(
-  filters: ReleaseRecordsFilters = {},
+  filters: Partial<ReleaseRecordsFilters> = {},
 ): Promise<ReleaseRecordsSnapshot> {
+  const normalizedFilters = normalizeReleaseRecordsFilters(filters);
   const searchParams = new URLSearchParams();
-  const moduleId = filters.moduleId?.trim();
-  const environment = filters.environment?.trim();
 
-  if (moduleId) {
-    searchParams.set("moduleId", moduleId);
+  if (normalizedFilters.moduleId) {
+    searchParams.set("moduleId", normalizedFilters.moduleId);
   }
-  if (environment) {
-    searchParams.set("environment", environment);
+  if (normalizedFilters.environment) {
+    searchParams.set("environment", normalizedFilters.environment);
+  }
+  if (normalizedFilters.status) {
+    searchParams.set("status", normalizedFilters.status);
+  }
+  if (normalizedFilters.releaseType) {
+    searchParams.set("releaseType", normalizedFilters.releaseType);
   }
 
   const queryString = searchParams.toString();
@@ -101,6 +115,21 @@ export async function fetchReleaseRecordsSnapshot(
     records,
     summary,
   };
+}
+
+function normalizeReleaseRecordsFilters(
+  filters?: Partial<ReleaseRecordsFilters>,
+): ReleaseRecordsFilters {
+  return {
+    environment: filters?.environment?.trim() ?? "",
+    moduleId: filters?.moduleId?.trim() ?? "",
+    releaseType: filters?.releaseType ?? "",
+    status: filters?.status ?? "",
+  };
+}
+
+function hasReleaseRecordsFilters(filters: ReleaseRecordsFilters) {
+  return Boolean(filters.environment || filters.moduleId || filters.releaseType || filters.status);
 }
 
 export async function fetchReleaseRecordDetail(releaseId: string): Promise<ReleaseRecordDetail> {

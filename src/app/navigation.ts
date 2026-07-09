@@ -19,7 +19,7 @@ export const navGroups: NavGroup[] = [
   {
     label: "发布运维",
     items: [
-      { id: "release-records", label: "发布记录", href: "/release-records", icon: "releaseRecord" },
+      { id: "release-records", label: "发布管理", href: "/release-records", icon: "releaseRecord" },
     ],
   },
   {

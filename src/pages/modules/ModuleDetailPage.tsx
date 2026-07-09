@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
+import { buildsSnapshotQueryKey, createBuild } from "@/api/builds";
 import { Modal, ModalFooter, ModalHeader } from "@/components/common/Modal";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -29,7 +30,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { buildsSnapshotQueryKey, createBuild } from "@/pages/builds";
 import { environmentsSnapshotQueryKey, fetchEnvironmentsSnapshot } from "@/pages/environments";
 import {
   fetchReleaseRecordsSnapshot,
@@ -210,7 +210,7 @@ export function ModuleDetailPage({ moduleId, onBack, onEditModule }: ModuleDetai
             });
             setBuildSuccess(`构建已提交：${build.createdAt}`);
             setIsBuildDialogOpen(false);
-            await queryClient.invalidateQueries({ queryKey: buildsSnapshotQueryKey });
+            await queryClient.invalidateQueries({ queryKey: buildsSnapshotQueryKey() });
           } catch (error) {
             setBuildError(error instanceof Error ? error.message : "提交构建失败，请稍后重试");
           }
