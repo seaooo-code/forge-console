@@ -39,9 +39,7 @@ export function AppSidebar({ navGroups, onNavigate }: AppSidebarProps) {
   return (
     <aside className="flex h-full w-full flex-col border-border border-r bg-card text-foreground lg:sticky lg:top-0 lg:h-screen lg:w-64 lg:shrink-0">
       <div className="flex h-14 items-center gap-3 border-border border-b px-5">
-        <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary font-bold text-primary-foreground text-sm ring-1 ring-inset ring-primary/30">
-          RN
-        </div>
+        <BrandMark />
         <div className="min-w-0">
           <div className="truncate font-semibold text-foreground text-sm">RN Bundle 平台</div>
           <div className="truncate text-muted-foreground text-xs">Engineering Console</div>
@@ -76,6 +74,36 @@ export function AppSidebar({ navGroups, onNavigate }: AppSidebarProps) {
         </div>
       </div>
     </aside>
+  );
+}
+
+function BrandMark() {
+  return (
+    <svg
+      className="size-9 shrink-0 rounded-lg shadow-xs ring-1 ring-emerald-200/80"
+      viewBox="0 0 64 64"
+      role="img"
+      aria-label="RN Bundle 平台"
+    >
+      <rect width="64" height="64" rx="16" fill="#ecfdf5" />
+      <rect x="12" y="12" width="20" height="20" rx="6" fill="#5ee0aa" />
+      <path
+        d="M20 44h24c4.4 0 8-3.6 8-8s-3.6-8-8-8H32"
+        fill="none"
+        stroke="#0f172a"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="6"
+      />
+      <path
+        d="M42 22l8 6-8 6"
+        fill="none"
+        stroke="#059669"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="5"
+      />
+    </svg>
   );
 }
 

@@ -12,10 +12,12 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
+import { useSearchParams } from "react-router";
 
 import { buildsSnapshotQueryKey, fetchBuildsSnapshot } from "@/api/builds";
-import { fetchModulesSnapshot, modulesRootQueryKey } from "@/api/modules";
+import { fetchModulesSnapshot, modulesSnapshotQueryKey } from "@/api/modules";
 import { createBuildRelease } from "@/api/releases";
+import { ApplicationScopeSelect } from "@/components/common/ApplicationScopeSelect";
 import { ConsoleClearableFilterSelect } from "@/components/common/ConsoleControls";
 import { EnvironmentBadge } from "@/components/common/EnvironmentBadge";
 import { Field } from "@/components/common/Field";
@@ -34,6 +36,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { environmentsSnapshotQueryKey, fetchEnvironmentsSnapshot } from "@/pages/environments";
+import { useApplicationScopeStore } from "@/store/use-application-scope-store";
 import { useAuthStore } from "@/store/use-auth-store";
 import type { BuildRunRecord } from "@/types/builds";
 import type {
@@ -57,6 +60,7 @@ import type { ReleasePointerRecord, ReleaseRecordStatus, ReleaseRecordsFilters }
 const PAGE_SIZE = 20;
 
 const emptyReleaseRecordsFilters: ReleaseRecordsFilters = {
+  applicationId: "",
   environment: "",
   moduleId: "",
   releaseType: "",
@@ -83,9 +87,16 @@ type ReleaseRecordsPageProps = {
 
 export function ReleaseRecordsPage({ onOpenRelease }: ReleaseRecordsPageProps) {
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const storedApplicationId = useApplicationScopeStore((state) => state.applicationId);
+  const setStoredApplicationId = useApplicationScopeStore((state) => state.setApplicationId);
+  const initialApplicationId = searchParams.get("applicationId")?.trim() || storedApplicationId;
   const session = useAuthStore((state) => state.session);
   const canCreateRelease = Boolean(session?.capabilities.canCreateRelease);
-  const [filters, setFilters] = useState<ReleaseRecordsFilters>(emptyReleaseRecordsFilters);
+  const [filters, setFilters] = useState<ReleaseRecordsFilters>({
+    ...emptyReleaseRecordsFilters,
+    applicationId: initialApplicationId,
+  });
   const [page, setPage] = useState(1);
   const {
     data: snapshot,
@@ -97,16 +108,16 @@ export function ReleaseRecordsPage({ onOpenRelease }: ReleaseRecordsPageProps) {
     queryKey: releaseRecordsSnapshotQueryKeyWithFilters(filters),
   });
   const { data: overviewSnapshot, refetch: refetchOverview } = useQuery({
-    queryFn: () => fetchReleaseRecordsSnapshot(),
-    queryKey: releaseRecordsSnapshotQueryKey,
+    queryFn: () => fetchReleaseRecordsSnapshot({ applicationId: filters.applicationId }),
+    queryKey: releaseRecordsSnapshotQueryKeyWithFilters({ applicationId: filters.applicationId }),
   });
   const { data: buildsSnapshot, isFetching: isBuildsFetching } = useQuery({
-    queryFn: () => fetchBuildsSnapshot(),
-    queryKey: buildsSnapshotQueryKey(),
+    queryFn: () => fetchBuildsSnapshot({ applicationId: filters.applicationId }),
+    queryKey: buildsSnapshotQueryKey({ applicationId: filters.applicationId }),
   });
   const { data: modulesSnapshot } = useQuery({
-    queryFn: () => fetchModulesSnapshot(),
-    queryKey: modulesRootQueryKey,
+    queryFn: () => fetchModulesSnapshot({ applicationId: filters.applicationId }),
+    queryKey: modulesSnapshotQueryKey({ applicationId: filters.applicationId }),
   });
   const { data: environmentSnapshot } = useQuery({
     queryFn: fetchEnvironmentsSnapshot,
@@ -138,6 +149,33 @@ export function ReleaseRecordsPage({ onOpenRelease }: ReleaseRecordsPageProps) {
   const updateFilters = (patch: Partial<ReleaseRecordsFilters>) => {
     setFilters((current) => ({ ...current, ...patch }));
     setPage(1);
+  };
+  useEffect(() => {
+    const queryApplicationId = searchParams.get("applicationId")?.trim() ?? "";
+    const nextApplicationId = queryApplicationId || storedApplicationId;
+
+    setFilters((current) => {
+      if (current.applicationId === nextApplicationId) {
+        return current;
+      }
+
+      return { ...current, applicationId: nextApplicationId, moduleId: "" };
+    });
+    setStoredApplicationId(nextApplicationId);
+  }, [searchParams, setStoredApplicationId, storedApplicationId]);
+  const updateApplicationScope = (applicationId: string) => {
+    const normalizedApplicationId = applicationId.trim();
+    setStoredApplicationId(normalizedApplicationId);
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current);
+      if (normalizedApplicationId) {
+        next.set("applicationId", normalizedApplicationId);
+      } else {
+        next.delete("applicationId");
+      }
+      return next;
+    });
+    updateFilters({ applicationId: normalizedApplicationId, moduleId: "" });
   };
   const stats = useMemo(
     () =>
@@ -251,7 +289,18 @@ export function ReleaseRecordsPage({ onOpenRelease }: ReleaseRecordsPageProps) {
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="发布管理" description="管理构建产物发布后的访问路由指向变更" />
+      <PageHeader
+        title="发布管理"
+        description="管理构建产物发布后的访问路由指向变更"
+        below={
+          <div className="flex flex-wrap items-center gap-2">
+            <ApplicationScopeSelect
+              value={filters.applicationId}
+              onValueChange={updateApplicationScope}
+            />
+          </div>
+        }
+      />
 
       <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {stats.map((item) => (

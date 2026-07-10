@@ -5,6 +5,7 @@ export type ReleaseRecordType = "full" | "gray";
 export type ReleaseGrayStrategy = "" | "percentage" | "targeted";
 
 export type ReleaseRecordsFilters = {
+  applicationId: string;
   environment: string;
   moduleId: string;
   releaseType: ReleaseRecordType | "";

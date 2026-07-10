@@ -11,9 +11,11 @@ import {
   RefreshCw,
   Trash2,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router";
 import { fetchGlobalEnums, globalEnumsQueryKey } from "@/api/enums";
 import { searchFeishuUsers } from "@/api/feishu-user-search";
+import { ApplicationScopeSelect } from "@/components/common/ApplicationScopeSelect";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import {
   ConsoleClearableFilterSelect,
@@ -26,6 +28,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { applicationsRootQueryKey } from "@/pages/applications";
+import { useApplicationScopeStore } from "@/store/use-application-scope-store";
 import { useAuthStore } from "@/store/use-auth-store";
 
 import {
@@ -53,10 +56,14 @@ type ModuleActionsCellParams = {
 
 export function ModulesPage({ onCreateModule, onEditModule, onOpenModule }: ModulesPageProps) {
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const storedApplicationId = useApplicationScopeStore((state) => state.applicationId);
+  const setStoredApplicationId = useApplicationScopeStore((state) => state.setApplicationId);
+  const initialApplicationId = searchParams.get("applicationId")?.trim() || storedApplicationId;
   const session = useAuthStore((state) => state.session);
   const canManageModules = Boolean(session?.capabilities.canManageModules);
   const [filters, setFilters] = useState<ModuleListFilters>({
-    applicationId: "",
+    applicationId: initialApplicationId,
     keyword: "",
     kind: "",
     owner: "",
@@ -75,13 +82,25 @@ export function ModulesPage({ onCreateModule, onEditModule, onOpenModule }: Modu
     queryKey: modulesSnapshotQueryKey(filters),
   });
   const { data: overviewSnapshot, refetch: refetchOverview } = useQuery({
-    queryFn: () => fetchModulesSnapshot(),
-    queryKey: modulesRootQueryKey,
+    queryFn: () => fetchModulesSnapshot({ applicationId: filters.applicationId }),
+    queryKey: modulesSnapshotQueryKey({ applicationId: filters.applicationId }),
   });
   const { data: globalEnums } = useQuery({
     queryFn: fetchGlobalEnums,
     queryKey: globalEnumsQueryKey,
   });
+
+  useEffect(() => {
+    const queryApplicationId = searchParams.get("applicationId")?.trim() ?? "";
+    const nextApplicationId = queryApplicationId || storedApplicationId;
+
+    setFilters((current) =>
+      current.applicationId === nextApplicationId
+        ? current
+        : { ...current, applicationId: nextApplicationId },
+    );
+    setStoredApplicationId(nextApplicationId);
+  }, [searchParams, setStoredApplicationId, storedApplicationId]);
 
   const kindOptions = useMemo(() => globalEnums?.moduleKinds ?? [], [globalEnums]);
 
@@ -182,10 +201,35 @@ export function ModulesPage({ onCreateModule, onEditModule, onOpenModule }: Modu
     setFilters((current) => ({ ...current, ...patch }));
     setPage(1);
   };
+  const updateApplicationScope = (applicationId: string) => {
+    const normalizedApplicationId = applicationId.trim();
+    setStoredApplicationId(normalizedApplicationId);
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current);
+      if (normalizedApplicationId) {
+        next.set("applicationId", normalizedApplicationId);
+      } else {
+        next.delete("applicationId");
+      }
+      return next;
+    });
+    updateFilters({ applicationId: normalizedApplicationId });
+  };
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="模块管理" description="管理模块仓库、归属应用、负责人和模块关系" />
+      <PageHeader
+        title="模块管理"
+        description="管理模块仓库、归属应用、负责人和模块关系"
+        below={
+          <div className="flex flex-wrap items-center gap-2">
+            <ApplicationScopeSelect
+              value={filters.applicationId}
+              onValueChange={updateApplicationScope}
+            />
+          </div>
+        }
+      />
 
       <section className="grid gap-3 md:grid-cols-3">
         {stats.map((item) => (

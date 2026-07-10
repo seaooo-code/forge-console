@@ -97,6 +97,7 @@ export async function fetchBuildsSnapshot(
 
 export function normalizeBuildListFilters(filters?: Partial<BuildListFilters>): BuildListFilters {
   return {
+    applicationId: filters?.applicationId?.trim() ?? "",
     environment: filters?.environment?.trim() ?? "",
     moduleId: filters?.moduleId?.trim() ?? "",
     status: filters?.status ?? "",
@@ -209,6 +210,9 @@ function buildBuildsSnapshotPath(filters?: Partial<BuildListFilters>) {
   if (normalizedFilters.status) {
     params.set("status", normalizedFilters.status);
   }
+  if (normalizedFilters.applicationId) {
+    params.set("applicationId", normalizedFilters.applicationId);
+  }
   if (normalizedFilters.moduleId) {
     params.set("moduleId", normalizedFilters.moduleId);
   }
@@ -225,7 +229,13 @@ function buildBuildsSnapshotPath(filters?: Partial<BuildListFilters>) {
 }
 
 function hasBuildListFilters(filters: BuildListFilters) {
-  return Boolean(filters.environment || filters.moduleId || filters.status || filters.triggerType);
+  return Boolean(
+    filters.applicationId ||
+      filters.environment ||
+      filters.moduleId ||
+      filters.status ||
+      filters.triggerType,
+  );
 }
 
 function formatTime(value: string) {

@@ -7,6 +7,7 @@ export type BuildListStatusFilter = "" | "failed" | "pending" | "running" | "suc
 export type BuildListTriggerTypeFilter = "" | BuildTriggerType;
 
 export type BuildListFilters = {
+  applicationId: string;
   environment: string;
   moduleId: string;
   status: BuildListStatusFilter;

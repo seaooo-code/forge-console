@@ -84,6 +84,9 @@ export async function fetchReleaseRecordsSnapshot(
   const normalizedFilters = normalizeReleaseRecordsFilters(filters);
   const searchParams = new URLSearchParams();
 
+  if (normalizedFilters.applicationId) {
+    searchParams.set("applicationId", normalizedFilters.applicationId);
+  }
   if (normalizedFilters.moduleId) {
     searchParams.set("moduleId", normalizedFilters.moduleId);
   }
@@ -121,6 +124,7 @@ function normalizeReleaseRecordsFilters(
   filters?: Partial<ReleaseRecordsFilters>,
 ): ReleaseRecordsFilters {
   return {
+    applicationId: filters?.applicationId?.trim() ?? "",
     environment: filters?.environment?.trim() ?? "",
     moduleId: filters?.moduleId?.trim() ?? "",
     releaseType: filters?.releaseType ?? "",
@@ -129,7 +133,13 @@ function normalizeReleaseRecordsFilters(
 }
 
 function hasReleaseRecordsFilters(filters: ReleaseRecordsFilters) {
-  return Boolean(filters.environment || filters.moduleId || filters.releaseType || filters.status);
+  return Boolean(
+    filters.applicationId ||
+      filters.environment ||
+      filters.moduleId ||
+      filters.releaseType ||
+      filters.status,
+  );
 }
 
 export async function fetchReleaseRecordDetail(releaseId: string): Promise<ReleaseRecordDetail> {

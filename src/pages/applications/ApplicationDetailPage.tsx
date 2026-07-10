@@ -84,12 +84,18 @@ type ApplicationDetailPageProps = {
   applicationSlug: string;
   onBack: () => void;
   onEditApplication: (applicationSlug: string) => void;
+  onOpenApplicationBuilds: (applicationId: string) => void;
+  onOpenApplicationModules: (applicationId: string) => void;
+  onOpenApplicationReleases: (applicationId: string) => void;
 };
 
 export function ApplicationDetailPage({
   applicationSlug,
   onBack,
   onEditApplication,
+  onOpenApplicationBuilds,
+  onOpenApplicationModules,
+  onOpenApplicationReleases,
 }: ApplicationDetailPageProps) {
   const queryClient = useQueryClient();
   const { data: snapshot, isFetching } = useQuery({
@@ -339,6 +345,30 @@ export function ApplicationDetailPage({
         description={detail.description}
         actions={
           <>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onOpenApplicationModules(application.id)}
+            >
+              <Boxes className="size-3.5" />
+              查看模块
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onOpenApplicationBuilds(application.id)}
+            >
+              <PackageCheck className="size-3.5" />
+              查看构建
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onOpenApplicationReleases(application.id)}
+            >
+              <RadioTower className="size-3.5" />
+              查看发布
+            </Button>
             <Button
               variant="outline"
               size="sm"

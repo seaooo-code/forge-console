@@ -13,10 +13,12 @@ import {
 } from "lucide-react";
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
+import { useSearchParams } from "react-router";
 
 import { buildsSnapshotQueryKey, createBuild, fetchBuildsSnapshot } from "@/api/builds";
-import { fetchModulesSnapshot, modulesRootQueryKey } from "@/api/modules";
+import { fetchModulesSnapshot, modulesSnapshotQueryKey } from "@/api/modules";
 import { createBuildRelease } from "@/api/releases";
+import { ApplicationScopeSelect } from "@/components/common/ApplicationScopeSelect";
 import { ConsoleClearableFilterSelect } from "@/components/common/ConsoleControls";
 import { Modal, ModalFooter, ModalHeader } from "@/components/common/Modal";
 import { DataTable, FilterBar, KpiCard, PageHeader, TablePagination } from "@/components/layout";
@@ -36,7 +38,9 @@ import { environmentsSnapshotQueryKey, fetchEnvironmentsSnapshot } from "@/pages
 import {
   fetchReleaseRecordsSnapshot,
   releaseRecordsSnapshotQueryKey,
+  releaseRecordsSnapshotQueryKeyWithFilters,
 } from "@/pages/release-records";
+import { useApplicationScopeStore } from "@/store/use-application-scope-store";
 import { useAuthStore } from "@/store/use-auth-store";
 
 import { buildStatusClass, buildTriggerLabels } from "./constants";
@@ -54,6 +58,7 @@ import type {
 const PAGE_SIZE = 20;
 
 const emptyBuildListFilters: BuildListFilters = {
+  applicationId: "",
   environment: "",
   moduleId: "",
   status: "",
@@ -96,10 +101,17 @@ type ActiveFullReleaseTarget = {
 
 export function BuildsPage({ onOpenBuild }: BuildsPageProps) {
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const storedApplicationId = useApplicationScopeStore((state) => state.applicationId);
+  const setStoredApplicationId = useApplicationScopeStore((state) => state.setApplicationId);
+  const initialApplicationId = searchParams.get("applicationId")?.trim() || storedApplicationId;
   const session = useAuthStore((state) => state.session);
   const canCreateBuild = Boolean(session?.capabilities.canCreateBuild);
   const canCreateRelease = Boolean(session?.capabilities.canCreateRelease);
-  const [filters, setFilters] = useState<BuildListFilters>(emptyBuildListFilters);
+  const [filters, setFilters] = useState<BuildListFilters>({
+    ...emptyBuildListFilters,
+    applicationId: initialApplicationId,
+  });
   const [page, setPage] = useState(1);
   const {
     data: snapshot,
@@ -111,20 +123,20 @@ export function BuildsPage({ onOpenBuild }: BuildsPageProps) {
     queryKey: buildsSnapshotQueryKey(filters),
   });
   const { data: overviewSnapshot, refetch: refetchOverview } = useQuery({
-    queryFn: () => fetchBuildsSnapshot(),
-    queryKey: buildsSnapshotQueryKey(),
+    queryFn: () => fetchBuildsSnapshot({ applicationId: filters.applicationId }),
+    queryKey: buildsSnapshotQueryKey({ applicationId: filters.applicationId }),
   });
   const { data: modulesSnapshot, isFetching: isModulesFetching } = useQuery({
-    queryFn: () => fetchModulesSnapshot(),
-    queryKey: modulesRootQueryKey,
+    queryFn: () => fetchModulesSnapshot({ applicationId: filters.applicationId }),
+    queryKey: modulesSnapshotQueryKey({ applicationId: filters.applicationId }),
   });
   const { data: environmentSnapshot, isFetching: isEnvironmentsFetching } = useQuery({
     queryFn: fetchEnvironmentsSnapshot,
     queryKey: environmentsSnapshotQueryKey,
   });
   const { data: releaseRecordsSnapshot } = useQuery({
-    queryFn: () => fetchReleaseRecordsSnapshot(),
-    queryKey: releaseRecordsSnapshotQueryKey,
+    queryFn: () => fetchReleaseRecordsSnapshot({ applicationId: filters.applicationId }),
+    queryKey: releaseRecordsSnapshotQueryKeyWithFilters({ applicationId: filters.applicationId }),
   });
   const [isCreateBuildDialogOpen, setIsCreateBuildDialogOpen] = useState(false);
   const [buildError, setBuildError] = useState("");
@@ -136,6 +148,36 @@ export function BuildsPage({ onOpenBuild }: BuildsPageProps) {
     setFilters((current) => ({ ...current, ...patch }));
     setPage(1);
   }, []);
+  useEffect(() => {
+    const queryApplicationId = searchParams.get("applicationId")?.trim() ?? "";
+    const nextApplicationId = queryApplicationId || storedApplicationId;
+
+    setFilters((current) => {
+      if (current.applicationId === nextApplicationId) {
+        return current;
+      }
+
+      return { ...current, applicationId: nextApplicationId, moduleId: "" };
+    });
+    setStoredApplicationId(nextApplicationId);
+  }, [searchParams, setStoredApplicationId, storedApplicationId]);
+  const updateApplicationScope = useCallback(
+    (applicationId: string) => {
+      const normalizedApplicationId = applicationId.trim();
+      setStoredApplicationId(normalizedApplicationId);
+      setSearchParams((current) => {
+        const next = new URLSearchParams(current);
+        if (normalizedApplicationId) {
+          next.set("applicationId", normalizedApplicationId);
+        } else {
+          next.delete("applicationId");
+        }
+        return next;
+      });
+      updateFilters({ applicationId: normalizedApplicationId, moduleId: "" });
+    },
+    [setSearchParams, setStoredApplicationId, updateFilters],
+  );
   const buildsById = useMemo(
     () => new Map(snapshot?.builds.map((build) => [build.id, build]) ?? []),
     [snapshot],
@@ -327,6 +369,14 @@ export function BuildsPage({ onOpenBuild }: BuildsPageProps) {
         <PageHeader
           title="构建管理"
           description="汇总所有模块构建执行，支持手动新增构建并跟踪流水线触发结果"
+          below={
+            <div className="flex flex-wrap items-center gap-2">
+              <ApplicationScopeSelect
+                value={filters.applicationId}
+                onValueChange={updateApplicationScope}
+              />
+            </div>
+          }
         />
 
         <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">

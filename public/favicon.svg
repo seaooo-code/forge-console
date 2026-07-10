@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="RN Bundle 平台">
+  <rect width="64" height="64" rx="16" fill="#ecfdf5" />
+  <rect x="12" y="12" width="20" height="20" rx="6" fill="#5ee0aa" />
+  <path
+    d="M20 44h24c4.4 0 8-3.6 8-8s-3.6-8-8-8H32"
+    fill="none"
+    stroke="#0f172a"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="6"
+  />
+  <path
+    d="M42 22l8 6-8 6"
+    fill="none"
+    stroke="#059669"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="5"
+  />
+</svg>

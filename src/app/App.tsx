@@ -248,6 +248,15 @@ function ApplicationDetailRoute() {
       applicationSlug={applicationSlug}
       onBack={() => navigate("/apps")}
       onEditApplication={(slug: string) => navigate(`/apps/${encodeURIComponent(slug)}/edit`)}
+      onOpenApplicationBuilds={(applicationId: string) =>
+        navigate(`/builds?applicationId=${encodeURIComponent(applicationId)}`)
+      }
+      onOpenApplicationModules={(applicationId: string) =>
+        navigate(`/modules?applicationId=${encodeURIComponent(applicationId)}`)
+      }
+      onOpenApplicationReleases={(applicationId: string) =>
+        navigate(`/release-records?applicationId=${encodeURIComponent(applicationId)}`)
+      }
     />
   );
 }
