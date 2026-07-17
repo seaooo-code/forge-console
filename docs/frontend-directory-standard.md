@@ -110,7 +110,8 @@ pages/applications/
 - 字体使用 Google 开源字体自托管方案：UI 使用自托管 `Roboto Flex Variable`，中文回退到系统字体 `PingFang SC / Microsoft YaHei`，代码/等宽文本使用 `Roboto Mono`，通过 Fontsource 包在 `src/main.tsx` 引入。
 - 不新增全局 CSS 文件，除非是第三方库必须要求，并在引入处说明用途。
 - shadcn/ui 组件可按项目主题微调，但不得塞入业务文案或业务状态。
-- 业务和布局代码优先使用 `src/components/ui` 中的 shadcn/ui 原子组件；已有对应组件时，不直接写原生 `button`、`input`、`select`、`textarea`、`checkbox` 等交互控件。
+- 业务和布局代码必须优先使用 `src/components/ui` 中的 shadcn/ui 原子组件；已有对应组件时，禁止直接写原生 `button`、`input`、`select`、`textarea`、`checkbox` 等交互控件。原生标签只允许出现在 `src/components/ui` 的无业务语义封装内部，或第三方组件明确无法替代的边界处。
+- 日期和时间选择统一使用 `src/components/ui/date-time-picker.tsx`；业务页面禁止直接使用 `input type="date"`、`input type="time"` 或 `input type="datetime-local"`，避免浏览器原生样式、格式和校验行为不一致。
 - Tailwind 类名优先使用 spacing scale 与语义色值，例如 `min-w-65`、`h-18`、`bg-slate-50`；视觉相近即可，不为像素级还原设计稿引入任意值。只有第三方状态选择器、无法替代的 CSS 变量等确实必要场景才使用中括号。
 - 复杂数据界面优先使用紧凑、可扫描的布局，不做营销式 hero 或装饰性背景。
 
@@ -130,3 +131,4 @@ pages/applications/
 4. 修改完成后运行 `bun run lint` 和 `bun run typecheck`。
 5. 涉及 UI、构建配置、依赖或打包行为时运行 `bun run build`。
 6. 如果新增了目录类别或打破现有边界，先更新本规范再提交代码。
+7. 新增或修改交互控件后，检查 `src/app`、`src/pages`、`src/components/common` 和 `src/components/layout`，确保没有可由现有 shadcn/ui 组件替代的原生表单控件。

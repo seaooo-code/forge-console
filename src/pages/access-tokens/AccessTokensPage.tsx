@@ -10,6 +10,7 @@ import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { Input } from "@/components/ui/input";
 import { useAuthStore } from "@/store/use-auth-store";
 
@@ -273,7 +274,14 @@ export function AccessTokensPage() {
                     label="过期时间"
                     error={errors.expiresAt?.message}
                   >
-                    <Input {...field} id="access-token-expires-at" type="datetime-local" />
+                    <DateTimePicker
+                      ref={field.ref}
+                      id="access-token-expires-at"
+                      value={field.value}
+                      invalid={Boolean(errors.expiresAt)}
+                      onBlur={field.onBlur}
+                      onChange={field.onChange}
+                    />
                   </Field>
                 )}
               />

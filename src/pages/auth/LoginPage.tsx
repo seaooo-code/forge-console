@@ -1,4 +1,4 @@
-import { ArrowRight, Fingerprint, ShieldCheck } from "lucide-react";
+import { ArrowRight, Fingerprint } from "lucide-react";
 
 import { beginFeishuAuthorization } from "@/api/feishu-auth";
 import { Button } from "@/components/ui/button";
@@ -12,16 +12,12 @@ export function LoginPage({ redirectPath }: LoginPageProps) {
   return (
     <main className="min-h-screen bg-surface text-foreground">
       <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col px-5 py-6 sm:px-8 lg:px-10">
-        <header className="flex h-12 items-center justify-between">
+        <header className="flex h-12 items-center">
           <div className="inline-flex items-center gap-2 font-semibold text-foreground text-sm">
             <span className="flex size-7 items-center justify-center rounded-md bg-primary text-primary-foreground text-xs">
               F
             </span>
             <span>Forge Console</span>
-          </div>
-          <div className="hidden items-center gap-2 rounded-md border border-border bg-card px-3 py-1.5 text-muted-foreground text-xs sm:flex">
-            <ShieldCheck className="size-3.5 text-success" />
-            <span>企业入口</span>
           </div>
         </header>
 

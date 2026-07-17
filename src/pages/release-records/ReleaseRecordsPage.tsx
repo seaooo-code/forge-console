@@ -26,6 +26,7 @@ import { DataTable, FilterBar, KpiCard, PageHeader, TablePagination } from "@/co
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -641,10 +642,10 @@ function CreateReleaseDialog({
               error={errors.expiresAt?.message}
             >
               <div className="grid gap-2">
-                <Input
-                  id="release-create-expires-at"
-                  type="datetime-local"
-                  {...register("expiresAt", {
+                <Controller
+                  control={control}
+                  name="expiresAt"
+                  rules={{
                     validate: (value) => {
                       if (releaseType !== "gray" || grayStrategy !== "targeted") {
                         return true;
@@ -658,7 +659,17 @@ function CreateReleaseDialog({
                       }
                       return expiresAt.getTime() > Date.now() ? true : "过期时间必须晚于当前时间";
                     },
-                  })}
+                  }}
+                  render={({ field }) => (
+                    <DateTimePicker
+                      ref={field.ref}
+                      id="release-create-expires-at"
+                      value={field.value}
+                      invalid={Boolean(errors.expiresAt)}
+                      onBlur={field.onBlur}
+                      onChange={field.onChange}
+                    />
+                  )}
                 />
                 <div className="flex flex-wrap gap-2">
                   {[7, 15, 30].map((days) => (
