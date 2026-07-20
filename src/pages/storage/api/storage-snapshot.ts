@@ -1,3 +1,4 @@
+import { type APIErrorPayload, createFetchClient } from "@/api/client";
 import type { StorageConfigRecord, StorageSnapshot } from "@/types/storage";
 import type { StorageMutationInput, StorageTestResult } from "../types";
 
@@ -5,10 +6,6 @@ export { storageEditQueryKey, storageSnapshotQueryKey } from "./storage-query-ke
 
 type StorageConfigurationAPIResponse = {
   configuration: StorageConfigRecord;
-};
-
-type APIErrorPayload = {
-  error?: string;
 };
 
 export class StorageAPIError extends Error {
@@ -23,19 +20,8 @@ export class StorageAPIError extends Error {
   }
 }
 
-const storageAPIErrorMessages: Record<string, string> = {
-  forbidden: "当前账号无权限执行此操作",
-  "internal server error": "服务端内部错误，请稍后重试",
-  "invalid storage configuration request": "存储配置参数无效，请检查表单",
-  "storage configuration already exists": "存储配置已存在，请更换标识后重试",
-  "storage configuration is referenced by environments": "存储配置已被环境引用，不能删除",
-  "storage configuration not found": "存储配置不存在",
-  "storage service unavailable": "存储服务暂不可用",
-};
-
-const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8080").replace(
-  /\/+$/,
-  "",
+const fetchJSON = createFetchClient(
+  (path, status, payload) => new StorageAPIError(path, status, payload),
 );
 
 export async function fetchStorageDetailSnapshot(storageId: string): Promise<StorageSnapshot> {
@@ -103,38 +89,15 @@ export async function deleteStorageConfiguration(storageId: string): Promise<Sto
   return payload.configuration;
 }
 
-async function fetchJSON<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${apiBaseUrl}${path}`, {
-    credentials: "include",
-    ...init,
-    headers: init?.body
-      ? {
-          "Content-Type": "application/json",
-          ...init.headers,
-        }
-      : init?.headers,
-  });
-
-  if (!response.ok) {
-    const payload = await readErrorPayload(response);
-    throw new StorageAPIError(path, response.status, payload);
-  }
-
-  return response.json() as Promise<T>;
-}
-
-async function readErrorPayload(response: Response): Promise<APIErrorPayload | undefined> {
-  const contentType = response.headers.get("content-type") ?? "";
-  if (!contentType.includes("application/json")) {
-    return undefined;
-  }
-
-  try {
-    return (await response.json()) as APIErrorPayload;
-  } catch (_error) {
-    return undefined;
-  }
-}
+const storageAPIErrorMessages: Record<string, string> = {
+  forbidden: "当前账号无权限执行此操作",
+  "internal server error": "服务端内部错误，请稍后重试",
+  "invalid storage configuration request": "存储配置参数无效，请检查表单",
+  "storage configuration already exists": "存储配置已存在，请更换标识后重试",
+  "storage configuration is referenced by environments": "存储配置已被环境引用，不能删除",
+  "storage configuration not found": "存储配置不存在",
+  "storage service unavailable": "存储服务暂不可用",
+};
 
 function getStorageAPIErrorMessage(path: string, status: number, payload?: APIErrorPayload) {
   const error = payload?.error;

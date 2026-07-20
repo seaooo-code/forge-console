@@ -1,3 +1,4 @@
+import { type APIErrorPayload, createFetchClient } from "@/api/client";
 import type {
   BuildArtifactTree,
   BuildArtifactTreeNode,
@@ -66,10 +67,6 @@ type BuildDetailAPIResponse = {
   build: BuildRecordAPIRecord;
 };
 
-type APIErrorPayload = {
-  error?: string;
-};
-
 export class BuildAPIError extends Error {
   readonly payload?: APIErrorPayload;
   readonly status: number;
@@ -82,9 +79,8 @@ export class BuildAPIError extends Error {
   }
 }
 
-const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8080").replace(
-  /\/+$/,
-  "",
+const fetchJSON = createFetchClient(
+  (path, status, payload) => new BuildAPIError(path, status, payload),
 );
 
 export async function fetchBuildDetail(buildId: string): Promise<BuildRecordDetail> {
@@ -93,26 +89,6 @@ export async function fetchBuildDetail(buildId: string): Promise<BuildRecordDeta
   );
 
   return normalizeBuildDetail(payload.build);
-}
-
-async function fetchJSON<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${apiBaseUrl}${path}`, {
-    credentials: "include",
-    ...init,
-    headers: init?.body
-      ? {
-          "Content-Type": "application/json",
-          ...init.headers,
-        }
-      : init?.headers,
-  });
-
-  if (!response.ok) {
-    const payload = await readErrorPayload(response);
-    throw new BuildAPIError(path, response.status, payload);
-  }
-
-  return response.json() as Promise<T>;
 }
 
 const buildAPIErrorMessages: Record<string, string> = {
@@ -136,19 +112,6 @@ function getBuildAPIErrorMessage(path: string, status: number, payload?: APIErro
     return buildAPIErrorMessages[error];
   }
   return error ?? `Request ${path} failed with ${status}`;
-}
-
-async function readErrorPayload(response: Response): Promise<APIErrorPayload | undefined> {
-  const contentType = response.headers.get("content-type") ?? "";
-  if (!contentType.includes("application/json")) {
-    return undefined;
-  }
-
-  try {
-    return (await response.json()) as APIErrorPayload;
-  } catch (_error) {
-    return undefined;
-  }
 }
 
 function normalizeBuildRecord(record: BuildRecordAPIRecord): BuildRunRecord {

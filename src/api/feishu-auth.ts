@@ -1,9 +1,6 @@
+import { apiBaseUrl } from "@/api/client";
 import type { AuthSession, FeishuAuthResponse } from "@/types/auth";
 
-const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8080").replace(
-  /\/+$/,
-  "",
-);
 const authRedirectStorageKey = "forge-console.auth-redirect-path";
 const authorizationRequests = new Map<string, Promise<AuthSession>>();
 let sessionRequest: Promise<AuthSession | null> | null = null;

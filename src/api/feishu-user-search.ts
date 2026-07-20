@@ -1,25 +1,25 @@
+import { type APIErrorPayload, createFetchClient } from "@/api/client";
 import type { FeishuUserSearchResult } from "@/types/feishu";
 
 type FeishuUserSearchAPIResponse = {
   users: FeishuUserSearchAPIResult[];
 };
 
-type APIErrorPayload = {
-  error?: string;
+type FeishuUserSearchAPIResult = Omit<FeishuUserSearchResult, "id"> & {
+  id?: string;
+};
+
+type FeishuUserSearchAPIErrorPayload = APIErrorPayload & {
   feishuCode?: number;
   feishuEndpoint?: string;
   feishuMsg?: string;
 };
 
-type FeishuUserSearchAPIResult = Omit<FeishuUserSearchResult, "id"> & {
-  id?: string;
-};
-
 export class FeishuUserSearchAPIError extends Error {
-  readonly payload?: APIErrorPayload;
+  readonly payload?: FeishuUserSearchAPIErrorPayload;
   readonly status: number;
 
-  constructor(path: string, status: number, payload?: APIErrorPayload) {
+  constructor(path: string, status: number, payload?: FeishuUserSearchAPIErrorPayload) {
     super(buildAPIErrorMessage(path, status, payload));
     this.name = "FeishuUserSearchAPIError";
     this.payload = payload;
@@ -27,9 +27,8 @@ export class FeishuUserSearchAPIError extends Error {
   }
 }
 
-const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8080").replace(
-  /\/+$/,
-  "",
+const fetchJSON = createFetchClient(
+  (path, status, payload) => new FeishuUserSearchAPIError(path, status, payload),
 );
 
 export async function searchFeishuUsers(query: string): Promise<FeishuUserSearchResult[]> {
@@ -64,33 +63,11 @@ function normalizeFeishuUserSearchResult(user: FeishuUserSearchAPIResult): Feish
   };
 }
 
-async function fetchJSON<T>(path: string): Promise<T> {
-  const response = await fetch(`${apiBaseUrl}${path}`, {
-    credentials: "include",
-  });
-
-  if (!response.ok) {
-    const payload = await readErrorPayload(response);
-    throw new FeishuUserSearchAPIError(path, response.status, payload);
-  }
-
-  return response.json() as Promise<T>;
-}
-
-async function readErrorPayload(response: Response): Promise<APIErrorPayload | undefined> {
-  const contentType = response.headers.get("content-type") ?? "";
-  if (!contentType.includes("application/json")) {
-    return undefined;
-  }
-
-  try {
-    return (await response.json()) as APIErrorPayload;
-  } catch (_error) {
-    return undefined;
-  }
-}
-
-function buildAPIErrorMessage(path: string, status: number, payload?: APIErrorPayload) {
+function buildAPIErrorMessage(
+  path: string,
+  status: number,
+  payload?: FeishuUserSearchAPIErrorPayload,
+) {
   if (payload?.feishuMsg) {
     return payload.feishuCode
       ? `飞书错误 ${payload.feishuCode}: ${payload.feishuMsg}`

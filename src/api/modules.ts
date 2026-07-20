@@ -1,3 +1,4 @@
+import { type APIErrorPayload, createFetchClient } from "@/api/client";
 import { fetchAllPaginatedItems, normalizePagination } from "@/api/pagination";
 import type {
   ModuleListFilters,
@@ -40,10 +41,6 @@ type ModulesAPIResponse = {
   summary: ModulesSnapshot["summary"];
 };
 
-type APIErrorPayload = {
-  error?: string;
-};
-
 export class ModulesAPIError extends Error {
   readonly payload?: APIErrorPayload;
   readonly status: number;
@@ -56,9 +53,9 @@ export class ModulesAPIError extends Error {
   }
 }
 
-const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8080").replace(
-  /\/+$/,
-  "",
+const fetchJSON = createFetchClient(
+  (path, status, payload) => new ModulesAPIError(path, status, payload),
+  { allowEmpty: true },
 );
 
 export async function fetchModulesSnapshot(
@@ -118,46 +115,6 @@ export function normalizeModuleListFilters(
     owner: filters?.owner?.trim() ?? "",
     ...normalizePagination(filters),
   };
-}
-
-async function fetchJSON<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${apiBaseUrl}${path}`, {
-    credentials: "include",
-    ...init,
-    headers: init?.body
-      ? {
-          "Content-Type": "application/json",
-          ...init.headers,
-        }
-      : init?.headers,
-  });
-
-  if (!response.ok) {
-    const payload = await readErrorPayload(response);
-    throw new ModulesAPIError(path, response.status, payload);
-  }
-
-  if (
-    response.status === 204 ||
-    !response.headers.get("content-type")?.includes("application/json")
-  ) {
-    return undefined as T;
-  }
-
-  return response.json() as Promise<T>;
-}
-
-async function readErrorPayload(response: Response): Promise<APIErrorPayload | undefined> {
-  const contentType = response.headers.get("content-type") ?? "";
-  if (!contentType.includes("application/json")) {
-    return undefined;
-  }
-
-  try {
-    return (await response.json()) as APIErrorPayload;
-  } catch (_error) {
-    return undefined;
-  }
 }
 
 function buildModulesSnapshotPath(filters?: Partial<ModuleListRequest>) {

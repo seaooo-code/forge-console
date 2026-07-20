@@ -1,3 +1,4 @@
+import { type APIErrorPayload, createFetchClient } from "@/api/client";
 import { fetchAllPaginatedItems, normalizePagination } from "@/api/pagination";
 import type { PaginationParams } from "@/types/pagination";
 import type { StorageConfigRecord, StorageSnapshot } from "@/types/storage";
@@ -5,10 +6,6 @@ import type { StorageConfigRecord, StorageSnapshot } from "@/types/storage";
 type StorageConfigurationsAPIResponse = {
   configurations: StorageConfigRecord[];
   pagination: StorageSnapshot["pagination"];
-};
-
-type APIErrorPayload = {
-  error?: string;
 };
 
 export class StorageConfigurationsAPIError extends Error {
@@ -23,9 +20,8 @@ export class StorageConfigurationsAPIError extends Error {
   }
 }
 
-const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8080").replace(
-  /\/+$/,
-  "",
+const fetchJSON = createFetchClient(
+  (path, status, payload) => new StorageConfigurationsAPIError(path, status, payload),
 );
 
 export async function fetchStorageConfigurationsSnapshot(
@@ -56,30 +52,4 @@ export async function fetchAllStorageConfigurationsSnapshot(): Promise<StorageSn
     ...snapshot,
     configurations: items,
   };
-}
-
-async function fetchJSON<T>(path: string): Promise<T> {
-  const response = await fetch(`${apiBaseUrl}${path}`, {
-    credentials: "include",
-  });
-
-  if (!response.ok) {
-    const payload = await readErrorPayload(response);
-    throw new StorageConfigurationsAPIError(path, response.status, payload);
-  }
-
-  return response.json() as Promise<T>;
-}
-
-async function readErrorPayload(response: Response): Promise<APIErrorPayload | undefined> {
-  const contentType = response.headers.get("content-type") ?? "";
-  if (!contentType.includes("application/json")) {
-    return undefined;
-  }
-
-  try {
-    return (await response.json()) as APIErrorPayload;
-  } catch (_error) {
-    return undefined;
-  }
 }

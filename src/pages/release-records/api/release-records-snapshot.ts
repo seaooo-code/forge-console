@@ -1,3 +1,4 @@
+import { type APIErrorPayload, createFetchClient } from "@/api/client";
 import { fetchAllPaginatedItems, normalizePagination } from "@/api/pagination";
 
 import type {
@@ -66,10 +67,6 @@ type ReleaseDetailAPIResponse = {
   release: ReleaseRecordAPIRecord;
 };
 
-type APIErrorPayload = {
-  error?: string;
-};
-
 export class ReleaseRecordsAPIError extends Error {
   readonly payload?: APIErrorPayload;
   readonly status: number;
@@ -82,9 +79,8 @@ export class ReleaseRecordsAPIError extends Error {
   }
 }
 
-const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8080").replace(
-  /\/+$/,
-  "",
+const fetchJSON = createFetchClient(
+  (path, status, payload) => new ReleaseRecordsAPIError(path, status, payload),
 );
 
 export async function fetchReleaseRecordsSnapshot(
@@ -213,26 +209,6 @@ export async function inactivateTargetedGrayRelease(
   return normalizeReleaseRecord(payload.release);
 }
 
-async function fetchJSON<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${apiBaseUrl}${path}`, {
-    credentials: "include",
-    ...init,
-    headers: init?.body
-      ? {
-          "Content-Type": "application/json",
-          ...init.headers,
-        }
-      : init?.headers,
-  });
-
-  if (!response.ok) {
-    const payload = await readErrorPayload(response);
-    throw new ReleaseRecordsAPIError(path, response.status, payload);
-  }
-
-  return response.json() as Promise<T>;
-}
-
 const releaseRecordsAPIErrorMessages: Record<string, string> = {
   forbidden: "当前账号无权限执行此操作",
   "internal server error": "服务端内部错误，请稍后重试",
@@ -248,19 +224,6 @@ function getReleaseRecordsAPIErrorMessage(path: string, status: number, payload?
     return releaseRecordsAPIErrorMessages[error];
   }
   return error ?? `Request ${path} failed with ${status}`;
-}
-
-async function readErrorPayload(response: Response): Promise<APIErrorPayload | undefined> {
-  const contentType = response.headers.get("content-type") ?? "";
-  if (!contentType.includes("application/json")) {
-    return undefined;
-  }
-
-  try {
-    return (await response.json()) as APIErrorPayload;
-  } catch (_error) {
-    return undefined;
-  }
 }
 
 function normalizeReleaseRecord(record: ReleaseRecordAPIRecord): ReleasePointerRecord {

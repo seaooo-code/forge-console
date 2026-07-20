@@ -1,3 +1,4 @@
+import { type APIErrorPayload, createFetchClient } from "@/api/client";
 import {
   fetchAllModulesSnapshot,
   fetchModuleDetailSnapshot,
@@ -49,10 +50,6 @@ type CodeSourceRepositoryAPIRecord = {
   sshUrl: string;
 };
 
-type APIErrorPayload = {
-  error?: string;
-};
-
 export class ModuleAPIError extends Error {
   readonly payload?: APIErrorPayload;
   readonly status: number;
@@ -64,6 +61,11 @@ export class ModuleAPIError extends Error {
     this.status = status;
   }
 }
+
+const fetchJSON = createFetchClient(
+  (path, status, payload) => new ModuleAPIError(path, status, payload),
+  { allowEmpty: true },
+);
 
 const moduleAPIErrorMessages: Record<string, string> = {
   "application already has common module": "当前应用已关联通用模块，每个应用只能关联一个通用模块",
@@ -82,11 +84,6 @@ const moduleAPIErrorMessages: Record<string, string> = {
   "module repository already exists": "该仓库已绑定其他模块，请选择未绑定仓库",
   "storage configuration not found": "环境未绑定有效存储配置，无法构建",
 };
-
-const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8080").replace(
-  /\/+$/,
-  "",
-);
 
 export async function createModule(input: ModuleMutationInput): Promise<ModuleRecord> {
   const payload = await fetchJSON<ModuleDetailAPIResponse>("/api/v1/modules", {
@@ -140,46 +137,6 @@ export async function searchCodeSourceRepositories(
     provider: repository.provider,
     sshUrl: repository.sshUrl,
   }));
-}
-
-async function fetchJSON<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${apiBaseUrl}${path}`, {
-    credentials: "include",
-    ...init,
-    headers: init?.body
-      ? {
-          "Content-Type": "application/json",
-          ...init.headers,
-        }
-      : init?.headers,
-  });
-
-  if (!response.ok) {
-    const payload = await readErrorPayload(response);
-    throw new ModuleAPIError(path, response.status, payload);
-  }
-
-  if (
-    response.status === 204 ||
-    !response.headers.get("content-type")?.includes("application/json")
-  ) {
-    return undefined as T;
-  }
-
-  return response.json() as Promise<T>;
-}
-
-async function readErrorPayload(response: Response): Promise<APIErrorPayload | undefined> {
-  const contentType = response.headers.get("content-type") ?? "";
-  if (!contentType.includes("application/json")) {
-    return undefined;
-  }
-
-  try {
-    return (await response.json()) as APIErrorPayload;
-  } catch (_error) {
-    return undefined;
-  }
 }
 
 function getModuleAPIErrorMessage(path: string, status: number, payload?: APIErrorPayload) {

@@ -1,3 +1,4 @@
+import { type APIErrorPayload, createFetchClient } from "@/api/client";
 import { fetchAllPaginatedItems, normalizePagination } from "@/api/pagination";
 import type {
   BuildCreateInput,
@@ -64,10 +65,6 @@ type BuildDetailAPIResponse = {
   build: BuildRecordAPIRecord;
 };
 
-type APIErrorPayload = {
-  error?: string;
-};
-
 export class BuildsAPIError extends Error {
   readonly payload?: APIErrorPayload;
   readonly status: number;
@@ -80,9 +77,8 @@ export class BuildsAPIError extends Error {
   }
 }
 
-const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8080").replace(
-  /\/+$/,
-  "",
+const fetchJSON = createFetchClient(
+  (path, status, payload) => new BuildsAPIError(path, status, payload),
 );
 
 export async function fetchBuildsSnapshot(
@@ -145,26 +141,6 @@ export async function createBuild(input: BuildCreateInput): Promise<BuildCreateR
   };
 }
 
-async function fetchJSON<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${apiBaseUrl}${path}`, {
-    credentials: "include",
-    ...init,
-    headers: init?.body
-      ? {
-          "Content-Type": "application/json",
-          ...init.headers,
-        }
-      : init?.headers,
-  });
-
-  if (!response.ok) {
-    const payload = await readErrorPayload(response);
-    throw new BuildsAPIError(path, response.status, payload);
-  }
-
-  return response.json() as Promise<T>;
-}
-
 const buildAPIErrorMessages: Record<string, string> = {
   "build record not found": "构建记录不存在",
   "build service unavailable": "构建服务暂不可用",
@@ -182,19 +158,6 @@ function getBuildsAPIErrorMessage(path: string, status: number, payload?: APIErr
     return buildAPIErrorMessages[error];
   }
   return error ?? `Request ${path} failed with ${status}`;
-}
-
-async function readErrorPayload(response: Response): Promise<APIErrorPayload | undefined> {
-  const contentType = response.headers.get("content-type") ?? "";
-  if (!contentType.includes("application/json")) {
-    return undefined;
-  }
-
-  try {
-    return (await response.json()) as APIErrorPayload;
-  } catch (_error) {
-    return undefined;
-  }
 }
 
 function normalizeBuildRecord(record: BuildRecordAPIRecord): BuildRunRecord {

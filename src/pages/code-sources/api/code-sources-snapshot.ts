@@ -1,3 +1,4 @@
+import { type APIErrorPayload, createFetchClient } from "@/api/client";
 import type {
   CodeSourceAppManifest,
   CodeSourceInstallURL,
@@ -6,10 +7,6 @@ import type {
 } from "../types";
 
 export const codeSourcesSnapshotQueryKey = ["code-sources-snapshot"] as const;
-
-type APIErrorPayload = {
-  error?: string;
-};
 
 export class CodeSourceAPIError extends Error {
   readonly payload?: APIErrorPayload;
@@ -23,6 +20,11 @@ export class CodeSourceAPIError extends Error {
   }
 }
 
+const fetchJSON = createFetchClient(
+  (path, status, payload) => new CodeSourceAPIError(path, status, payload),
+  { allowEmpty: true },
+);
+
 const codeSourceAPIErrorMessages: Record<string, string> = {
   "code source auth not configured": "代码源授权未配置",
   "code source authorization failed": "代码源授权失败",
@@ -32,11 +34,6 @@ const codeSourceAPIErrorMessages: Record<string, string> = {
   "internal server error": "服务端内部错误，请稍后重试",
   "invalid code source request": "代码源参数无效",
 };
-
-const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8080").replace(
-  /\/+$/,
-  "",
-);
 
 export async function fetchCodeSourcesSnapshot(): Promise<CodeSourcesSnapshot> {
   const payload = await fetchJSON<CodeSourcesSnapshot>("/api/v1/code-sources");
@@ -69,46 +66,6 @@ export async function deleteCodeSourceInstallations(provider: CodeSourceProvider
   await fetchJSON<void>(`/api/v1/code-sources/${encodeURIComponent(provider)}/installations`, {
     method: "DELETE",
   });
-}
-
-async function fetchJSON<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${apiBaseUrl}${path}`, {
-    credentials: "include",
-    ...init,
-    headers: init?.body
-      ? {
-          "Content-Type": "application/json",
-          ...init.headers,
-        }
-      : init?.headers,
-  });
-
-  if (!response.ok) {
-    const payload = await readErrorPayload(response);
-    throw new CodeSourceAPIError(path, response.status, payload);
-  }
-
-  if (
-    response.status === 204 ||
-    !response.headers.get("content-type")?.includes("application/json")
-  ) {
-    return undefined as T;
-  }
-
-  return response.json() as Promise<T>;
-}
-
-async function readErrorPayload(response: Response): Promise<APIErrorPayload | undefined> {
-  const contentType = response.headers.get("content-type") ?? "";
-  if (!contentType.includes("application/json")) {
-    return undefined;
-  }
-
-  try {
-    return (await response.json()) as APIErrorPayload;
-  } catch (_error) {
-    return undefined;
-  }
 }
 
 function getCodeSourceAPIErrorMessage(path: string, status: number, payload?: APIErrorPayload) {

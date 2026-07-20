@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 
+import { apiBaseUrl } from "@/api/client";
 import { fetchModuleDetailSnapshot, moduleDetailQueryKey } from "@/api/modules";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -43,11 +44,6 @@ type BuildDetailPageProps = {
   onOpenEnvironment: (environmentId: string) => void;
   onOpenStorage: (storageId: string) => void;
 };
-
-const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8080").replace(
-  /\/+$/,
-  "",
-);
 
 export function BuildDetailPage({
   buildId,

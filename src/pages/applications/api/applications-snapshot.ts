@@ -1,3 +1,4 @@
+import { type APIErrorPayload, createFetchClient } from "@/api/client";
 import { fetchAllPaginatedItems } from "@/api/pagination";
 
 import { applicationStatusLabelByCode } from "../constants";
@@ -49,18 +50,17 @@ type ApplicationDetailRawAPIResponse = {
 
 type ApplicationMemberAPIResponse = ApplicationMemberRecord;
 
-type APIErrorPayload = {
-  error?: string;
+type ApplicationAPIErrorPayload = APIErrorPayload & {
   feishuCode?: number;
   feishuEndpoint?: string;
   feishuMsg?: string;
 };
 
 export class ForgeAPIError extends Error {
-  readonly payload?: APIErrorPayload;
+  readonly payload?: ApplicationAPIErrorPayload;
   readonly status: number;
 
-  constructor(path: string, status: number, payload?: APIErrorPayload) {
+  constructor(path: string, status: number, payload?: ApplicationAPIErrorPayload) {
     super(buildAPIErrorMessage(path, status, payload));
     this.name = "ForgeAPIError";
     this.payload = payload;
@@ -68,9 +68,9 @@ export class ForgeAPIError extends Error {
   }
 }
 
-const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8080").replace(
-  /\/+$/,
-  "",
+const fetchJSON = createFetchClient(
+  (path, status, payload) => new ForgeAPIError(path, status, payload),
+  { allowEmpty: true },
 );
 
 export async function fetchApplicationsSnapshot(
@@ -235,47 +235,7 @@ export async function deleteApplicationMember(
   );
 }
 
-async function fetchJSON<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${apiBaseUrl}${path}`, {
-    credentials: "include",
-    ...init,
-    headers: init?.body
-      ? {
-          "Content-Type": "application/json",
-          ...init.headers,
-        }
-      : init?.headers,
-  });
-
-  if (!response.ok) {
-    const payload = await readErrorPayload(response);
-    throw new ForgeAPIError(path, response.status, payload);
-  }
-
-  if (
-    response.status === 204 ||
-    !response.headers.get("content-type")?.includes("application/json")
-  ) {
-    return undefined as T;
-  }
-
-  return response.json() as Promise<T>;
-}
-
-async function readErrorPayload(response: Response): Promise<APIErrorPayload | undefined> {
-  const contentType = response.headers.get("content-type") ?? "";
-  if (!contentType.includes("application/json")) {
-    return undefined;
-  }
-
-  try {
-    return (await response.json()) as APIErrorPayload;
-  } catch (_error) {
-    return undefined;
-  }
-}
-
-function buildAPIErrorMessage(path: string, status: number, payload?: APIErrorPayload) {
+function buildAPIErrorMessage(path: string, status: number, payload?: ApplicationAPIErrorPayload) {
   if (payload?.feishuMsg) {
     return payload.feishuCode
       ? `飞书错误 ${payload.feishuCode}: ${payload.feishuMsg}`

@@ -1,3 +1,4 @@
+import { type APIErrorPayload, createFetchClient } from "@/api/client";
 import type { BuildReleaseInput } from "@/types/releases";
 
 type ReleaseDetailAPIResponse = {
@@ -5,10 +6,6 @@ type ReleaseDetailAPIResponse = {
     createdAt: string;
     id: string;
   };
-};
-
-type APIErrorPayload = {
-  error?: string;
 };
 
 export class ReleaseAPIError extends Error {
@@ -23,9 +20,8 @@ export class ReleaseAPIError extends Error {
   }
 }
 
-const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8080").replace(
-  /\/+$/,
-  "",
+const fetchJSON = createFetchClient(
+  (path, status, payload) => new ReleaseAPIError(path, status, payload),
 );
 
 export async function createBuildRelease(input: BuildReleaseInput): Promise<string> {
@@ -53,26 +49,6 @@ export async function createBuildRelease(input: BuildReleaseInput): Promise<stri
   return formatRecordNumber(payload.release.createdAt);
 }
 
-async function fetchJSON<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${apiBaseUrl}${path}`, {
-    credentials: "include",
-    ...init,
-    headers: init?.body
-      ? {
-          "Content-Type": "application/json",
-          ...init.headers,
-        }
-      : init?.headers,
-  });
-
-  if (!response.ok) {
-    const payload = await readErrorPayload(response);
-    throw new ReleaseAPIError(path, response.status, payload);
-  }
-
-  return response.json() as Promise<T>;
-}
-
 const releaseAPIErrorMessages: Record<string, string> = {
   "build record not found": "构建记录不存在",
   forbidden: "当前账号无权限执行此操作",
@@ -89,19 +65,6 @@ function getReleaseAPIErrorMessage(path: string, status: number, payload?: APIEr
     return releaseAPIErrorMessages[error];
   }
   return error ?? `Request ${path} failed with ${status}`;
-}
-
-async function readErrorPayload(response: Response): Promise<APIErrorPayload | undefined> {
-  const contentType = response.headers.get("content-type") ?? "";
-  if (!contentType.includes("application/json")) {
-    return undefined;
-  }
-
-  try {
-    return (await response.json()) as APIErrorPayload;
-  } catch (_error) {
-    return undefined;
-  }
 }
 
 function formatRecordNumber(value: string) {

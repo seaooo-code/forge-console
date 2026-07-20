@@ -1,3 +1,4 @@
+import { type APIErrorPayload, createFetchClient } from "@/api/client";
 import type {
   AccessTokensSnapshot,
   ArtifactAccessTokenCreateInput,
@@ -18,10 +19,6 @@ type ArtifactAccessTokenDetailAPIResponse = {
 
 type ArtifactAccessTokenGenerateAPIResponse = ArtifactAccessTokenGenerateResult;
 
-type APIErrorPayload = {
-  error?: string;
-};
-
 export class AccessTokensAPIError extends Error {
   readonly payload?: APIErrorPayload;
   readonly status: number;
@@ -34,6 +31,11 @@ export class AccessTokensAPIError extends Error {
   }
 }
 
+const fetchJSON = createFetchClient(
+  (path, status, payload) => new AccessTokensAPIError(path, status, payload),
+  { allowEmpty: true },
+);
+
 const accessTokensAPIErrorMessages: Record<string, string> = {
   "artifact access token already exists": "访问令牌已存在，请重新生成",
   "artifact access token not found": "访问令牌不存在",
@@ -41,11 +43,6 @@ const accessTokensAPIErrorMessages: Record<string, string> = {
   "internal server error": "服务端内部错误，请稍后重试",
   "invalid artifact access token request": "访问令牌参数无效，请检查表单",
 };
-
-const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8080").replace(
-  /\/+$/,
-  "",
-);
 
 export async function fetchAccessTokensSnapshot(): Promise<AccessTokensSnapshot> {
   const payload = await fetchJSON<ArtifactAccessTokensAPIResponse>(
@@ -101,43 +98,6 @@ export async function deleteArtifactAccessToken(tokenId: string): Promise<void> 
   await fetchJSON<void>(`/api/v1/artifact-access-tokens/${encodeURIComponent(tokenId)}`, {
     method: "DELETE",
   });
-}
-
-async function fetchJSON<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${apiBaseUrl}${path}`, {
-    credentials: "include",
-    ...init,
-    headers: init?.body
-      ? {
-          "Content-Type": "application/json",
-          ...init.headers,
-        }
-      : init?.headers,
-  });
-
-  if (!response.ok) {
-    const payload = await readErrorPayload(response);
-    throw new AccessTokensAPIError(path, response.status, payload);
-  }
-
-  if (response.status === 204) {
-    return undefined as T;
-  }
-
-  return response.json() as Promise<T>;
-}
-
-async function readErrorPayload(response: Response): Promise<APIErrorPayload | undefined> {
-  const contentType = response.headers.get("content-type") ?? "";
-  if (!contentType.includes("application/json")) {
-    return undefined;
-  }
-
-  try {
-    return (await response.json()) as APIErrorPayload;
-  } catch (_error) {
-    return undefined;
-  }
 }
 
 function getAccessTokensAPIErrorMessage(path: string, status: number, payload?: APIErrorPayload) {
