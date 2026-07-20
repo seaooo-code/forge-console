@@ -3,6 +3,7 @@ export type {
   ModuleFormState,
   ModuleKind,
   ModuleListFilters,
+  ModuleListRequest,
   ModuleMutationInput,
   ModuleRecord,
   ModuleRepositoryBinding,

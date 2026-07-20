@@ -14,8 +14,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useSearchParams } from "react-router";
 
-import { buildsSnapshotQueryKey, fetchBuildsSnapshot } from "@/api/builds";
-import { fetchModulesSnapshot, modulesSnapshotQueryKey } from "@/api/modules";
+import { buildsAllQueryKey, buildsSnapshotQueryKey, fetchAllBuildsSnapshot } from "@/api/builds";
+import { fetchAllModulesSnapshot, modulesAllQueryKey } from "@/api/modules";
 import { createBuildRelease } from "@/api/releases";
 import { ApplicationScopeSelect } from "@/components/common/ApplicationScopeSelect";
 import { ConsoleClearableFilterSelect } from "@/components/common/ConsoleControls";
@@ -35,6 +35,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { usePagination } from "@/hooks/use-pagination";
 import { cn } from "@/lib/utils";
 import { environmentsSnapshotQueryKey, fetchEnvironmentsSnapshot } from "@/pages/environments";
 import { useApplicationScopeStore } from "@/store/use-application-scope-store";
@@ -57,8 +58,6 @@ import {
   releaseRecordStatusLabels,
 } from "./constants";
 import type { ReleasePointerRecord, ReleaseRecordStatus, ReleaseRecordsFilters } from "./types";
-
-const PAGE_SIZE = 20;
 
 const emptyReleaseRecordsFilters: ReleaseRecordsFilters = {
   applicationId: "",
@@ -98,27 +97,27 @@ export function ReleaseRecordsPage({ onOpenRelease }: ReleaseRecordsPageProps) {
     ...emptyReleaseRecordsFilters,
     applicationId: initialApplicationId,
   });
-  const [page, setPage] = useState(1);
+  const { clampPage, page, pageSize, resetPage, setPage, setPageSize } = usePagination();
   const {
     data: snapshot,
     isFetching,
     refetch,
   } = useQuery({
     placeholderData: keepPreviousData,
-    queryFn: () => fetchReleaseRecordsSnapshot(filters),
-    queryKey: releaseRecordsSnapshotQueryKeyWithFilters(filters),
+    queryFn: () => fetchReleaseRecordsSnapshot({ ...filters, page, pageSize }),
+    queryKey: releaseRecordsSnapshotQueryKeyWithFilters({ ...filters, page, pageSize }),
   });
   const { data: overviewSnapshot, refetch: refetchOverview } = useQuery({
     queryFn: () => fetchReleaseRecordsSnapshot({ applicationId: filters.applicationId }),
     queryKey: releaseRecordsSnapshotQueryKeyWithFilters({ applicationId: filters.applicationId }),
   });
   const { data: buildsSnapshot, isFetching: isBuildsFetching } = useQuery({
-    queryFn: () => fetchBuildsSnapshot({ applicationId: filters.applicationId }),
-    queryKey: buildsSnapshotQueryKey({ applicationId: filters.applicationId }),
+    queryFn: () => fetchAllBuildsSnapshot({ applicationId: filters.applicationId }),
+    queryKey: buildsAllQueryKey({ applicationId: filters.applicationId }),
   });
   const { data: modulesSnapshot } = useQuery({
-    queryFn: () => fetchModulesSnapshot({ applicationId: filters.applicationId }),
-    queryKey: modulesSnapshotQueryKey({ applicationId: filters.applicationId }),
+    queryFn: () => fetchAllModulesSnapshot({ applicationId: filters.applicationId }),
+    queryKey: modulesAllQueryKey({ applicationId: filters.applicationId }),
   });
   const { data: environmentSnapshot } = useQuery({
     queryFn: fetchEnvironmentsSnapshot,
@@ -149,7 +148,7 @@ export function ReleaseRecordsPage({ onOpenRelease }: ReleaseRecordsPageProps) {
   );
   const updateFilters = (patch: Partial<ReleaseRecordsFilters>) => {
     setFilters((current) => ({ ...current, ...patch }));
-    setPage(1);
+    resetPage();
   };
   useEffect(() => {
     const queryApplicationId = searchParams.get("applicationId")?.trim() ?? "";
@@ -162,8 +161,14 @@ export function ReleaseRecordsPage({ onOpenRelease }: ReleaseRecordsPageProps) {
 
       return { ...current, applicationId: nextApplicationId, moduleId: "" };
     });
+    resetPage();
     setStoredApplicationId(nextApplicationId);
-  }, [searchParams, setStoredApplicationId, storedApplicationId]);
+  }, [resetPage, searchParams, setStoredApplicationId, storedApplicationId]);
+  useEffect(() => {
+    if (snapshot) {
+      clampPage(snapshot.pagination.total);
+    }
+  }, [clampPage, snapshot]);
   const updateApplicationScope = (applicationId: string) => {
     const normalizedApplicationId = applicationId.trim();
     setStoredApplicationId(normalizedApplicationId);
@@ -409,12 +414,10 @@ export function ReleaseRecordsPage({ onOpenRelease }: ReleaseRecordsPageProps) {
       <Card className="rounded-xl border-border bg-card py-0 shadow-xs">
         <TablePagination
           page={page}
-          pageSize={PAGE_SIZE}
-          total={snapshot.records.length}
+          pageSize={pageSize}
+          total={snapshot.pagination.total}
           onPageChange={setPage}
-          onPageSizeChange={() => {
-            // hook left here for future wiring; current snapshot returns the full list
-          }}
+          onPageSizeChange={setPageSize}
         />
       </Card>
 

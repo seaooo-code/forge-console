@@ -1,7 +1,10 @@
+import { fetchAllPaginatedItems, normalizePagination } from "@/api/pagination";
+import type { PaginationParams } from "@/types/pagination";
 import type { StorageConfigRecord, StorageSnapshot } from "@/types/storage";
 
 type StorageConfigurationsAPIResponse = {
   configurations: StorageConfigRecord[];
+  pagination: StorageSnapshot["pagination"];
 };
 
 type APIErrorPayload = {
@@ -25,13 +28,33 @@ const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8080"
   "",
 );
 
-export async function fetchStorageConfigurationsSnapshot(): Promise<StorageSnapshot> {
+export async function fetchStorageConfigurationsSnapshot(
+  pagination?: Partial<PaginationParams>,
+): Promise<StorageSnapshot> {
+  const normalizedPagination = normalizePagination(pagination);
+  const searchParams = new URLSearchParams({
+    page: String(normalizedPagination.page),
+    pageSize: String(normalizedPagination.pageSize),
+  });
   const payload = await fetchJSON<StorageConfigurationsAPIResponse>(
-    "/api/v1/storage/configurations",
+    `/api/v1/storage/configurations?${searchParams.toString()}`,
   );
 
   return {
     configurations: payload.configurations,
+    pagination: payload.pagination,
+  };
+}
+
+export async function fetchAllStorageConfigurationsSnapshot(): Promise<StorageSnapshot> {
+  const { items, snapshot } = await fetchAllPaginatedItems(
+    fetchStorageConfigurationsSnapshot,
+    (pageSnapshot) => pageSnapshot.configurations,
+  );
+
+  return {
+    ...snapshot,
+    configurations: items,
   };
 }
 

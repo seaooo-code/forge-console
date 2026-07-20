@@ -15,17 +15,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { applicationsRootQueryKey, fetchApplicationsSnapshot } from "@/pages/applications";
+import {
+  applicationsAllQueryKey,
+  applicationsRootQueryKey,
+  fetchAllApplicationsSnapshot,
+} from "@/pages/applications";
 import { codeSourcesSnapshotQueryKey, fetchCodeSourcesSnapshot } from "@/pages/code-sources";
 import type { FeishuUserSearchResult } from "@/types/feishu";
 
 import {
   createModule,
+  fetchAllModulesSnapshot,
   fetchModuleDetailSnapshot,
-  fetchModulesSnapshot,
   moduleEditQueryKey,
+  modulesAllQueryKey,
   modulesRootQueryKey,
-  modulesSnapshotQueryKey,
   searchCodeSourceRepositories,
   updateModule,
 } from "./api/modules-snapshot";
@@ -57,8 +61,8 @@ export function ModuleCreatePage({
   const isEditMode = mode === "edit";
   const editModuleId = isEditMode ? moduleId : undefined;
   const { data: applicationSnapshot, isFetching: isApplicationsFetching } = useQuery({
-    queryFn: () => fetchApplicationsSnapshot(),
-    queryKey: applicationsRootQueryKey,
+    queryFn: () => fetchAllApplicationsSnapshot(),
+    queryKey: applicationsAllQueryKey,
   });
   const { data: moduleSnapshot, isFetching: isModuleFetching } = useQuery({
     queryFn: editModuleId ? () => fetchModuleDetailSnapshot(editModuleId) : skipToken,
@@ -102,8 +106,10 @@ export function ModuleCreatePage({
     [selectedApplicationId, shouldLoadCommonModules],
   );
   const { data: commonModuleSnapshot } = useQuery({
-    queryFn: shouldLoadCommonModules ? () => fetchModulesSnapshot(commonModuleFilters) : skipToken,
-    queryKey: modulesSnapshotQueryKey(commonModuleFilters),
+    queryFn: shouldLoadCommonModules
+      ? () => fetchAllModulesSnapshot(commonModuleFilters)
+      : skipToken,
+    queryKey: modulesAllQueryKey(commonModuleFilters),
   });
   const [formError, setFormError] = useState("");
   const hasInstalledCodeSource = codeSourceSnapshot?.apps.some((app) => app.status === "installed");

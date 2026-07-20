@@ -26,6 +26,7 @@ import { DataTable, FilterBar, KpiCard, PageHeader, TablePagination } from "@/co
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { usePagination } from "@/hooks/use-pagination";
 import { cn } from "@/lib/utils";
 import { applicationsRootQueryKey } from "@/pages/applications";
 import { useApplicationScopeStore } from "@/store/use-application-scope-store";
@@ -39,8 +40,6 @@ import {
 } from "./api/modules-snapshot";
 import { kindClass } from "./constants";
 import type { ModuleKind, ModuleListFilters, ModuleRecord } from "./types";
-
-const PAGE_SIZE = 20;
 
 type ModulesPageProps = {
   onCreateModule: () => void;
@@ -68,7 +67,7 @@ export function ModulesPage({ onCreateModule, onEditModule, onOpenModule }: Modu
     kind: "",
     owner: "",
   });
-  const [page, setPage] = useState(1);
+  const { clampPage, page, pageSize, resetPage, setPage, setPageSize } = usePagination();
   const [deleteTarget, setDeleteTarget] = useState<ModuleRecord | null>(null);
   const [deleteError, setDeleteError] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
@@ -78,8 +77,8 @@ export function ModulesPage({ onCreateModule, onEditModule, onOpenModule }: Modu
     refetch,
   } = useQuery({
     placeholderData: keepPreviousData,
-    queryFn: () => fetchModulesSnapshot(filters),
-    queryKey: modulesSnapshotQueryKey(filters),
+    queryFn: () => fetchModulesSnapshot({ ...filters, page, pageSize }),
+    queryKey: modulesSnapshotQueryKey({ ...filters, page, pageSize }),
   });
   const { data: overviewSnapshot, refetch: refetchOverview } = useQuery({
     queryFn: () => fetchModulesSnapshot({ applicationId: filters.applicationId }),
@@ -99,8 +98,15 @@ export function ModulesPage({ onCreateModule, onEditModule, onOpenModule }: Modu
         ? current
         : { ...current, applicationId: nextApplicationId },
     );
+    resetPage();
     setStoredApplicationId(nextApplicationId);
-  }, [searchParams, setStoredApplicationId, storedApplicationId]);
+  }, [resetPage, searchParams, setStoredApplicationId, storedApplicationId]);
+
+  useEffect(() => {
+    if (snapshot) {
+      clampPage(snapshot.pagination.total);
+    }
+  }, [clampPage, snapshot]);
 
   const kindOptions = useMemo(() => globalEnums?.moduleKinds ?? [], [globalEnums]);
 
@@ -199,7 +205,7 @@ export function ModulesPage({ onCreateModule, onEditModule, onOpenModule }: Modu
   const modules = snapshot?.modules ?? [];
   const updateFilters = (patch: Partial<ModuleListFilters>) => {
     setFilters((current) => ({ ...current, ...patch }));
-    setPage(1);
+    resetPage();
   };
   const updateApplicationScope = (applicationId: string) => {
     const normalizedApplicationId = applicationId.trim();
@@ -308,12 +314,10 @@ export function ModulesPage({ onCreateModule, onEditModule, onOpenModule }: Modu
       <Card className="rounded-xl border-border bg-card py-0 shadow-xs">
         <TablePagination
           page={page}
-          pageSize={PAGE_SIZE}
-          total={modules.length}
+          pageSize={pageSize}
+          total={snapshot?.pagination.total ?? 0}
           onPageChange={setPage}
-          onPageSizeChange={() => {
-            // hook left here for future wiring; current snapshot returns the full list
-          }}
+          onPageSizeChange={setPageSize}
         />
       </Card>
 

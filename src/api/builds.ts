@@ -1,7 +1,9 @@
+import { fetchAllPaginatedItems, normalizePagination } from "@/api/pagination";
 import type {
   BuildCreateInput,
   BuildCreateResult,
   BuildListFilters,
+  BuildListRequest,
   BuildRunRecord,
   BuildRunStatus,
   BuildsSnapshot,
@@ -10,15 +12,19 @@ import type {
 
 export const buildsRootQueryKey = ["builds-snapshot"] as const;
 
-export const buildsSnapshotQueryKey = (filters?: Partial<BuildListFilters>) => {
-  const normalizedFilters = normalizeBuildListFilters(filters);
-
-  if (!hasBuildListFilters(normalizedFilters)) {
+export const buildsSnapshotQueryKey = (filters?: Partial<BuildListRequest>) => {
+  if (!filters) {
     return buildsRootQueryKey;
   }
 
-  return [...buildsRootQueryKey, normalizedFilters] as const;
+  return [...buildsRootQueryKey, normalizeBuildListFilters(filters)] as const;
 };
+
+export const buildsAllQueryKey = (filters?: Partial<BuildListFilters>) => [
+  ...buildsRootQueryKey,
+  "all",
+  normalizeBuildListFilters(filters),
+];
 
 type BuildRecordAPIStatus = "failed" | "pending" | "running" | "succeeded";
 type BuildRecordAPITriggerType = BuildTriggerType;
@@ -44,6 +50,7 @@ type BuildRecordAPIRecord = {
 
 type BuildsAPIResponse = {
   builds: BuildRecordAPIRecord[];
+  pagination: BuildsSnapshot["pagination"];
   summary: {
     failed: number;
     pending: number;
@@ -79,12 +86,13 @@ const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8080"
 );
 
 export async function fetchBuildsSnapshot(
-  filters?: Partial<BuildListFilters>,
+  filters?: Partial<BuildListRequest>,
 ): Promise<BuildsSnapshot> {
   const payload = await fetchJSON<BuildsAPIResponse>(buildBuildsSnapshotPath(filters));
 
   return {
     builds: payload.builds.map(normalizeBuildRecord),
+    pagination: payload.pagination,
     summary: {
       failed: payload.summary.failed,
       queued: payload.summary.pending,
@@ -95,11 +103,26 @@ export async function fetchBuildsSnapshot(
   };
 }
 
-export function normalizeBuildListFilters(filters?: Partial<BuildListFilters>): BuildListFilters {
+export async function fetchAllBuildsSnapshot(
+  filters?: Partial<BuildListFilters>,
+): Promise<BuildsSnapshot> {
+  const { items, snapshot } = await fetchAllPaginatedItems(
+    (pagination) => fetchBuildsSnapshot({ ...filters, ...pagination }),
+    (pageSnapshot) => pageSnapshot.builds,
+  );
+
+  return {
+    ...snapshot,
+    builds: items,
+  };
+}
+
+export function normalizeBuildListFilters(filters?: Partial<BuildListRequest>): BuildListRequest {
   return {
     applicationId: filters?.applicationId?.trim() ?? "",
     environment: filters?.environment?.trim() ?? "",
     moduleId: filters?.moduleId?.trim() ?? "",
+    ...normalizePagination(filters),
     status: filters?.status ?? "",
     triggerType: filters?.triggerType ?? "",
   };
@@ -203,9 +226,12 @@ const buildStatusMap: Record<BuildRecordAPIStatus, BuildRunStatus> = {
   succeeded: "success",
 };
 
-function buildBuildsSnapshotPath(filters?: Partial<BuildListFilters>) {
+function buildBuildsSnapshotPath(filters?: Partial<BuildListRequest>) {
   const normalizedFilters = normalizeBuildListFilters(filters);
   const params = new URLSearchParams();
+
+  params.set("page", String(normalizedFilters.page));
+  params.set("pageSize", String(normalizedFilters.pageSize));
 
   if (normalizedFilters.status) {
     params.set("status", normalizedFilters.status);
@@ -226,16 +252,6 @@ function buildBuildsSnapshotPath(filters?: Partial<BuildListFilters>) {
   const query = params.toString();
 
   return query ? `/api/v1/builds?${query}` : "/api/v1/builds";
-}
-
-function hasBuildListFilters(filters: BuildListFilters) {
-  return Boolean(
-    filters.applicationId ||
-      filters.environment ||
-      filters.moduleId ||
-      filters.status ||
-      filters.triggerType,
-  );
 }
 
 function formatTime(value: string) {

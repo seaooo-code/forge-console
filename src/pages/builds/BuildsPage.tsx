@@ -15,8 +15,14 @@ import { type ReactNode, useCallback, useEffect, useMemo, useState } from "react
 import { Controller, useForm } from "react-hook-form";
 import { useSearchParams } from "react-router";
 
-import { buildsSnapshotQueryKey, createBuild, fetchBuildsSnapshot } from "@/api/builds";
-import { fetchModulesSnapshot, modulesSnapshotQueryKey } from "@/api/modules";
+import {
+  buildsAllQueryKey,
+  buildsSnapshotQueryKey,
+  createBuild,
+  fetchAllBuildsSnapshot,
+  fetchBuildsSnapshot,
+} from "@/api/builds";
+import { fetchAllModulesSnapshot, modulesAllQueryKey } from "@/api/modules";
 import { createBuildRelease } from "@/api/releases";
 import { ApplicationScopeSelect } from "@/components/common/ApplicationScopeSelect";
 import { ConsoleClearableFilterSelect } from "@/components/common/ConsoleControls";
@@ -34,12 +40,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { usePagination } from "@/hooks/use-pagination";
 import { cn } from "@/lib/utils";
 import { environmentsSnapshotQueryKey, fetchEnvironmentsSnapshot } from "@/pages/environments";
 import {
-  fetchReleaseRecordsSnapshot,
+  fetchAllReleaseRecordsSnapshot,
+  releaseRecordsAllQueryKey,
   releaseRecordsSnapshotQueryKey,
-  releaseRecordsSnapshotQueryKeyWithFilters,
 } from "@/pages/release-records";
 import { useApplicationScopeStore } from "@/store/use-application-scope-store";
 import { useAuthStore } from "@/store/use-auth-store";
@@ -55,8 +62,6 @@ import type {
   BuildRunStatus,
   BuildTriggerType,
 } from "./types";
-
-const PAGE_SIZE = 20;
 
 const emptyBuildListFilters: BuildListFilters = {
   applicationId: "",
@@ -113,31 +118,31 @@ export function BuildsPage({ onOpenBuild }: BuildsPageProps) {
     ...emptyBuildListFilters,
     applicationId: initialApplicationId,
   });
-  const [page, setPage] = useState(1);
+  const { clampPage, page, pageSize, resetPage, setPage, setPageSize } = usePagination();
   const {
     data: snapshot,
     isFetching,
     refetch,
   } = useQuery({
     placeholderData: keepPreviousData,
-    queryFn: () => fetchBuildsSnapshot(filters),
-    queryKey: buildsSnapshotQueryKey(filters),
+    queryFn: () => fetchBuildsSnapshot({ ...filters, page, pageSize }),
+    queryKey: buildsSnapshotQueryKey({ ...filters, page, pageSize }),
   });
   const { data: overviewSnapshot, refetch: refetchOverview } = useQuery({
-    queryFn: () => fetchBuildsSnapshot({ applicationId: filters.applicationId }),
-    queryKey: buildsSnapshotQueryKey({ applicationId: filters.applicationId }),
+    queryFn: () => fetchAllBuildsSnapshot({ applicationId: filters.applicationId }),
+    queryKey: buildsAllQueryKey({ applicationId: filters.applicationId }),
   });
   const { data: modulesSnapshot, isFetching: isModulesFetching } = useQuery({
-    queryFn: () => fetchModulesSnapshot({ applicationId: filters.applicationId }),
-    queryKey: modulesSnapshotQueryKey({ applicationId: filters.applicationId }),
+    queryFn: () => fetchAllModulesSnapshot({ applicationId: filters.applicationId }),
+    queryKey: modulesAllQueryKey({ applicationId: filters.applicationId }),
   });
   const { data: environmentSnapshot, isFetching: isEnvironmentsFetching } = useQuery({
     queryFn: fetchEnvironmentsSnapshot,
     queryKey: environmentsSnapshotQueryKey,
   });
   const { data: releaseRecordsSnapshot } = useQuery({
-    queryFn: () => fetchReleaseRecordsSnapshot({ applicationId: filters.applicationId }),
-    queryKey: releaseRecordsSnapshotQueryKeyWithFilters({ applicationId: filters.applicationId }),
+    queryFn: () => fetchAllReleaseRecordsSnapshot({ applicationId: filters.applicationId }),
+    queryKey: releaseRecordsAllQueryKey({ applicationId: filters.applicationId }),
   });
   const [isCreateBuildDialogOpen, setIsCreateBuildDialogOpen] = useState(false);
   const [buildError, setBuildError] = useState("");
@@ -145,10 +150,13 @@ export function BuildsPage({ onOpenBuild }: BuildsPageProps) {
   const [releaseBuild, setReleaseBuild] = useState<BuildRunRecord | null>(null);
   const [releaseError, setReleaseError] = useState("");
   const [releaseSuccess, setReleaseSuccess] = useState("");
-  const updateFilters = useCallback((patch: Partial<BuildListFilters>) => {
-    setFilters((current) => ({ ...current, ...patch }));
-    setPage(1);
-  }, []);
+  const updateFilters = useCallback(
+    (patch: Partial<BuildListFilters>) => {
+      setFilters((current) => ({ ...current, ...patch }));
+      resetPage();
+    },
+    [resetPage],
+  );
   useEffect(() => {
     const queryApplicationId = searchParams.get("applicationId")?.trim() ?? "";
     const nextApplicationId = queryApplicationId || storedApplicationId;
@@ -160,8 +168,14 @@ export function BuildsPage({ onOpenBuild }: BuildsPageProps) {
 
       return { ...current, applicationId: nextApplicationId, moduleId: "" };
     });
+    resetPage();
     setStoredApplicationId(nextApplicationId);
-  }, [searchParams, setStoredApplicationId, storedApplicationId]);
+  }, [resetPage, searchParams, setStoredApplicationId, storedApplicationId]);
+  useEffect(() => {
+    if (snapshot) {
+      clampPage(snapshot.pagination.total);
+    }
+  }, [clampPage, snapshot]);
   const updateApplicationScope = useCallback(
     (applicationId: string) => {
       const normalizedApplicationId = applicationId.trim();
@@ -180,8 +194,8 @@ export function BuildsPage({ onOpenBuild }: BuildsPageProps) {
     [setSearchParams, setStoredApplicationId, updateFilters],
   );
   const buildsById = useMemo(
-    () => new Map(snapshot?.builds.map((build) => [build.id, build]) ?? []),
-    [snapshot],
+    () => new Map(overviewSnapshot?.builds.map((build) => [build.id, build]) ?? []),
+    [overviewSnapshot],
   );
   const activeFullReleaseByTarget = useMemo(() => {
     const releases = new Map<string, ActiveFullReleaseTarget>();
@@ -489,12 +503,10 @@ export function BuildsPage({ onOpenBuild }: BuildsPageProps) {
         <Card className="rounded-xl border-border bg-card py-0 shadow-xs">
           <TablePagination
             page={page}
-            pageSize={PAGE_SIZE}
-            total={snapshot.builds.length}
+            pageSize={pageSize}
+            total={snapshot.pagination.total}
             onPageChange={setPage}
-            onPageSizeChange={() => {
-              // hook left here for future wiring; current snapshot returns the full list
-            }}
+            onPageSizeChange={setPageSize}
           />
         </Card>
       </div>

@@ -32,12 +32,12 @@ import {
 import { cn } from "@/lib/utils";
 import { environmentsSnapshotQueryKey, fetchEnvironmentsSnapshot } from "@/pages/environments";
 import {
-  fetchReleaseRecordsSnapshot,
+  fetchAllReleaseRecordsSnapshot,
   getReleaseRecordTargetLabel,
   getReleaseRecordTypeLabel,
   type ReleasePointerRecord,
   releaseRecordStatusClass,
-  releaseRecordsSnapshotQueryKeyWithFilters,
+  releaseRecordsAllQueryKey,
 } from "@/pages/release-records";
 
 import { fetchModuleDetailSnapshot, moduleDetailQueryKey } from "./api/modules-snapshot";
@@ -62,8 +62,8 @@ export function ModuleDetailPage({ moduleId, onBack, onEditModule }: ModuleDetai
   });
   const releaseRecordsFilters = useMemo(() => ({ moduleId }), [moduleId]);
   const { data: releaseRecordsSnapshot, isFetching: isReleaseRecordsFetching } = useQuery({
-    queryFn: () => fetchReleaseRecordsSnapshot(releaseRecordsFilters),
-    queryKey: releaseRecordsSnapshotQueryKeyWithFilters(releaseRecordsFilters),
+    queryFn: () => fetchAllReleaseRecordsSnapshot(releaseRecordsFilters),
+    queryKey: releaseRecordsAllQueryKey(releaseRecordsFilters),
   });
   const [isBuildDialogOpen, setIsBuildDialogOpen] = useState(false);
   const [buildError, setBuildError] = useState("");

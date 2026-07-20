@@ -1,3 +1,5 @@
+import type { PaginationMeta, PaginationParams } from "./pagination";
+
 export type BuildRunStatus = "canceled" | "failed" | "queued" | "running" | "success";
 
 export type BuildTriggerType = "manual" | "pipeline";
@@ -13,6 +15,8 @@ export type BuildListFilters = {
   status: BuildListStatusFilter;
   triggerType: BuildListTriggerTypeFilter;
 };
+
+export type BuildListRequest = BuildListFilters & PaginationParams;
 
 export type BuildRunRecord = {
   application: string;
@@ -36,6 +40,7 @@ export type BuildRunRecord = {
 
 export type BuildsSnapshot = {
   builds: BuildRunRecord[];
+  pagination: PaginationMeta;
   summary: {
     failed: number;
     queued: number;

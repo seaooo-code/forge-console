@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import type { FieldPath } from "react-hook-form";
+import type { PaginationMeta, PaginationParams } from "@/types/pagination";
 
 export type ApplicationStatus = "运行中" | "维护中" | "已下线";
 export type ApplicationStatusCode = "running" | "maintenance" | "offline";
@@ -116,6 +117,7 @@ export type ApplicationSummary = {
 export type ApplicationsSnapshot = {
   applications: HostApplication[];
   details: Record<string, ApplicationDetail>;
+  pagination: PaginationMeta;
   summary: ApplicationSummary;
 };
 
@@ -138,6 +140,8 @@ export type ApplicationListFilters = {
   platform: string;
   status: ApplicationStatusCode | "";
 };
+
+export type ApplicationListRequest = ApplicationListFilters & PaginationParams;
 
 export type ApplicationEnvironmentInput = {
   environment: ApplicationEnvironmentRecord["environment"];

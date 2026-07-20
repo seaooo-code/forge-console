@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ColDef, ICellRendererParams } from "ag-grid-community";
 import {
   CheckCircle2,
@@ -10,22 +10,21 @@ import {
   Trash2,
   TriangleAlert,
 } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { fetchStorageConfigurationsSnapshot } from "@/api/storage-configurations";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { DataTable, FilterBar, PageHeader, TablePagination } from "@/components/layout";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { usePagination } from "@/hooks/use-pagination";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/use-auth-store";
 import type { StorageConfigRecord, StorageStatus } from "@/types/storage";
 
-import { storageSnapshotQueryKey } from "./api/storage-query-keys";
+import { storagePageQueryKey, storageSnapshotQueryKey } from "./api/storage-query-keys";
 import { deleteStorageConfiguration } from "./api/storage-snapshot";
 import { adapterToneClass, statusClass } from "./constants";
-
-const PAGE_SIZE = 20;
 
 type StoragePageProps = {
   onCreateStorage: () => void;
@@ -36,18 +35,24 @@ export function StoragePage({ onCreateStorage, onEditStorage }: StoragePageProps
   const queryClient = useQueryClient();
   const session = useAuthStore((state) => state.session);
   const canManageStorage = Boolean(session?.capabilities.canManageStorage);
+  const { clampPage, page, pageSize, setPage, setPageSize } = usePagination();
   const { data: snapshot } = useQuery({
-    queryFn: fetchStorageConfigurationsSnapshot,
-    queryKey: storageSnapshotQueryKey,
+    placeholderData: keepPreviousData,
+    queryFn: () => fetchStorageConfigurationsSnapshot({ page, pageSize }),
+    queryKey: storagePageQueryKey({ page, pageSize }),
   });
   const [deleteTarget, setDeleteTarget] = useState<StorageConfigRecord | null>(null);
   const [deleteError, setDeleteError] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
-  const [page, setPage] = useState(1);
   const handleRequestDeleteStorage = useCallback((storage: StorageConfigRecord) => {
     setDeleteTarget(storage);
     setDeleteError("");
   }, []);
+  useEffect(() => {
+    if (snapshot) {
+      clampPage(snapshot.pagination.total);
+    }
+  }, [clampPage, snapshot]);
   const columnDefs = useMemo<ColDef<StorageConfigRecord>[]>(
     () => [
       {
@@ -142,9 +147,7 @@ export function StoragePage({ onCreateStorage, onEditStorage }: StoragePageProps
             <>
               <span className="text-muted-foreground text-xs">
                 共{" "}
-                <span className="font-semibold text-foreground">
-                  {snapshot.configurations.length}
-                </span>{" "}
+                <span className="font-semibold text-foreground">{snapshot.pagination.total}</span>{" "}
                 条配置
               </span>
               <Button
@@ -169,12 +172,10 @@ export function StoragePage({ onCreateStorage, onEditStorage }: StoragePageProps
         <Card className="rounded-xl border-border bg-card py-0 shadow-xs">
           <TablePagination
             page={page}
-            pageSize={PAGE_SIZE}
-            total={snapshot.configurations.length}
+            pageSize={pageSize}
+            total={snapshot.pagination.total}
             onPageChange={setPage}
-            onPageSizeChange={() => {
-              // hook left here for future wiring; current snapshot returns the full list
-            }}
+            onPageSizeChange={setPageSize}
           />
         </Card>
       </div>

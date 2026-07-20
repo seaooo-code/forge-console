@@ -1,3 +1,5 @@
+import type { PaginationMeta, PaginationParams } from "./pagination";
+
 export type ModuleKind = "Common" | "Feature";
 
 export type ModuleApplicationOption = {
@@ -42,6 +44,7 @@ export type ModuleRecord = {
 
 export type ModulesSnapshot = {
   modules: ModuleRecord[];
+  pagination: PaginationMeta;
   summary: ModuleSummary;
 };
 
@@ -92,3 +95,5 @@ export type ModuleListFilters = {
   kind: ModuleKind | "";
   owner: string;
 };
+
+export type ModuleListRequest = ModuleListFilters & PaginationParams;

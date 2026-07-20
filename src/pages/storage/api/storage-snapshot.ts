@@ -45,6 +45,11 @@ export async function fetchStorageDetailSnapshot(storageId: string): Promise<Sto
 
   return {
     configurations: [payload.configuration],
+    pagination: {
+      page: 1,
+      pageSize: 1,
+      total: 1,
+    },
   };
 }
 

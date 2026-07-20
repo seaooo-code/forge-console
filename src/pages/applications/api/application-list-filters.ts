@@ -1,17 +1,19 @@
-import type { ApplicationListFilters } from "../types";
+import { normalizePagination } from "@/api/pagination";
+
+import type { ApplicationListRequest } from "../types";
 
 export const applicationsRootQueryKey = ["applications-snapshot"] as const;
 
+export const applicationsAllQueryKey = [...applicationsRootQueryKey, "all"] as const;
+
 export const applicationOptionsQueryKey = [...applicationsRootQueryKey, "options"] as const;
 
-export const applicationsSnapshotQueryKey = (filters?: Partial<ApplicationListFilters>) => {
-  const normalizedFilters = normalizeApplicationListFilters(filters);
-
-  if (!hasApplicationListFilters(normalizedFilters)) {
+export const applicationsSnapshotQueryKey = (filters?: Partial<ApplicationListRequest>) => {
+  if (!filters) {
     return applicationsRootQueryKey;
   }
 
-  return [...applicationsRootQueryKey, normalizedFilters] as const;
+  return [...applicationsRootQueryKey, normalizeApplicationListFilters(filters)] as const;
 };
 
 export const applicationDetailQueryKey = (applicationSlug: string | undefined) =>
@@ -24,16 +26,13 @@ export const applicationDeleteCheckQueryKey = (applicationSlug: string | undefin
   [...applicationsRootQueryKey, "delete-check", applicationSlug] as const;
 
 export function normalizeApplicationListFilters(
-  filters?: Partial<ApplicationListFilters>,
-): ApplicationListFilters {
+  filters?: Partial<ApplicationListRequest>,
+): ApplicationListRequest {
   return {
     keyword: filters?.keyword?.trim() ?? "",
     owner: filters?.owner?.trim() ?? "",
+    ...normalizePagination(filters),
     platform: filters?.platform?.trim() ?? "",
     status: filters?.status ?? "",
   };
-}
-
-function hasApplicationListFilters(filters: ApplicationListFilters) {
-  return Boolean(filters.platform || filters.status || filters.owner || filters.keyword);
 }

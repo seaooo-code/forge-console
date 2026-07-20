@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Smartphone } from "lucide-react";
 
-import { applicationsRootQueryKey, fetchApplicationsSnapshot } from "@/pages/applications";
+import { applicationsAllQueryKey, fetchAllApplicationsSnapshot } from "@/pages/applications";
 
 import { ConsoleClearableFilterSelect } from "./ConsoleControls";
 
@@ -12,8 +12,8 @@ type ApplicationScopeSelectProps = {
 
 export function ApplicationScopeSelect({ onValueChange, value }: ApplicationScopeSelectProps) {
   const { data: snapshot } = useQuery({
-    queryFn: () => fetchApplicationsSnapshot(),
-    queryKey: applicationsRootQueryKey,
+    queryFn: () => fetchAllApplicationsSnapshot(),
+    queryKey: applicationsAllQueryKey,
   });
 
   const options =

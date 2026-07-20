@@ -1,3 +1,5 @@
+import type { PaginationMeta, PaginationParams } from "@/types/pagination";
+
 export type ReleaseRecordStatus = "active" | "inactive";
 
 export type ReleaseRecordType = "full" | "gray";
@@ -11,6 +13,8 @@ export type ReleaseRecordsFilters = {
   releaseType: ReleaseRecordType | "";
   status: ReleaseRecordStatus | "";
 };
+
+export type ReleaseRecordsRequest = ReleaseRecordsFilters & PaginationParams;
 
 export type ReleasePointerRecord = {
   artifact: string;
@@ -45,6 +49,7 @@ export type ReleasePointerRecord = {
 export type ReleaseRecordDetail = ReleasePointerRecord;
 
 export type ReleaseRecordsSnapshot = {
+  pagination: PaginationMeta;
   records: ReleasePointerRecord[];
   summary: {
     active: number;

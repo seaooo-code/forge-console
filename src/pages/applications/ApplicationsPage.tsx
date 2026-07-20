@@ -32,11 +32,13 @@ import {
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { usePagination } from "@/hooks/use-pagination";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/use-auth-store";
 
 import {
   applicationDeleteCheckQueryKey,
+  applicationsRootQueryKey,
   applicationsSnapshotQueryKey,
 } from "./api/application-list-filters";
 import {
@@ -48,8 +50,6 @@ import {
 import { applicationStatusClass, emptyApplicationListFilters } from "./constants";
 import { useApplicationOptions } from "./hooks";
 import type { ApplicationListFilters, ApplicationStatusCode, HostApplication } from "./types";
-
-const PAGE_SIZE = 20;
 
 type ApplicationsPageProps = {
   onConfigureApplication: (applicationSlug: string) => void;
@@ -67,7 +67,7 @@ export function ApplicationsPage({
   const canCreateApplication = Boolean(session?.capabilities.canCreateApplication);
   const canManageApplications = Boolean(session?.capabilities.canManageApplications);
   const [filters, setFilters] = useState<ApplicationListFilters>(emptyApplicationListFilters);
-  const [page, setPage] = useState(1);
+  const { clampPage, page, pageSize, resetPage, setPage, setPageSize } = usePagination();
   const {
     data: snapshot,
     error,
@@ -76,8 +76,8 @@ export function ApplicationsPage({
     refetch,
   } = useQuery({
     placeholderData: keepPreviousData,
-    queryFn: () => fetchApplicationsSnapshot(filters),
-    queryKey: applicationsSnapshotQueryKey(filters),
+    queryFn: () => fetchApplicationsSnapshot({ ...filters, page, pageSize }),
+    queryKey: applicationsSnapshotQueryKey({ ...filters, page, pageSize }),
   });
   const { data: overviewSnapshot, refetch: refetchOverview } = useQuery({
     queryFn: () => fetchApplicationsSnapshot(),
@@ -110,14 +110,23 @@ export function ApplicationsPage({
     setDeleteTarget(application);
     setDeleteError("");
   }, []);
-  const updateFilters = useCallback((patch: Partial<ApplicationListFilters>) => {
-    setFilters((current) => ({ ...current, ...patch }));
-    setPage(1);
-  }, []);
+  const updateFilters = useCallback(
+    (patch: Partial<ApplicationListFilters>) => {
+      setFilters((current) => ({ ...current, ...patch }));
+      resetPage();
+    },
+    [resetPage],
+  );
 
   useEffect(() => {
     setKeywordInput(filters.keyword);
   }, [filters.keyword]);
+
+  useEffect(() => {
+    if (snapshot) {
+      clampPage(snapshot.pagination.total);
+    }
+  }, [clampPage, snapshot]);
 
   useEffect(() => {
     const nextKeyword = keywordInput.trim();
@@ -371,12 +380,10 @@ export function ApplicationsPage({
       <Card className="rounded-xl border-border bg-card py-0 shadow-xs">
         <TablePagination
           page={page}
-          pageSize={PAGE_SIZE}
-          total={applications.length}
+          pageSize={pageSize}
+          total={snapshot.pagination.total}
           onPageChange={setPage}
-          onPageSizeChange={() => {
-            // hook left here for future wiring; current snapshot returns the full list
-          }}
+          onPageSizeChange={setPageSize}
         />
       </Card>
 
@@ -407,7 +414,7 @@ export function ApplicationsPage({
           setStatusActionError("");
           try {
             await updateApplicationStatus(statusActionTarget.slug, nextStatus);
-            await queryClient.invalidateQueries({ queryKey: applicationsSnapshotQueryKey() });
+            await queryClient.invalidateQueries({ queryKey: applicationsRootQueryKey });
             setStatusActionTarget(null);
           } catch (error) {
             setStatusActionError(
@@ -450,7 +457,7 @@ export function ApplicationsPage({
           setDeleteError("");
           try {
             await deleteApplication(deleteTarget.slug);
-            await queryClient.invalidateQueries({ queryKey: applicationsSnapshotQueryKey() });
+            await queryClient.invalidateQueries({ queryKey: applicationsRootQueryKey });
             setDeleteTarget(null);
           } catch (error) {
             setDeleteError(error instanceof Error ? error.message : "删除应用失败，请稍后重试");

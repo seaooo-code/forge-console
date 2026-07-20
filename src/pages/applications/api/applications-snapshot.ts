@@ -1,3 +1,5 @@
+import { fetchAllPaginatedItems } from "@/api/pagination";
+
 import { applicationStatusLabelByCode } from "../constants";
 import type {
   ApplicationCapabilities,
@@ -5,6 +7,7 @@ import type {
   ApplicationDetail,
   ApplicationEnvironmentRecord,
   ApplicationListFilters,
+  ApplicationListRequest,
   ApplicationMemberInput,
   ApplicationMemberRecord,
   ApplicationMutationInput,
@@ -26,6 +29,7 @@ export {
 
 type ApplicationsAPIResponse = {
   applications: ApplicationAPIRecord[];
+  pagination: ApplicationsSnapshot["pagination"];
   summary: ApplicationsSnapshot["summary"];
 };
 
@@ -70,7 +74,7 @@ const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8080"
 );
 
 export async function fetchApplicationsSnapshot(
-  filters?: Partial<ApplicationListFilters>,
+  filters?: Partial<ApplicationListRequest>,
 ): Promise<ApplicationsSnapshot> {
   const payload = await fetchJSON<ApplicationsAPIResponse>(buildApplicationsSnapshotPath(filters));
   const applications = payload.applications.map(normalizeApplication);
@@ -78,7 +82,22 @@ export async function fetchApplicationsSnapshot(
   return {
     applications,
     details: {},
+    pagination: payload.pagination,
     summary: payload.summary,
+  };
+}
+
+export async function fetchAllApplicationsSnapshot(
+  filters?: Partial<ApplicationListFilters>,
+): Promise<ApplicationsSnapshot> {
+  const { items, snapshot } = await fetchAllPaginatedItems(
+    (pagination) => fetchApplicationsSnapshot({ ...filters, ...pagination }),
+    (pageSnapshot) => pageSnapshot.applications,
+  );
+
+  return {
+    ...snapshot,
+    applications: items,
   };
 }
 
@@ -99,6 +118,11 @@ export async function fetchApplicationDetailSnapshot(
     applications: [application],
     details: {
       [application.slug]: detail,
+    },
+    pagination: {
+      page: 1,
+      pageSize: 1,
+      total: 1,
     },
     summary: {
       maintenance: application.status === "维护中" ? 1 : 0,
@@ -273,9 +297,12 @@ const applicationAPIErrorMessages: Record<string, string> = {
   "invalid application request": "应用参数无效，请检查表单",
 };
 
-function buildApplicationsSnapshotPath(filters?: Partial<ApplicationListFilters>) {
+function buildApplicationsSnapshotPath(filters?: Partial<ApplicationListRequest>) {
   const normalizedFilters = normalizeApplicationListFilters(filters);
   const params = new URLSearchParams();
+
+  params.set("page", String(normalizedFilters.page));
+  params.set("pageSize", String(normalizedFilters.pageSize));
 
   if (normalizedFilters.platform) {
     params.set("platform", normalizedFilters.platform);

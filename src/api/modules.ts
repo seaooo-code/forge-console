@@ -1,16 +1,26 @@
-import type { ModuleListFilters, ModuleRecord, ModulesSnapshot } from "@/types/modules";
+import { fetchAllPaginatedItems, normalizePagination } from "@/api/pagination";
+import type {
+  ModuleListFilters,
+  ModuleListRequest,
+  ModuleRecord,
+  ModulesSnapshot,
+} from "@/types/modules";
 
 export const modulesRootQueryKey = ["modules-snapshot"] as const;
 
-export const modulesSnapshotQueryKey = (filters?: Partial<ModuleListFilters>) => {
-  const normalizedFilters = normalizeModuleListFilters(filters);
-
-  if (!hasModuleListFilters(normalizedFilters)) {
+export const modulesSnapshotQueryKey = (filters?: Partial<ModuleListRequest>) => {
+  if (!filters) {
     return modulesRootQueryKey;
   }
 
-  return [...modulesRootQueryKey, normalizedFilters] as const;
+  return [...modulesRootQueryKey, normalizeModuleListFilters(filters)] as const;
 };
+
+export const modulesAllQueryKey = (filters?: Partial<ModuleListFilters>) => [
+  ...modulesRootQueryKey,
+  "all",
+  normalizeModuleListFilters(filters),
+];
 
 export const moduleDetailQueryKey = (moduleId: string | undefined) => [
   ...modulesRootQueryKey,
@@ -26,6 +36,7 @@ type ModuleDetailAPIResponse = {
 
 type ModulesAPIResponse = {
   modules: ModuleAPIRecord[];
+  pagination: ModulesSnapshot["pagination"];
   summary: ModulesSnapshot["summary"];
 };
 
@@ -51,13 +62,28 @@ const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8080"
 );
 
 export async function fetchModulesSnapshot(
-  filters?: Partial<ModuleListFilters>,
+  filters?: Partial<ModuleListRequest>,
 ): Promise<ModulesSnapshot> {
   const payload = await fetchJSON<ModulesAPIResponse>(buildModulesSnapshotPath(filters));
 
   return {
     modules: payload.modules.map(normalizeModule),
+    pagination: payload.pagination,
     summary: payload.summary,
+  };
+}
+
+export async function fetchAllModulesSnapshot(
+  filters?: Partial<ModuleListFilters>,
+): Promise<ModulesSnapshot> {
+  const { items, snapshot } = await fetchAllPaginatedItems(
+    (pagination) => fetchModulesSnapshot({ ...filters, ...pagination }),
+    (pageSnapshot) => pageSnapshot.modules,
+  );
+
+  return {
+    ...snapshot,
+    modules: items,
   };
 }
 
@@ -69,6 +95,11 @@ export async function fetchModuleDetailSnapshot(moduleId: string): Promise<Modul
 
   return {
     modules: [module],
+    pagination: {
+      page: 1,
+      pageSize: 1,
+      total: 1,
+    },
     summary: {
       common: module.kind === "Common" ? 1 : 0,
       feature: module.kind === "Feature" ? 1 : 0,
@@ -78,13 +109,14 @@ export async function fetchModuleDetailSnapshot(moduleId: string): Promise<Modul
 }
 
 export function normalizeModuleListFilters(
-  filters?: Partial<ModuleListFilters>,
-): ModuleListFilters {
+  filters?: Partial<ModuleListRequest>,
+): ModuleListRequest {
   return {
     applicationId: filters?.applicationId?.trim() ?? "",
     keyword: filters?.keyword?.trim() ?? "",
     kind: filters?.kind ?? "",
     owner: filters?.owner?.trim() ?? "",
+    ...normalizePagination(filters),
   };
 }
 
@@ -128,9 +160,12 @@ async function readErrorPayload(response: Response): Promise<APIErrorPayload | u
   }
 }
 
-function buildModulesSnapshotPath(filters?: Partial<ModuleListFilters>) {
+function buildModulesSnapshotPath(filters?: Partial<ModuleListRequest>) {
   const normalizedFilters = normalizeModuleListFilters(filters);
   const params = new URLSearchParams();
+
+  params.set("page", String(normalizedFilters.page));
+  params.set("pageSize", String(normalizedFilters.pageSize));
 
   if (normalizedFilters.kind) {
     params.set("kind", normalizedFilters.kind);
@@ -148,10 +183,6 @@ function buildModulesSnapshotPath(filters?: Partial<ModuleListFilters>) {
   const query = params.toString();
 
   return query ? `/api/v1/modules?${query}` : "/api/v1/modules";
-}
-
-function hasModuleListFilters(filters: ModuleListFilters) {
-  return Boolean(filters.applicationId || filters.kind || filters.owner || filters.keyword);
 }
 
 function normalizeModule(module: ModuleAPIRecord): ModuleRecord {

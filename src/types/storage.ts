@@ -1,3 +1,5 @@
+import type { PaginationMeta } from "./pagination";
+
 export type StorageAdapter = "S3";
 
 export type StorageStatus = "正常" | "异常" | "已停用";
@@ -17,4 +19,5 @@ export type StorageConfigRecord = {
 
 export type StorageSnapshot = {
   configurations: StorageConfigRecord[];
+  pagination: PaginationMeta;
 };

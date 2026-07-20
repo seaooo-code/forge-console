@@ -1,9 +1,12 @@
+import { fetchAllPaginatedItems, normalizePagination } from "@/api/pagination";
+
 import type {
   ReleaseGrayStrategy,
   ReleasePointerRecord,
   ReleaseRecordDetail,
   ReleaseRecordStatus,
   ReleaseRecordsFilters,
+  ReleaseRecordsRequest,
   ReleaseRecordsSnapshot,
   ReleaseRecordType,
 } from "../types";
@@ -12,16 +15,20 @@ export const releaseRecordDetailQueryKey = (releaseId: string) =>
   ["release-record-detail", releaseId] as const;
 export const releaseRecordsSnapshotQueryKey = ["release-records-snapshot"] as const;
 export const releaseRecordsSnapshotQueryKeyWithFilters = (
-  filters?: Partial<ReleaseRecordsFilters>,
+  filters?: Partial<ReleaseRecordsRequest>,
 ) => {
-  const normalizedFilters = normalizeReleaseRecordsFilters(filters);
-
-  if (!hasReleaseRecordsFilters(normalizedFilters)) {
+  if (!filters) {
     return releaseRecordsSnapshotQueryKey;
   }
 
-  return [...releaseRecordsSnapshotQueryKey, normalizedFilters] as const;
+  return [...releaseRecordsSnapshotQueryKey, normalizeReleaseRecordsFilters(filters)] as const;
 };
+
+export const releaseRecordsAllQueryKey = (filters?: Partial<ReleaseRecordsFilters>) => [
+  ...releaseRecordsSnapshotQueryKey,
+  "all",
+  normalizeReleaseRecordsFilters(filters),
+];
 
 type ReleaseRecordAPIStatus = ReleaseRecordStatus;
 type ReleaseRecordAPIType = ReleaseRecordType;
@@ -50,7 +57,9 @@ type ReleaseRecordAPIRecord = {
 };
 
 type ReleaseRecordsAPIResponse = {
+  pagination: ReleaseRecordsSnapshot["pagination"];
   releases: ReleaseRecordAPIRecord[];
+  summary: ReleaseRecordsSnapshot["summary"];
 };
 
 type ReleaseDetailAPIResponse = {
@@ -79,10 +88,13 @@ const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8080"
 );
 
 export async function fetchReleaseRecordsSnapshot(
-  filters: Partial<ReleaseRecordsFilters> = {},
+  filters: Partial<ReleaseRecordsRequest> = {},
 ): Promise<ReleaseRecordsSnapshot> {
   const normalizedFilters = normalizeReleaseRecordsFilters(filters);
   const searchParams = new URLSearchParams();
+
+  searchParams.set("page", String(normalizedFilters.page));
+  searchParams.set("pageSize", String(normalizedFilters.pageSize));
 
   if (normalizedFilters.applicationId) {
     searchParams.set("applicationId", normalizedFilters.applicationId);
@@ -105,41 +117,39 @@ export async function fetchReleaseRecordsSnapshot(
     `/api/v1/releases${queryString ? `?${queryString}` : ""}`,
   );
   const records = payload.releases.map(normalizeReleaseRecord);
-  const summary: ReleaseRecordsSnapshot["summary"] = {
-    active: 0,
-    inactive: 0,
-    total: records.length,
-  };
-  for (const record of records) {
-    summary[record.status] += 1;
-  }
 
   return {
+    pagination: payload.pagination,
     records,
-    summary,
+    summary: payload.summary,
+  };
+}
+
+export async function fetchAllReleaseRecordsSnapshot(
+  filters?: Partial<ReleaseRecordsFilters>,
+): Promise<ReleaseRecordsSnapshot> {
+  const { items, snapshot } = await fetchAllPaginatedItems(
+    (pagination) => fetchReleaseRecordsSnapshot({ ...filters, ...pagination }),
+    (pageSnapshot) => pageSnapshot.records,
+  );
+
+  return {
+    ...snapshot,
+    records: items,
   };
 }
 
 function normalizeReleaseRecordsFilters(
-  filters?: Partial<ReleaseRecordsFilters>,
-): ReleaseRecordsFilters {
+  filters?: Partial<ReleaseRecordsRequest>,
+): ReleaseRecordsRequest {
   return {
     applicationId: filters?.applicationId?.trim() ?? "",
     environment: filters?.environment?.trim() ?? "",
     moduleId: filters?.moduleId?.trim() ?? "",
+    ...normalizePagination(filters),
     releaseType: filters?.releaseType ?? "",
     status: filters?.status ?? "",
   };
-}
-
-function hasReleaseRecordsFilters(filters: ReleaseRecordsFilters) {
-  return Boolean(
-    filters.applicationId ||
-      filters.environment ||
-      filters.moduleId ||
-      filters.releaseType ||
-      filters.status,
-  );
 }
 
 export async function fetchReleaseRecordDetail(releaseId: string): Promise<ReleaseRecordDetail> {
@@ -150,7 +160,7 @@ export async function fetchReleaseRecordDetail(releaseId: string): Promise<Relea
     });
   }
 
-  const snapshot = await fetchReleaseRecordsSnapshot();
+  const snapshot = await fetchAllReleaseRecordsSnapshot();
   const record = snapshot.records.find((item) => item.id === normalizedReleaseId);
   if (!record) {
     throw new ReleaseRecordsAPIError(`/api/v1/releases/${encodeURIComponent(releaseId)}`, 404, {

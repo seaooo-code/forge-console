@@ -1,7 +1,9 @@
 import {
+  fetchAllModulesSnapshot,
   fetchModuleDetailSnapshot,
   fetchModulesSnapshot,
   moduleDetailQueryKey,
+  modulesAllQueryKey,
   modulesRootQueryKey,
   modulesSnapshotQueryKey,
   normalizeModuleListFilters,
@@ -10,9 +12,11 @@ import {
 import type { ModuleMutationInput, ModuleRecord, ModuleRepositoryBinding } from "../types";
 
 export {
+  fetchAllModulesSnapshot,
   fetchModuleDetailSnapshot,
   fetchModulesSnapshot,
   moduleDetailQueryKey,
+  modulesAllQueryKey,
   modulesRootQueryKey,
   modulesSnapshotQueryKey,
   normalizeModuleListFilters,
