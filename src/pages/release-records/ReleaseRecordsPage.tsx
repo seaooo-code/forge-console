@@ -53,9 +53,7 @@ export function ReleaseRecordsPage({ onOpenRelease }: ReleaseRecordsPageProps) {
     isBuildsFetching,
     isFetching,
     moduleOptions,
-    overviewSnapshot,
     refetch,
-    refetchOverview,
     snapshot,
   } = useReleaseRecordsData(filters, page, pageSize);
   const [isCreateReleaseDialogOpen, setIsCreateReleaseDialogOpen] = useState(false);
@@ -68,7 +66,7 @@ export function ReleaseRecordsPage({ onOpenRelease }: ReleaseRecordsPageProps) {
     }
   }, [clampPage, snapshot]);
 
-  const stats = buildReleaseRecordsStats(overviewSnapshot);
+  const stats = buildReleaseRecordsStats(snapshot);
 
   if (!snapshot) {
     return null;
@@ -170,7 +168,6 @@ export function ReleaseRecordsPage({ onOpenRelease }: ReleaseRecordsPageProps) {
               disabled={isFetching}
               onClick={() => {
                 void refetch();
-                void refetchOverview();
               }}
             >
               <RefreshCw className="size-4" />

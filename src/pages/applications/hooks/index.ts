@@ -64,10 +64,6 @@ export function useApplicationsListState() {
     queryFn: () => fetchApplicationsSnapshot({ ...filters, page, pageSize }),
     queryKey: applicationsSnapshotQueryKey({ ...filters, page, pageSize }),
   });
-  const { data: overviewSnapshot, refetch: refetchOverview } = useQuery({
-    queryFn: () => fetchApplicationsSnapshot(),
-    queryKey: applicationsSnapshotQueryKey(),
-  });
   const { data: applicationOptions } = useApplicationOptions();
   const [keywordInput, setKeywordInput] = useState(filters.keyword);
 
@@ -103,11 +99,11 @@ export function useApplicationsListState() {
   }, [filters.keyword, keywordInput, updateFilters]);
 
   const stats = useMemo(() => {
-    if (!overviewSnapshot) {
+    if (!snapshot) {
       return [];
     }
 
-    const { summary } = overviewSnapshot;
+    const { summary } = snapshot;
     return [
       {
         detail: "全部接入",
@@ -142,7 +138,7 @@ export function useApplicationsListState() {
         value: summary.offline,
       },
     ];
-  }, [overviewSnapshot]);
+  }, [snapshot]);
 
   const platformFilterOptions = useMemo(
     () => applicationOptions?.platforms ?? [],
@@ -163,7 +159,6 @@ export function useApplicationsListState() {
     pageSize,
     platformFilterOptions,
     refetch,
-    refetchOverview,
     setKeywordInput,
     setPage,
     setPageSize,

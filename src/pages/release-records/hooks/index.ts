@@ -104,10 +104,6 @@ export function useReleaseRecordsData(
     queryFn: () => fetchReleaseRecordsSnapshot({ ...filters, page, pageSize }),
     queryKey: releaseRecordsSnapshotQueryKeyWithFilters({ ...filters, page, pageSize }),
   });
-  const { data: overviewSnapshot, refetch: refetchOverview } = useQuery({
-    queryFn: () => fetchReleaseRecordsSnapshot({ applicationId: filters.applicationId }),
-    queryKey: releaseRecordsSnapshotQueryKeyWithFilters({ applicationId: filters.applicationId }),
-  });
   const { data: buildsSnapshot, isFetching: isBuildsFetching } = useQuery({
     queryFn: () => fetchAllBuildsSnapshot({ applicationId: filters.applicationId }),
     queryKey: buildsAllQueryKey({ applicationId: filters.applicationId }),
@@ -148,9 +144,7 @@ export function useReleaseRecordsData(
     isBuildsFetching,
     isFetching,
     moduleOptions,
-    overviewSnapshot,
     refetch,
-    refetchOverview,
     snapshot,
   };
 }

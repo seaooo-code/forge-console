@@ -63,10 +63,6 @@ export function ModulesPage({ onCreateModule, onEditModule, onOpenModule }: Modu
     queryFn: () => fetchModulesSnapshot({ ...filters, page, pageSize }),
     queryKey: modulesSnapshotQueryKey({ ...filters, page, pageSize }),
   });
-  const { data: overviewSnapshot, refetch: refetchOverview } = useQuery({
-    queryFn: () => fetchModulesSnapshot({ applicationId: filters.applicationId }),
-    queryKey: modulesSnapshotQueryKey({ applicationId: filters.applicationId }),
-  });
   const { data: globalEnums } = useQuery({
     queryFn: fetchGlobalEnums,
     queryKey: globalEnumsQueryKey,
@@ -93,7 +89,7 @@ export function ModulesPage({ onCreateModule, onEditModule, onOpenModule }: Modu
 
   const kindOptions = useMemo(() => globalEnums?.moduleKinds ?? [], [globalEnums]);
 
-  const stats = useMemo(() => buildModuleStats(overviewSnapshot), [overviewSnapshot]);
+  const stats = useMemo(() => buildModuleStats(snapshot), [snapshot]);
 
   const columnDefs = useMemo(
     () =>
@@ -192,7 +188,6 @@ export function ModulesPage({ onCreateModule, onEditModule, onOpenModule }: Modu
               disabled={isFetching}
               onClick={() => {
                 void refetch();
-                void refetchOverview();
               }}
             >
               <RefreshCw className="size-4" />

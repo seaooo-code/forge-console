@@ -27,7 +27,7 @@ export function useBuildsPageData(filters: BuildListFilters) {
     queryFn: () => fetchBuildsSnapshot({ ...filters, page, pageSize }),
     queryKey: buildsSnapshotQueryKey({ ...filters, page, pageSize }),
   });
-  const { data: overviewSnapshot, refetch: refetchOverview } = useQuery({
+  const { data: overviewSnapshot } = useQuery({
     queryFn: () => fetchAllBuildsSnapshot({ applicationId: filters.applicationId }),
     queryKey: buildsAllQueryKey({ applicationId: filters.applicationId }),
   });
@@ -85,7 +85,7 @@ export function useBuildsPageData(filters: BuildListFilters) {
   );
   const stats = useMemo(
     () =>
-      overviewSnapshot
+      snapshot
         ? [
             {
               detail: "全部构建记录",
@@ -93,7 +93,7 @@ export function useBuildsPageData(filters: BuildListFilters) {
               id: "total",
               label: "总构建",
               tone: "info" as const,
-              value: overviewSnapshot.summary.total,
+              value: snapshot.summary.total,
             },
             {
               detail: "正在执行",
@@ -101,7 +101,7 @@ export function useBuildsPageData(filters: BuildListFilters) {
               id: "running",
               label: "构建中",
               tone: "info" as const,
-              value: overviewSnapshot.summary.running,
+              value: snapshot.summary.running,
             },
             {
               detail: "产物可发布",
@@ -109,7 +109,7 @@ export function useBuildsPageData(filters: BuildListFilters) {
               id: "success",
               label: "成功",
               tone: "success" as const,
-              value: overviewSnapshot.summary.success,
+              value: snapshot.summary.success,
             },
             {
               detail: "需要排查",
@@ -117,7 +117,7 @@ export function useBuildsPageData(filters: BuildListFilters) {
               id: "failed",
               label: "失败",
               tone: "destructive" as const,
-              value: overviewSnapshot.summary.failed,
+              value: snapshot.summary.failed,
             },
             {
               detail: "等待执行",
@@ -125,11 +125,11 @@ export function useBuildsPageData(filters: BuildListFilters) {
               id: "queued",
               label: "排队中",
               tone: "warning" as const,
-              value: overviewSnapshot.summary.queued,
+              value: snapshot.summary.queued,
             },
           ]
         : [],
-    [overviewSnapshot],
+    [snapshot],
   );
 
   return {
@@ -143,7 +143,6 @@ export function useBuildsPageData(filters: BuildListFilters) {
     page,
     pageSize,
     refetch,
-    refetchOverview,
     resetPage,
     setPage,
     setPageSize,
