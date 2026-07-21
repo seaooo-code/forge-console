@@ -54,7 +54,6 @@ export function ApplicationsPage({
     pageSize,
     platformFilterOptions,
     refetch,
-    refetchOverview,
     setKeywordInput,
     setPage,
     setPageSize,
@@ -194,7 +193,6 @@ export function ApplicationsPage({
               disabled={isFetching}
               onClick={() => {
                 void refetch();
-                void refetchOverview();
               }}
             >
               <RefreshCw className="size-4" />

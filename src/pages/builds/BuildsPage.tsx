@@ -70,7 +70,6 @@ export function BuildsPage({ onOpenBuild }: BuildsPageProps) {
     page,
     pageSize,
     refetch,
-    refetchOverview,
     resetPage,
     setPage,
     setPageSize,
@@ -242,7 +241,6 @@ export function BuildsPage({ onOpenBuild }: BuildsPageProps) {
                 disabled={isFetching}
                 onClick={() => {
                   void refetch();
-                  void refetchOverview();
                 }}
               >
                 <RefreshCw className="size-4" />

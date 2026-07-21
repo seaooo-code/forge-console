@@ -12,4 +12,18 @@ export default defineConfig({
       "@": new URL("./src", import.meta.url).pathname,
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes("node_modules/echarts") || id.includes("node_modules/zrender")) {
+            return "vendor-echarts";
+          }
+          if (id.includes("node_modules/ag-grid")) {
+            return "vendor-ag-grid";
+          }
+        },
+      },
+    },
+  },
 });
