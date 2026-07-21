@@ -1,9 +1,10 @@
 import { skipToken, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Layers3, LoaderCircle } from "lucide-react";
-import { type ReactNode, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 
 import { fetchAllStorageConfigurationsSnapshot } from "@/api/storage-configurations";
+import { FormSectionField, FormSectionHeader } from "@/components/common/FormSectionHeader";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -178,18 +179,18 @@ export function EnvironmentCreatePage({
         <Card className="rounded-lg border-border bg-card p-0 shadow-none">
           <FormSectionHeader title="基础信息" description="定义环境唯一标识、名称和视觉标识" />
           <div className="grid gap-4 px-5 pb-5 xl:grid-cols-3">
-            <Field label="环境 ID" required>
+            <FormSectionField label="环境 ID" required>
               <Input
                 readOnly={isEditMode}
                 className={isEditMode ? "bg-muted text-muted-foreground" : undefined}
                 placeholder="例如：qa"
                 {...register("code")}
               />
-            </Field>
-            <Field label="环境名称" required>
+            </FormSectionField>
+            <FormSectionField label="环境名称" required>
               <Input placeholder="例如：QA 环境" {...register("name")} />
-            </Field>
-            <Field label="视觉标识">
+            </FormSectionField>
+            <FormSectionField label="视觉标识">
               <Controller
                 control={control}
                 name="tone"
@@ -211,14 +212,14 @@ export function EnvironmentCreatePage({
                   </Select>
                 )}
               />
-            </Field>
+            </FormSectionField>
           </div>
         </Card>
 
         <Card className="rounded-lg border-border bg-card p-0 shadow-none">
           <FormSectionHeader title="存储关联" description="环境必须绑定一个已创建的存储配置" />
           <div className="grid gap-4 px-5 pb-5 xl:grid-cols-2">
-            <Field label="存储配置" required>
+            <FormSectionField label="存储配置" required>
               <Controller
                 control={control}
                 name="storageConfigurationId"
@@ -243,10 +244,10 @@ export function EnvironmentCreatePage({
                   </Select>
                 )}
               />
-            </Field>
-            <Field label="环境描述">
+            </FormSectionField>
+            <FormSectionField label="环境描述">
               <Input placeholder="例如：用于 QA 验收与集成验证" {...register("description")} />
-            </Field>
+            </FormSectionField>
           </div>
         </Card>
       </div>
@@ -263,35 +264,6 @@ async function updateExistingEnvironment(
   }
 
   return updateEnvironment(environmentId, input);
-}
-
-function Field({
-  children,
-  label,
-  required = false,
-}: {
-  children: ReactNode;
-  label: ReactNode;
-  required?: boolean;
-}) {
-  return (
-    <div className="grid gap-2">
-      <span className="font-medium text-foreground text-sm">
-        {label}
-        {required ? <span className="ml-1 text-destructive">*</span> : null}
-      </span>
-      {children}
-    </div>
-  );
-}
-
-function FormSectionHeader({ description, title }: { description: string; title: string }) {
-  return (
-    <div className="border-border border-b px-5 py-4">
-      <h2 className="font-semibold text-foreground text-sm">{title}</h2>
-      <p className="mt-1 text-muted-foreground text-xs">{description}</p>
-    </div>
-  );
 }
 
 function EnvironmentFormLoading({ onBack }: { onBack: () => void }) {

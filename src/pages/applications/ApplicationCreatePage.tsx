@@ -7,8 +7,6 @@ import { OwnerPicker, type OwnerSearchUser } from "@/components/common/OwnerPick
 import { FormActions, FormLayout, PageHeader, SectionCard } from "@/components/layout";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -18,29 +16,25 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { applicationEditQueryKey, applicationsRootQueryKey } from "./api/application-list-filters";
+import { createApplication, fetchApplicationDetailSnapshot } from "./api/applications-snapshot";
 import {
-  createApplication,
-  fetchApplicationDetailSnapshot,
-  updateApplication,
-} from "./api/applications-snapshot";
-import { applicationStatusCodeByLabel } from "./constants";
+  ApplicationFormLoading,
+  ApplicationFormNotFound,
+  ApplicationFormOptionsError,
+} from "./components/ApplicationFormFeedback";
+import { CheckOption, Field } from "./components/ApplicationFormFields";
 import { useApplicationOptions } from "./hooks";
 import type {
   ApplicationCreatePageProps,
-  ApplicationDetail,
-  ApplicationEditFormSource,
   ApplicationEnvironmentFieldPath,
-  ApplicationFormFeedbackProps,
   ApplicationFormState,
-  ApplicationMutationInput,
-  ApplicationOption,
-  ApplicationStatusCode,
-  CheckOptionProps,
-  EnvironmentCode,
-  EnvironmentFormState,
-  FieldProps,
 } from "./types";
-import { parseApplicationStatusCode } from "./utils";
+import {
+  buildApplicationInput,
+  buildInitialForm,
+  parseApplicationStatusCode,
+  updateExistingApplication,
+} from "./utils";
 
 export function ApplicationCreatePage({
   applicationSlug,
@@ -355,149 +349,5 @@ export function ApplicationCreatePage({
         }
       />
     </form>
-  );
-}
-
-async function updateExistingApplication(
-  applicationSlug: string | undefined,
-  input: ApplicationMutationInput,
-) {
-  if (!applicationSlug) {
-    throw new Error("Application slug is required");
-  }
-
-  return updateApplication(applicationSlug, input);
-}
-
-function buildInitialForm(
-  source?: ApplicationEditFormSource,
-  environmentOptions: ApplicationOption[] = [],
-  statusOptions: ApplicationOption[] = [],
-): ApplicationFormState {
-  if (!source) {
-    return {
-      description: "",
-      environments: buildEnvironmentState(undefined, environmentOptions),
-      name: "",
-      owner: "",
-      ownerAvatarUrl: "",
-      ownerDepartmentIds: [],
-      ownerEmail: "",
-      platforms: [],
-      slug: "",
-      status: parseApplicationStatusCode(statusOptions[0]?.value) ?? "",
-    };
-  }
-
-  const { application, detail } = source;
-
-  return {
-    description: detail.description,
-    environments: buildEnvironmentState(detail, environmentOptions),
-    name: detail.name,
-    owner: detail.owner,
-    ownerAvatarUrl: detail.ownerAvatarUrl,
-    ownerDepartmentIds: detail.ownerDepartmentIds,
-    ownerEmail: detail.ownerEmail,
-    platforms: application.platform.split("/").map((item) => item.trim()),
-    slug: detail.slug,
-    status: applicationStatusCodeByLabel[application.status],
-  };
-}
-
-function buildEnvironmentState(
-  detail?: ApplicationDetail,
-  environmentOptions: ApplicationOption[] = [],
-): EnvironmentFormState {
-  const enabledEnvironments = new Map(
-    detail?.environments.map((environment) => [environment.environment, environment]) ?? [],
-  );
-
-  return Object.fromEntries(
-    environmentOptions.map((environment) => [
-      environment.value,
-      detail ? enabledEnvironments.has(environment.value) : true,
-    ]),
-  );
-}
-
-function buildApplicationInput(
-  form: ApplicationFormState,
-  environmentOptions: ApplicationOption[],
-  status: ApplicationStatusCode,
-): ApplicationMutationInput {
-  const environments = environmentOptions
-    .filter((environment) => form.environments[environment.value])
-    .map((environment) => ({
-      environment: environment.value as EnvironmentCode,
-    }));
-
-  return {
-    description: form.description.trim(),
-    environments,
-    name: form.name.trim(),
-    owner: form.owner.trim(),
-    ownerAvatarUrl: form.ownerAvatarUrl.trim(),
-    ownerDepartmentIds: form.ownerDepartmentIds,
-    ownerEmail: form.ownerEmail.trim(),
-    platform: form.platforms.join(" / "),
-    slug: form.slug.trim(),
-    status,
-  };
-}
-
-function ApplicationFormLoading({ onBack }: ApplicationFormFeedbackProps) {
-  return (
-    <div className="flex flex-col gap-6">
-      <PageHeader onBack={onBack} backLabel="返回应用管理" title="加载中" />
-      <Card className="rounded-xl border-border p-6 shadow-xs">
-        <div className="space-y-3">
-          <div className="h-5 w-36 animate-pulse rounded bg-muted" />
-          <div className="h-10 w-full animate-pulse rounded bg-muted" />
-          <div className="h-40 w-full animate-pulse rounded bg-muted" />
-        </div>
-      </Card>
-    </div>
-  );
-}
-
-function ApplicationFormOptionsError({ onBack }: ApplicationFormFeedbackProps) {
-  return (
-    <div className="flex flex-col gap-6">
-      <PageHeader onBack={onBack} backLabel="返回应用管理" title="应用选项加载失败" />
-      <Alert variant="danger" className="border-destructive/30 bg-destructive/10">
-        应用选项加载失败，请刷新后重试
-      </Alert>
-    </div>
-  );
-}
-
-function ApplicationFormNotFound({ onBack }: ApplicationFormFeedbackProps) {
-  return (
-    <div className="flex flex-col gap-6">
-      <PageHeader onBack={onBack} backLabel="返回应用管理" title="应用不存在" />
-      <Card className="rounded-xl border-border bg-card p-6 shadow-xs">
-        <div className="font-semibold text-foreground text-sm">应用不存在</div>
-        <p className="mt-1 text-muted-foreground text-sm">当前应用可能已被删除或路径无效。</p>
-      </Card>
-    </div>
-  );
-}
-
-function Field({ children, className, label }: FieldProps) {
-  return (
-    <div className={className}>
-      <div className="mb-1.5 font-medium text-foreground text-sm">{label}</div>
-      {children}
-    </div>
-  );
-}
-
-function CheckOption({ checked, label, onCheckedChange }: CheckOptionProps) {
-  return (
-    <div className="flex h-9 items-center gap-2 rounded-md border border-border bg-card px-3 text-foreground text-sm">
-      <Checkbox checked={checked} onCheckedChange={(value) => onCheckedChange?.(value === true)} />
-      <span>{label}</span>
-    </div>
   );
 }

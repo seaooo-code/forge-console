@@ -229,3 +229,9 @@ export type CheckOptionProps = {
   label: string;
   onCheckedChange?: (checked: boolean) => void;
 };
+
+export type ApplicationMemberFormState = {
+  memberName: string;
+  role: ApplicationMemberRecord["role"];
+  userId: string;
+};

@@ -1,17 +1,11 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Ban, Copy, KeyRound, Plus, RotateCw, ShieldCheck, Trash2 } from "lucide-react";
-import type { ReactNode } from "react";
+import { KeyRound, RotateCw } from "lucide-react";
 import { useState } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
-import { PageHeader } from "@/components/layout";
 import { Alert } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { DateTimePicker } from "@/components/ui/date-time-picker";
-import { Input } from "@/components/ui/input";
 import { useAuthStore } from "@/store/use-auth-store";
 
 import {
@@ -22,21 +16,15 @@ import {
   generateArtifactAccessToken,
   updateArtifactAccessTokenStatus,
 } from "./api/access-tokens-snapshot";
-import type {
-  ArtifactAccessTokenCreateInput,
-  ArtifactAccessTokenRecord,
-  ArtifactAccessTokenStatus,
-} from "./types";
-
-type AccessTokenFormState = {
-  expiresAt: string;
-  name: string;
-};
-
-const defaultForm: AccessTokenFormState = {
-  expiresAt: "",
-  name: "",
-};
+import { AccessTokenRow } from "./components/AccessTokenRow";
+import {
+  AccessTokensHeader,
+  AccessTokensPageError,
+  AccessTokensPageLoading,
+} from "./components/AccessTokensStates";
+import { CreateAccessTokenForm } from "./components/CreateAccessTokenForm";
+import type { ArtifactAccessTokenRecord, ArtifactAccessTokenStatus } from "./types";
+import { type AccessTokenFormState, buildCreateInput, defaultAccessTokenForm } from "./utils";
 
 export function AccessTokensPage() {
   const queryClient = useQueryClient();
@@ -57,7 +45,7 @@ export function AccessTokensPage() {
     handleSubmit,
     reset,
   } = useForm<AccessTokenFormState>({
-    defaultValues: defaultForm,
+    defaultValues: defaultAccessTokenForm,
   });
   const [deleteTarget, setDeleteTarget] = useState<ArtifactAccessTokenRecord | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
@@ -100,7 +88,7 @@ export function AccessTokensPage() {
       const input = buildCreateInput(form, generatedToken);
       const token = await createArtifactAccessToken(input);
       await queryClient.invalidateQueries({ queryKey: accessTokensSnapshotQueryKey });
-      reset(defaultForm);
+      reset(defaultAccessTokenForm);
       setCreatedTokenDialog({ name: token.name, plainToken: generatedToken });
       setGeneratedToken("");
       setMessage(`产物访问令牌「${token.name}」已创建。`);
@@ -206,95 +194,16 @@ export function AccessTokensPage() {
             )}
           </section>
 
-          <Card className="h-fit rounded-xl border-border bg-card p-5 shadow-xs">
-            <div className="flex items-center gap-2">
-              <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-success/10 text-success">
-                <Plus className="size-4" />
-              </div>
-              <div>
-                <h2 className="font-semibold text-foreground text-sm">新增令牌</h2>
-                <p className="text-muted-foreground text-xs">先生成明文令牌，再保存访问配置</p>
-              </div>
-            </div>
-
-            <form className="mt-5 space-y-4" onSubmit={handleSubmit(handleCreate)}>
-              <div className="rounded-lg border border-border bg-muted p-3">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="font-medium text-foreground text-xs">明文令牌</div>
-                    <div className="mt-1 text-muted-foreground text-xs">
-                      服务端生成，保存后只在弹窗中再次提示复制
-                    </div>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={!canManageAccessTokens || isGenerating || isCreating}
-                    onClick={() => void handleGenerate()}
-                  >
-                    <KeyRound className="size-4" />
-                    {isGenerating ? "生成中" : "生成令牌"}
-                  </Button>
-                </div>
-                {generatedToken ? (
-                  <div className="mt-3 flex flex-col gap-2">
-                    <code className="min-w-0 overflow-x-auto rounded-md border border-border bg-card px-3 py-2 font-mono text-foreground text-xs">
-                      {generatedToken}
-                    </code>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="w-fit"
-                      onClick={() => void navigator.clipboard?.writeText(generatedToken)}
-                    >
-                      <Copy className="size-4" />
-                      复制
-                    </Button>
-                  </div>
-                ) : null}
-              </div>
-              <Controller
-                control={control}
-                name="name"
-                rules={{ required: "请输入令牌名称" }}
-                render={({ field }) => (
-                  <Field id="access-token-name" label="名称" error={errors.name?.message}>
-                    <Input {...field} id="access-token-name" placeholder="Bundle 客户端" />
-                  </Field>
-                )}
-              />
-              <Controller
-                control={control}
-                name="expiresAt"
-                render={({ field }) => (
-                  <Field
-                    id="access-token-expires-at"
-                    label="过期时间"
-                    error={errors.expiresAt?.message}
-                  >
-                    <DateTimePicker
-                      ref={field.ref}
-                      id="access-token-expires-at"
-                      value={field.value}
-                      invalid={Boolean(errors.expiresAt)}
-                      onBlur={field.onBlur}
-                      onChange={field.onChange}
-                    />
-                  </Field>
-                )}
-              />
-              <Button
-                type="submit"
-                disabled={!canManageAccessTokens || isCreating || !generatedToken}
-                className="w-full bg-primary hover:bg-primary/90"
-              >
-                <Plus className="size-4" />
-                {isCreating ? "创建中" : "保存令牌"}
-              </Button>
-            </form>
-          </Card>
+          <CreateAccessTokenForm
+            canManageAccessTokens={canManageAccessTokens}
+            control={control}
+            errors={errors}
+            generatedToken={generatedToken}
+            isCreating={isCreating}
+            isGenerating={isGenerating}
+            onGenerate={() => void handleGenerate()}
+            onSubmit={handleSubmit(handleCreate)}
+          />
         </div>
       </div>
 
@@ -358,193 +267,4 @@ export function AccessTokensPage() {
       </ConfirmDialog>
     </>
   );
-}
-
-function AccessTokenRow({
-  canManageAccessTokens,
-  isPending,
-  onDelete,
-  onStatusChange,
-  token,
-}: {
-  canManageAccessTokens: boolean;
-  isPending: boolean;
-  onDelete: (token: ArtifactAccessTokenRecord) => void;
-  onStatusChange: (token: ArtifactAccessTokenRecord, status: ArtifactAccessTokenStatus) => void;
-  token: ArtifactAccessTokenRecord;
-}) {
-  const isDisabled = token.status === "disabled";
-  const nextStatus: ArtifactAccessTokenStatus = isDisabled ? "active" : "disabled";
-  const StatusIcon = isDisabled ? Ban : ShieldCheck;
-
-  return (
-    <div className="grid gap-3 px-4 py-4 md:grid-cols-2 2xl:grid-cols-[minmax(14rem,1.4fr)_minmax(5rem,0.6fr)_minmax(7rem,0.7fr)_minmax(6rem,0.65fr)_minmax(7rem,0.7fr)_auto] 2xl:items-center">
-      <div className="min-w-0 md:col-span-2 2xl:col-span-1">
-        <div className="flex min-w-0 items-center gap-2">
-          <span className="min-w-0 flex-1 truncate font-semibold text-foreground text-sm">
-            {token.name}
-          </span>
-          <TokenStatusBadge token={token} />
-        </div>
-        <div className="mt-1 truncate font-mono text-muted-foreground text-xs">
-          {token.tokenPreview}
-        </div>
-      </div>
-      <TokenMeta label="创建人" value={token.createdBy || "-"} />
-      <TokenMeta label="创建时间" value={formatDisplayTime(token.createdAt)} />
-      <TokenMeta label="最近使用" value={formatDisplayTime(token.lastUsedAt)} />
-      <TokenMeta label="过期时间" value={formatDisplayTime(token.expiresAt)} />
-      <div className="flex items-center justify-start gap-1.5 md:col-span-2 2xl:col-span-1 2xl:justify-end">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={!canManageAccessTokens || isPending}
-          onClick={() => onStatusChange(token, nextStatus)}
-        >
-          <StatusIcon className="size-4" />
-          {isDisabled ? "启用" : "停用"}
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          disabled={!canManageAccessTokens}
-          onClick={() => onDelete(token)}
-        >
-          <Trash2 className="size-4 text-destructive" />
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-function TokenStatusBadge({ token }: { token: ArtifactAccessTokenRecord }) {
-  if (isExpired(token.expiresAt)) {
-    return (
-      <Badge variant="warning" className="shrink-0 gap-1">
-        已过期
-      </Badge>
-    );
-  }
-
-  if (token.status === "disabled") {
-    return (
-      <Badge variant="outline" className="shrink-0 border-border text-muted-foreground">
-        已停用
-      </Badge>
-    );
-  }
-
-  return (
-    <Badge variant="success" className="shrink-0 gap-1">
-      <ShieldCheck className="size-3" />
-      启用中
-    </Badge>
-  );
-}
-
-function TokenMeta({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="min-w-0">
-      <div className="text-muted-foreground text-xs">{label}</div>
-      <div className="mt-1 truncate text-foreground text-xs">{value}</div>
-    </div>
-  );
-}
-
-function Field({
-  children,
-  error,
-  id,
-  label,
-}: {
-  children: ReactNode;
-  error?: string;
-  id: string;
-  label: string;
-}) {
-  return (
-    <div className="block space-y-1.5">
-      <label htmlFor={id} className="font-medium text-foreground text-xs">
-        {label}
-      </label>
-      {children}
-      {error ? <span className="text-destructive text-xs">{error}</span> : null}
-    </div>
-  );
-}
-
-function AccessTokensPageError({ message, onRetry }: { message: string; onRetry: () => void }) {
-  return (
-    <div className="flex flex-col gap-6">
-      <AccessTokensHeader />
-      <Card className="rounded-xl border-destructive/30 bg-destructive/10 p-5 text-destructive shadow-xs">
-        <div className="font-medium text-sm">访问令牌接口不可用</div>
-        <div className="mt-2 text-sm">{message}</div>
-        <Button
-          type="button"
-          variant="outline"
-          className="mt-4 border-destructive/30 bg-card text-destructive hover:bg-destructive/10"
-          onClick={onRetry}
-        >
-          重试
-        </Button>
-      </Card>
-    </div>
-  );
-}
-
-function AccessTokensPageLoading() {
-  return (
-    <div className="flex flex-col gap-6">
-      <AccessTokensHeader />
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_23rem]">
-        <Card className="h-72 animate-pulse rounded-xl border-border bg-card shadow-xs" />
-        <Card className="h-72 animate-pulse rounded-xl border-border bg-card shadow-xs" />
-      </div>
-    </div>
-  );
-}
-
-function AccessTokensHeader() {
-  return <PageHeader title="访问令牌" description="管理产物 manifest 与后端下载接口访问凭据" />;
-}
-
-function buildCreateInput(
-  form: AccessTokenFormState,
-  token: string,
-): ArtifactAccessTokenCreateInput {
-  const input: ArtifactAccessTokenCreateInput = {
-    name: form.name.trim(),
-    token,
-  };
-  if (form.expiresAt) {
-    input.expiresAt = new Date(form.expiresAt).toISOString();
-  }
-  return input;
-}
-
-function isExpired(value: string) {
-  if (!value) {
-    return false;
-  }
-  const time = Date.parse(value);
-  return Number.isFinite(time) && time <= Date.now();
-}
-
-function formatDisplayTime(value: string) {
-  if (!value) {
-    return "-";
-  }
-  const time = Date.parse(value);
-  if (!Number.isFinite(time)) {
-    return value;
-  }
-  return new Intl.DateTimeFormat("zh-CN", {
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    month: "2-digit",
-  }).format(new Date(time));
 }

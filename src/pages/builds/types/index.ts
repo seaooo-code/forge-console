@@ -71,6 +71,24 @@ export type BuildRecordDetail = BuildRunRecord & {
 
 export type BuildsSnapshot = SharedBuildsSnapshot;
 
+export type ActiveFullReleaseTarget = {
+  build?: BuildRunRecord;
+  buildId: string;
+};
+
+export type BuildModuleOption = {
+  applicationName: string;
+  defaultBranch: string;
+  label: string;
+  repositoryFullName: string;
+  value: string;
+};
+
+export type BuildEnvironmentOption = {
+  label: string;
+  value: string;
+};
+
 export type BuildReleaseFormState = SharedBuildReleaseFormState;
 
 export type BuildCreateFormState = SharedBuildCreateFormState;

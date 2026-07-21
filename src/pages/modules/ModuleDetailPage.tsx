@@ -9,40 +9,24 @@ import {
   Hammer,
   Package,
   PenLine,
-  Rocket,
-  ShieldCheck,
   UserRound,
 } from "lucide-react";
-import { type ReactNode, useEffect, useMemo, useState } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { useMemo, useState } from "react";
 import { buildsSnapshotQueryKey, createBuild } from "@/api/builds";
-import { Modal, ModalFooter, ModalHeader } from "@/components/common/Modal";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { environmentsSnapshotQueryKey, fetchEnvironmentsSnapshot } from "@/pages/environments";
-import {
-  fetchAllReleaseRecordsSnapshot,
-  getReleaseRecordTargetLabel,
-  getReleaseRecordTypeLabel,
-  type ReleasePointerRecord,
-  releaseRecordStatusClass,
-  releaseRecordsAllQueryKey,
-} from "@/pages/release-records";
+import { fetchAllReleaseRecordsSnapshot, releaseRecordsAllQueryKey } from "@/pages/release-records";
 
 import { fetchModuleDetailSnapshot, moduleDetailQueryKey } from "./api/modules-snapshot";
+import { ModuleBuildDialog } from "./components/ModuleBuildDialog";
+import { PublishedBuildsPanel } from "./components/PublishedBuildsPanel";
 import { kindClass } from "./constants";
-import type { ModuleBuildFormState, ModuleRecord } from "./types";
+import type { ModuleRecord } from "./types";
+import { formatCommonModule } from "./utils";
 
 type ModuleDetailPageProps = {
   moduleId: string;
@@ -303,248 +287,6 @@ function DetailItem({
         <div className="font-medium text-muted-foreground text-xs">{label}</div>
         <div className="mt-1 break-all font-semibold text-foreground text-sm">{value || "-"}</div>
       </div>
-    </div>
-  );
-}
-
-function formatCommonModule(module: ModuleRecord) {
-  if (module.kind === "Common") {
-    return "-";
-  }
-
-  return module.commonModuleName || module.commonModuleId || "-";
-}
-
-function PublishedBuildsPanel({
-  isFetching,
-  records,
-}: {
-  isFetching: boolean;
-  records: ReleasePointerRecord[];
-}) {
-  return (
-    <Card className="gap-0 rounded-lg border-border py-0 shadow-sm">
-      <SectionHeader title="已发布构建" description="当前模块已发布的全量和标识构建" />
-      {records.length > 0 ? (
-        <div className="overflow-hidden">
-          <div className="hidden border-border border-b bg-muted px-4 py-2 font-medium text-muted-foreground text-xs xl:grid xl:grid-cols-[110px_170px_110px_100px_minmax(140px,1fr)_92px_120px]">
-            <span>构建 ID</span>
-            <span>发布时间</span>
-            <span>环境</span>
-            <span>发布类型</span>
-            <span>标识</span>
-            <span>状态</span>
-            <span>操作人</span>
-          </div>
-          <div className="divide-y divide-border">
-            {records.map((record) => (
-              <div
-                key={record.id}
-                className="grid gap-2 px-4 py-3 text-sm xl:grid-cols-[110px_170px_110px_100px_minmax(140px,1fr)_92px_120px] xl:items-center"
-              >
-                <PublishedBuildField label="构建 ID">
-                  <span className="font-mono font-semibold text-foreground text-xs">
-                    {formatShortRecordID(record.buildRecordId)}
-                  </span>
-                </PublishedBuildField>
-                <PublishedBuildField label="发布时间">
-                  <span className="font-mono text-muted-foreground text-xs">
-                    {record.createdAt}
-                  </span>
-                </PublishedBuildField>
-                <PublishedBuildField label="环境">
-                  <span className="truncate font-medium text-foreground">
-                    {record.environmentName}
-                  </span>
-                </PublishedBuildField>
-                <PublishedBuildField label="发布类型">
-                  <span className="font-medium text-foreground text-xs">
-                    {getReleaseRecordTypeLabel(record)}
-                  </span>
-                </PublishedBuildField>
-                <PublishedBuildField label="标识">
-                  <span className="truncate text-muted-foreground">
-                    {getReleaseRecordTargetLabel(record)}
-                  </span>
-                </PublishedBuildField>
-                <PublishedBuildField label="状态">
-                  <ReleaseStatusBadge status={record.status} />
-                </PublishedBuildField>
-                <PublishedBuildField label="操作人">
-                  <span className="truncate text-muted-foreground">{record.operator}</span>
-                </PublishedBuildField>
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : (
-        <div className="px-4 py-8 text-center text-muted-foreground text-sm">
-          {isFetching ? "正在加载已发布构建" : "暂无已发布构建"}
-        </div>
-      )}
-    </Card>
-  );
-}
-
-function PublishedBuildField({ children, label }: { children: ReactNode; label: string }) {
-  return (
-    <div className="grid min-w-0 grid-cols-[72px_minmax(0,1fr)] items-center gap-2 xl:block">
-      <span className="font-medium text-muted-foreground text-xs xl:hidden">{label}</span>
-      <div className="min-w-0">{children}</div>
-    </div>
-  );
-}
-
-function ReleaseStatusBadge({ status }: { status: ReleasePointerRecord["status"] }) {
-  const Icon = status === "active" ? ShieldCheck : Rocket;
-  const label = status === "active" ? "生效中" : status === "inactive" ? "已失效" : "已撤销";
-
-  return (
-    <span
-      className={cn(
-        "inline-flex h-6 items-center gap-1 rounded border px-2 font-semibold text-xs leading-none",
-        releaseRecordStatusClass[status],
-      )}
-    >
-      <Icon className="size-3" />
-      {label}
-    </span>
-  );
-}
-
-function formatShortRecordID(value: string) {
-  const normalized = value.trim();
-  return normalized ? `#${normalized.slice(-8)}` : "-";
-}
-
-function ModuleBuildDialog({
-  environmentOptions,
-  isEnvironmentsFetching,
-  isOpen,
-  module,
-  onClose,
-  onSubmit,
-  submitError,
-}: {
-  environmentOptions: Array<{ label: string; value: string }>;
-  isEnvironmentsFetching: boolean;
-  isOpen: boolean;
-  module: ModuleRecord;
-  onClose: () => void;
-  onSubmit: (form: ModuleBuildFormState) => Promise<void>;
-  submitError: string;
-}) {
-  const {
-    control,
-    formState: { isSubmitting },
-    handleSubmit,
-    register,
-    reset,
-  } = useForm<ModuleBuildFormState>({
-    defaultValues: {
-      branch: module.defaultBranch,
-      environment: environmentOptions[0]?.value ?? "",
-    },
-  });
-  const hasEnvironmentOptions = environmentOptions.length > 0;
-
-  useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-
-    reset({
-      branch: module.defaultBranch,
-      environment: environmentOptions[0]?.value ?? "",
-    });
-  }, [environmentOptions, isOpen, module.defaultBranch, reset]);
-
-  if (!isOpen) {
-    return null;
-  }
-
-  return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      labelledBy="module-build-dialog-title"
-      describedBy="module-build-dialog-description"
-      className="max-w-lg"
-    >
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <ModalHeader
-          title="新增构建"
-          titleId="module-build-dialog-title"
-          descriptionId="module-build-dialog-description"
-          description={`为「${module.name}」创建构建记录，产物将上传到所选环境绑定的存储配置。`}
-        />
-
-        <div className="mt-4 space-y-4">
-          <Field label="分支" inputId="module-build-branch">
-            <Input
-              id="module-build-branch"
-              placeholder={module.defaultBranch || "输入 Git 分支"}
-              {...register("branch")}
-            />
-          </Field>
-          <Field label="环境" inputId="module-build-environment">
-            <Controller
-              control={control}
-              name="environment"
-              render={({ field }) => (
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger id="module-build-environment" className="w-full">
-                    <SelectValue placeholder={isEnvironmentsFetching ? "环境加载中" : "选择环境"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {environmentOptions.map((environment) => (
-                      <SelectItem key={environment.value} value={environment.value}>
-                        {environment.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            />
-          </Field>
-          {submitError ? <Alert variant="danger">{submitError}</Alert> : null}
-          {!isEnvironmentsFetching && !hasEnvironmentOptions ? (
-            <Alert variant="warning">暂无可用环境，请先在环境管理中创建环境。</Alert>
-          ) : null}
-        </div>
-
-        <ModalFooter>
-          <Button variant="outline" type="button" disabled={isSubmitting} onClick={onClose}>
-            取消
-          </Button>
-          <Button
-            type="submit"
-            className="bg-primary text-primary-foreground hover:bg-primary/90"
-            disabled={isSubmitting || isEnvironmentsFetching || !hasEnvironmentOptions}
-          >
-            {isSubmitting ? "提交中" : "提交构建"}
-          </Button>
-        </ModalFooter>
-      </form>
-    </Modal>
-  );
-}
-
-function Field({
-  children,
-  inputId,
-  label,
-}: {
-  children: ReactNode;
-  inputId: string;
-  label: string;
-}) {
-  return (
-    <div className="space-y-1.5">
-      <label htmlFor={inputId} className="font-medium text-muted-foreground text-xs">
-        {label}
-      </label>
-      {children}
     </div>
   );
 }
