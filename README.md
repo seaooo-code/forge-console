@@ -47,7 +47,9 @@ Vite 默认监听 `0.0.0.0:5173`，浏览器访问：
 http://127.0.0.1:5173
 ```
 
-前端默认请求 `http://127.0.0.1:8080`。需要连接其他后端时，在仓库根目录创建 `.env.local`：
+本地联调统一使用 `127.0.0.1`，不要用 `localhost` 打开前端：飞书回调地址和后端默认地址都是 `127.0.0.1`，混用时 session cookie 可能无法携带，表现为登录后又回到登录页。
+
+前端默认请求 `http://127.0.0.1:8080`。需要连接其他后端时，复制 `.env.example` 为 `.env.local` 并修改：
 
 ```dotenv
 VITE_API_BASE_URL=http://127.0.0.1:8080
@@ -76,6 +78,7 @@ HTTP_CORS_ALLOW_CREDENTIALS=true
 | 命令 | 说明 |
 | --- | --- |
 | `bun run dev` | 启动 Vite 开发服务器 |
+| `bun run gen:api` | 从 `../forge-server/docs/openapi.json` 生成 `src/api/openapi.ts` 接口类型 |
 | `bun run lint` | 使用 Biome 检查格式和基础规则 |
 | `bun run lint:fix` | 自动修复 Biome 可处理的问题 |
 | `bun run typecheck` | 执行 TypeScript 类型检查 |

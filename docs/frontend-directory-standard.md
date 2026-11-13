@@ -45,6 +45,7 @@ src/
 - `src/pages/<page>/components` 只放该页面专属组件。两个及以上页面复用后，再移动到 `src/components/common`。
 - `src/components/ui` 只放 shadcn/ui 组件。这里的组件不得引用 `pages`、`app`、业务 store 或请求函数。
 - `src/api` 只放两个及以上页面复用的请求函数、API 适配和跨页面 Query key；页面专属请求继续放页面 `api/`。
+- `src/api/openapi.ts` 由 `bun run gen:api` 从后端 `forge-server/docs/openapi.json` 生成，禁止手改。描述后端请求/响应结构的类型一律通过 `src/api/client.ts` 导出的 `APISchemas` 引用生成类型，不再手写；纯前端视图类型、表单类型照常放在所属目录。
 - `src/constants` 只放两个及以上页面复用的业务常量；页面专属常量继续放页面 `constants/index.ts`。
 - `src/hooks` 只放两个及以上页面复用的 hook；页面专属 hook 继续放页面 `hooks/index.ts`。
 - `src/lib` 只放无业务语义的基础设施，例如 `queryClient`、`cn`、日期/数字通用格式化。

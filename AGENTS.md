@@ -2,12 +2,14 @@
 
 ## 全局要求
 
-- git 提交信息遵守现有项目要求，中文不超过 50 字。
+- git 提交标题使用格式：`<gitmoji> type(scope): 中文描述`，中文描述不超过 50 字，标题不加 Markdown 标记；`type` 与 gitmoji 映射和后端仓库 `forge-server/AGENTS.md` 保持一致（`✨ feat`、`🐛 fix`、`📝 docs`、`♻️ refactor`、`✅ test`、`🎨 style`、`⚡️ perf`、`🔧 chore`），`scope` 使用改动所属模块或目录名，例如 `ui`、`api`、`applications`。
+- 本仓库与后端仓库 `../forge-server` 属于同一项目；涉及后端的改动必须先阅读并遵守 `forge-server/AGENTS.md`，前后端规范以各自仓库为准。
 - 后续 AI 开发必须先阅读并遵守 `docs/frontend-directory-standard.md`。
 - 新增文件前先判断目录归属；若需要新增顶层目录，先更新目录规范文档。
 - 表单类功能统一使用 React Hook Form，不再手写分散的表单状态。
 - Biome 是本项目唯一格式化与基础 lint 工具，不新增 ESLint/Prettier，除非用户明确要求。
 - 不为一两行表达式单独抽三行小函数；能内联的派生逻辑直接内联，复杂或复用逻辑放到所属业务目录的 `utils/index.ts`。
+- 后端接口类型统一来自 `src/api/openapi.ts`（`bun run gen:api` 生成，禁止手改），通过 `APISchemas` 引用，不再手写请求/响应类型；后端接口变更后先在 forge-server 更新 `docs/openapi.json`，再在本仓库运行 `bun run gen:api`。
 - 代码改动后至少运行 `bun run lint` 与 `bun run typecheck`；涉及 UI、构建配置或依赖时追加 `bun run build`。
 
 ## 前端边界
