@@ -21,8 +21,8 @@ export function StorageConnectionSection({ isEditMode, register }: StorageConnec
         <FormSectionField label="Bucket" required>
           <Input placeholder="xiaomi-auto-rn-prod" {...register("bucket")} />
         </FormSectionField>
-        <FormSectionField label={<RegionLabel />}>
-          <Input placeholder="可选，例如 cn-beijing / ap-guangzhou" {...register("region")} />
+        <FormSectionField label={<RegionLabel />} required>
+          <Input placeholder="例如 cn-beijing / ap-guangzhou" {...register("region")} />
         </FormSectionField>
         <FormSectionField label="Endpoint" required>
           <Input placeholder="oss-cn-beijing.aliyuncs.com" {...register("endpoint")} />
@@ -52,7 +52,6 @@ function RegionLabel() {
   return (
     <span className="inline-flex items-center gap-1">
       Region
-      <span className="font-normal text-muted-foreground text-xs">可选</span>
       <span className="group relative inline-flex">
         <Button
           variant="ghost"
@@ -64,8 +63,8 @@ function RegionLabel() {
           <CircleHelp className="size-3.5" />
         </Button>
         <span className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 hidden w-80 -translate-x-1/2 rounded-md border border-border bg-card px-3 py-2 text-left font-normal text-muted-foreground text-xs leading-5 shadow-lg group-focus-within:block group-hover:block">
-          AWS S3、阿里云 OSS、腾讯云 COS、华为云 OBS 通常需要填写 Region；MinIO、Ceph RGW
-          等私有部署可按服务端配置填写或留空。
+          AWS S3、阿里云 OSS、腾讯云 COS、华为云 OBS 填写服务商的 Region；MinIO、Ceph RGW
+          等私有部署填写服务端配置的 Region，未单独配置时通常为 us-east-1。
         </span>
       </span>
     </span>

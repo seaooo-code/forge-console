@@ -1,67 +1,15 @@
-export type MetricIconName =
-  | "accessToken"
-  | "app"
-  | "build"
-  | "codeSource"
-  | "environment"
-  | "module"
-  | "release"
-  | "storage";
+import type { APISchemas } from "@/api/client";
 
-export type SummaryMetric = {
-  description: string;
-  id: string;
-  label: string;
-  value: string;
-  trend: string;
-  trendTone: "positive" | "negative" | "neutral";
-  icon: MetricIconName;
-  iconTone: "amber" | "blue" | "cyan" | "emerald" | "indigo" | "red" | "slate" | "violet";
-  sparkline: number[];
-};
+export type MetricIconName = SummaryMetric["icon"];
 
-export type BuildTrendPoint = {
-  date: string;
-  buildCount: number;
-  successCount: number;
-};
+export type SummaryMetric = APISchemas["DashboardMetric"];
 
-export type RecentBuildRecord = {
-  application: string;
-  duration: string;
-  environment: string;
-  id: string;
-  module: string;
-  operator: string;
-  startedAt: string;
-  status: "failed" | "queued" | "running" | "success";
-};
+export type BuildTrendPoint = APISchemas["DashboardBuildTrendPoint"];
 
-export type ReleaseRecord = {
-  application: string;
-  id: string;
-  environment: string;
-  gray: string;
-  module: string;
-  status: "active" | "inactive";
-  updatedAt: string;
-};
+export type RecentBuildRecord = APISchemas["DashboardBuildRecord"];
 
-export type ResourceStatus = {
-  description: string;
-  href: string;
-  id: string;
-  label: string;
-  status: "attention" | "healthy" | "neutral";
-  statusLabel: string;
-  value: string;
-};
+export type ReleaseRecord = APISchemas["DashboardReleaseRecord"];
 
-export type DashboardSnapshot = {
-  metrics: SummaryMetric[];
-  buildTrend: BuildTrendPoint[];
-  builds: RecentBuildRecord[];
-  releases: ReleaseRecord[];
-  resources: ResourceStatus[];
-  updatedAt: string;
-};
+export type ResourceStatus = APISchemas["DashboardResourceStatus"];
+
+export type DashboardSnapshot = APISchemas["DashboardResponse"];

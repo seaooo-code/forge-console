@@ -1,10 +1,11 @@
+import type { APISchemas } from "@/api/client";
 import type { PaginationMeta, PaginationParams } from "@/types/pagination";
 
-export type ReleaseRecordStatus = "active" | "inactive";
+export type ReleaseRecordStatus = APISchemas["ReleaseRecord"]["status"];
 
-export type ReleaseRecordType = "full" | "gray";
+export type ReleaseRecordType = APISchemas["ReleaseRecord"]["releaseType"];
 
-export type ReleaseGrayStrategy = "" | "percentage" | "targeted";
+export type ReleaseGrayStrategy = NonNullable<APISchemas["ReleaseRecord"]["grayStrategy"]>;
 
 export type ReleaseRecordsFilters = {
   applicationId: string;

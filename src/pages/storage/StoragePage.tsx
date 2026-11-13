@@ -24,7 +24,7 @@ import type { StorageConfigRecord, StorageStatus } from "@/types/storage";
 
 import { storagePageQueryKey, storageSnapshotQueryKey } from "./api/storage-query-keys";
 import { deleteStorageConfiguration } from "./api/storage-snapshot";
-import { adapterToneClass, statusClass } from "./constants";
+import { adapterToneClass, statusClass, statusLabel } from "./constants";
 
 type StoragePageProps = {
   onCreateStorage: () => void;
@@ -299,7 +299,7 @@ function StatusCell({ value }: ICellRendererParams<StorageConfigRecord, StorageS
     return null;
   }
 
-  const Icon = value === "异常" ? TriangleAlert : value === "正常" ? CheckCircle2 : RotateCw;
+  const Icon = value === "error" ? TriangleAlert : value === "healthy" ? CheckCircle2 : RotateCw;
 
   return (
     <span
@@ -309,7 +309,7 @@ function StatusCell({ value }: ICellRendererParams<StorageConfigRecord, StorageS
       )}
     >
       <Icon className="size-3" />
-      {value}
+      {statusLabel[value]}
     </span>
   );
 }

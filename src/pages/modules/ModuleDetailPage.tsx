@@ -152,10 +152,20 @@ export function ModuleDetailPage({ moduleId, onBack, onEditModule }: ModuleDetai
             <div className="grid gap-3 p-4 md:grid-cols-2">
               <DetailItem icon={GitFork} label="仓库" value={module.repository} />
               <DetailItem icon={GitFork} label="完整仓库名" value={module.repositoryFullName} />
-              <DetailItem icon={GitFork} label="默认分支" value={module.defaultBranch} />
+              <DetailItem icon={GitFork} label="默认分支" value={module.defaultBranch ?? ""} />
               <DetailItem icon={GitFork} label="Provider" value={module.repositoryProvider} />
-              <DetailItem icon={GitFork} label="Clone URL" value={module.repositoryCloneUrl} wide />
-              <DetailItem icon={GitFork} label="SSH URL" value={module.repositorySshUrl} wide />
+              <DetailItem
+                icon={GitFork}
+                label="Clone URL"
+                value={module.repositoryCloneUrl ?? ""}
+                wide
+              />
+              <DetailItem
+                icon={GitFork}
+                label="SSH URL"
+                value={module.repositorySshUrl ?? ""}
+                wide
+              />
             </div>
           </Card>
 
@@ -227,7 +237,7 @@ function InfoPill({
 function OwnerInfoPill({ module }: { module: ModuleRecord }) {
   return (
     <div className="flex min-w-0 items-center gap-2 rounded-lg border border-border bg-muted px-3 py-2">
-      <OwnerAvatar avatarUrl={module.ownerAvatarUrl} name={module.owner} />
+      <OwnerAvatar avatarUrl={module.ownerAvatarUrl ?? ""} name={module.owner} />
       <div className="min-w-0">
         <div className="text-muted-foreground text-xs">负责人</div>
         <div className="truncate font-semibold text-foreground text-sm">{module.owner || "-"}</div>

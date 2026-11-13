@@ -1,4 +1,4 @@
-import { type APIErrorPayload, createFetchClient } from "@/api/client";
+import { type APIErrorPayload, type APISchemas, createFetchClient } from "@/api/client";
 import {
   fetchAllModulesSnapshot,
   fetchModuleDetailSnapshot,
@@ -29,26 +29,11 @@ export const moduleEditQueryKey = (moduleId: string | undefined) => [
   moduleId ?? "none",
 ];
 
-type ModuleAPIRecord = ModuleRecord;
+type ModuleAPIRecord = APISchemas["Module"];
 
-type ModuleDetailAPIResponse = {
-  module: ModuleAPIRecord;
-};
+type ModuleDetailAPIResponse = APISchemas["ModuleDetailResponse"];
 
-type CodeSourceRepositorySearchResponse = {
-  repositories: CodeSourceRepositoryAPIRecord[];
-};
-
-type CodeSourceRepositoryAPIRecord = {
-  cloneUrl: string;
-  defaultBranch: string;
-  fullName: string;
-  htmlUrl: string;
-  id: string;
-  installationId: string;
-  provider: "github";
-  sshUrl: string;
-};
+type CodeSourceRepositorySearchResponse = APISchemas["CodeSourceRepositorySearchResponse"];
 
 export class ModuleAPIError extends Error {
   readonly payload?: APIErrorPayload;
@@ -99,10 +84,11 @@ export async function updateModule(
   input: ModuleMutationInput,
 ): Promise<ModuleRecord> {
   const { id: _id, ...payloadInput } = input;
+  const updateInput: APISchemas["ModuleUpdateRequest"] = payloadInput;
   const payload = await fetchJSON<ModuleDetailAPIResponse>(
     `/api/v1/modules/${encodeURIComponent(moduleId)}`,
     {
-      body: JSON.stringify(payloadInput),
+      body: JSON.stringify(updateInput),
       method: "PATCH",
     },
   );

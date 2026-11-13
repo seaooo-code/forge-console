@@ -1,4 +1,4 @@
-import { type APIErrorPayload, createFetchClient } from "@/api/client";
+import { type APIErrorPayload, type APISchemas, createFetchClient } from "@/api/client";
 import type {
   CodeSourceAppManifest,
   CodeSourceInstallURL,
@@ -36,7 +36,7 @@ const codeSourceAPIErrorMessages: Record<string, string> = {
 };
 
 export async function fetchCodeSourcesSnapshot(): Promise<CodeSourcesSnapshot> {
-  const payload = await fetchJSON<CodeSourcesSnapshot>("/api/v1/code-sources");
+  const payload = await fetchJSON<APISchemas["CodeSourcesResponse"]>("/api/v1/code-sources");
 
   return {
     apps: payload.apps.map((app) => ({

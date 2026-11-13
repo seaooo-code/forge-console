@@ -1,6 +1,11 @@
-export type BuildReleaseType = "full" | "gray";
+import type { APISchemas } from "@/api/client";
 
-export type BuildReleaseGrayStrategy = "percentage" | "targeted";
+export type BuildReleaseType = APISchemas["ReleaseCreateRequest"]["releaseType"];
+
+export type BuildReleaseGrayStrategy = Exclude<
+  APISchemas["ReleaseCreateRequest"]["grayStrategy"],
+  "" | undefined
+>;
 
 export type BuildReleaseFormState = {
   expiresAt: string;

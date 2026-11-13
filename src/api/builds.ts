@@ -1,4 +1,4 @@
-import { type APIErrorPayload, createFetchClient } from "@/api/client";
+import { type APIErrorPayload, type APISchemas, createFetchClient } from "@/api/client";
 import { fetchAllPaginatedItems, normalizePagination } from "@/api/pagination";
 import type {
   BuildCreateInput,
@@ -8,7 +8,6 @@ import type {
   BuildRunRecord,
   BuildRunStatus,
   BuildsSnapshot,
-  BuildTriggerType,
 } from "@/types/builds";
 
 export const buildsRootQueryKey = ["builds-snapshot"] as const;
@@ -27,43 +26,13 @@ export const buildsAllQueryKey = (filters?: Partial<BuildListFilters>) => [
   normalizeBuildListFilters(filters),
 ];
 
-type BuildRecordAPIStatus = "failed" | "pending" | "running" | "succeeded";
-type BuildRecordAPITriggerType = BuildTriggerType;
+type BuildRecordAPIRecord = APISchemas["BuildRecord"];
 
-type BuildRecordAPIRecord = {
-  applicationName: string;
-  artifactKey: string;
-  branch: string;
-  createdAt: string;
-  environment: string;
-  environmentName: string;
-  finishedAt: string;
-  id: string;
-  moduleId: string;
-  moduleName: string;
-  queuedAt: string;
-  startedAt: string;
-  status: BuildRecordAPIStatus;
-  triggerId: string;
-  triggerType: BuildRecordAPITriggerType;
-  workerId: string;
-};
+type BuildRecordAPIStatus = BuildRecordAPIRecord["status"];
 
-type BuildsAPIResponse = {
-  builds: BuildRecordAPIRecord[];
-  pagination: BuildsSnapshot["pagination"];
-  summary: {
-    failed: number;
-    pending: number;
-    running: number;
-    succeeded: number;
-    total: number;
-  };
-};
+type BuildsAPIResponse = APISchemas["BuildRecordsResponse"];
 
-type BuildDetailAPIResponse = {
-  build: BuildRecordAPIRecord;
-};
+type BuildDetailAPIResponse = APISchemas["BuildRecordDetailResponse"];
 
 export class BuildsAPIError extends Error {
   readonly payload?: APIErrorPayload;
@@ -168,7 +137,7 @@ function normalizeBuildRecord(record: BuildRecordAPIRecord): BuildRunRecord {
     commit: "-",
     createdAt: formatRecordNumber(record.createdAt),
     createdAtRaw: record.createdAt,
-    duration: formatDuration(record.startedAt, record.finishedAt),
+    duration: formatDuration(record.startedAt ?? "", record.finishedAt ?? ""),
     environment: record.environment,
     id: record.id,
     module: record.moduleName || record.moduleId,

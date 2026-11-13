@@ -68,7 +68,7 @@ export function useBuildsPageData(filters: BuildListFilters) {
     () =>
       modulesSnapshot?.modules.map((module) => ({
         applicationName: module.applicationName,
-        defaultBranch: module.defaultBranch,
+        defaultBranch: module.defaultBranch ?? "",
         label: module.name,
         repositoryFullName: module.repositoryFullName || module.repository,
         value: module.id,

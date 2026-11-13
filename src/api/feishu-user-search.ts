@@ -1,13 +1,9 @@
-import { type APIErrorPayload, createFetchClient } from "@/api/client";
+import { type APIErrorPayload, type APISchemas, createFetchClient } from "@/api/client";
 import type { FeishuUserSearchResult } from "@/types/feishu";
 
-type FeishuUserSearchAPIResponse = {
-  users: FeishuUserSearchAPIResult[];
-};
+type FeishuUserSearchAPIResponse = APISchemas["FeishuUserSearchResponse"];
 
-type FeishuUserSearchAPIResult = Omit<FeishuUserSearchResult, "id"> & {
-  id?: string;
-};
+type FeishuUserSearchAPIResult = APISchemas["FeishuUserSearchItem"];
 
 type FeishuUserSearchAPIErrorPayload = APIErrorPayload & {
   feishuCode?: number;
@@ -54,7 +50,7 @@ function normalizeFeishuUserSearchResult(user: FeishuUserSearchAPIResult): Feish
     departmentIds: user.departmentIds ?? [],
     email: user.email ?? "",
     enName: user.enName ?? "",
-    id: user.id || openId || userId || unionId,
+    id: openId || userId || unionId,
     mobile: user.mobile ?? "",
     name: user.name ?? "",
     openId,

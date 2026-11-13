@@ -1,12 +1,10 @@
-import { type APIErrorPayload, createFetchClient } from "@/api/client";
+import { type APIErrorPayload, type APISchemas, createFetchClient } from "@/api/client";
 import type { StorageConfigRecord, StorageSnapshot } from "@/types/storage";
 import type { StorageMutationInput, StorageTestResult } from "../types";
 
 export { storageEditQueryKey, storageSnapshotQueryKey } from "./storage-query-keys";
 
-type StorageConfigurationAPIResponse = {
-  configuration: StorageConfigRecord;
-};
+type StorageConfigurationAPIResponse = APISchemas["StorageConfigurationDetailResponse"];
 
 export class StorageAPIError extends Error {
   readonly payload?: APIErrorPayload;

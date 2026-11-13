@@ -1,71 +1,23 @@
-import { type APIErrorPayload, createFetchClient } from "@/api/client";
+import { type APIErrorPayload, type APISchemas, createFetchClient } from "@/api/client";
 import type {
   BuildArtifactTree,
   BuildArtifactTreeNode,
   BuildRecordDetail,
   BuildRunRecord,
   BuildRunStatus,
-  BuildTriggerType,
 } from "../types";
 
 export const buildDetailQueryKey = (buildId: string) => ["build-detail", buildId] as const;
 
-type BuildRecordAPIStatus = "failed" | "pending" | "running" | "succeeded";
-type BuildRecordAPITriggerType = BuildTriggerType;
+type BuildRecordAPIStatus = APISchemas["BuildRecord"]["status"];
 
-type BuildRecordAPIRecord = {
-  applicationName: string;
-  artifactTree?: BuildArtifactTreeAPIRecord;
-  artifactKey: string;
-  artifactUrl: string;
-  branch: string;
-  createdAt: string;
-  defaultBranch: string;
-  environment: string;
-  environmentName: string;
-  errorMessage: string;
-  fileCount: number;
-  finishedAt: string;
-  id: string;
-  manifestKey: string;
-  moduleId: string;
-  moduleName: string;
-  queuedAt: string;
-  repositoryFullName: string;
-  repositoryId: string;
-  repositoryInstallationId: string;
-  repositoryProvider: string;
-  startedAt: string;
-  status: BuildRecordAPIStatus;
-  storageConfigurationId: string;
-  storageConfigurationName: string;
-  triggerId: string;
-  triggerType: BuildRecordAPITriggerType;
-  totalSizeBytes: number;
-  updatedAt: string;
-  workerId: string;
-};
+type BuildRecordAPIRecord = APISchemas["BuildRecord"];
 
-type BuildArtifactTreeAPIRecord = {
-  fileCount: number;
-  nodes: BuildArtifactTreeNodeAPIRecord[];
-  totalSizeBytes: number;
-};
+type BuildArtifactTreeAPIRecord = APISchemas["BuildArtifactTree"];
 
-type BuildArtifactTreeNodeAPIRecord = {
-  children?: BuildArtifactTreeNodeAPIRecord[];
-  contentType?: string;
-  name: string;
-  objectKey?: string;
-  path: string;
-  sha256?: string;
-  sizeBytes: number;
-  type: "directory" | "file";
-};
+type BuildArtifactTreeNodeAPIRecord = APISchemas["BuildArtifactTreeNode"];
 
-type BuildDetailAPIResponse = {
-  build: BuildRecordAPIRecord;
-};
+type BuildDetailAPIResponse = APISchemas["BuildRecordDetailResponse"];
 
 export class BuildAPIError extends Error {
   readonly payload?: APIErrorPayload;
@@ -160,7 +112,7 @@ function normalizeBuildDetail(record: BuildRecordAPIRecord): BuildRecordDetail {
     repositoryInstallationId: record.repositoryInstallationId || "-",
     repositoryProvider: record.repositoryProvider || "-",
     startedAtFull: formatFullTime(record.startedAt),
-    startedAtRaw: record.startedAt,
+    startedAtRaw: record.startedAt ?? "",
     storageConfigurationId: record.storageConfigurationId || "-",
     storageConfigurationName: record.storageConfigurationName || "-",
     totalSizeBytes: record.totalSizeBytes ?? 0,
@@ -201,7 +153,7 @@ const buildStatusMap: Record<BuildRecordAPIStatus, BuildRunStatus> = {
   succeeded: "success",
 };
 
-function formatTime(value: string) {
+function formatTime(value?: string) {
   if (!value) {
     return "-";
   }
@@ -219,11 +171,11 @@ function formatTime(value: string) {
   }).format(date);
 }
 
-function formatFullTime(value: string) {
+function formatFullTime(value?: string) {
   return formatRecordNumber(value);
 }
 
-function formatRecordNumber(value: string) {
+function formatRecordNumber(value?: string) {
   if (!value) {
     return "-";
   }
@@ -242,7 +194,7 @@ function formatRecordNumber(value: string) {
   return `${year}-${month}-${day} ${hour}:${minute}:${second}`;
 }
 
-function formatDuration(startedAt: string, finishedAt: string) {
+function formatDuration(startedAt?: string, finishedAt?: string) {
   if (!startedAt) {
     return "-";
   }

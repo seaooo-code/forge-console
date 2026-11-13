@@ -19,7 +19,7 @@ export function TopToolbar() {
     return null;
   }
 
-  const displayName = user.name;
+  const displayName = user.name ?? "";
   const email = user.enterpriseEmail;
   const avatarURL = user.avatarThumb;
   const initials = getInitials(displayName);

@@ -1,15 +1,12 @@
-import { type APIErrorPayload, createFetchClient } from "@/api/client";
+import { type APIErrorPayload, type APISchemas, createFetchClient } from "@/api/client";
 import { fetchAllPaginatedItems, normalizePagination } from "@/api/pagination";
 
 import type {
-  ReleaseGrayStrategy,
   ReleasePointerRecord,
   ReleaseRecordDetail,
-  ReleaseRecordStatus,
   ReleaseRecordsFilters,
   ReleaseRecordsRequest,
   ReleaseRecordsSnapshot,
-  ReleaseRecordType,
 } from "../types";
 
 export const releaseRecordDetailQueryKey = (releaseId: string) =>
@@ -31,41 +28,13 @@ export const releaseRecordsAllQueryKey = (filters?: Partial<ReleaseRecordsFilter
   normalizeReleaseRecordsFilters(filters),
 ];
 
-type ReleaseRecordAPIStatus = ReleaseRecordStatus;
-type ReleaseRecordAPIType = ReleaseRecordType;
+type ReleaseRecordAPIRecord = APISchemas["ReleaseRecord"];
 
-type ReleaseRecordAPIRecord = {
-  applicationName: string;
-  artifactKey: string;
-  artifactUrl: string;
-  buildRecordId: string;
-  createdAt: string;
-  createdBy: string;
-  createdByUserId: string;
-  description: string;
-  environment: string;
-  environmentName: string;
-  expiresAt: string;
-  grayPercentage: number;
-  grayStrategy: ReleaseGrayStrategy;
-  id: string;
-  identifier: string;
-  moduleId: string;
-  moduleName: string;
-  releaseType: ReleaseRecordAPIType;
-  status: ReleaseRecordAPIStatus;
-  updatedAt: string;
-};
+type ReleaseRecordsAPIResponse = APISchemas["ReleasesResponse"];
 
-type ReleaseRecordsAPIResponse = {
-  pagination: ReleaseRecordsSnapshot["pagination"];
-  releases: ReleaseRecordAPIRecord[];
-  summary: ReleaseRecordsSnapshot["summary"];
-};
+type ReleaseDetailAPIResponse = APISchemas["ReleaseDetailResponse"];
 
-type ReleaseDetailAPIResponse = {
-  release: ReleaseRecordAPIRecord;
-};
+type ReleaseGrayPercentageAPIPayload = APISchemas["ReleaseGrayPercentageUpdateRequest"];
 
 export class ReleaseRecordsAPIError extends Error {
   readonly payload?: APIErrorPayload;
@@ -181,7 +150,7 @@ export async function updateReleaseGrayPercentage(
   const payload = await fetchJSON<ReleaseDetailAPIResponse>(
     `/api/v1/releases/${encodeURIComponent(normalizedReleaseId)}/gray-percentage`,
     {
-      body: JSON.stringify({ grayPercentage }),
+      body: JSON.stringify({ grayPercentage } satisfies ReleaseGrayPercentageAPIPayload),
       method: "PATCH",
     },
   );
@@ -258,7 +227,7 @@ function normalizeReleaseRecord(record: ReleaseRecordAPIRecord): ReleasePointerR
   };
 }
 
-function formatShortRecordTime(value: string) {
+function formatShortRecordTime(value?: string) {
   if (!value) {
     return "-";
   }
@@ -275,7 +244,7 @@ function formatShortRecordTime(value: string) {
   return `${month}-${day} ${hour}:${minute}`;
 }
 
-function formatRecordNumber(value: string) {
+function formatRecordNumber(value?: string) {
   if (!value) {
     return "-";
   }

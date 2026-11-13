@@ -1,27 +1,16 @@
-export type CodeSourceProvider = "github";
+import type { APISchemas } from "@/api/client";
 
-export type CodeSourceAppStatus = "installed" | "notInstalled";
+export type CodeSourceApp = APISchemas["CodeSourceApp"];
 
-export type CodeSourceAppConfigurationStatus = "configured" | "notConfigured";
+export type CodeSourceProvider = CodeSourceApp["provider"];
 
-export type CodeSourceApp = {
-  configurationStatus: CodeSourceAppConfigurationStatus;
-  description: string;
-  id: CodeSourceProvider;
-  installedAt?: string;
-  name: string;
-  provider: CodeSourceProvider;
-  status: CodeSourceAppStatus;
-};
+export type CodeSourceAppStatus = CodeSourceApp["status"];
 
-export type CodeSourceInstallURL = {
-  url: string;
-};
+export type CodeSourceAppConfigurationStatus = CodeSourceApp["configurationStatus"];
 
-export type CodeSourceAppManifest = {
-  actionUrl: string;
-  manifest: string;
-};
+export type CodeSourceInstallURL = APISchemas["CodeSourceInstallURL"];
+
+export type CodeSourceAppManifest = APISchemas["CodeSourceAppManifest"];
 
 export type CodeSourcesSnapshot = {
   apps: CodeSourceApp[];

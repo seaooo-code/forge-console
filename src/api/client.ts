@@ -1,3 +1,8 @@
+import type { components } from "@/api/openapi";
+
+/** 后端 OpenAPI schema 生成的接口类型，由 `bun run gen:api` 更新。 */
+export type APISchemas = components["schemas"];
+
 export type APIErrorPayload = {
   error?: string;
 };

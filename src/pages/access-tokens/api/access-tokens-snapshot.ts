@@ -1,21 +1,16 @@
-import { type APIErrorPayload, createFetchClient } from "@/api/client";
+import { type APIErrorPayload, type APISchemas, createFetchClient } from "@/api/client";
 import type {
   AccessTokensSnapshot,
   ArtifactAccessTokenCreateInput,
   ArtifactAccessTokenGenerateResult,
   ArtifactAccessTokenRecord,
-  ArtifactAccessTokenStatus,
 } from "../types";
 
 export const accessTokensSnapshotQueryKey = ["access-tokens"] as const;
 
-type ArtifactAccessTokensAPIResponse = {
-  tokens: ArtifactAccessTokenRecord[];
-};
+type ArtifactAccessTokensAPIResponse = APISchemas["ArtifactAccessTokensResponse"];
 
-type ArtifactAccessTokenDetailAPIResponse = {
-  token: ArtifactAccessTokenRecord;
-};
+type ArtifactAccessTokenDetailAPIResponse = APISchemas["ArtifactAccessTokenDetailResponse"];
 
 type ArtifactAccessTokenGenerateAPIResponse = ArtifactAccessTokenGenerateResult;
 
@@ -81,12 +76,12 @@ export async function generateArtifactAccessToken(): Promise<string> {
 
 export async function updateArtifactAccessTokenStatus(
   tokenId: string,
-  status: ArtifactAccessTokenStatus,
+  status: APISchemas["ArtifactAccessTokenUpdateRequest"]["status"],
 ): Promise<ArtifactAccessTokenRecord> {
   const payload = await fetchJSON<ArtifactAccessTokenDetailAPIResponse>(
     `/api/v1/artifact-access-tokens/${encodeURIComponent(tokenId)}`,
     {
-      body: JSON.stringify({ status }),
+      body: JSON.stringify({ status } satisfies APISchemas["ArtifactAccessTokenUpdateRequest"]),
       method: "PATCH",
     },
   );

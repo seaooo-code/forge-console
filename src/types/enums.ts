@@ -1,10 +1,5 @@
-export type EnumOption = {
-  label: string;
-  value: string;
-};
+import type { APISchemas } from "@/api/client";
 
-export type GlobalEnums = {
-  applicationStatuses: EnumOption[];
-  moduleKinds: EnumOption[];
-  platforms: EnumOption[];
-};
+export type EnumOption = APISchemas["EnumOption"];
+
+export type GlobalEnums = APISchemas["EnumsResponse"];

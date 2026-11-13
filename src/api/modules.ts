@@ -1,4 +1,4 @@
-import { type APIErrorPayload, createFetchClient } from "@/api/client";
+import { type APIErrorPayload, type APISchemas, createFetchClient } from "@/api/client";
 import { fetchAllPaginatedItems, normalizePagination } from "@/api/pagination";
 import type {
   ModuleListFilters,
@@ -29,17 +29,11 @@ export const moduleDetailQueryKey = (moduleId: string | undefined) => [
   moduleId ?? "none",
 ];
 
-type ModuleAPIRecord = ModuleRecord;
+type ModuleAPIRecord = APISchemas["Module"];
 
-type ModuleDetailAPIResponse = {
-  module: ModuleAPIRecord;
-};
+type ModuleDetailAPIResponse = APISchemas["ModuleDetailResponse"];
 
-type ModulesAPIResponse = {
-  modules: ModuleAPIRecord[];
-  pagination: ModulesSnapshot["pagination"];
-  summary: ModulesSnapshot["summary"];
-};
+type ModulesAPIResponse = APISchemas["ModulesResponse"];
 
 export class ModulesAPIError extends Error {
   readonly payload?: APIErrorPayload;

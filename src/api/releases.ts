@@ -1,12 +1,7 @@
-import { type APIErrorPayload, createFetchClient } from "@/api/client";
+import { type APIErrorPayload, type APISchemas, createFetchClient } from "@/api/client";
 import type { BuildReleaseInput } from "@/types/releases";
 
-type ReleaseDetailAPIResponse = {
-  release: {
-    createdAt: string;
-    id: string;
-  };
-};
+type ReleaseDetailAPIResponse = APISchemas["ReleaseDetailResponse"];
 
 export class ReleaseAPIError extends Error {
   readonly payload?: APIErrorPayload;

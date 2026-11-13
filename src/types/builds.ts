@@ -1,10 +1,12 @@
+import type { APISchemas } from "@/api/client";
+
 import type { PaginationMeta, PaginationParams } from "./pagination";
 
 export type BuildRunStatus = "canceled" | "failed" | "queued" | "running" | "success";
 
-export type BuildTriggerType = "manual" | "pipeline";
+export type BuildTriggerType = APISchemas["BuildRecord"]["triggerType"];
 
-export type BuildListStatusFilter = "" | "failed" | "pending" | "running" | "succeeded";
+export type BuildListStatusFilter = "" | APISchemas["BuildRecord"]["status"];
 
 export type BuildListTriggerTypeFilter = "" | BuildTriggerType;
 

@@ -1,7 +1,10 @@
-import { type APIErrorPayload, createFetchClient } from "@/api/client";
+import { type APISchemas, createFetchClient } from "@/api/client";
 import { fetchAllPaginatedItems } from "@/api/pagination";
 
-import { applicationStatusLabelByCode } from "../constants";
+import {
+  applicationEnvironmentStatusLabelByCode,
+  applicationStatusLabelByCode,
+} from "../constants";
 import type {
   ApplicationCapabilities,
   ApplicationDeleteCheck,
@@ -13,8 +16,6 @@ import type {
   ApplicationMemberRecord,
   ApplicationMutationInput,
   ApplicationOptions,
-  ApplicationStatus,
-  ApplicationStatusCode,
   ApplicationsSnapshot,
   HostApplication,
 } from "../types";
@@ -28,33 +29,20 @@ export {
   normalizeApplicationListFilters,
 } from "./application-list-filters";
 
-type ApplicationsAPIResponse = {
-  applications: ApplicationAPIRecord[];
-  pagination: ApplicationsSnapshot["pagination"];
-  summary: ApplicationsSnapshot["summary"];
-};
+type ApplicationsAPIResponse = APISchemas["ApplicationsResponse"];
 
 export type ApplicationDetailAPIResponse = {
   application: HostApplication;
   detail: ApplicationDetail;
 };
 
-type ApplicationAPIRecord = Omit<HostApplication, "status"> & {
-  status: ApplicationStatus | ApplicationStatusCode;
-};
+type ApplicationAPIRecord = APISchemas["Application"];
 
-type ApplicationDetailRawAPIResponse = {
-  application: ApplicationAPIRecord;
-  detail: ApplicationDetail;
-};
+type ApplicationDetailRawAPIResponse = APISchemas["ApplicationDetailResponse"];
 
-type ApplicationMemberAPIResponse = ApplicationMemberRecord;
+type ApplicationMemberAPIResponse = APISchemas["ApplicationMember"];
 
-type ApplicationAPIErrorPayload = APIErrorPayload & {
-  feishuCode?: number;
-  feishuEndpoint?: string;
-  feishuMsg?: string;
-};
+type ApplicationAPIErrorPayload = Partial<APISchemas["ErrorResponse"]>;
 
 export class ForgeAPIError extends Error {
   readonly payload?: ApplicationAPIErrorPayload;
@@ -149,12 +137,13 @@ export async function updateApplication(
   input: ApplicationMutationInput,
 ): Promise<ApplicationDetailAPIResponse> {
   const { slug: _slug, ...payload } = input;
+  const body: APISchemas["ApplicationUpdateRequest"] = payload;
 
   return normalizeApplicationDetailPayload(
     await fetchJSON<ApplicationDetailRawAPIResponse>(
       `/api/v1/applications/${encodeURIComponent(applicationSlug)}`,
       {
-        body: JSON.stringify(payload),
+        body: JSON.stringify(body),
         method: "PATCH",
       },
     ),
@@ -163,13 +152,13 @@ export async function updateApplication(
 
 export async function updateApplicationStatus(
   applicationSlug: string,
-  status: ApplicationMutationInput["status"],
+  status: APISchemas["ApplicationStatusUpdateRequest"]["status"],
 ): Promise<ApplicationDetailAPIResponse> {
   return normalizeApplicationDetailPayload(
     await fetchJSON<ApplicationDetailRawAPIResponse>(
       `/api/v1/applications/${encodeURIComponent(applicationSlug)}/status`,
       {
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({ status } satisfies APISchemas["ApplicationStatusUpdateRequest"]),
         method: "PATCH",
       },
     ),
@@ -207,14 +196,14 @@ export async function upsertApplicationMember(
 export async function updateApplicationMemberRole(
   applicationSlug: string,
   userId: string,
-  role: ApplicationMemberInput["role"],
+  role: APISchemas["ApplicationMemberRoleUpdateRequest"]["role"],
 ): Promise<ApplicationMemberRecord> {
   const payload = await fetchJSON<ApplicationMemberAPIResponse>(
     `/api/v1/applications/${encodeURIComponent(applicationSlug)}/members/${encodeURIComponent(
       userId,
     )}`,
     {
-      body: JSON.stringify({ role }),
+      body: JSON.stringify({ role } satisfies APISchemas["ApplicationMemberRoleUpdateRequest"]),
       method: "PATCH",
     },
   );
@@ -297,16 +286,11 @@ function normalizeApplication(application: ApplicationAPIRecord): HostApplicatio
   return {
     ...application,
     createdAt: formatDate(application.createdAt),
-    status:
-      application.status === "running" ||
-      application.status === "maintenance" ||
-      application.status === "offline"
-        ? applicationStatusLabelByCode[application.status]
-        : application.status,
+    status: applicationStatusLabelByCode[application.status],
   };
 }
 
-function normalizeApplicationDetail(detail: ApplicationDetail): ApplicationDetail {
+function normalizeApplicationDetail(detail: APISchemas["ApplicationDetail"]): ApplicationDetail {
   return {
     ...detail,
     capabilities: normalizeApplicationCapabilities(detail.capabilities),
@@ -328,10 +312,11 @@ function normalizeApplicationCapabilities(
 }
 
 function normalizeApplicationEnvironment(
-  environment: ApplicationEnvironmentRecord,
+  environment: APISchemas["ApplicationEnvironment"],
 ): ApplicationEnvironmentRecord {
   return {
     ...environment,
+    status: applicationEnvironmentStatusLabelByCode[environment.status],
     updatedAt: formatUpdatedAt(environment.updatedAt),
   };
 }

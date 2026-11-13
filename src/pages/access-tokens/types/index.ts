@@ -1,26 +1,13 @@
-export type ArtifactAccessTokenStatus = "active" | "disabled";
+import type { APISchemas } from "@/api/client";
 
-export type ArtifactAccessTokenRecord = {
-  createdAt: string;
-  createdBy: string;
-  expiresAt: string;
-  id: string;
-  lastUsedAt: string;
-  name: string;
-  status: ArtifactAccessTokenStatus;
-  tokenPreview: string;
-};
+export type ArtifactAccessTokenStatus = APISchemas["ArtifactAccessToken"]["status"];
+
+export type ArtifactAccessTokenRecord = APISchemas["ArtifactAccessToken"];
 
 export type AccessTokensSnapshot = {
   tokens: ArtifactAccessTokenRecord[];
 };
 
-export type ArtifactAccessTokenCreateInput = {
-  expiresAt?: string;
-  name: string;
-  token: string;
-};
+export type ArtifactAccessTokenCreateInput = APISchemas["ArtifactAccessTokenCreateRequest"];
 
-export type ArtifactAccessTokenGenerateResult = {
-  plainToken: string;
-};
+export type ArtifactAccessTokenGenerateResult = APISchemas["ArtifactAccessTokenGenerateResponse"];

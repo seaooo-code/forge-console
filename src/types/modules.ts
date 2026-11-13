@@ -1,46 +1,17 @@
+import type { APISchemas } from "@/api/client";
+
 import type { PaginationMeta, PaginationParams } from "./pagination";
 
-export type ModuleKind = "Common" | "Feature";
+export type ModuleKind = ModuleRecord["kind"];
 
 export type ModuleApplicationOption = {
   label: string;
   value: string;
 };
 
-export type ModuleRepositoryBinding = {
-  cloneUrl: string;
-  defaultBranch: string;
-  fullName: string;
-  htmlUrl: string;
-  id: string;
-  installationId: string;
-  provider: "github";
-  sshUrl: string;
-};
+export type ModuleRepositoryBinding = APISchemas["ModuleRepositoryRequest"];
 
-export type ModuleRecord = {
-  applicationId: string;
-  applicationName: string;
-  applicationSlug: string;
-  commonModuleId: string;
-  commonModuleName: string;
-  defaultBranch: string;
-  id: string;
-  name: string;
-  kind: ModuleKind;
-  owner: string;
-  ownerAvatarUrl: string;
-  ownerEmail: string;
-  ownerUserId: string;
-  repository: string;
-  repositoryCloneUrl: string;
-  repositoryFullName: string;
-  repositoryHtmlUrl: string;
-  repositoryId: string;
-  repositoryInstallationId: string;
-  repositoryProvider: "github";
-  repositorySshUrl: string;
-};
+export type ModuleRecord = APISchemas["Module"];
 
 export type ModulesSnapshot = {
   modules: ModuleRecord[];
@@ -48,28 +19,9 @@ export type ModulesSnapshot = {
   summary: ModuleSummary;
 };
 
-export type ModuleSummary = {
-  common: number;
-  feature: number;
-  total: number;
-};
+export type ModuleSummary = APISchemas["ModuleSummary"];
 
-export type ModuleMutationInput = {
-  applicationId: string;
-  commonModuleId?: string;
-  id: string;
-  name: string;
-  kind: ModuleKind;
-  owner: string;
-  ownerAvatarUrl: string;
-  ownerDepartmentIds: string[];
-  ownerEmail: string;
-  ownerFeishuOpenId?: string;
-  ownerFeishuUnionId?: string;
-  ownerFeishuUserId?: string;
-  ownerUserId: string;
-  repository: ModuleRepositoryBinding;
-};
+export type ModuleMutationInput = APISchemas["ModuleCreateRequest"];
 
 export type ModuleFormState = {
   applicationId: string;

@@ -1,5 +1,5 @@
 import { apiBaseUrl } from "@/api/client";
-import type { AuthSession, FeishuAuthResponse } from "@/types/auth";
+import type { AuthSession, FeishuAuthResponse, GlobalRole } from "@/types/auth";
 
 const authRedirectStorageKey = "forge-console.auth-redirect-path";
 const authorizationRequests = new Map<string, Promise<AuthSession>>();
@@ -97,7 +97,7 @@ function toAuthSession(payload: FeishuAuthResponse): AuthSession {
       canCreateBuild: Boolean(payload.capabilities?.canCreateBuild),
       canCreateRelease: Boolean(payload.capabilities?.canCreateRelease),
     },
-    roles: payload.roles ?? [],
+    roles: (payload.roles ?? []) as GlobalRole[],
     token: payload.token,
     user: payload.user,
   };

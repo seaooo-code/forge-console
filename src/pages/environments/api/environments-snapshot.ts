@@ -1,4 +1,4 @@
-import { type APIErrorPayload, createFetchClient } from "@/api/client";
+import { type APIErrorPayload, type APISchemas, createFetchClient } from "@/api/client";
 import type {
   EnvironmentCode,
   EnvironmentDetail,
@@ -13,13 +13,9 @@ export {
   environmentsSnapshotQueryKey,
 } from "./environment-query-keys";
 
-type EnvironmentsAPIResponse = {
-  environments: RuntimeEnvironment[];
-};
+type EnvironmentsAPIResponse = APISchemas["EnvironmentsResponse"];
 
-type EnvironmentDetailAPIResponse = {
-  environment: RuntimeEnvironment;
-};
+type EnvironmentDetailAPIResponse = APISchemas["EnvironmentDetailResponse"];
 
 export class EnvironmentAPIError extends Error {
   readonly payload?: APIErrorPayload;

@@ -124,12 +124,14 @@ export function ApplicationCreatePage({
     setValue("ownerAvatarUrl", "", { shouldDirty: true });
     setValue("ownerDepartmentIds", [], { shouldDirty: true });
     setValue("ownerEmail", "", { shouldDirty: true });
+    setValue("ownerUserId", "", { shouldDirty: true });
   };
 
   const handleOwnerSelect = (user: OwnerSearchUser) => {
     setValue("ownerAvatarUrl", user.avatarUrl, { shouldDirty: true });
     setValue("ownerDepartmentIds", user.departmentIds, { shouldDirty: true });
     setValue("ownerEmail", user.email, { shouldDirty: true });
+    setValue("ownerUserId", user.id, { shouldDirty: true });
   };
 
   const handleFormSubmit = async (form: ApplicationFormState) => {
@@ -150,6 +152,11 @@ export function ApplicationCreatePage({
       input.environments.length === 0
     ) {
       setFormError("请完整填写基础信息，并至少选择一个平台和一个环境");
+      return;
+    }
+
+    if (!input.ownerUserId) {
+      setFormError("请从搜索结果中选择负责人");
       return;
     }
 

@@ -1,12 +1,9 @@
-import { type APIErrorPayload, createFetchClient } from "@/api/client";
+import { type APIErrorPayload, type APISchemas, createFetchClient } from "@/api/client";
 import { fetchAllPaginatedItems, normalizePagination } from "@/api/pagination";
 import type { PaginationParams } from "@/types/pagination";
-import type { StorageConfigRecord, StorageSnapshot } from "@/types/storage";
+import type { StorageSnapshot } from "@/types/storage";
 
-type StorageConfigurationsAPIResponse = {
-  configurations: StorageConfigRecord[];
-  pagination: StorageSnapshot["pagination"];
-};
+type StorageConfigurationsAPIResponse = APISchemas["StorageConfigurationsResponse"];
 
 export class StorageConfigurationsAPIError extends Error {
   readonly payload?: APIErrorPayload;

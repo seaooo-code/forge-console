@@ -11,6 +11,7 @@
     "format": "biome format --write .",
     "preview": "vite preview",
     "typecheck": "tsc -b --pretty",
+    "gen:api": "openapi-typescript ../forge-server/docs/openapi.json -o src/api/openapi.ts",
     "validate": "bun run lint && bun run typecheck && bun run build"
   },
   "dependencies": {
@@ -45,6 +46,7 @@
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.2",
+    "openapi-typescript": "^7.13.0",
     "tailwindcss": "^4.3.0",
     "typescript": "^6.0.3",
     "vite": "^8.0.16"

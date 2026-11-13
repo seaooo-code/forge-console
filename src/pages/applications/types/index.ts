@@ -1,118 +1,44 @@
 import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import type { FieldPath } from "react-hook-form";
+import type { APISchemas } from "@/api/client";
 import type { PaginationMeta, PaginationParams } from "@/types/pagination";
 
 export type ApplicationStatus = "运行中" | "维护中" | "已下线";
-export type ApplicationStatusCode = "running" | "maintenance" | "offline";
+export type ApplicationStatusCode = APISchemas["Application"]["status"];
 
-export type HostApplication = {
-  id: string;
-  name: string;
-  slug: string;
-  platform: string;
-  owner: string;
-  ownerEmail: string;
-  ownerAvatarUrl: string;
-  ownerDepartmentIds: string[];
-  moduleCount: number;
-  environmentCount: number;
-  createdAt: string;
+export type HostApplication = Omit<APISchemas["Application"], "status"> & {
   status: ApplicationStatus;
 };
 
-export type ApplicationMetricTone = "blue" | "emerald" | "amber" | "rose" | "slate";
+export type ApplicationMetricTone = APISchemas["ApplicationMetric"]["tone"];
 
-export type ApplicationDetailMetric = {
-  id: string;
-  label: string;
-  value: string;
-  detail: string;
-  tone: ApplicationMetricTone;
+export type ApplicationDetailMetric = APISchemas["ApplicationMetric"];
+
+export type ApplicationEnvironmentStatus = "健康" | "灰度中" | "维护中";
+export type ApplicationEnvironmentStatusCode = APISchemas["ApplicationEnvironment"]["status"];
+
+export type ApplicationEnvironmentRecord = Omit<APISchemas["ApplicationEnvironment"], "status"> & {
+  status: ApplicationEnvironmentStatus;
 };
 
-export type ApplicationEnvironmentRecord = {
-  id: string;
-  environment: string;
-  traffic: string;
-  updatedAt: string;
-  status: "健康" | "灰度中" | "维护中";
-};
+export type ApplicationModuleRecord = APISchemas["ApplicationModule"];
 
-export type ApplicationModuleRecord = {
-  commonModuleId: string;
-  commonModuleName: string;
-  id: string;
-  name: string;
-  kind: "Common" | "Feature";
-  repository: string;
-  owner: string;
-};
+export type ApplicationMemberRecord = APISchemas["ApplicationMember"];
 
-export type ApplicationMemberRecord = {
-  avatarUrl: string;
-  email: string;
-  id: string;
-  name: string;
-  role: "Owner" | "Developer" | "QA" | "Release";
-  team: string;
-  userId: string;
-};
+export type ApplicationCapabilities = APISchemas["ApplicationCapabilities"];
 
-export type ApplicationCapabilities = {
-  canEditApplication: boolean;
-  canManageMembers: boolean;
-  canUpdateStatus: boolean;
-  canCreateBuild: boolean;
-  canRelease: boolean;
-};
+export type ClientIntegrationField = APISchemas["ApplicationClientIntegrationField"];
 
-export type ClientIntegrationField = {
-  name: string;
-  description: string;
-  required?: boolean;
-  type?: string;
-  example?: string;
-};
+export type ClientIntegrationEndpoint = APISchemas["ApplicationClientIntegrationEndpoint"];
 
-export type ClientIntegrationEndpoint = {
-  baseUrl: string;
-  path: string;
-  method: string;
-  requestFields: ClientIntegrationField[];
-  responseFields: ClientIntegrationField[];
-  description?: string;
-  exampleUrl?: string;
-};
+export type ClientIntegrationInfo = APISchemas["ApplicationClientIntegration"];
 
-export type ClientIntegrationInfo = {
-  endpoint: ClientIntegrationEndpoint;
-};
-
-export type ApplicationDetail = {
-  id: string;
-  appKey: string;
-  slug: string;
-  name: string;
-  description: string;
-  owner: string;
-  ownerEmail: string;
-  ownerAvatarUrl: string;
-  ownerDepartmentIds: string[];
-  metrics: ApplicationDetailMetric[];
+export type ApplicationDetail = Omit<APISchemas["ApplicationDetail"], "environments"> & {
   environments: ApplicationEnvironmentRecord[];
-  modules: ApplicationModuleRecord[];
-  members: ApplicationMemberRecord[];
-  capabilities: ApplicationCapabilities;
-  clientIntegration?: ClientIntegrationInfo;
 };
 
-export type ApplicationSummary = {
-  total: number;
-  running: number;
-  maintenance: number;
-  offline: number;
-};
+export type ApplicationSummary = APISchemas["ApplicationSummary"];
 
 export type ApplicationsSnapshot = {
   applications: HostApplication[];
@@ -121,18 +47,9 @@ export type ApplicationsSnapshot = {
   summary: ApplicationSummary;
 };
 
-export type ApplicationDeleteDependency = {
-  id: string;
-  name: string;
-  type: string;
-  description?: string;
-};
+export type ApplicationDeleteDependency = APISchemas["ApplicationDeleteDependency"];
 
-export type ApplicationDeleteCheck = {
-  deletable: boolean;
-  dependencies: ApplicationDeleteDependency[];
-  message?: string;
-};
+export type ApplicationDeleteCheck = APISchemas["ApplicationDeleteCheck"];
 
 export type ApplicationListFilters = {
   keyword: string;
@@ -143,39 +60,15 @@ export type ApplicationListFilters = {
 
 export type ApplicationListRequest = ApplicationListFilters & PaginationParams;
 
-export type ApplicationEnvironmentInput = {
-  environment: ApplicationEnvironmentRecord["environment"];
-};
+export type ApplicationEnvironmentInput = APISchemas["ApplicationEnvironmentRequest"];
 
-export type ApplicationMemberInput = {
-  role: ApplicationMemberRecord["role"];
-  userId: string;
-};
+export type ApplicationMemberInput = APISchemas["ApplicationMemberRequest"];
 
-export type ApplicationOption = {
-  label: string;
-  value: string;
-};
+export type ApplicationOption = APISchemas["ApplicationOption"];
 
-export type ApplicationOptions = {
-  applicationStatuses: ApplicationOption[];
-  environments: ApplicationOption[];
-  owners: ApplicationOption[];
-  platforms: ApplicationOption[];
-};
+export type ApplicationOptions = APISchemas["ApplicationOptions"];
 
-export type ApplicationMutationInput = {
-  slug?: string;
-  name: string;
-  platform: string;
-  owner: string;
-  ownerEmail: string;
-  ownerAvatarUrl: string;
-  ownerDepartmentIds: string[];
-  description: string;
-  status: ApplicationStatusCode;
-  environments: ApplicationEnvironmentInput[];
-};
+export type ApplicationMutationInput = APISchemas["ApplicationCreateRequest"];
 
 export type ApplicationCreatePageProps = {
   applicationSlug?: string;
@@ -196,6 +89,7 @@ export type ApplicationFormState = {
   ownerAvatarUrl: string;
   ownerDepartmentIds: string[];
   ownerEmail: string;
+  ownerUserId: string;
   platforms: string[];
   slug: string;
   status: ApplicationStatusCode | "";

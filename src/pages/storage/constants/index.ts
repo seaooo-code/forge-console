@@ -8,11 +8,17 @@ export const defaultForm: StorageFormState = {
   bucket: "",
   endpoint: "",
   name: "",
-  owner: "rn-platform",
+  owner: "",
+  ownerAvatarUrl: "",
+  ownerEmail: "",
+  ownerFeishuOpenId: "",
+  ownerFeishuUnionId: "",
+  ownerFeishuUserId: "",
+  ownerUserId: "",
   publicBaseUrl: "",
   region: "",
   secretAccessKey: "",
-  status: "正常",
+  status: "healthy",
 };
 
 export const storageAdapterOptions: StorageAdapterOption[] = [
@@ -27,7 +33,13 @@ export const adapterToneClass: Record<StorageAdapter, string> = {
 };
 
 export const statusClass: Record<StorageStatus, string> = {
-  已停用: "border-border bg-muted text-muted-foreground",
-  异常: "border-destructive/30 bg-destructive/10 text-destructive",
-  正常: "border-success/30 bg-success/10 text-success",
+  disabled: "border-border bg-muted text-muted-foreground",
+  error: "border-destructive/30 bg-destructive/10 text-destructive",
+  healthy: "border-success/30 bg-success/10 text-success",
+};
+
+export const statusLabel: Record<StorageStatus, string> = {
+  disabled: "已停用",
+  error: "异常",
+  healthy: "正常",
 };

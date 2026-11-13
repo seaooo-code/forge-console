@@ -3,6 +3,8 @@ import { themeQuartz } from "@/lib/ag-grid";
 import type {
   ApplicationDetailMetric,
   ApplicationEnvironmentRecord,
+  ApplicationEnvironmentStatus,
+  ApplicationEnvironmentStatusCode,
   ApplicationListFilters,
   ApplicationModuleRecord,
   ApplicationStatus,
@@ -78,6 +80,15 @@ export const applicationEnvironmentStatusClass: Record<
   健康: "border-success/30 bg-success/10 text-success",
   灰度中: "border-warning/40 bg-warning/10 text-warning",
   维护中: "border-border bg-muted text-muted-foreground",
+};
+
+export const applicationEnvironmentStatusLabelByCode: Record<
+  ApplicationEnvironmentStatusCode,
+  ApplicationEnvironmentStatus
+> = {
+  gray: "灰度中",
+  healthy: "健康",
+  maintenance: "维护中",
 };
 
 export const applicationModuleKindClass: Record<ApplicationModuleRecord["kind"], string> = {

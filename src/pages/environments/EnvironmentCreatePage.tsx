@@ -33,7 +33,6 @@ import type {
   EnvironmentCardTone,
   EnvironmentFormState,
   EnvironmentMutationInput,
-  EnvironmentStatusCode,
   RuntimeEnvironment,
 } from "./types";
 
@@ -316,7 +315,7 @@ function buildInitialForm(environment?: RuntimeEnvironment): EnvironmentFormStat
     code: environment.id,
     description: environment.description,
     name: environment.name,
-    status: toStatusCode(environment.status),
+    status: environment.status,
     storageConfigurationId: environment.storageConfigurationId,
     tone: environment.tone,
   };
@@ -330,19 +329,10 @@ function buildEnvironmentInput(
     code: form.code.trim(),
     description: form.description.trim(),
     name: form.name.trim(),
-    status: form.status ?? (environment ? toStatusCode(environment.status) : defaultForm.status),
+    status: form.status ?? environment?.status ?? defaultForm.status,
     storageConfigurationId: form.storageConfigurationId,
     tone: form.tone,
   };
-}
-
-function toStatusCode(status: RuntimeEnvironment["status"]): EnvironmentStatusCode {
-  switch (status) {
-    case "健康":
-      return "healthy";
-    case "灰度中":
-      return "gray";
-  }
 }
 
 function validateEnvironmentInput(

@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import type { FeishuUserSearchResult } from "@/types/feishu";
 import type { StorageAdapter, StorageStatus } from "@/types/storage";
 
 import { storageAdapterOptions } from "../constants";
@@ -20,12 +21,14 @@ import type { StorageFormState } from "../types";
 type StorageBasicInfoSectionProps = {
   control: Control<StorageFormState>;
   onOwnerChange: (value: string) => void;
+  onOwnerSelect: (user: FeishuUserSearchResult) => void;
   register: UseFormRegister<StorageFormState>;
 };
 
 export function StorageBasicInfoSection({
   control,
   onOwnerChange,
+  onOwnerSelect,
   register,
 }: StorageBasicInfoSectionProps) {
   return (
@@ -71,15 +74,15 @@ export function StorageBasicInfoSection({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="正常">正常</SelectItem>
-                  <SelectItem value="异常">异常</SelectItem>
-                  <SelectItem value="已停用">已停用</SelectItem>
+                  <SelectItem value="healthy">正常</SelectItem>
+                  <SelectItem value="error">异常</SelectItem>
+                  <SelectItem value="disabled">已停用</SelectItem>
                 </SelectContent>
               </Select>
             )}
           />
         </FormSectionField>
-        <FormSectionField label="负责人">
+        <FormSectionField label="负责人" required>
           <Controller
             control={control}
             name="owner"
@@ -91,6 +94,7 @@ export function StorageBasicInfoSection({
                 searchUsers={searchFeishuUsers}
                 onBlur={field.onBlur}
                 onChange={onOwnerChange}
+                onSelect={onOwnerSelect}
               />
             )}
           />
