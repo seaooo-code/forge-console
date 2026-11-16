@@ -26,6 +26,7 @@ export const navGroups: NavGroup[] = [
     label: "平台",
     items: [
       { id: "code-sources", label: "代码源管理", href: "/code-sources", icon: "codeSource" },
+      { id: "build-adapters", label: "构建适配器", href: "/build-adapters", icon: "buildAdapter" },
       { id: "storage", label: "存储管理", href: "/storage", icon: "storage" },
       { id: "environments", label: "环境管理", href: "/environments", icon: "environment" },
       { id: "access-tokens", label: "访问令牌", href: "/access-tokens", icon: "accessToken" },

@@ -17,10 +17,10 @@ export function buildBuildsColumnDefs({
 }): ColDef<BuildRunRecord>[] {
   return [
     {
-      cellRenderer: BuildIDCell,
-      field: "id",
+      cellRenderer: BuildNumberCell,
+      field: "number",
       flex: 0.45,
-      headerName: "ID",
+      headerName: "构建号",
       minWidth: 96,
     },
     {
@@ -120,12 +120,16 @@ function BuildCell({ data }: ICellRendererParams<BuildRunRecord>) {
   return <span className="truncate font-semibold text-primary text-sm">{data.createdAt}</span>;
 }
 
-function BuildIDCell({ value }: ICellRendererParams<BuildRunRecord, string>) {
-  return value ? (
-    <span className="truncate font-mono font-semibold text-foreground text-xs">
-      #{value.trim().slice(-8)}
+function BuildNumberCell({ data }: ICellRendererParams<BuildRunRecord>) {
+  if (!data) {
+    return null;
+  }
+
+  return (
+    <span className="truncate font-mono font-semibold text-foreground text-xs" title={data.id}>
+      {data.number ? `#${data.number}` : `#${data.id.trim().slice(-8)}`}
     </span>
-  ) : null;
+  );
 }
 
 function BranchCell({ data }: ICellRendererParams<BuildRunRecord>) {

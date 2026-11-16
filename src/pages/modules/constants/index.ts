@@ -1,12 +1,20 @@
-import type { BuildVariableFormState, ModuleFormState, ModuleKind } from "../types";
+import type { BuildMode, BuildVariableFormState, ModuleFormState, ModuleKind } from "../types";
 
 export const defaultModuleBuildConfig: ModuleFormState["buildConfig"] = {
   autoBuildBranches: [],
   autoBuildEnvironment: "",
   autoPreviewRelease: false,
   autoPreviewTtlHours: 168,
+  buildAdapterId: "",
+  buildAdapterParams: {},
   buildContext: ".",
+  buildMode: "dockerfile",
   dockerfilePath: "Dockerfile",
+};
+
+export const buildModeLabels: Record<BuildMode, string> = {
+  adapter: "构建适配器",
+  dockerfile: "仓库 Dockerfile",
 };
 
 export const defaultForm: ModuleFormState = {

@@ -25,7 +25,7 @@ export const buildTriggerFilterOptions = (
 
 export const buildPlatformLabels: Record<BuildPlatform, string> = {
   android: "Android",
-  harmony: "HarmonyOS",
+  harmonyos: "HarmonyOS",
   ios: "iOS",
 };
 

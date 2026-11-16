@@ -25,6 +25,14 @@ const ApplicationsPage = lazy(async () => ({
   default: (await import("@/pages/applications")).ApplicationsPage,
 }));
 
+const BuildAdaptersPage = lazy(async () => ({
+  default: (await import("@/pages/build-adapters")).BuildAdaptersPage,
+}));
+
+const BuildAdapterEditPage = lazy(async () => ({
+  default: (await import("@/pages/build-adapters")).BuildAdapterEditPage,
+}));
+
 const BuildsPage = lazy(async () => ({
   default: (await import("@/pages/builds")).BuildsPage,
 }));
@@ -173,6 +181,9 @@ function ConsoleRoutes() {
         <Route path="deployments" element={<Navigate to="/release-records" replace />} />
         <Route path="deployments/:releaseId" element={<DeploymentDetailRedirect />} />
         <Route path="code-sources" element={<CodeSourcesPage />} />
+        <Route path="build-adapters" element={<BuildAdaptersRoute />} />
+        <Route path="build-adapters/new" element={<BuildAdapterCreateRoute />} />
+        <Route path="build-adapters/:adapterId" element={<BuildAdapterEditRoute />} />
         <Route path="storage" element={<StorageRoute />} />
         <Route path="storage/new" element={<StorageCreateRoute />} />
         <Route path="storage/:storageId/edit" element={<StorageEditRoute />} />
@@ -261,6 +272,49 @@ function ApplicationDetailRoute() {
   );
 }
 
+function BuildAdaptersRoute() {
+  const navigate = useNavigate();
+
+  return (
+    <BuildAdaptersPage
+      onCreateBuildAdapter={() => navigate("/build-adapters/new")}
+      onOpenBuildAdapter={(adapterId: string) =>
+        navigate(`/build-adapters/${encodeURIComponent(adapterId)}`)
+      }
+    />
+  );
+}
+
+function BuildAdapterCreateRoute() {
+  const navigate = useNavigate();
+
+  return (
+    <BuildAdapterEditPage
+      onBack={() => navigate("/build-adapters")}
+      onCreated={(adapterId: string) =>
+        navigate(`/build-adapters/${encodeURIComponent(adapterId)}`, { replace: true })
+      }
+    />
+  );
+}
+
+function BuildAdapterEditRoute() {
+  const navigate = useNavigate();
+  const { adapterId } = useParams<{ adapterId: string }>();
+
+  if (!adapterId) {
+    return <Navigate to="/build-adapters" replace />;
+  }
+
+  return (
+    <BuildAdapterEditPage
+      key={adapterId}
+      adapterId={adapterId}
+      onBack={() => navigate("/build-adapters")}
+    />
+  );
+}
+
 function ModulesRoute() {
   const navigate = useNavigate();
 
@@ -315,6 +369,9 @@ function ModuleDetailRoute() {
     <ModuleDetailPage
       moduleId={moduleId}
       onBack={() => navigate("/modules")}
+      onOpenBuildAdapter={(adapterId: string) =>
+        navigate(`/build-adapters/${encodeURIComponent(adapterId)}`)
+      }
       onEditModule={(editableModuleId: string) =>
         navigate(`/modules/${encodeURIComponent(editableModuleId)}/edit`)
       }
@@ -344,6 +401,9 @@ function BuildDetailRoute() {
     <BuildDetailPage
       buildId={buildId}
       onBack={() => navigate("/builds")}
+      onOpenBuildAdapter={(adapterId: string) =>
+        navigate(`/build-adapters/${encodeURIComponent(adapterId)}`)
+      }
       onOpenEnvironment={(environmentId: string) =>
         navigate(`/environments/${encodeURIComponent(environmentId)}/edit`)
       }

@@ -3,12 +3,11 @@ import { ExternalLink, GitFork, LoaderCircle, Lock, X } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import {
   connectionRepositoriesQueryKey,
   searchConnectionRepositories,
 } from "../api/modules-snapshot";
-import { useDebouncedValue } from "../hooks";
 import type {
   CodeSourceConnection,
   CodeSourceRepository,

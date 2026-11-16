@@ -1,11 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,
+  Blocks,
   Box,
   CalendarClock,
   Clock3,
   Database,
   ExternalLink,
+  FileCheck2,
   GitBranch,
   GitCommitHorizontal,
   HardDrive,
@@ -16,6 +18,7 @@ import {
   UserRound,
 } from "lucide-react";
 
+import { buildAdapterDetailQueryKey, fetchBuildAdapter } from "@/api/build-adapters";
 import { fetchModuleDetailSnapshot, moduleDetailQueryKey } from "@/api/modules";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -45,6 +48,7 @@ import { getArtifactBaseURL, getStorageConfigurationDisplayName, isLiveBuildStat
 type BuildDetailPageProps = {
   buildId: string;
   onBack: () => void;
+  onOpenBuildAdapter: (adapterId: string) => void;
   onOpenEnvironment: (environmentId: string) => void;
   onOpenStorage: (storageId: string) => void;
 };
@@ -52,6 +56,7 @@ type BuildDetailPageProps = {
 export function BuildDetailPage({
   buildId,
   onBack,
+  onOpenBuildAdapter,
   onOpenEnvironment,
   onOpenStorage,
 }: BuildDetailPageProps) {
@@ -74,11 +79,27 @@ export function BuildDetailPage({
     queryKey: moduleDetailQueryKey(buildModuleId),
   });
 
+  const buildAdapterId = build?.buildAdapterId ?? "";
+  // 读取适配器需要平台管理员或应用 Owner 权限；读不到时回退到模块里的适配器名称或 id。
+  const { data: buildAdapter } = useQuery({
+    enabled: buildAdapterId !== "",
+    queryFn: () => fetchBuildAdapter(buildAdapterId),
+    queryKey: buildAdapterDetailQueryKey(buildAdapterId),
+    retry: false,
+  });
+
   if (!build) {
     return <BuildDetailFallback error={error} isFetching={isFetching} onBack={onBack} />;
   }
 
-  const applicationSlug = moduleSnapshot?.modules[0]?.applicationSlug ?? "";
+  const buildModule = moduleSnapshot?.modules[0];
+  const applicationSlug = buildModule?.applicationSlug ?? "";
+  const buildAdapterName =
+    buildAdapter?.name ||
+    (buildModule?.buildConfig.buildAdapterId === buildAdapterId
+      ? buildModule?.buildConfig.buildAdapterName
+      : "") ||
+    buildAdapterId;
 
   return (
     <>
@@ -99,7 +120,7 @@ export function BuildDetailPage({
                 <PackageCheck className="size-5" />
               </div>
               <h1 className="font-semibold text-2xl text-foreground tracking-tight">
-                构建 {build.createdAt}
+                {build.number ? `构建 #${build.number}` : `构建 ${build.createdAt}`}
               </h1>
               <BuildStatusBadge status={build.status} />
               <Badge variant="outline" className="border-border font-mono text-muted-foreground">
@@ -113,6 +134,7 @@ export function BuildDetailPage({
             </div>
             <p className="mt-2 text-muted-foreground text-sm">
               {build.application} / {build.module} / {build.environmentName}
+              {build.number ? ` · 创建于 ${build.createdAt}` : ""}
             </p>
           </div>
 
@@ -217,6 +239,35 @@ export function BuildDetailPage({
                 value={build.workerId}
                 description={build.status === "queued" ? "等待分配" : undefined}
               />
+              {buildAdapterId ? (
+                <>
+                  <DetailItem
+                    icon={Blocks}
+                    label="构建适配器"
+                    value={buildAdapterName}
+                    description={
+                      build.buildAdapterVersion !== null
+                        ? `版本 v${build.buildAdapterVersion}`
+                        : "版本待渲染后写入"
+                    }
+                    onClick={() => onOpenBuildAdapter(buildAdapterId)}
+                  />
+                  <DetailItem
+                    icon={FileCheck2}
+                    label="渲染结果 sha256"
+                    value={
+                      build.renderedDockerfileSha256
+                        ? build.renderedDockerfileSha256.slice(0, 12)
+                        : "-"
+                    }
+                    description={
+                      build.renderedDockerfileSha256
+                        ? "渲染后 Dockerfile 的摘要（前 12 位）"
+                        : "尚未渲染"
+                    }
+                  />
+                </>
+              ) : null}
               <DetailItem
                 icon={HardDrive}
                 label="产物 URL"

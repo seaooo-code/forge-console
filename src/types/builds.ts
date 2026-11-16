@@ -27,6 +27,10 @@ export type BuildRunRecord = {
   application: string;
   artifact: string;
   branch: string;
+  /** 适配器构建使用的适配器 id，Dockerfile 构建为空字符串。 */
+  buildAdapterId: string;
+  /** 适配器构建使用的适配器版本，Dockerfile 构建或渲染前为 null。 */
+  buildAdapterVersion: number | null;
   /** 完整 commit SHA，构建检出前为空字符串。 */
   commitSha: string;
   commitShortSha: string;
@@ -41,8 +45,12 @@ export type BuildRunRecord = {
   id: string;
   module: string;
   moduleId: string;
+  /** 模块内构建号，从 1 递增。 */
+  number: number;
   operator: string;
   platforms: string[];
+  /** 适配器构建渲染出的 Dockerfile 的 sha256，Dockerfile 构建为空字符串。 */
+  renderedDockerfileSha256: string;
   repositoryWebUrl: string;
   /** forge.json 中的运行时版本，构建成功前为空字符串。 */
   runtimeVersion: string;
@@ -76,4 +84,5 @@ export type BuildCreateInput = BuildCreateFormState;
 export type BuildCreateResult = {
   createdAt: string;
   id: string;
+  number: number;
 };

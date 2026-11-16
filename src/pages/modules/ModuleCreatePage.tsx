@@ -15,7 +15,7 @@ import {
   ModuleFormLoading,
   ModuleFormNotFound,
 } from "./components/ModuleFormStatus";
-import { useModuleFormData } from "./hooks";
+import { useModuleBuildAdapters, useModuleFormData } from "./hooks";
 import type { ModuleFormState, ModuleKind, ModuleRepositorySelection } from "./types";
 import {
   buildModuleInput,
@@ -64,6 +64,7 @@ export function ModuleCreatePage({
     register,
     setValue,
   } = form;
+  const adaptersQuery = useModuleBuildAdapters();
   const selectedConnectionId = useWatch({ control, name: "connectionId" });
   const selectedConnection = connections.find(
     (connection) => connection.id === selectedConnectionId,
@@ -151,7 +152,19 @@ export function ModuleCreatePage({
   };
 
   const handleFormSubmit = async (form: ModuleFormState) => {
-    const input = buildModuleInput(form);
+    const selectedAdapter = adaptersQuery.data?.find(
+      (adapter) => adapter.id === form.buildConfig.buildAdapterId,
+    );
+    // 读不到适配器列表时（无权限）保持模块原有的适配器参数，不做按定义过滤。
+    if (
+      form.buildConfig.buildMode === "adapter" &&
+      !selectedAdapter &&
+      form.buildConfig.buildAdapterId !== moduleRecord?.buildConfig.buildAdapterId
+    ) {
+      setFormError("请选择构建适配器");
+      return;
+    }
+    const input = buildModuleInput(form, selectedAdapter);
     const validationError = validateModuleInput(input);
     if (validationError) {
       setFormError(validationError);
@@ -254,9 +267,15 @@ export function ModuleCreatePage({
           />
           <div className="px-4 pb-5">
             <ModuleBuildConfigFields
+              adapters={adaptersQuery.data}
+              adaptersError={adaptersQuery.error}
               clearFormError={clearFormError}
               control={control}
+              currentAdapterId={moduleRecord?.buildConfig.buildAdapterId ?? ""}
+              currentAdapterName={moduleRecord?.buildConfig.buildAdapterName ?? ""}
               environmentOptions={environmentOptions}
+              isAdaptersLoading={adaptersQuery.isPending}
+              moduleId={isEditMode ? moduleRecord?.id : undefined}
               register={register}
             />
           </div>

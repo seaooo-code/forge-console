@@ -90,6 +90,7 @@ function toAuthSession(payload: FeishuAuthResponse): AuthSession {
       canCreateApplication: Boolean(payload.capabilities?.canCreateApplication),
       canManageAccessTokens: Boolean(payload.capabilities?.canManageAccessTokens),
       canManageApplications: Boolean(payload.capabilities?.canManageApplications),
+      canManageBuildAdapters: Boolean(payload.capabilities?.canManageBuildAdapters),
       canManageCodeSources: Boolean(payload.capabilities?.canManageCodeSources),
       canManageEnvironments: Boolean(payload.capabilities?.canManageEnvironments),
       canManageModules: Boolean(payload.capabilities?.canManageModules),

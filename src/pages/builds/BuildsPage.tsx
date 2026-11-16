@@ -293,7 +293,7 @@ export function BuildsPage({ onOpenBuild }: BuildsPageProps) {
               environment: form.environment,
               moduleId: form.moduleId,
             });
-            setBuildSuccess(`构建已提交：${build.createdAt}`);
+            setBuildSuccess(`构建 #${build.number} 已提交：${build.createdAt}`);
             setIsCreateBuildDialogOpen(false);
             await queryClient.invalidateQueries({ queryKey: buildsSnapshotQueryKey() });
           } catch (error) {

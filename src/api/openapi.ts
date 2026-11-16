@@ -283,6 +283,110 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/build-adapters": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List build adapters */
+        get: operations["listBuildAdapters"];
+        put?: never;
+        /** Create build adapter */
+        post: operations["createBuildAdapter"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/build-adapters/render-preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Render an unsaved build adapter draft with sample context or a module, without building */
+        post: operations["previewBuildAdapterDraft"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/build-adapters/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get build adapter */
+        get: operations["getBuildAdapter"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update build adapter. Each update increments version */
+        patch: operations["updateBuildAdapter"];
+        trace?: never;
+    };
+    "/api/v1/build-adapters/{id}/disable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Disable build adapter. Referencing modules cannot start new builds */
+        post: operations["disableBuildAdapter"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/build-adapters/{id}/enable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Enable build adapter */
+        post: operations["enableBuildAdapter"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/build-adapters/{id}/render-preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Render build adapter with sample context or a module, without building */
+        post: operations["previewBuildAdapter"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/builds": {
         parameters: {
             query?: never;
@@ -1337,7 +1441,7 @@ export interface components {
              * @description Requested platform.
              * @enum {string}
              */
-            platform: "android" | "ios" | "harmony";
+            platform: "android" | "ios" | "harmonyos";
             /** @description Requested runtimeVersion. */
             runtimeVersion: string;
         };
@@ -1356,6 +1460,162 @@ export interface components {
              * @enum {string}
              */
             reason: "no_release_for_runtime" | "release not found" | "platform_unavailable" | "build not found" | "build artifact not available";
+        };
+        BuildAdapter: {
+            /**
+             * Format: date-time
+             * @description Creation time.
+             */
+            createdAt: string;
+            /** @description Creator. */
+            createdBy: components["schemas"]["UserSummary"] | null;
+            /** @description Creator user id. */
+            createdByUserId: string;
+            /** @description Build adapter description. */
+            description: string;
+            /** @description Dockerfile template using Go text/template syntax. */
+            dockerfileTemplate: string;
+            /** @description Helper file templates keyed by path relative to the .forge/ directory of the build context. */
+            files: {
+                [key: string]: string;
+            };
+            /** @description Build adapter id. */
+            id: string;
+            /**
+             * Format: int32
+             * @description Number of modules referencing this adapter.
+             */
+            moduleCount: number;
+            /** @description Build adapter display name. */
+            name: string;
+            parameters: components["schemas"]["BuildAdapterParameter"][];
+            /**
+             * @description Build adapter status. Disabled adapters cannot be selected and referencing modules cannot start new builds.
+             * @enum {string}
+             */
+            status: "active" | "disabled";
+            /**
+             * Format: date-time
+             * @description Last update time.
+             */
+            updatedAt: string;
+            /** @description Last updater. */
+            updatedBy: components["schemas"]["UserSummary"] | null;
+            /** @description Last updater user id. */
+            updatedByUserId: string;
+            /**
+             * Format: int32
+             * @description Version, incremented by every update.
+             */
+            version: number;
+        };
+        BuildAdapterCreateRequest: {
+            /** @description Description, at most 2000 characters. */
+            description?: string;
+            /** @description Dockerfile template, at most 64 KiB. Only default, quote, join, lower, upper, trim, replace and the and/or/not/eq/ne/lt/le/gt/ge builtins are allowed; define/template/block are rejected and range only accepts context fields or variables. */
+            dockerfileTemplate: string;
+            /** @description Helper file templates, at most 20 files of 64 KiB each. Keys are clean relative paths without .. and are written under .forge/ of the build context. Replaces all files when provided. */
+            files?: {
+                [key: string]: string;
+            };
+            /** @description Display name, at most 100 characters. */
+            name: string;
+            parameters?: components["schemas"]["BuildAdapterParameter"][];
+        };
+        BuildAdapterDetailResponse: {
+            buildAdapter: components["schemas"]["BuildAdapter"];
+        };
+        BuildAdapterDraftRenderPreviewRequest: {
+            /** @description Draft Dockerfile template. Validated with the same rules as saving. */
+            dockerfileTemplate: string;
+            /** @description Draft helper file templates keyed by path relative to .forge/. */
+            files?: {
+                [key: string]: string;
+            };
+            /** @description Module used for the render context. Omit to use a sample context. */
+            moduleId?: string;
+            parameters?: components["schemas"]["BuildAdapterParameter"][];
+            /** @description Parameter values, validated strictly against the draft parameters. Omit to use the parameters saved on the module; keys not declared in the draft are ignored. */
+            params?: {
+                [key: string]: string;
+            };
+        };
+        BuildAdapterErrorResponse: {
+            /** @description Error message. */
+            error: string;
+            /**
+             * Format: int32
+             * @description 1-based template line of the error.
+             */
+            line?: number;
+            /** @description Template that failed: Dockerfile or a helper file path. */
+            template?: string;
+        };
+        BuildAdapterParameter: {
+            /** @description Default value used when the module leaves the parameter empty. */
+            default: string;
+            /** @description Parameter description. */
+            description: string;
+            /** @description Parameter key, matching ^[a-zA-Z][a-zA-Z0-9_]{0,63}$. Referenced in templates as .Params.<key>. */
+            key: string;
+            /** @description Display label. Defaults to the key. */
+            label: string;
+            /** @description Whether modules must provide a non-empty value (or the default is non-empty). */
+            required: boolean;
+        };
+        BuildAdapterRenderError: {
+            /**
+             * Format: int32
+             * @description 1-based template line. 0 when unknown.
+             */
+            line: number;
+            /** @description Error message. */
+            message: string;
+            /** @description Template that failed: Dockerfile or a helper file path. Empty for parameter errors. */
+            template: string;
+        };
+        BuildAdapterRenderPreviewRequest: {
+            /** @description Module used for the render context. Omit to use a sample context. */
+            moduleId?: string;
+            /** @description Parameter values. Omit to use the parameters saved on the module (when it references this adapter). */
+            params?: {
+                [key: string]: string;
+            };
+        };
+        BuildAdapterRenderPreviewResponse: {
+            /** @description Rendered Dockerfile. */
+            dockerfile: string;
+            /** @description SHA-256 of the rendered Dockerfile. */
+            dockerfileSha256: string;
+            /** @description Render or parameter error. Null on success. */
+            error: components["schemas"]["BuildAdapterRenderError"] | null;
+            /** @description Rendered helper files keyed by path relative to .forge/. */
+            files: {
+                [key: string]: string;
+            };
+            /** @description Whether rendering succeeded. */
+            ok: boolean;
+        };
+        BuildAdapterUpdateRequest: {
+            /** @description Description, at most 2000 characters. */
+            description?: string;
+            /** @description Dockerfile template, at most 64 KiB. Only default, quote, join, lower, upper, trim, replace and the and/or/not/eq/ne/lt/le/gt/ge builtins are allowed; define/template/block are rejected and range only accepts context fields or variables. */
+            dockerfileTemplate?: string;
+            /**
+             * Format: int32
+             * @description Version the editor loaded. When set and different from the current version, the update is rejected with 409.
+             */
+            expectedVersion?: number;
+            /** @description Helper file templates, at most 20 files of 64 KiB each. Keys are clean relative paths without .. and are written under .forge/ of the build context. Replaces all files when provided. */
+            files?: {
+                [key: string]: string;
+            };
+            /** @description Display name, at most 100 characters. */
+            name?: string;
+            parameters?: components["schemas"]["BuildAdapterParameter"][];
+        };
+        BuildAdaptersResponse: {
+            buildAdapters: components["schemas"]["BuildAdapter"][];
         };
         BuildArtifactTree: {
             /**
@@ -1417,6 +1677,13 @@ export interface components {
             artifactUrl?: string;
             /** @description Git branch selected for this build record. */
             branch: string;
+            /** @description Build adapter used by an adapter build. Empty for Dockerfile builds or before rendering. */
+            buildAdapterId?: string;
+            /**
+             * Format: int32
+             * @description Build adapter version used by an adapter build.
+             */
+            buildAdapterVersion?: number | null;
             /** @description Code source connection id of the module repository. */
             codeSourceConnectionId: string;
             /** @description Commit built by this record. Webhook builds record the pushed commit; manual builds fill it after checkout. */
@@ -1454,13 +1721,20 @@ export interface components {
             moduleId: string;
             /** @description Module display name. */
             moduleName: string;
-            /** @description Platform directories produced by the build: android, ios, harmony. */
+            /**
+             * Format: int64
+             * @description Build number, increasing within the module.
+             */
+            number: number;
+            /** @description Platform directories produced by the build: android, ios, harmonyos. */
             platforms: string[];
             /**
              * Format: date-time
              * @description Build queue time.
              */
             queuedAt: string;
+            /** @description SHA-256 of the rendered Dockerfile for adapter builds. Empty for Dockerfile builds. */
+            renderedDockerfileSha256?: string;
             /** @description Repository full name. */
             repositoryFullName: string;
             /** @description Provider repository id (external repository id). */
@@ -2066,6 +2340,8 @@ export interface components {
             canManageAccessTokens: boolean;
             /** @description Whether current user can manage applications globally. */
             canManageApplications: boolean;
+            /** @description Whether current user can create, edit, disable and enable build adapters. */
+            canManageBuildAdapters: boolean;
             /** @description Whether current user can manage code source integrations. */
             canManageCodeSources: boolean;
             /** @description Whether current user can manage environments. */
@@ -2152,9 +2428,22 @@ export interface components {
              * @description Preview release lifetime in hours, 1-8760, default 168.
              */
             autoPreviewTtlHours?: number;
+            /** @description Build adapter id. Required in adapter mode and must be empty in dockerfile mode. A newly selected adapter must be active. */
+            buildAdapterId?: string;
+            /** @description Build adapter display name. Read only. */
+            buildAdapterName?: string;
+            /** @description Build adapter parameter values keyed by parameter key. Validated against the adapter parameter definitions: required parameters need a value and undeclared keys are rejected. Must be empty in dockerfile mode. Do not put secrets here; use build variables. */
+            buildAdapterParams?: {
+                [key: string]: string;
+            };
             /** @description Docker build context relative to the repository root, default ".". */
             buildContext?: string;
-            /** @description Dockerfile path relative to the repository root. Defaults to FORGE_WORKER_DOCKERFILE. */
+            /**
+             * @description Build mode. dockerfile uses the repository Dockerfile (default); adapter uses a platform build adapter.
+             * @enum {string}
+             */
+            buildMode?: "dockerfile" | "adapter";
+            /** @description Dockerfile path relative to the repository root. Defaults to FORGE_WORKER_DOCKERFILE. Only used in dockerfile mode. */
             dockerfilePath?: string;
         };
         ModuleCreateRequest: {
@@ -3586,7 +3875,7 @@ export interface operations {
         parameters: {
             query: {
                 /** @description Client platform. Only files under the {platform}/ directory are returned, with the platform prefix removed. */
-                platform: "android" | "ios" | "harmony";
+                platform: "android" | "ios" | "harmonyos";
                 /** @description Client runtimeVersion. Only routes with exactly this runtimeVersion are matched. 1-64 characters of [A-Za-z0-9._-]. */
                 runtimeVersion: string;
                 /** @description Optional targeting identifier. Targeted gray wins when present, percentage gray may use userId, otherwise default release is used. */
@@ -3656,7 +3945,7 @@ export interface operations {
         parameters: {
             query: {
                 /** @description Optional platform. When present, path is relative to the platform directory, as returned by the application manifest. */
-                platform?: "android" | "ios" | "harmony";
+                platform?: "android" | "ios" | "harmonyos";
                 /** @description Artifact file relative path. Relative to the artifact root, or to the platform directory when platform is present. */
                 path: string;
             };
@@ -3902,6 +4191,456 @@ export interface operations {
             };
             /** @description Feishu auth is not configured. */
             503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    listBuildAdapters: {
+        parameters: {
+            query?: {
+                /** @description Status filter. */
+                status?: "active" | "disabled";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Build adapter list with referencing module counts. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BuildAdaptersResponse"];
+                };
+            };
+            /** @description Invalid status filter. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BuildAdapterErrorResponse"];
+                };
+            };
+            /** @description Current user cannot manage modules in any application. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    createBuildAdapter: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Build adapter create payload. */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BuildAdapterCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Build adapter created with version 1. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BuildAdapterDetailResponse"];
+                };
+            };
+            /** @description Invalid build adapter. Template errors include the template name and line. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BuildAdapterErrorResponse"];
+                };
+            };
+            /** @description Only PlatformAdmin or SuperAdmin can manage build adapters. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    previewBuildAdapterDraft: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Draft render preview payload. */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BuildAdapterDraftRenderPreviewRequest"];
+            };
+        };
+        responses: {
+            /** @description Render result. Invalid drafts, template errors and parameter errors return ok=false with error details. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BuildAdapterRenderPreviewResponse"];
+                };
+            };
+            /** @description Invalid request body. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BuildAdapterErrorResponse"];
+                };
+            };
+            /** @description Only PlatformAdmin or SuperAdmin can preview drafts. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Module not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getBuildAdapter: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Build adapter id. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Build adapter detail. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BuildAdapterDetailResponse"];
+                };
+            };
+            /** @description Current user cannot manage modules in any application. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Build adapter not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    updateBuildAdapter: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Build adapter id. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        /** @description Build adapter update payload. Omitted fields are unchanged; files and parameters replace the whole value. */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BuildAdapterUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Build adapter updated. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BuildAdapterDetailResponse"];
+                };
+            };
+            /** @description Invalid build adapter. Template errors include the template name and line. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BuildAdapterErrorResponse"];
+                };
+            };
+            /** @description Only PlatformAdmin or SuperAdmin can manage build adapters. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Build adapter not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Build adapter was modified concurrently. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    disableBuildAdapter: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Build adapter id. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Build adapter disabled. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BuildAdapterDetailResponse"];
+                };
+            };
+            /** @description Only PlatformAdmin or SuperAdmin can manage build adapters. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Build adapter not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    enableBuildAdapter: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Build adapter id. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Build adapter enabled. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BuildAdapterDetailResponse"];
+                };
+            };
+            /** @description Only PlatformAdmin or SuperAdmin can manage build adapters. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Build adapter not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    previewBuildAdapter: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Build adapter id. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        /** @description Render preview payload. Both fields are optional. */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BuildAdapterRenderPreviewRequest"];
+            };
+        };
+        responses: {
+            /** @description Render result. Template and parameter errors return ok=false with error details. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BuildAdapterRenderPreviewResponse"];
+                };
+            };
+            /** @description Invalid request body. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BuildAdapterErrorResponse"];
+                };
+            };
+            /** @description Current user cannot manage modules in any application. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Build adapter or module not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Server error. */
+            500: {
                 headers: {
                     [name: string]: unknown;
                 };

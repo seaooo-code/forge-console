@@ -109,10 +109,12 @@ export async function createBuild(input: BuildCreateInput): Promise<BuildCreateR
   return {
     createdAt: formatRecordNumber(payload.build.createdAt),
     id: payload.build.id,
+    number: payload.build.number,
   };
 }
 
 const buildAPIErrorMessages: Record<string, string> = {
+  "build adapter is disabled": "模块使用的构建适配器已停用，无法发起新构建",
   "build record not found": "构建记录不存在",
   "build service unavailable": "构建服务暂不可用",
   "environment not found": "环境不存在",
@@ -140,6 +142,8 @@ export function normalizeBuildRecord(record: BuildRecordAPIRecord): BuildRunReco
     application: record.applicationName || "-",
     artifact: record.artifactKey || "-",
     branch: record.branch || "-",
+    buildAdapterId: record.buildAdapterId?.trim() ?? "",
+    buildAdapterVersion: record.buildAdapterVersion ?? null,
     commitSha,
     commitShortSha: commitSha.slice(0, 8),
     // GitHub 和 GitLab 的提交页都是 {web}/commit/{sha}。
@@ -155,8 +159,10 @@ export function normalizeBuildRecord(record: BuildRecordAPIRecord): BuildRunReco
     id: record.id,
     module: record.moduleName || record.moduleId,
     moduleId: record.moduleId,
+    number: record.number,
     operator: record.workerId || "-",
     platforms: record.platforms ?? [],
+    renderedDockerfileSha256: record.renderedDockerfileSha256?.trim() ?? "",
     repositoryWebUrl,
     runtimeVersion: record.runtimeVersion.trim(),
     startedAt: formatTime(record.startedAt || record.queuedAt || record.createdAt),

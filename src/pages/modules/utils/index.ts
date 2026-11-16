@@ -9,6 +9,7 @@ import {
   maxAutoPreviewTtlHours,
 } from "../constants";
 import type {
+  BuildAdapter,
   ModuleBuildConfig,
   ModuleFormState,
   ModuleMutationInput,
@@ -82,7 +83,7 @@ export function buildInitialForm(
     return {
       ...defaultForm,
       applicationId: fallbackApplicationId,
-      buildConfig: { ...defaultModuleBuildConfig, autoBuildBranches: [] },
+      buildConfig: { ...defaultModuleBuildConfig, autoBuildBranches: [], buildAdapterParams: {} },
       connectionId: fallbackConnectionId,
       ownerDepartmentIds: [],
     };
@@ -98,7 +99,10 @@ export function buildInitialForm(
       autoPreviewRelease: buildConfig.autoPreviewRelease ?? false,
       autoPreviewTtlHours:
         buildConfig.autoPreviewTtlHours || defaultModuleBuildConfig.autoPreviewTtlHours,
+      buildAdapterId: buildConfig.buildAdapterId ?? "",
+      buildAdapterParams: { ...(buildConfig.buildAdapterParams ?? {}) },
       buildContext: buildConfig.buildContext || defaultModuleBuildConfig.buildContext,
+      buildMode: buildConfig.buildMode ?? "dockerfile",
       dockerfilePath: buildConfig.dockerfilePath || defaultModuleBuildConfig.dockerfilePath,
     },
     commonModuleId: moduleRecord.commonModuleId ?? "",
@@ -124,11 +128,19 @@ export function buildInitialForm(
   };
 }
 
-export function buildModuleInput(form: ModuleFormState): ModuleMutationInput {
+/**
+ * adapter 为当前选中的构建适配器：参数只保留它声明过的 key 且去掉空值（后端拒绝未声明的参数）。
+ * dockerfile 模式不能带适配器字段，提交时整体清掉。
+ */
+export function buildModuleInput(
+  form: ModuleFormState,
+  adapter?: BuildAdapter,
+): ModuleMutationInput {
   const { buildConfig } = form;
   const autoBuildBranches = [
     ...new Set(buildConfig.autoBuildBranches.map((branch) => branch.value.trim()).filter(Boolean)),
   ];
+  const isAdapterMode = buildConfig.buildMode === "adapter";
 
   return {
     applicationId: form.applicationId,
@@ -137,7 +149,12 @@ export function buildModuleInput(form: ModuleFormState): ModuleMutationInput {
       autoBuildEnvironment: buildConfig.autoBuildEnvironment,
       autoPreviewRelease: buildConfig.autoPreviewRelease,
       autoPreviewTtlHours: Number(buildConfig.autoPreviewTtlHours),
+      buildAdapterId: isAdapterMode ? buildConfig.buildAdapterId : undefined,
+      buildAdapterParams: isAdapterMode
+        ? pickAdapterParams(buildConfig.buildAdapterParams, adapter)
+        : undefined,
       buildContext: buildConfig.buildContext.trim(),
+      buildMode: buildConfig.buildMode,
       dockerfilePath: buildConfig.dockerfilePath.trim(),
     },
     commonModuleId: form.kind === "Feature" ? form.commonModuleId.trim() : undefined,
@@ -195,11 +212,29 @@ export function validateModuleInput(input: ModuleMutationInput) {
   return validateBuildConfig(input.buildConfig ?? {});
 }
 
+export function pickAdapterParams(
+  values: Record<string, string> | undefined,
+  adapter: BuildAdapter | undefined,
+): Record<string, string> {
+  const declared =
+    adapter?.parameters.map((parameter) => parameter.key) ?? Object.keys(values ?? {});
+  return Object.fromEntries(
+    declared
+      .map((key) => [key, values?.[key]?.trim() ?? ""] as const)
+      .filter(([, value]) => value !== ""),
+  );
+}
+
 function validateBuildConfig(config: ModuleBuildConfig) {
   const dockerfilePath = config.dockerfilePath ?? "";
   const buildContext = config.buildContext ?? "";
 
-  if (!dockerfilePath) {
+  if (config.buildMode === "adapter" && !config.buildAdapterId) {
+    return "请选择构建适配器";
+  }
+
+  // 适配器模式不使用 Dockerfile 路径，留空时后端回填默认值。
+  if (config.buildMode !== "adapter" && !dockerfilePath) {
     return "请填写 Dockerfile 路径";
   }
 

@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import {
   AppWindow,
+  Blocks,
   Boxes,
   Database,
   Gauge,
@@ -19,6 +20,7 @@ const navIcons: Record<NavIconName, LucideIcon> = {
   accessToken: KeyRound,
   app: AppWindow,
   build: ServerCog,
+  buildAdapter: Blocks,
   codeSource: GitFork,
   dashboard: Gauge,
   environment: Layers3,

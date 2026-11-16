@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { LucideIcon } from "lucide-react";
 import {
   ArrowLeft,
+  Blocks,
   Box,
   Boxes,
   CircleAlert,
@@ -17,9 +18,11 @@ import {
   Package,
   PenLine,
   Rocket,
+  SlidersHorizontal,
   UserRound,
 } from "lucide-react";
 import { type ReactNode, useMemo, useState } from "react";
+import { buildAdapterDetailQueryKey, fetchBuildAdapter } from "@/api/build-adapters";
 import { buildsSnapshotQueryKey, createBuild } from "@/api/builds";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -36,7 +39,7 @@ import { ModuleBuildDialog } from "./components/ModuleBuildDialog";
 import { ModuleBuildVariablesPanel } from "./components/ModuleBuildVariablesPanel";
 import { ModuleWebhookPanel } from "./components/ModuleWebhookPanel";
 import { PublishedBuildsPanel } from "./components/PublishedBuildsPanel";
-import { codeSourceProviderLabels, kindClass } from "./constants";
+import { buildModeLabels, codeSourceProviderLabels, kindClass } from "./constants";
 import type { ModuleRecord } from "./types";
 import { formatCommonModule } from "./utils";
 
@@ -44,9 +47,15 @@ type ModuleDetailPageProps = {
   moduleId: string;
   onBack: () => void;
   onEditModule: (moduleId: string) => void;
+  onOpenBuildAdapter: (adapterId: string) => void;
 };
 
-export function ModuleDetailPage({ moduleId, onBack, onEditModule }: ModuleDetailPageProps) {
+export function ModuleDetailPage({
+  moduleId,
+  onBack,
+  onEditModule,
+  onOpenBuildAdapter,
+}: ModuleDetailPageProps) {
   const queryClient = useQueryClient();
   const { data: snapshot, isFetching } = useQuery({
     queryFn: () => fetchModuleDetailSnapshot(moduleId),
@@ -188,6 +197,7 @@ export function ModuleDetailPage({ moduleId, onBack, onEditModule }: ModuleDetai
                   )?.label
                 }
                 module={module}
+                onOpenBuildAdapter={onOpenBuildAdapter}
               />
               <ModuleWebhookPanel module={module} />
               <Card className="gap-0 rounded-lg border-border py-0 shadow-sm">
@@ -231,7 +241,7 @@ export function ModuleDetailPage({ moduleId, onBack, onEditModule }: ModuleDetai
               environment: form.environment,
               moduleId: module.id,
             });
-            setBuildSuccess(`构建已提交：${build.createdAt}`);
+            setBuildSuccess(`构建 #${build.number} 已提交：${build.createdAt}`);
             setIsBuildDialogOpen(false);
             await queryClient.invalidateQueries({ queryKey: buildsSnapshotQueryKey() });
           } catch (error) {
@@ -323,22 +333,90 @@ function RepositoryCard({ module }: { module: ModuleRecord }) {
 function BuildConfigCard({
   environmentName,
   module,
+  onOpenBuildAdapter,
 }: {
   environmentName: string | undefined;
   module: ModuleRecord;
+  onOpenBuildAdapter: (adapterId: string) => void;
 }) {
   const config = module.buildConfig;
   const branches = config.autoBuildBranches ?? [];
+  const buildMode = config.buildMode ?? "dockerfile";
+  const adapterId = buildMode === "adapter" ? (config.buildAdapterId ?? "") : "";
+  const params = Object.entries(config.buildAdapterParams ?? {});
+  // 只用来取参数显示名称和停用状态；没有读取权限时回退到 key 和模块里的适配器名称。
+  const { data: adapter } = useQuery({
+    enabled: adapterId !== "",
+    queryFn: () => fetchBuildAdapter(adapterId),
+    queryKey: buildAdapterDetailQueryKey(adapterId),
+    retry: false,
+  });
+  const parameterLabels = new Map(
+    adapter?.parameters.map((parameter) => [parameter.key, parameter.label || parameter.key]),
+  );
 
   return (
     <Card className="gap-0 rounded-lg border-border py-0 shadow-sm">
-      <SectionHeader title="构建配置" description="Dockerfile、自动构建与预览通道" />
+      <SectionHeader title="构建配置" description="构建方式、自动构建与预览通道" />
       <div className="grid gap-3 p-4 md:grid-cols-2">
-        <DetailItem
-          icon={FileCode2}
-          label="Dockerfile 路径"
-          value={<span className="font-mono">{config.dockerfilePath || "-"}</span>}
-        />
+        <DetailItem icon={Hammer} label="构建方式" value={buildModeLabels[buildMode]} />
+        {adapterId ? (
+          <DetailItem
+            icon={Blocks}
+            label="构建适配器"
+            value={
+              <span className="inline-flex flex-wrap items-center gap-1.5">
+                <Button
+                  variant="link"
+                  type="button"
+                  className="h-auto p-0 font-semibold text-sm"
+                  onClick={() => onOpenBuildAdapter(adapterId)}
+                >
+                  {config.buildAdapterName || adapter?.name || adapterId}
+                </Button>
+                {adapter ? (
+                  <span className="font-mono font-normal text-muted-foreground text-xs">
+                    v{adapter.version}
+                  </span>
+                ) : null}
+                {adapter?.status === "disabled" ? (
+                  <Badge variant="neutral" size="sm">
+                    已停用
+                  </Badge>
+                ) : null}
+              </span>
+            }
+          />
+        ) : (
+          <DetailItem
+            icon={FileCode2}
+            label="Dockerfile 路径"
+            value={<span className="font-mono">{config.dockerfilePath || "-"}</span>}
+          />
+        )}
+        {adapterId ? (
+          <DetailItem
+            icon={SlidersHorizontal}
+            label="适配器参数"
+            wide
+            value={
+              params.length > 0 ? (
+                <span className="grid gap-1">
+                  {params.map(([key, value]) => (
+                    <span key={key} className="flex min-w-0 flex-wrap items-baseline gap-2">
+                      <span className="font-normal text-muted-foreground text-xs">
+                        {parameterLabels.get(key) ?? key}
+                      </span>
+                      <span className="break-all font-mono text-xs">{value}</span>
+                    </span>
+                  ))}
+                </span>
+              ) : (
+                <span className="font-normal text-muted-foreground">未填写，使用默认值</span>
+              )
+            }
+          />
+        ) : null}
         <DetailItem
           icon={FolderTree}
           label="构建上下文"

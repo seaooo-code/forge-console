@@ -88,6 +88,7 @@ const fetchJSON = createFetchClient(
 const moduleAPIErrorMessages: Record<string, string> = {
   "application already has common module": "当前应用已关联通用模块，每个应用只能关联一个通用模块",
   "common module must belong to same application": "通用模块必须属于当前关联应用",
+  "build adapter is disabled": "所选构建适配器已停用，请选择启用中的适配器",
   "build record not found": "构建记录不存在",
   "build service unavailable": "构建服务暂不可用",
   "build variable not found": "构建变量不存在",
@@ -202,7 +203,13 @@ export async function deleteModuleBuildVariable(
   );
 }
 
+const invalidBuildAdapterPrefix = "invalid build adapter request: ";
+
 function getModuleAPIErrorMessage(path: string, status: number, payload?: APIErrorPayload) {
+  // 适配器参数校验失败时后端直接返回中文原因，例如"必填参数 entry 没有值"。
+  if (payload?.error?.startsWith(invalidBuildAdapterPrefix)) {
+    return `适配器参数无效：${payload.error.slice(invalidBuildAdapterPrefix.length)}`;
+  }
   if (payload?.error) {
     return moduleAPIErrorMessages[payload.error] ?? payload.error;
   }

@@ -17,6 +17,7 @@ export type NavIconName =
   | "accessToken"
   | "app"
   | "build"
+  | "buildAdapter"
   | "codeSource"
   | "dashboard"
   | "environment"

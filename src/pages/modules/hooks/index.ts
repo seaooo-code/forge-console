@@ -1,6 +1,7 @@
 import { skipToken, useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
+import { buildAdaptersQueryKey, fetchBuildAdapters } from "@/api/build-adapters";
 import { applicationsAllQueryKey, fetchAllApplicationsSnapshot } from "@/pages/applications";
 import { codeSourceConnectionsQueryKey, fetchCodeSourceConnections } from "@/pages/code-sources";
 import { environmentsSnapshotQueryKey, fetchEnvironmentsSnapshot } from "@/pages/environments";
@@ -121,13 +122,11 @@ export function useModuleFormData(mode: "create" | "edit", moduleId: string | un
   };
 }
 
-export function useDebouncedValue<T>(value: T, delay = 280) {
-  const [debouncedValue, setDebouncedValue] = useState(value);
-
-  useEffect(() => {
-    const handle = window.setTimeout(() => setDebouncedValue(value), delay);
-    return () => window.clearTimeout(handle);
-  }, [delay, value]);
-
-  return debouncedValue;
+/** 构建配置里可选的适配器列表；无读取权限（非平台管理员或应用 Owner）时返回 403。 */
+export function useModuleBuildAdapters() {
+  return useQuery({
+    queryFn: () => fetchBuildAdapters(),
+    queryKey: buildAdaptersQueryKey(),
+    retry: false,
+  });
 }

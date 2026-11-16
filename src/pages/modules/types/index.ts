@@ -1,5 +1,13 @@
 import type { APISchemas } from "@/api/client";
+import type { BuildMode } from "@/types/build-adapters";
 import type { ModuleKind } from "@/types/modules";
+
+export type {
+  BuildAdapter,
+  BuildAdapterParameter,
+  BuildAdapterRenderPreview,
+  BuildMode,
+} from "@/types/build-adapters";
 
 export type {
   ModuleApplicationOption,
@@ -37,7 +45,11 @@ export type ModuleBuildConfigFormState = {
   autoBuildEnvironment: string;
   autoPreviewRelease: boolean;
   autoPreviewTtlHours: number;
+  buildAdapterId: string;
+  /** 适配器参数值，key 为参数定义里的 key；dockerfile 模式提交时清空。 */
+  buildAdapterParams: Record<string, string>;
   buildContext: string;
+  buildMode: BuildMode;
   dockerfilePath: string;
 };
 
