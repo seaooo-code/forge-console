@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 import { buildStatusClass, buildTriggerLabels } from "../constants";
-import type { BuildRunRecord, BuildRunStatus, BuildTriggerType } from "../types";
+import type { BuildRunRecord, BuildRunStatus } from "../types";
+import { BuildCommitLink, BuildCreator, BuildPlatformBadges } from "./BuildMeta";
 
 export function buildBuildsColumnDefs({
   canCreateRelease,
@@ -44,9 +45,24 @@ export function buildBuildsColumnDefs({
     {
       cellRenderer: BranchCell,
       field: "branch",
-      flex: 1.3,
-      headerName: "分支",
-      minWidth: 220,
+      flex: 1.2,
+      headerName: "分支 / Commit",
+      minWidth: 200,
+    },
+    {
+      cellRenderer: RuntimeVersionCell,
+      field: "runtimeVersion",
+      flex: 0.75,
+      headerName: "运行时版本",
+      minWidth: 110,
+    },
+    {
+      cellRenderer: PlatformsCell,
+      field: "platforms",
+      flex: 0.9,
+      headerName: "平台",
+      minWidth: 140,
+      sortable: false,
     },
     {
       field: "version",
@@ -57,9 +73,9 @@ export function buildBuildsColumnDefs({
     {
       cellRenderer: TriggerCell,
       field: "triggerType",
-      flex: 0.75,
+      flex: 0.8,
       headerName: "触发方式",
-      minWidth: 110,
+      minWidth: 120,
     },
     {
       cellRenderer: StatusCell,
@@ -69,10 +85,13 @@ export function buildBuildsColumnDefs({
       minWidth: 92,
     },
     {
-      field: "operator",
-      flex: 0.7,
-      headerName: "触发人",
-      minWidth: 100,
+      cellRenderer: ({ data }: ICellRendererParams<BuildRunRecord>) =>
+        data ? <BuildCreator createdBy={data.createdBy} /> : null,
+      colId: "createdBy",
+      flex: 0.8,
+      headerName: "创建人",
+      minWidth: 120,
+      sortable: false,
     },
     {
       field: "duration",
@@ -115,19 +134,50 @@ function BranchCell({ data }: ICellRendererParams<BuildRunRecord>) {
   }
 
   return (
-    <span className="inline-flex min-w-0 items-center gap-1.5">
-      <GitBranch className="size-3.5 shrink-0 text-muted-foreground" />
-      <span className="truncate font-mono text-foreground text-xs">
-        {data.branch} · {data.commit}
-      </span>
-    </span>
+    <div className="min-w-0 leading-tight">
+      <div className="flex min-w-0 items-center gap-1.5">
+        <GitBranch className="size-3.5 shrink-0 text-muted-foreground" />
+        <span className="truncate font-mono text-foreground text-xs">{data.branch}</span>
+      </div>
+      <div className="mt-1 flex min-w-0 items-center gap-1.5 pl-5">
+        <BuildCommitLink build={data} />
+      </div>
+    </div>
   );
 }
 
-function TriggerCell({ value }: ICellRendererParams<BuildRunRecord, BuildTriggerType>) {
+function RuntimeVersionCell({ value }: ICellRendererParams<BuildRunRecord, string>) {
   return value ? (
-    <span className="font-medium text-foreground text-xs">{buildTriggerLabels[value]}</span>
-  ) : null;
+    <span className="truncate font-mono font-semibold text-foreground text-xs">{value}</span>
+  ) : (
+    <span className="text-muted-foreground text-xs">-</span>
+  );
+}
+
+function PlatformsCell({ value }: ICellRendererParams<BuildRunRecord, string[]>) {
+  return <BuildPlatformBadges platforms={value ?? []} />;
+}
+
+function TriggerCell({ data }: ICellRendererParams<BuildRunRecord>) {
+  if (!data) {
+    return null;
+  }
+
+  return (
+    <div className="min-w-0 leading-tight">
+      <div className="truncate font-medium text-foreground text-xs">
+        {buildTriggerLabels[data.triggerType]}
+      </div>
+      {data.triggerType === "webhook" && data.triggerId !== "-" ? (
+        <div
+          className="mt-1 truncate font-mono text-muted-foreground text-xs"
+          title={data.triggerId}
+        >
+          {data.triggerId}
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
 function StatusCell({ value }: ICellRendererParams<BuildRunRecord, BuildRunStatus>) {

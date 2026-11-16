@@ -318,6 +318,111 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/builds/{id}/logs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List build log chunks */
+        get: operations["listBuildLogs"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/code-source-connections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List code source connections */
+        get: operations["listCodeSourceConnections"];
+        put?: never;
+        /** Create a token based code source connection (GitLab) */
+        post: operations["createCodeSourceConnection"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/code-source-connections/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get code source connection */
+        get: operations["getCodeSourceConnection"];
+        put?: never;
+        post?: never;
+        /** Delete code source connection */
+        delete: operations["deleteCodeSourceConnection"];
+        options?: never;
+        head?: never;
+        /** Update code source connection name, credential or status */
+        patch: operations["updateCodeSourceConnection"];
+        trace?: never;
+    };
+    "/api/v1/code-source-connections/{id}/repositories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Search repositories accessible by a connection and refresh the repository cache */
+        get: operations["searchCodeSourceRepositories"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/code-source-connections/{id}/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Verify code source connection credential */
+        post: operations["verifyCodeSourceConnection"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/code-source-connections/{id}/webhook": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get webhook configuration of a connection */
+        get: operations["getCodeSourceConnectionWebhook"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/code-sources": {
         parameters: {
             query?: never;
@@ -325,7 +430,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List code source apps */
+        /** List code source apps (GitHub App status) */
         get: operations["listCodeSources"];
         put?: never;
         post?: never;
@@ -335,14 +440,14 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/code-sources/{provider}/install-url": {
+    "/api/v1/code-sources/github/install-url": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Get code source app installation URL */
+        /** Get GitHub App installation URL */
         get: operations["getCodeSourceInstallURL"];
         put?: never;
         post?: never;
@@ -352,14 +457,14 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/code-sources/{provider}/install/callback": {
+    "/api/v1/code-sources/github/install/callback": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Complete code source app installation callback */
+        /** Complete GitHub App installation callback and upsert the installation connection */
         get: operations["completeCodeSourceInstallation"];
         put?: never;
         post?: never;
@@ -369,31 +474,14 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/code-sources/{provider}/installations": {
+    "/api/v1/code-sources/github/manifest": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get?: never;
-        put?: never;
-        post?: never;
-        /** Delete current user's code source app authorizations and repository cache */
-        delete: operations["deleteCodeSourceInstallations"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/code-sources/{provider}/manifest": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get code source app manifest creation payload */
+        /** Get GitHub App manifest creation payload */
         get: operations["getCodeSourceAppManifest"];
         put?: never;
         post?: never;
@@ -403,32 +491,15 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/code-sources/{provider}/manifest/callback": {
+    "/api/v1/code-sources/github/manifest/callback": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Complete code source app manifest callback */
+        /** Complete GitHub App manifest callback */
         get: operations["completeCodeSourceAppManifest"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/code-sources/{provider}/repositories/search": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Search authorized code source repositories */
-        get: operations["searchCodeSourceRepositories"];
         put?: never;
         post?: never;
         delete?: never;
@@ -559,6 +630,25 @@ export interface paths {
         head?: never;
         /** Update module */
         patch: operations["updateModule"];
+        trace?: never;
+    };
+    "/api/v1/modules/{id}/build-variables": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List module build variables */
+        get: operations["listModuleBuildVariables"];
+        /** Create or update a module build variable */
+        put: operations["upsertModuleBuildVariable"];
+        post?: never;
+        /** Delete a module build variable */
+        delete: operations["deleteModuleBuildVariable"];
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/ping": {
@@ -699,6 +789,46 @@ export interface paths {
         head?: never;
         /** Update storage configuration */
         patch: operations["updateStorageConfiguration"];
+        trace?: never;
+    };
+    "/api/v1/webhooks/github": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Receive GitHub App webhook
+         * @description Shared by all GitHub App installations. Verified with X-Hub-Signature-256 (HMAC-SHA256 of the App webhook secret); only push events are processed.
+         */
+        post: operations["receiveGitHubWebhook"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/webhooks/gitlab/{connectionId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Receive GitLab project webhook
+         * @description Configured per GitLab project. Verified with X-Gitlab-Token against the connection webhook secret; only Push Hook branch pushes are processed.
+         */
+        post: operations["receiveGitLabWebhook"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/healthz": {
@@ -1139,23 +1269,31 @@ export interface components {
         ArtifactManifestFile: {
             /** @description File content type. */
             contentType: string;
-            /** @description Artifact file relative path. */
+            /** @description File digests keyed by algorithm (sha256, md5), configured by FORGE_ARTIFACT_DIGESTS on the worker. Manifests generated before digests existed fall back to {sha256}. */
+            digests: {
+                [key: string]: string;
+            };
+            /** @description File path relative to the requested platform directory (platform prefix removed). */
             path: string;
-            /** @description File SHA-256 digest. */
+            /** @description File SHA-256 digest. Kept for compatibility; prefer digests. */
             sha256: string;
             /**
              * Format: int64
              * @description File size in bytes.
              */
             sizeBytes: number;
-            /** @description Download URL. Uses public base URL when configured, otherwise the artifact download API. */
+            /** @description Download URL. Uses public base URL when configured, otherwise the artifact download API with platform and path. */
             url: string;
         };
         ArtifactManifestModule: {
             /** @description Artifact object key root. */
             artifactKey: string;
+            /** @description Branch of the matched build. */
+            branch: string;
             /** @description Matched build record UUID. */
             buildRecordId: string;
+            /** @description Commit SHA of the matched build. */
+            commitSha: string;
             files: components["schemas"]["ArtifactManifestFile"][];
             /**
              * Format: int32
@@ -1195,6 +1333,13 @@ export interface components {
             identifier: string;
             missingModules: components["schemas"]["ArtifactMissingModule"][];
             modules: components["schemas"]["ArtifactManifestModule"][];
+            /**
+             * @description Requested platform.
+             * @enum {string}
+             */
+            platform: "android" | "ios" | "harmony";
+            /** @description Requested runtimeVersion. */
+            runtimeVersion: string;
         };
         ArtifactMissingModule: {
             /** @description Module id. */
@@ -1206,8 +1351,11 @@ export interface components {
             kind: "Common" | "Feature";
             /** @description Module display name. */
             name: string;
-            /** @description Why this module is absent from the manifest modules list. */
-            reason: string;
+            /**
+             * @description Why this module is absent from the manifest modules list. no_release_for_runtime: no active route under the requested runtimeVersion; release not found: routes exist under the runtimeVersion but none matched; platform_unavailable: the matched build does not contain the requested platform.
+             * @enum {string}
+             */
+            reason: "no_release_for_runtime" | "release not found" | "platform_unavailable" | "build not found" | "build artifact not available";
         };
         BuildArtifactTree: {
             /**
@@ -1245,6 +1393,20 @@ export interface components {
              */
             type: "directory" | "file";
         };
+        BuildLogChunk: {
+            /** @description Redacted git and docker output. */
+            content: string;
+            /**
+             * Format: int32
+             * @description Chunk sequence number, increasing within one build.
+             */
+            seq: number;
+        };
+        BuildLogsResponse: {
+            chunks: components["schemas"]["BuildLogChunk"][];
+            /** @description True when the build has finished and no more chunks remain after this page. */
+            finished: boolean;
+        };
         BuildRecord: {
             /** @description Application display name used in artifact object keys. */
             applicationName: string;
@@ -1255,11 +1417,17 @@ export interface components {
             artifactUrl?: string;
             /** @description Git branch selected for this build record. */
             branch: string;
+            /** @description Code source connection id of the module repository. */
+            codeSourceConnectionId: string;
+            /** @description Commit built by this record. Webhook builds record the pushed commit; manual builds fill it after checkout. */
+            commitSha: string;
             /**
              * Format: date-time
              * @description Build record creation time.
              */
             createdAt: string;
+            /** @description Build creator. Manual builds record the console user; webhook builds record the code source connection creator. Null for historical builds or deleted users. */
+            createdBy: components["schemas"]["UserSummary"] | null;
             /** @description Repository branch used by the worker when configured on the module. */
             defaultBranch?: string;
             /** @description Environment code. */
@@ -1286,6 +1454,8 @@ export interface components {
             moduleId: string;
             /** @description Module display name. */
             moduleName: string;
+            /** @description Platform directories produced by the build: android, ios, harmony. */
+            platforms: string[];
             /**
              * Format: date-time
              * @description Build queue time.
@@ -1293,15 +1463,17 @@ export interface components {
             queuedAt: string;
             /** @description Repository full name. */
             repositoryFullName: string;
-            /** @description Provider repository id. */
+            /** @description Provider repository id (external repository id). */
             repositoryId: string;
-            /** @description Provider installation id. */
-            repositoryInstallationId: string;
             /**
              * @description Repository provider.
              * @enum {string}
              */
-            repositoryProvider: "github";
+            repositoryProvider: "github" | "gitlab";
+            /** @description Repository web URL. */
+            repositoryWebUrl?: string;
+            /** @description runtimeVersion from forge.json. Empty until the build succeeds. */
+            runtimeVersion: string;
             /**
              * Format: date-time
              * @description Build start time.
@@ -1321,13 +1493,13 @@ export interface components {
              * @description Total uploaded artifact file size in bytes.
              */
             totalSizeBytes?: number;
-            /** @description Trigger source id. Empty for manual builds. */
+            /** @description Trigger source id, such as the webhook delivery id. Empty for manual builds. */
             triggerId?: string;
             /**
              * @description Build trigger type.
              * @enum {string}
              */
-            triggerType: "manual" | "pipeline";
+            triggerType: "manual" | "webhook";
             /**
              * Format: date-time
              * @description Build record update time.
@@ -1339,17 +1511,10 @@ export interface components {
         BuildRecordCreateRequest: {
             /** @description Git branch to build. Defaults to the module default branch when omitted. */
             branch?: string;
-            /** @description Environment code whose storage configuration receives artifacts. */
+            /** @description Environment code whose storage configuration receives artifacts. Console builds are always manual. */
             environment: string;
             /** @description Module id to build. */
             moduleId: string;
-            /** @description Trigger source id. Required when triggerType is pipeline. */
-            triggerId?: string;
-            /**
-             * @description Build trigger type. Defaults to manual when omitted.
-             * @enum {string}
-             */
-            triggerType?: "manual" | "pipeline";
         };
         BuildRecordDetailResponse: {
             build: components["schemas"]["BuildRecord"];
@@ -1386,12 +1551,52 @@ export interface components {
             pagination: components["schemas"]["Pagination"];
             summary: components["schemas"]["BuildRecordSummary"];
         };
+        BuildVariable: {
+            /** @description Environment code. Empty means the variable applies to all environments. */
+            environmentCode: string;
+            /** @description Secrets are passed to docker build via BuildKit --secret and never returned. */
+            isSecret: boolean;
+            /** @description Variable key, matching ^[A-Z][A-Z0-9_]{0,63}$. */
+            key: string;
+            /**
+             * Format: date-time
+             * @description Last update time.
+             */
+            updatedAt: string;
+            /** @description Display name of the last updater. */
+            updatedBy: string;
+            /** @description User id of the last updater. */
+            updatedByUserId: string;
+            /** @description Plain value for normal variables; ****** for secrets. */
+            value: string;
+        };
+        BuildVariableDetailResponse: {
+            variable: components["schemas"]["BuildVariable"];
+        };
+        BuildVariableUpsertRequest: {
+            /** @description Environment code. Empty means the variable applies to all environments. */
+            environmentCode?: string;
+            /** @description Store as a secret build variable. */
+            isSecret?: boolean;
+            /** @description Variable key, matching ^[A-Z][A-Z0-9_]{0,63}$. The FORGE_ prefix is reserved. */
+            key: string;
+            /** @description Plain value. Required and non-empty for secrets. */
+            value: string;
+        };
+        BuildVariablesResponse: {
+            variables: components["schemas"]["BuildVariable"][];
+        };
         CodeSourceApp: {
             /**
              * @description Code source app configuration status.
              * @enum {string}
              */
             configurationStatus: "configured" | "notConfigured";
+            /**
+             * Format: int32
+             * @description Active installation connection count.
+             */
+            connectionCount: number;
             /** @description Code source app description. */
             description: string;
             /**
@@ -1417,14 +1622,98 @@ export interface components {
              */
             status: "installed" | "notInstalled";
         };
-        CodeSourceAppDetailResponse: {
-            app: components["schemas"]["CodeSourceApp"];
-        };
         CodeSourceAppManifest: {
             /** @description GitHub App manifest creation endpoint. */
             actionUrl: string;
             /** @description Serialized GitHub App manifest payload. */
             manifest: string;
+        };
+        CodeSourceConnection: {
+            /** @description Provider API base URL. */
+            apiBaseUrl: string;
+            /**
+             * Format: date-time
+             * @description Connection creation time.
+             */
+            createdAt: string;
+            /** @description Creator display name. */
+            createdBy?: string;
+            /** @description Creator platform user id. */
+            createdByUserId: string;
+            /** @description Credential expiration time, or empty when unknown or never expires. */
+            credentialExpiresAt?: string;
+            /** @description Masked credential preview. Credential itself is never returned. */
+            credentialPreview?: string;
+            /** @description GitHub installation account or GitLab token user. */
+            externalAccount?: string;
+            /** @description Provider level id, such as GitHub installation id. Empty for GitLab. */
+            externalId?: string;
+            /** @description Connection id. */
+            id: string;
+            /** @description Last successful verification time, or empty. */
+            lastVerifiedAt?: string;
+            /** @description Connection display name. */
+            name: string;
+            /**
+             * @description Code source provider.
+             * @enum {string}
+             */
+            provider: "github" | "gitlab";
+            /**
+             * @description Connection status.
+             * @enum {string}
+             */
+            status: "active" | "disabled";
+            /**
+             * Format: date-time
+             * @description Connection update time.
+             */
+            updatedAt: string;
+            /** @description Provider web base URL, such as https://github.com or the GitLab instance URL. */
+            webBaseUrl: string;
+        };
+        CodeSourceConnectionCreateRequest: {
+            /** @description Provider API base URL. Defaults to webBaseUrl. */
+            apiBaseUrl?: string;
+            /** @description Access token, such as a GitLab group or project access token with read_api and read_repository scopes. */
+            credential: string;
+            /** @description Connection display name. */
+            name: string;
+            /**
+             * @description Code source provider. GitHub connections are created by the App installation callback.
+             * @enum {string}
+             */
+            provider: "github" | "gitlab";
+            /** @description Provider web base URL, such as https://gitlab.example.com. */
+            webBaseUrl: string;
+        };
+        CodeSourceConnectionDetailResponse: {
+            connection: components["schemas"]["CodeSourceConnection"];
+        };
+        CodeSourceConnectionUpdateRequest: {
+            /** @description New access token. The connection is re-verified when provided. */
+            credential?: string;
+            /** @description Connection display name. */
+            name?: string;
+            /**
+             * @description Connection status.
+             * @enum {string}
+             */
+            status?: "active" | "disabled";
+        };
+        CodeSourceConnectionWebhook: {
+            /** @description Webhook path on forge-server, prefix it with the public API origin. */
+            path: string;
+            /**
+             * @description Code source provider.
+             * @enum {string}
+             */
+            provider: "github" | "gitlab";
+            /** @description Webhook secret token. Empty when the provider receives webhooks at App level (GitHub). */
+            secret: string;
+        };
+        CodeSourceConnectionsResponse: {
+            connections: components["schemas"]["CodeSourceConnection"][];
         };
         CodeSourceInstallURL: {
             /** @description Code source provider installation URL. */
@@ -1433,38 +1722,39 @@ export interface components {
         CodeSourceRepository: {
             /** @description HTTPS clone URL. */
             cloneUrl?: string;
+            /** @description Code source connection id. */
+            connectionId: string;
             /** @description Default branch name. */
             defaultBranch?: string;
             /** @description Repository description. */
             description?: string;
-            /** @description Repository full name, owner/name. */
+            /** @description Provider repository id (GitHub repository id, GitLab project id). */
+            externalRepositoryId: string;
+            /** @description Repository full name, such as owner/name or group/subgroup/project. */
             fullName: string;
-            /** @description Repository HTML URL. */
-            htmlUrl?: string;
-            /** @description Provider repository id. */
-            id: string;
-            /** @description Provider installation id that currently grants repository access. */
-            installationId: string;
-            /** @description Repository name. */
-            name: string;
-            /** @description Repository owner. */
-            owner: string;
-            /** @description Whether repository is private. */
-            private: boolean;
-            /**
-             * @description Code source provider.
-             * @enum {string}
-             */
-            provider: "github";
-            /** @description SSH clone URL. */
-            sshUrl?: string;
             /**
              * Format: date-time
-             * @description Repository update time.
+             * @description Repository cache sync time.
              */
-            updatedAt?: string;
+            lastSyncedAt?: string;
+            /** @description Whether repository is private. */
+            private: boolean;
+            /** @description Repository web URL. */
+            webUrl?: string;
         };
         CodeSourceRepositorySearchResponse: {
+            /** @description Whether more repositories are available. */
+            hasMore: boolean;
+            /**
+             * Format: int32
+             * @description Effective page number.
+             */
+            page: number;
+            /**
+             * Format: int32
+             * @description Effective page size.
+             */
+            pageSize: number;
             repositories: components["schemas"]["CodeSourceRepository"][];
         };
         CodeSourcesResponse: {
@@ -1796,6 +2086,11 @@ export interface components {
             applicationName: string;
             /** @description Linked application slug. */
             applicationSlug?: string;
+            buildConfig: components["schemas"]["ModuleBuildConfig"];
+            /** @description Code source connection id. */
+            codeSourceConnectionId: string;
+            /** @description Code source connection display name. */
+            codeSourceConnectionName?: string;
             /** @description Common module id for feature modules. */
             commonModuleId?: string;
             /** @description Common module name for feature modules. */
@@ -1830,28 +2125,42 @@ export interface components {
             repositoryCloneUrl?: string;
             /** @description Repository full name. */
             repositoryFullName: string;
-            /** @description Repository HTML URL. */
-            repositoryHtmlUrl?: string;
-            /** @description Provider repository id. */
+            /** @description Provider repository id (external repository id). */
             repositoryId: string;
-            /** @description Provider installation id that currently grants repository access. */
-            repositoryInstallationId?: string;
             /**
-             * @description Repository provider.
+             * @description Repository provider, decided by the connection.
              * @enum {string}
              */
-            repositoryProvider: "github";
-            /** @description Repository SSH clone URL. */
-            repositorySshUrl?: string;
+            repositoryProvider: "github" | "gitlab";
+            /** @description Repository web URL. */
+            repositoryWebUrl?: string;
             /**
              * Format: date-time
              * @description Module update time.
              */
             updatedAt?: string;
         };
+        ModuleBuildConfig: {
+            /** @description Branch globs that trigger builds on push. Empty disables automatic builds. */
+            autoBuildBranches?: string[];
+            /** @description Environment code for automatic builds. Required when autoBuildBranches is not empty. */
+            autoBuildEnvironment?: string;
+            /** @description Create a targeted release named after the branch when an automatic build succeeds. */
+            autoPreviewRelease?: boolean;
+            /**
+             * Format: int32
+             * @description Preview release lifetime in hours, 1-8760, default 168.
+             */
+            autoPreviewTtlHours?: number;
+            /** @description Docker build context relative to the repository root, default ".". */
+            buildContext?: string;
+            /** @description Dockerfile path relative to the repository root. Defaults to FORGE_WORKER_DOCKERFILE. */
+            dockerfilePath?: string;
+        };
         ModuleCreateRequest: {
             /** @description Linked application id. */
             applicationId: string;
+            buildConfig?: components["schemas"]["ModuleBuildConfig"];
             /** @description Required for Feature modules. Must point to a Common module of the same application. */
             commonModuleId?: string;
             /** @description Immutable module id. */
@@ -1885,25 +2194,10 @@ export interface components {
             module: components["schemas"]["Module"];
         };
         ModuleRepositoryRequest: {
-            /** @description Repository HTTPS clone URL. */
-            cloneUrl?: string;
-            /** @description Repository default branch. */
-            defaultBranch?: string;
-            /** @description Repository full name. */
-            fullName: string;
-            /** @description Repository HTML URL. */
-            htmlUrl?: string;
-            /** @description Provider repository id. */
-            id: string;
-            /** @description Provider installation id that currently grants repository access. */
-            installationId: string;
-            /**
-             * @description Code source provider.
-             * @enum {string}
-             */
-            provider: "github";
-            /** @description Repository SSH clone URL. */
-            sshUrl?: string;
+            /** @description Code source connection id. */
+            connectionId: string;
+            /** @description Repository id returned by the connection repository search. Repository name and URLs are taken from the server side repository cache. */
+            externalRepositoryId: string;
         };
         ModuleSummary: {
             /**
@@ -1925,6 +2219,7 @@ export interface components {
         ModuleUpdateRequest: {
             /** @description Linked application id. */
             applicationId: string;
+            buildConfig?: components["schemas"]["ModuleBuildConfig"];
             /** @description Required for Feature modules. Must point to a Common module of the same application. */
             commonModuleId?: string;
             /**
@@ -2077,6 +2372,8 @@ export interface components {
              * @enum {string}
              */
             releaseType: "full" | "gray";
+            /** @description runtimeVersion of the release route. A release only replaces releases of the same runtimeVersion. */
+            runtimeVersion: string;
             /**
              * @description Release status.
              * @enum {string}
@@ -2155,6 +2452,8 @@ export interface components {
              * @enum {string}
              */
             routeType: "default" | "identifier" | "percentage";
+            /** @description runtimeVersion copied from the build record. Routes are isolated per runtimeVersion. */
+            runtimeVersion: string;
             /**
              * @description Release route status.
              * @enum {string}
@@ -2342,6 +2641,14 @@ export interface components {
         StorageConfigurationsResponse: {
             configurations: components["schemas"]["StorageConfiguration"][];
             pagination: components["schemas"]["Pagination"];
+        };
+        UserSummary: {
+            /** @description Avatar URL. Empty when the user has no avatar. */
+            avatarUrl: string;
+            /** @description User id. */
+            id: string;
+            /** @description User name. */
+            name: string;
         };
     };
     responses: never;
@@ -3277,7 +3584,11 @@ export interface operations {
     };
     getApplicationArtifactManifest: {
         parameters: {
-            query?: {
+            query: {
+                /** @description Client platform. Only files under the {platform}/ directory are returned, with the platform prefix removed. */
+                platform: "android" | "ios" | "harmony";
+                /** @description Client runtimeVersion. Only routes with exactly this runtimeVersion are matched. 1-64 characters of [A-Za-z0-9._-]. */
+                runtimeVersion: string;
                 /** @description Optional targeting identifier. Targeted gray wins when present, percentage gray may use userId, otherwise default release is used. */
                 identifier?: string;
                 /** @description Optional user id for percentage gray bucketing. */
@@ -3303,7 +3614,7 @@ export interface operations {
                     "application/json": components["schemas"]["ArtifactManifestResponse"];
                 };
             };
-            /** @description Invalid artifact manifest request. */
+            /** @description Invalid artifact manifest request, including missing or invalid platform or runtimeVersion. */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -3344,7 +3655,9 @@ export interface operations {
     downloadArtifactFile: {
         parameters: {
             query: {
-                /** @description Artifact file relative path from the build artifact manifest. */
+                /** @description Optional platform. When present, path is relative to the platform directory, as returned by the application manifest. */
+                platform?: "android" | "ios" | "harmony";
+                /** @description Artifact file relative path. Relative to the artifact root, or to the platform directory when platform is present. */
                 path: string;
             };
             header?: never;
@@ -3610,7 +3923,7 @@ export interface operations {
                 /** @description Environment code filter. */
                 environment?: string;
                 /** @description Build trigger type filter. */
-                triggerType?: "manual" | "pipeline";
+                triggerType?: "manual" | "webhook";
                 /** @description One-based page number. Defaults to 1. */
                 page?: number;
                 /** @description Rows per page, from 1 to 100. Defaults to 20. */
@@ -3753,6 +4066,779 @@ export interface operations {
             };
         };
     };
+    listBuildLogs: {
+        parameters: {
+            query?: {
+                /** @description Return chunks with seq greater than this value. Omit to read from the beginning. */
+                afterSeq?: number;
+            };
+            header?: never;
+            path: {
+                /** @description Build record UUID. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Build log chunks after afterSeq. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BuildLogsResponse"];
+                };
+            };
+            /** @description Invalid afterSeq. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Build record not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    listCodeSourceConnections: {
+        parameters: {
+            query?: {
+                /** @description Code source provider filter. */
+                provider?: "github" | "gitlab";
+                /** @description Connection status filter. */
+                status?: "active" | "disabled";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Code source connection list. Deleted connections are excluded. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CodeSourceConnectionsResponse"];
+                };
+            };
+            /** @description Invalid code source request or credential. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication is required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Current user cannot manage or use code source connections. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Code source connection, repository or installation not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Code source provider request failed. */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Code source auth is not configured. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    createCodeSourceConnection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Code source connection create payload. */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CodeSourceConnectionCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Connection verified and created. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CodeSourceConnectionDetailResponse"];
+                };
+            };
+            /** @description Invalid code source request or credential. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication is required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Current user cannot manage or use code source connections. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Code source connection, repository or installation not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Connection already exists. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Code source provider request failed. */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Code source auth is not configured. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getCodeSourceConnection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Code source connection id. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Code source connection detail. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CodeSourceConnectionDetailResponse"];
+                };
+            };
+            /** @description Invalid code source request or credential. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication is required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Current user cannot manage or use code source connections. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Code source connection, repository or installation not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Code source provider request failed. */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Code source auth is not configured. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    deleteCodeSourceConnection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Code source connection id. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Connection was deleted. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid code source request or credential. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication is required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Current user cannot manage or use code source connections. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Code source connection, repository or installation not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Connection is referenced by modules. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Code source provider request failed. */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Code source auth is not configured. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    updateCodeSourceConnection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Code source connection id. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        /** @description Code source connection update payload. Omitted fields are unchanged. */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CodeSourceConnectionUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Code source connection updated. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CodeSourceConnectionDetailResponse"];
+                };
+            };
+            /** @description Invalid code source request or credential. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication is required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Current user cannot manage or use code source connections. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Code source connection, repository or installation not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Code source provider request failed. */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Code source auth is not configured. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    searchCodeSourceRepositories: {
+        parameters: {
+            query?: {
+                /** @description Repository search keyword. */
+                query?: string;
+                /** @description Page number, min 1, default 1. */
+                page?: number;
+                /** @description Result size, min 1, max 100, default 20. */
+                pageSize?: number;
+            };
+            header?: never;
+            path: {
+                /** @description Code source connection id. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Repository search result. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CodeSourceRepositorySearchResponse"];
+                };
+            };
+            /** @description Invalid code source request or credential. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication is required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Current user cannot manage or use code source connections. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Code source connection, repository or installation not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Code source provider request failed. */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Code source auth is not configured. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    verifyCodeSourceConnection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Code source connection id. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Connection verified. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CodeSourceConnectionDetailResponse"];
+                };
+            };
+            /** @description Invalid code source request or credential. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication is required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Current user cannot manage or use code source connections. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Code source connection, repository or installation not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Code source provider request failed. */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Code source auth is not configured. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getCodeSourceConnectionWebhook: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Code source connection id. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Webhook path and secret. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CodeSourceConnectionWebhook"];
+                };
+            };
+            /** @description Invalid code source request or credential. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication is required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Current user cannot manage or use code source connections. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Code source connection, repository or installation not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Code source provider request failed. */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Code source auth is not configured. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     listCodeSources: {
         parameters: {
             query?: never;
@@ -3795,21 +4881,27 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                /** @description Code source provider. */
-                provider: "github";
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description Code source installation URL. */
+            /** @description GitHub App installation URL. */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": components["schemas"]["CodeSourceInstallURL"];
+                };
+            };
+            /** @description Invalid code source request or credential. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Authentication is required. */
@@ -3821,7 +4913,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Current user cannot manage code sources. */
+            /** @description Current user cannot manage or use code source connections. */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -3830,7 +4922,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Code source provider not found. */
+            /** @description Code source connection, repository or installation not found. */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -3879,15 +4971,12 @@ export interface operations {
                 state?: string;
             };
             header?: never;
-            path: {
-                /** @description Code source provider. */
-                provider: "github";
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description Code source app installation completed and redirects to console. */
+            /** @description Installation connection saved and redirects to console. */
             302: {
                 headers: {
                     [name: string]: unknown;
@@ -3896,7 +4985,7 @@ export interface operations {
                     "application/json": unknown;
                 };
             };
-            /** @description Invalid code source callback. */
+            /** @description Invalid code source request or credential. */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -3914,7 +5003,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Current user cannot manage code sources. */
+            /** @description Current user cannot manage or use code source connections. */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -3923,82 +5012,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Code source provider or installation not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Server error. */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Code source provider request failed. */
-            502: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Code source auth is not configured. */
-            503: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-        };
-    };
-    deleteCodeSourceInstallations: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Code source provider. */
-                provider: "github";
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Current user's code source app authorizations and repository cache were deleted. */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Authentication is required. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Current user cannot manage code sources. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Code source provider or installation not found. */
+            /** @description Code source connection, repository or installation not found. */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -4040,21 +5054,27 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                /** @description Code source provider. */
-                provider: "github";
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description Code source app manifest creation payload. */
+            /** @description GitHub App manifest creation payload. */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": components["schemas"]["CodeSourceAppManifest"];
+                };
+            };
+            /** @description Invalid code source request or credential. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Authentication is required. */
@@ -4066,7 +5086,16 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Code source provider not found. */
+            /** @description Current user cannot manage or use code source connections. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Code source connection, repository or installation not found. */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -4111,10 +5140,7 @@ export interface operations {
                 code?: string;
             };
             header?: never;
-            path: {
-                /** @description Code source provider. */
-                provider: "github";
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
@@ -4130,97 +5156,6 @@ export interface operations {
             };
             /** @description Invalid code source manifest callback. */
             400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Code source provider not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Server error. */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Code source provider request failed. */
-            502: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Code source auth is not configured. */
-            503: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-        };
-    };
-    searchCodeSourceRepositories: {
-        parameters: {
-            query?: {
-                /** @description Repository search keyword. Matches owner, name, full name or description. */
-                query?: string;
-                /** @description Result size, min 1, max 100, default 20. */
-                pageSize?: number;
-            };
-            header?: never;
-            path: {
-                /** @description Code source provider. */
-                provider: "github";
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Authorized repository search result. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CodeSourceRepositorySearchResponse"];
-                };
-            };
-            /** @description Invalid repository search request. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Authentication is required. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Code source provider or installation not found. */
-            404: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -4865,6 +5800,182 @@ export interface operations {
             };
         };
     };
+    listModuleBuildVariables: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Module id. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Module build variables. Secret values are masked as ******. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BuildVariablesResponse"];
+                };
+            };
+            /** @description Current user cannot manage this module. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Module not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    upsertModuleBuildVariable: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Module id. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        /** @description Build variable payload. Upserts by key and environmentCode. */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BuildVariableUpsertRequest"];
+            };
+        };
+        responses: {
+            /** @description Build variable saved. Secret values are masked as ******. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BuildVariableDetailResponse"];
+                };
+            };
+            /** @description Invalid build variable request. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Current user cannot manage this module. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Module or environment not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    deleteModuleBuildVariable: {
+        parameters: {
+            query: {
+                /** @description Build variable key. */
+                key: string;
+                /** @description Environment code. Omit or leave empty for the variable shared by all environments. */
+                environmentCode?: string;
+            };
+            header?: never;
+            path: {
+                /** @description Module id. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Build variable deleted. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid build variable request. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Current user cannot manage this module. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Module or build variable not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     ping: {
         parameters: {
             query?: never;
@@ -5015,6 +6126,8 @@ export interface operations {
                 moduleId: string;
                 /** @description Environment code. */
                 environment: string;
+                /** @description Optional runtimeVersion. When present only routes of this runtimeVersion are resolved, otherwise the newest matching route of any runtimeVersion wins. */
+                runtimeVersion?: string;
                 /** @description Optional targeting identifier. Falls back to the default route when no identifier route exists. */
                 identifier?: string;
                 /** @description Optional user id for percentage gray bucketing. */
@@ -5498,6 +6611,191 @@ export interface operations {
             };
             /** @description Server error. */
             500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    receiveGitHubWebhook: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Provider webhook header X-Hub-Signature-256. */
+                "X-Hub-Signature-256"?: string;
+                /** @description Provider webhook header X-GitHub-Event. */
+                "X-GitHub-Event"?: string;
+                /** @description Provider webhook header X-GitHub-Delivery. */
+                "X-GitHub-Delivery"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Raw GitHub webhook payload. */
+        requestBody: {
+            content: {
+                "application/json": Record<string, never>;
+            };
+        };
+        responses: {
+            /** @description Push event matched at least one module auto build rule. Builds were created, or skipped because the same commit already has a pending, running or succeeded build. */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Event ignored (not a branch push, branch deleted, tag push, connection disabled, or no module auto build rule matched). */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid webhook payload. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Webhook signature or secret is invalid. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Code source connection not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Webhook payload too large. */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Webhook secret is not configured. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    receiveGitLabWebhook: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Provider webhook header X-Gitlab-Token. */
+                "X-Gitlab-Token"?: string;
+                /** @description Provider webhook header X-Gitlab-Event. */
+                "X-Gitlab-Event"?: string;
+                /** @description Provider webhook header X-Gitlab-Event-UUID. */
+                "X-Gitlab-Event-UUID"?: string;
+            };
+            path: {
+                /** @description Code source connection id. */
+                connectionId: string;
+            };
+            cookie?: never;
+        };
+        /** @description Raw GitLab webhook payload. */
+        requestBody: {
+            content: {
+                "application/json": Record<string, never>;
+            };
+        };
+        responses: {
+            /** @description Push event matched at least one module auto build rule. Builds were created, or skipped because the same commit already has a pending, running or succeeded build. */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Event ignored (not a branch push, branch deleted, tag push, connection disabled, or no module auto build rule matched). */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid webhook payload. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Webhook signature or secret is invalid. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Code source connection not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Webhook payload too large. */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Webhook secret is not configured. */
+            503: {
                 headers: {
                     [name: string]: unknown;
                 };

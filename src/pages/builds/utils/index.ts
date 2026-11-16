@@ -7,8 +7,13 @@ import type {
   BuildRunStatus,
 } from "../types";
 
-export function buildReleaseTargetKey(moduleId: string, environment: string) {
-  return `${moduleId}:${environment}`;
+/** 发布路由按模块、环境和运行时版本隔离，同一 key 下的全量发布才会互相替换。 */
+export function buildReleaseTargetKey(
+  moduleId: string,
+  environment: string,
+  runtimeVersion: string,
+) {
+  return `${moduleId}:${environment}:${runtimeVersion}`;
 }
 
 export function isBuildOlderThanActiveRelease(

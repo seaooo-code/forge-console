@@ -13,3 +13,5 @@ export type ReleaseRecord = APISchemas["DashboardReleaseRecord"];
 export type ResourceStatus = APISchemas["DashboardResourceStatus"];
 
 export type DashboardSnapshot = APISchemas["DashboardResponse"];
+
+export type EnvironmentTone = APISchemas["Environment"]["tone"];

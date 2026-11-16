@@ -7,10 +7,13 @@ import {
   Database,
   ExternalLink,
   GitBranch,
+  GitCommitHorizontal,
   HardDrive,
+  Layers,
   PackageCheck,
   RadioTower,
   Server,
+  UserRound,
 } from "lucide-react";
 
 import { fetchModuleDetailSnapshot, moduleDetailQueryKey } from "@/api/modules";
@@ -28,8 +31,15 @@ import {
   SectionHeader,
   SummaryCard,
 } from "./components/BuildDetailSummary";
-import { buildTriggerLabels } from "./constants";
-import type { BuildRecordDetail } from "./types";
+import { BuildLogPanel } from "./components/BuildLogPanel";
+import { BuildCommitLink, BuildCreator, BuildPlatformBadges } from "./components/BuildMeta";
+import {
+  buildDetailRefetchIntervalMs,
+  buildPlatformLabels,
+  buildTriggerLabels,
+  repositoryProviderLabels,
+} from "./constants";
+import type { BuildPlatform, BuildRecordDetail } from "./types";
 import { getArtifactBaseURL, getStorageConfigurationDisplayName, isLiveBuildStatus } from "./utils";
 
 type BuildDetailPageProps = {
@@ -54,7 +64,7 @@ export function BuildDetailPage({
     queryKey: buildDetailQueryKey(buildId),
     refetchInterval: (query) => {
       const currentBuild = query.state.data as BuildRecordDetail | undefined;
-      return isLiveBuildStatus(currentBuild?.status) ? 5000 : false;
+      return isLiveBuildStatus(currentBuild?.status) ? buildDetailRefetchIntervalMs : false;
     },
   });
   const buildModuleId = build?.moduleId;
@@ -130,19 +140,29 @@ export function BuildDetailPage({
             icon={GitBranch}
             label="分支"
             value={build.branch}
-            description={`默认 ${build.defaultBranch}`}
+            description={
+              build.commitShortSha
+                ? `commit ${build.commitShortSha}`
+                : `默认 ${build.defaultBranch}`
+            }
+          />
+          <SummaryCard
+            icon={Layers}
+            label="运行时版本"
+            value={build.runtimeVersion || "-"}
+            description={
+              build.platforms.length > 0
+                ? build.platforms
+                    .map((platform) => buildPlatformLabels[platform as BuildPlatform] ?? platform)
+                    .join(" / ")
+                : "构建成功后从 forge.json 读取"
+            }
           />
           <SummaryCard
             icon={Clock3}
             label="耗时"
             value={build.duration}
             description={`开始 ${build.startedAt}`}
-          />
-          <SummaryCard
-            icon={Server}
-            label="执行节点"
-            value={build.workerId}
-            description={build.status === "queued" ? "等待分配" : "Worker"}
           />
         </section>
 
@@ -168,7 +188,35 @@ export function BuildDetailPage({
                 label="触发方式"
                 value={buildTriggerLabels[build.triggerType]}
               />
-              <DetailItem icon={RadioTower} label="触发来源" value={build.triggerId} />
+              <DetailItem
+                icon={RadioTower}
+                label={build.triggerType === "webhook" ? "Webhook Delivery ID" : "触发来源"}
+                value={build.triggerId}
+              />
+              <DetailItem
+                icon={UserRound}
+                label="创建人"
+                value=""
+                description={
+                  build.triggerType === "webhook" && build.createdBy
+                    ? "Webhook 构建记录为代码源连接的创建人"
+                    : undefined
+                }
+              >
+                <BuildCreator createdBy={build.createdBy} />
+              </DetailItem>
+              <DetailItem icon={GitCommitHorizontal} label="Commit" value="">
+                <BuildCommitLink build={build} />
+              </DetailItem>
+              <DetailItem icon={Layers} label="平台" value="">
+                <BuildPlatformBadges platforms={build.platforms} />
+              </DetailItem>
+              <DetailItem
+                icon={Server}
+                label="执行节点"
+                value={build.workerId}
+                description={build.status === "queued" ? "等待分配" : undefined}
+              />
               <DetailItem
                 icon={HardDrive}
                 label="产物 URL"
@@ -181,7 +229,13 @@ export function BuildDetailPage({
           <Card className="gap-0 rounded-lg border-border py-0 shadow-sm">
             <SectionHeader title="上下文" description="仓库、环境和存储配置" />
             <div className="grid gap-3 p-4">
-              <DetailItem icon={GitBranch} label="仓库" value={build.repositoryFullName} />
+              <DetailItem
+                icon={GitBranch}
+                label="仓库"
+                value={build.repositoryFullName}
+                description={`${repositoryProviderLabels[build.repositoryProvider]} · 连接 ${build.codeSourceConnectionId}`}
+                href={build.repositoryWebUrl || undefined}
+              />
               <DetailItem
                 icon={Database}
                 label="环境名称"
@@ -205,6 +259,8 @@ export function BuildDetailPage({
             </div>
           </Card>
         </section>
+
+        <BuildLogPanel buildId={build.id} isLive={isLiveBuildStatus(build.status)} />
 
         <ArtifactTreePanel applicationSlug={applicationSlug} build={build} />
       </div>

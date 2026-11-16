@@ -1,74 +1,110 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ExternalLink, GitFork, type LucideIcon, Trash2 } from "lucide-react";
+import { GitBranch, Plus, RotateCw } from "lucide-react";
 import { useState } from "react";
 
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { ErrorState } from "@/components/common/StateBlock";
 import { PageHeader } from "@/components/layout";
 import { Alert } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/use-auth-store";
 
 import {
   CodeSourceAPIError,
+  codeSourceConnectionsQueryKey,
   codeSourcesSnapshotQueryKey,
-  deleteCodeSourceInstallations,
-  fetchCodeSourceAppManifest,
-  fetchCodeSourceInstallURL,
+  createCodeSourceConnection,
+  deleteCodeSourceConnection,
+  fetchCodeSourceConnections,
   fetchCodeSourcesSnapshot,
+  fetchGitHubAppManifest,
+  fetchGitHubInstallURL,
+  updateCodeSourceConnection,
+  verifyCodeSourceConnection,
 } from "./api/code-sources-snapshot";
-import { providerToneClass, statusClass, statusLabel } from "./constants";
-import type { CodeSourceApp, CodeSourceProvider } from "./types";
-
-const providerIcons: Record<CodeSourceProvider, LucideIcon> = {
-  github: GitFork,
-};
+import { CodeSourceConnectionRow } from "./components/CodeSourceConnectionRow";
+import { GitHubAppCard } from "./components/GitHubAppCard";
+import { GitLabConnectionDialog } from "./components/GitLabConnectionDialog";
+import { credentialExpiryWarningDays } from "./constants";
+import type {
+  CodeSourceApp,
+  CodeSourceConnection,
+  CodeSourceConnectionAction,
+  GitLabConnectionFormValues,
+} from "./types";
+import {
+  buildGitLabCreatePayload,
+  buildGitLabUpdatePayload,
+  getCredentialExpiryLevel,
+} from "./utils";
 
 export function CodeSourcesPage() {
   const queryClient = useQueryClient();
   const session = useAuthStore((state) => state.session);
-  const canManageCodeSources = Boolean(session?.capabilities.canManageCodeSources);
-  const {
-    data: snapshot,
-    error,
-    isError,
-    refetch,
-  } = useQuery({
+  const canManage = Boolean(session?.capabilities.canManageCodeSources);
+  const appsQuery = useQuery({
     queryFn: fetchCodeSourcesSnapshot,
     queryKey: codeSourcesSnapshotQueryKey,
   });
-  const [deleteError, setDeleteError] = useState("");
-  const [deleteTarget, setDeleteTarget] = useState<CodeSourceApp | null>(null);
-  const [errorMessage, setErrorMessage] = useState("");
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [installingProvider, setInstallingProvider] = useState<CodeSourceProvider | null>(null);
+  const connectionsQuery = useQuery({
+    queryFn: fetchCodeSourceConnections,
+    queryKey: codeSourceConnectionsQueryKey,
+  });
   const [message, setMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isOpeningGitHub, setIsOpeningGitHub] = useState(false);
+  const [dialogConnection, setDialogConnection] = useState<CodeSourceConnection | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [dialogError, setDialogError] = useState("");
+  const [pending, setPending] = useState<{ action: CodeSourceConnectionAction; id: string } | null>(
+    null,
+  );
+  const [deleteTarget, setDeleteTarget] = useState<CodeSourceConnection | null>(null);
+  const [deleteError, setDeleteError] = useState("");
 
-  const requestInstall = async (app: CodeSourceApp) => {
-    setInstallingProvider(app.provider);
-    setErrorMessage("");
+  const connections = connectionsQuery.data ?? [];
+  const expiringConnections = connections.filter(
+    (connection) =>
+      connection.status === "active" &&
+      getCredentialExpiryLevel(connection.credentialExpiresAt) !== "none",
+  );
+
+  const clearFeedback = () => {
     setMessage("");
+    setErrorMessage("");
+  };
+
+  const refreshAll = () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: codeSourceConnectionsQueryKey }),
+      queryClient.invalidateQueries({ queryKey: codeSourcesSnapshotQueryKey }),
+    ]);
+
+  const openGitHubManifest = async () => {
+    const manifest = await fetchGitHubAppManifest();
+    submitGitHubAppManifest(manifest.actionUrl, manifest.manifest);
+  };
+
+  const handleInstallGitHub = async (app: CodeSourceApp) => {
+    setIsOpeningGitHub(true);
+    clearFeedback();
     try {
       if (app.configurationStatus === "notConfigured") {
-        const manifest = await fetchCodeSourceAppManifest(app.provider);
-        submitGitHubAppManifest(manifest.actionUrl, manifest.manifest);
+        await openGitHubManifest();
         return;
       }
-
-      const installURL = await fetchCodeSourceInstallURL(app.provider);
+      const installURL = await fetchGitHubInstallURL();
       window.location.assign(installURL.url);
     } catch (error) {
+      // App 配置被清空时安装地址返回 503，回退到创建 App 流程。
       if (
         error instanceof CodeSourceAPIError &&
         error.status === 503 &&
         error.payload?.error === "code source auth not configured"
       ) {
         try {
-          const manifest = await fetchCodeSourceAppManifest(app.provider);
-          submitGitHubAppManifest(manifest.actionUrl, manifest.manifest);
+          await openGitHubManifest();
           return;
         } catch (manifestError) {
           setErrorMessage(
@@ -76,90 +112,252 @@ export function CodeSourcesPage() {
               ? manifestError.message
               : "创建 GitHub App 失败，请稍后重试",
           );
-          setInstallingProvider(null);
+          setIsOpeningGitHub(false);
           return;
         }
       }
       setErrorMessage(error instanceof Error ? error.message : "获取安装地址失败，请稍后重试");
-      setInstallingProvider(null);
+      setIsOpeningGitHub(false);
     }
   };
 
-  if (!snapshot) {
-    return isError ? (
-      <CodeSourcesPageError
-        message={error instanceof Error ? error.message : "读取代码源失败，请稍后重试"}
-        onRetry={() => void refetch()}
-      />
-    ) : (
-      <CodeSourcesPageLoading />
-    );
-  }
+  const openDialog = (connection: CodeSourceConnection | null) => {
+    clearFeedback();
+    setDialogError("");
+    setDialogConnection(connection);
+    setIsDialogOpen(true);
+  };
+
+  const handleDialogSubmit = async (values: GitLabConnectionFormValues) => {
+    setDialogError("");
+    try {
+      if (dialogConnection) {
+        const payload = buildGitLabUpdatePayload(values, dialogConnection);
+        if (Object.keys(payload).length > 0) {
+          const updated = await updateCodeSourceConnection(dialogConnection.id, payload);
+          setMessage(`连接「${updated.name}」已更新。`);
+        }
+      } else {
+        const created = await createCodeSourceConnection(buildGitLabCreatePayload(values));
+        setMessage(
+          `GitLab 连接「${created.name}」已创建并校验通过${created.externalAccount ? `，令牌所属账号 ${created.externalAccount}` : ""}。`,
+        );
+      }
+      await refreshAll();
+      setIsDialogOpen(false);
+    } catch (error) {
+      setDialogError(error instanceof Error ? error.message : "保存连接失败，请稍后重试");
+    }
+  };
+
+  const runConnectionAction = async (
+    connection: CodeSourceConnection,
+    action: CodeSourceConnectionAction,
+    request: () => Promise<string>,
+  ) => {
+    setPending({ action, id: connection.id });
+    clearFeedback();
+    try {
+      setMessage(await request());
+      await refreshAll();
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "操作失败，请稍后重试");
+    } finally {
+      setPending(null);
+    }
+  };
+
+  const handleVerify = (connection: CodeSourceConnection) =>
+    void runConnectionAction(connection, "verify", async () => {
+      const verified = await verifyCodeSourceConnection(connection.id);
+      return `连接「${verified.name}」校验通过。`;
+    });
+
+  const handleToggleStatus = (connection: CodeSourceConnection) => {
+    const nextStatus = connection.status === "active" ? "disabled" : "active";
+    void runConnectionAction(connection, "status", async () => {
+      const updated = await updateCodeSourceConnection(connection.id, { status: nextStatus });
+      return `连接「${updated.name}」已${nextStatus === "active" ? "启用" : "停用"}。`;
+    });
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) {
+      return;
+    }
+    setPending({ action: "delete", id: deleteTarget.id });
+    setDeleteError("");
+    try {
+      await deleteCodeSourceConnection(deleteTarget.id);
+      await refreshAll();
+      setMessage(`连接「${deleteTarget.name}」已删除。`);
+      setDeleteTarget(null);
+    } catch (error) {
+      setDeleteError(
+        error instanceof CodeSourceAPIError && error.status === 409
+          ? "仍有模块使用该连接，无法删除。请先调整这些模块的代码源，或改为停用该连接。"
+          : error instanceof Error
+            ? error.message
+            : "删除连接失败，请稍后重试",
+      );
+    } finally {
+      setPending(null);
+    }
+  };
+
+  const isDeleting = pending?.action === "delete";
+  const githubApp = appsQuery.data?.apps.find((app) => app.provider === "github");
 
   return (
     <>
       <div className="flex flex-col gap-6">
-        <CodeSourcesHeader />
+        <PageHeader
+          title="代码源管理"
+          description="管理 GitHub 和 GitLab 代码源连接，模块通过连接选择仓库并拉取代码"
+          actions={
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  void appsQuery.refetch();
+                  void connectionsQuery.refetch();
+                }}
+              >
+                <RotateCw className="size-4" />
+                刷新
+              </Button>
+              <Button type="button" disabled={!canManage} onClick={() => openDialog(null)}>
+                <Plus className="size-4" />
+                新建 GitLab 连接
+              </Button>
+            </>
+          }
+        />
 
+        {!canManage ? (
+          <Alert variant="info">
+            当前账号只能查看和使用代码源连接，创建、编辑、停用和删除需要平台管理员权限。
+          </Alert>
+        ) : null}
         {message ? <Alert variant="info">{message}</Alert> : null}
         {errorMessage ? <Alert variant="danger">{errorMessage}</Alert> : null}
+        {expiringConnections.length > 0 ? (
+          <Alert variant="warning">
+            以下连接的凭证已过期或将在 {credentialExpiryWarningDays} 天内过期，请及时更换：
+            {expiringConnections.map((connection) => connection.name).join("、")}
+          </Alert>
+        ) : null}
 
-        <section className="grid gap-4 xl:grid-cols-2">
-          {snapshot.apps.map((app) => (
-            <CodeSourceAppCard
-              key={app.id}
-              app={app}
-              canManageCodeSources={canManageCodeSources}
-              isInstalling={installingProvider === app.provider}
-              onDeleteInstallations={(targetApp) => {
-                setDeleteTarget(targetApp);
-                setDeleteError("");
-                setErrorMessage("");
-                setMessage("");
-              }}
-              onInstall={requestInstall}
-            />
-          ))}
+        {githubApp ? (
+          <GitHubAppCard
+            app={githubApp}
+            canManage={canManage}
+            isOpening={isOpeningGitHub}
+            onInstall={(app) => void handleInstallGitHub(app)}
+          />
+        ) : appsQuery.isError ? (
+          <ErrorState
+            title="GitHub App 状态读取失败"
+            message={appsQuery.error instanceof Error ? appsQuery.error.message : "请稍后重试"}
+            onRetry={() => void appsQuery.refetch()}
+          />
+        ) : appsQuery.isPending ? (
+          <Card className="h-24 animate-pulse rounded-xl bg-card shadow-xs" />
+        ) : null}
+
+        <section className="overflow-hidden rounded-xl border border-border bg-card shadow-xs">
+          <div className="flex items-center gap-2 border-border border-b px-4 py-3">
+            <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+              <GitBranch className="size-4" />
+            </div>
+            <div className="min-w-0">
+              <h2 className="font-semibold text-foreground text-sm">代码源连接</h2>
+              <p className="text-muted-foreground text-xs">
+                {connectionsQuery.data ? `共 ${connections.length} 条连接` : "GitHub 与 GitLab"}
+              </p>
+            </div>
+          </div>
+
+          {connectionsQuery.isError && !connectionsQuery.data ? (
+            <div className="p-4">
+              <ErrorState
+                title="代码源连接读取失败"
+                message={
+                  connectionsQuery.error instanceof Error
+                    ? connectionsQuery.error.message
+                    : "请稍后重试"
+                }
+                onRetry={() => void connectionsQuery.refetch()}
+              />
+            </div>
+          ) : connectionsQuery.isPending ? (
+            <div className="space-y-3 p-4">
+              {["first", "second"].map((item) => (
+                <div key={item} className="h-14 animate-pulse rounded-md bg-muted" />
+              ))}
+            </div>
+          ) : connections.length === 0 ? (
+            <div className="px-4 py-12 text-center">
+              <div className="mx-auto flex size-10 items-center justify-center rounded-md bg-muted text-muted-foreground">
+                <GitBranch className="size-5" />
+              </div>
+              <div className="mt-3 font-medium text-foreground text-sm">暂无代码源连接</div>
+              <p className="mt-1 text-muted-foreground text-xs">
+                安装 GitHub App 或新建 GitLab 连接后，连接会显示在这里
+              </p>
+            </div>
+          ) : (
+            <div className="divide-y divide-border">
+              {connections.map((connection) => (
+                <CodeSourceConnectionRow
+                  key={connection.id}
+                  canManage={canManage}
+                  connection={connection}
+                  pendingAction={pending?.id === connection.id ? pending.action : undefined}
+                  onDelete={(target) => {
+                    clearFeedback();
+                    setDeleteError("");
+                    setDeleteTarget(target);
+                  }}
+                  onEdit={openDialog}
+                  onToggleStatus={handleToggleStatus}
+                  onVerify={handleVerify}
+                />
+              ))}
+            </div>
+          )}
         </section>
       </div>
+
+      <GitLabConnectionDialog
+        connection={dialogConnection}
+        isOpen={isDialogOpen}
+        submitError={dialogError}
+        onClose={() => setIsDialogOpen(false)}
+        onSubmit={handleDialogSubmit}
+      />
 
       <ConfirmDialog
         isOpen={deleteTarget !== null}
         isPending={isDeleting}
-        title="删除 GitHub 授权"
+        title="删除代码源连接"
         description={
           deleteTarget
-            ? `确认删除当前账号的「${deleteTarget.name}」安装授权和仓库缓存？GitHub 开发者后台里的 App 本体需要在 GitHub 侧手动删除。`
+            ? deleteTarget.provider === "github"
+              ? `确认删除「${deleteTarget.name}」？GitHub 侧的 App 安装不会被移除，如需彻底解除请到 GitHub 设置中卸载。`
+              : `确认删除「${deleteTarget.name}」？删除后无法恢复；仍有模块使用该连接时不能删除。`
             : ""
         }
-        confirmLabel="删除授权"
+        confirmLabel="删除连接"
         tone="danger"
         onCancel={() => {
-          if (isDeleting) {
-            return;
-          }
-          setDeleteTarget(null);
-          setDeleteError("");
-        }}
-        onConfirm={async () => {
-          if (!deleteTarget) {
-            return;
-          }
-
-          setIsDeleting(true);
-          setDeleteError("");
-          setMessage("");
-          try {
-            await deleteCodeSourceInstallations(deleteTarget.provider);
-            await queryClient.invalidateQueries({ queryKey: codeSourcesSnapshotQueryKey });
-            setMessage(`${deleteTarget.name} 当前账号授权和仓库缓存已删除。`);
+          if (!isDeleting) {
             setDeleteTarget(null);
-          } catch (error) {
-            setDeleteError(error instanceof Error ? error.message : "删除授权失败，请稍后重试");
-          } finally {
-            setIsDeleting(false);
+            setDeleteError("");
           }
         }}
+        onConfirm={() => void handleDelete()}
       >
         {deleteError ? (
           <Alert variant="danger" className="px-3 py-2">
@@ -168,21 +366,6 @@ export function CodeSourcesPage() {
         ) : null}
       </ConfirmDialog>
     </>
-  );
-}
-
-function CodeSourcesPageError({ message, onRetry }: { message: string; onRetry: () => void }) {
-  return (
-    <div className="flex flex-col gap-6">
-      <CodeSourcesHeader />
-      <ErrorState title="代码源接口不可用" message={message} onRetry={onRetry} />
-    </div>
-  );
-}
-
-function CodeSourcesHeader() {
-  return (
-    <PageHeader title="代码源管理" description="创建或移除 GitHub App 授权，用于后续仓库绑定" />
   );
 }
 
@@ -199,95 +382,4 @@ function submitGitHubAppManifest(actionURL: string, manifest: string) {
 
   document.body.appendChild(form);
   form.submit();
-}
-
-function CodeSourcesPageLoading() {
-  return (
-    <div className="flex flex-col gap-6">
-      <CodeSourcesHeader />
-      <div className="grid gap-4 xl:grid-cols-2">
-        {["github"].map((item) => (
-          <Card key={item} className="h-42 animate-pulse rounded-xl bg-card shadow-xs" />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function CodeSourceAppCard({
-  app,
-  canManageCodeSources,
-  isInstalling,
-  onDeleteInstallations,
-  onInstall,
-}: {
-  app: CodeSourceApp;
-  canManageCodeSources: boolean;
-  isInstalling: boolean;
-  onDeleteInstallations: (app: CodeSourceApp) => void;
-  onInstall: (app: CodeSourceApp) => void;
-}) {
-  const Icon = providerIcons[app.provider];
-  const isInstalled = app.status === "installed";
-  const isConfigured = app.configurationStatus === "configured";
-
-  return (
-    <Card className="rounded-xl border-border bg-card p-5 shadow-xs">
-      <div className="flex flex-col gap-5">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex min-w-0 items-start gap-3">
-            <div
-              className={cn(
-                "flex size-10 shrink-0 items-center justify-center rounded-lg",
-                providerToneClass[app.provider],
-              )}
-            >
-              <Icon className="size-5" />
-            </div>
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <h2 className="font-semibold text-foreground text-base">{app.name}</h2>
-                <Badge variant="outline" className={statusClass[app.status]}>
-                  {statusLabel[app.status]}
-                </Badge>
-              </div>
-              <p className="mt-2 max-w-xl text-muted-foreground text-sm leading-6">
-                {app.description}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-3 border-border border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="text-muted-foreground text-sm">
-            {isInstalled && app.installedAt ? `安装时间：${app.installedAt}` : null}
-            {isInstalled && !app.installedAt ? "已安装" : null}
-            {!isInstalled ? "尚未安装" : null}
-          </div>
-          <Button
-            type="button"
-            variant={isInstalled ? "destructive" : "default"}
-            className={cn(!isInstalled && "bg-primary hover:bg-primary/90")}
-            disabled={!canManageCodeSources || isInstalling}
-            onClick={() => {
-              if (isInstalled) {
-                onDeleteInstallations(app);
-                return;
-              }
-              onInstall(app);
-            }}
-          >
-            {isInstalled ? <Trash2 className="size-4" /> : <ExternalLink className="size-4" />}
-            {isInstalled
-              ? "删除授权"
-              : isInstalling
-                ? "正在打开"
-                : isConfigured
-                  ? "安装 App"
-                  : "创建 GitHub App"}
-          </Button>
-        </div>
-      </div>
-    </Card>
-  );
 }

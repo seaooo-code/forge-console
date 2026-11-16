@@ -15,7 +15,6 @@ type GrayPercentageAdjustCardProps = {
   grayPercentageError: string;
   grayPercentageInput: string;
   grayPercentageMessage: string;
-  // biome-ignore lint/suspicious/noExplicitAny: mutation result types are structurally used only for isPending/mutate
   grayPercentageMutation: UseMutationResult<ReleaseRecordDetail, Error, number, unknown>;
   onGrayPercentageInputChange: (value: string) => void;
   onUpdate: () => void;

@@ -138,9 +138,21 @@ export function useReleaseRecordsData(
     [environmentSnapshot],
   );
 
+  const environmentTones = useMemo(
+    () =>
+      new Map(
+        environmentSnapshot?.environments.map((environment) => [
+          environment.id,
+          environment.tone,
+        ]) ?? [],
+      ),
+    [environmentSnapshot],
+  );
+
   return {
     buildOptions,
     environmentOptions,
+    environmentTones,
     isBuildsFetching,
     isFetching,
     moduleOptions,

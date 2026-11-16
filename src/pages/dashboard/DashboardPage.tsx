@@ -1,6 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { Activity, Clock3, Layers3, type LucideIcon } from "lucide-react";
+import { useMemo } from "react";
+
 import { PageErrorState, PageHeader, PageSkeleton } from "@/components/layout";
+import { environmentsSnapshotQueryKey, fetchEnvironmentsSnapshot } from "@/pages/environments";
 
 import { dashboardSnapshotQueryKey, fetchDashboardSnapshot } from "./api/dashboard-snapshot";
 import { BuildTrendChart } from "./components/BuildTrendChart";
@@ -20,6 +23,21 @@ export function DashboardPage() {
     queryFn: fetchDashboardSnapshot,
     queryKey: dashboardSnapshotQueryKey,
   });
+  // 环境徽标按环境配置的 tone 着色；环境列表与其他页面共用同一个缓存。
+  const { data: environmentSnapshot } = useQuery({
+    queryFn: fetchEnvironmentsSnapshot,
+    queryKey: environmentsSnapshotQueryKey,
+  });
+  const environmentTones = useMemo(
+    () =>
+      new Map(
+        environmentSnapshot?.environments.map((environment) => [
+          environment.id,
+          environment.tone,
+        ]) ?? [],
+      ),
+    [environmentSnapshot],
+  );
 
   if (!snapshot && !isError) {
     return <PageSkeleton withHeader withKpis rows={3} kpiCount={6} />;
@@ -76,14 +94,14 @@ export function DashboardPage() {
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
         <BuildTrendChart data={snapshot.buildTrend} />
-        <ReleaseOverviewPanel releases={snapshot.releases} />
+        <ReleaseOverviewPanel environmentTones={environmentTones} releases={snapshot.releases} />
       </div>
 
       <ResourceOverviewPanel resources={snapshot.resources} />
 
       <div className="grid gap-6 xl:grid-cols-2">
-        <RecentBuildsTable builds={snapshot.builds} />
-        <RecentReleasesTable releases={snapshot.releases} />
+        <RecentBuildsTable builds={snapshot.builds} environmentTones={environmentTones} />
+        <RecentReleasesTable releases={snapshot.releases} environmentTones={environmentTones} />
       </div>
 
       <div className="text-right text-muted-foreground text-xs">

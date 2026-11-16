@@ -1,4 +1,4 @@
-import { Box, CalendarClock, RadioTower, UserRound } from "lucide-react";
+import { Box, CalendarClock, Layers, RadioTower, UserRound } from "lucide-react";
 
 import { Card } from "@/components/ui/card";
 
@@ -46,6 +46,12 @@ export function ReleaseRecordInfoSection({
               description="到期后自动失效"
             />
           ) : null}
+          <DetailItem
+            icon={Layers}
+            label="运行时版本"
+            value={release.runtimeVersion || "-"}
+            description="只替换该运行时版本下的同类发布"
+          />
           <DetailItem icon={UserRound} label="操作人" value={release.operator} />
         </div>
       </Card>

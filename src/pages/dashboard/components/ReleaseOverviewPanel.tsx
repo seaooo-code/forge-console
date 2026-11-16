@@ -6,13 +6,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 import { recentReleaseStatusClass, recentReleaseStatusLabel } from "../constants";
-import type { ReleaseRecord } from "../types";
+import type { EnvironmentTone, ReleaseRecord } from "../types";
 
 type ReleaseOverviewPanelProps = {
+  environmentTones: ReadonlyMap<string, EnvironmentTone>;
   releases: ReleaseRecord[];
 };
 
-export function ReleaseOverviewPanel({ releases }: ReleaseOverviewPanelProps) {
+export function ReleaseOverviewPanel({ environmentTones, releases }: ReleaseOverviewPanelProps) {
   const activeCount = releases.filter((release) => release.status === "active").length;
   const inactiveCount = releases.length - activeCount;
   const latestRelease = releases[0];
@@ -62,6 +63,7 @@ export function ReleaseOverviewPanel({ releases }: ReleaseOverviewPanelProps) {
               <EnvironmentBadge
                 className="h-5 px-2 py-0.5 font-medium"
                 environment={latestRelease.environment}
+                tone={environmentTones.get(latestRelease.environment)}
               />
               <span>灰度 {latestRelease.gray}</span>
               <span>更新 {latestRelease.updatedAt}</span>

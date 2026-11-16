@@ -23,6 +23,7 @@ import type {
 } from "@/types/releases";
 
 import { defaultTargetedGrayExpiresAt, targetedGrayExpiresAt } from "../utils";
+import { ReleaseRuntimeVersionNotice } from "./ReleaseRuntimeVersionNotice";
 
 type CreateReleaseFormState = BuildReleaseFormState & {
   buildRecordId: string;
@@ -136,6 +137,7 @@ export function CreateReleaseDialog({
                     {buildOptions.map((build) => (
                       <SelectItem key={build.id} value={build.id}>
                         {build.createdAt} / {build.module} / {build.version}
+                        {build.runtimeVersion ? ` / ${build.runtimeVersion}` : ""}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -144,10 +146,16 @@ export function CreateReleaseDialog({
             />
             {selectedBuild ? (
               <div className="truncate text-muted-foreground text-xs">
-                {selectedBuild.application} / {selectedBuild.branch} / #{selectedBuild.id.slice(-8)}
+                {selectedBuild.application} / {selectedBuild.branch}
+                {selectedBuild.commitShortSha ? ` @ ${selectedBuild.commitShortSha}` : ""} / #
+                {selectedBuild.id.slice(-8)}
               </div>
             ) : null}
           </Field>
+
+          {selectedBuild ? (
+            <ReleaseRuntimeVersionNotice runtimeVersion={selectedBuild.runtimeVersion} />
+          ) : null}
 
           <Field label="发布类型" htmlFor="release-create-type">
             <Controller

@@ -7,6 +7,7 @@ export {
   releaseRecordsSnapshotQueryKey,
   releaseRecordsSnapshotQueryKeyWithFilters,
 } from "./api/release-records-snapshot";
+export { ReleaseRuntimeVersionNotice } from "./components/ReleaseRuntimeVersionNotice";
 export {
   getReleaseRecordTargetLabel,
   getReleaseRecordTypeLabel,

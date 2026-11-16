@@ -17,7 +17,6 @@ import { ReleaseStatusBadge, ReleaseTypeBadge } from "./DetailPrimitives";
 type ReleaseRecordDetailHeaderProps = {
   canCreateRelease: boolean;
   canInactivateTargetedGray: boolean;
-  // biome-ignore lint/suspicious/noExplicitAny: mutation result types are structurally used only for isPending/mutate
   inactivateMutation: UseMutationResult<ReleaseRecordDetail, Error, void, unknown>;
   onBack: () => void;
   onInactivate: () => void;

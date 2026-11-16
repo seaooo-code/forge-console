@@ -18,6 +18,7 @@ import { useAuthStore } from "@/store/use-auth-store";
 import { BuildCreateDialog } from "./components/BuildCreateDialog";
 import { BuildReleaseDialog } from "./components/BuildReleaseDialog";
 import { buildBuildsColumnDefs } from "./components/BuildsColumns";
+import { buildTriggerFilterOptions } from "./constants";
 import { useBuildsPageData } from "./hooks";
 import type { BuildListFilters, BuildRunRecord } from "./types";
 import { buildReleaseTargetKey } from "./utils";
@@ -35,11 +36,6 @@ const buildStatusFilterOptions = [
   { label: "构建中", value: "running" },
   { label: "成功", value: "succeeded" },
   { label: "失败", value: "failed" },
-];
-
-const buildTriggerFilterOptions = [
-  { label: "手动触发", value: "manual" },
-  { label: "流水线触发", value: "pipeline" },
 ];
 
 type BuildsPageProps = {
@@ -148,7 +144,7 @@ export function BuildsPage({ onOpenBuild }: BuildsPageProps) {
       <div className="flex flex-col gap-6">
         <PageHeader
           title="构建管理"
-          description="汇总所有模块构建执行，支持手动新增构建并跟踪流水线触发结果"
+          description="汇总所有模块构建执行，支持手动新增构建并跟踪 Webhook 触发结果"
           below={
             <div className="flex flex-wrap items-center gap-2">
               <ApplicationScopeSelect
@@ -309,7 +305,11 @@ export function BuildsPage({ onOpenBuild }: BuildsPageProps) {
         activeFullRelease={
           releaseBuild
             ? activeFullReleaseByTarget.get(
-                buildReleaseTargetKey(releaseBuild.moduleId, releaseBuild.environment),
+                buildReleaseTargetKey(
+                  releaseBuild.moduleId,
+                  releaseBuild.environment,
+                  releaseBuild.runtimeVersion,
+                ),
               )
             : undefined
         }

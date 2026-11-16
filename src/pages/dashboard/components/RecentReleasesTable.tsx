@@ -13,13 +13,14 @@ import {
   recentReleaseStatusClass,
   recentReleaseStatusLabel,
 } from "../constants";
-import type { ReleaseRecord } from "../types";
+import type { EnvironmentTone, ReleaseRecord } from "../types";
 
 type RecentReleasesTableProps = {
   releases: ReleaseRecord[];
+  environmentTones: ReadonlyMap<string, EnvironmentTone>;
 };
 
-export function RecentReleasesTable({ releases }: RecentReleasesTableProps) {
+export function RecentReleasesTable({ releases, environmentTones }: RecentReleasesTableProps) {
   const columnDefs = useMemo<ColDef<ReleaseRecord>[]>(
     () => [
       {
@@ -44,7 +45,11 @@ export function RecentReleasesTable({ releases }: RecentReleasesTableProps) {
       {
         cellRenderer: ({ value }: { value?: ReleaseRecord["environment"] }) =>
           value ? (
-            <EnvironmentBadge className="h-5 px-2 py-0.5 font-medium" environment={value} />
+            <EnvironmentBadge
+              className="h-5 px-2 py-0.5 font-medium"
+              environment={value}
+              tone={environmentTones.get(value)}
+            />
           ) : null,
         field: "environment",
         flex: 0.7,
@@ -81,7 +86,7 @@ export function RecentReleasesTable({ releases }: RecentReleasesTableProps) {
         minWidth: 80,
       },
     ],
-    [],
+    [environmentTones],
   );
 
   const defaultColDef = useMemo<ColDef<ReleaseRecord>>(

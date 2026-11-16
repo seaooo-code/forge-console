@@ -1,8 +1,10 @@
+import type { APISchemas } from "@/api/client";
 import type {
   BuildCreateFormState as SharedBuildCreateFormState,
   BuildCreateInput as SharedBuildCreateInput,
   BuildCreateResult as SharedBuildCreateResult,
   BuildListFilters as SharedBuildListFilters,
+  BuildPlatform as SharedBuildPlatform,
   BuildRunRecord as SharedBuildRunRecord,
   BuildRunStatus as SharedBuildRunStatus,
   BuildsSnapshot as SharedBuildsSnapshot,
@@ -15,6 +17,8 @@ import type {
 } from "@/types/releases";
 
 export type BuildRunStatus = SharedBuildRunStatus;
+
+export type BuildPlatform = SharedBuildPlatform;
 
 export type BuildTriggerType = SharedBuildTriggerType;
 
@@ -46,6 +50,7 @@ export type BuildArtifactTree = {
 export type BuildRecordDetail = BuildRunRecord & {
   artifactTree: BuildArtifactTree;
   artifactUrl: string;
+  codeSourceConnectionId: string;
   createdAt: string;
   defaultBranch: string;
   environment: string;
@@ -58,8 +63,7 @@ export type BuildRecordDetail = BuildRunRecord & {
   queuedAt: string;
   repositoryFullName: string;
   repositoryId: string;
-  repositoryInstallationId: string;
-  repositoryProvider: string;
+  repositoryProvider: APISchemas["BuildRecord"]["repositoryProvider"];
   startedAtFull: string;
   startedAtRaw: string;
   storageConfigurationId: string;
@@ -70,6 +74,14 @@ export type BuildRecordDetail = BuildRunRecord & {
 };
 
 export type BuildsSnapshot = SharedBuildsSnapshot;
+
+/** 构建日志在前端累积后的状态：已拼接的内容、最后读到的 seq 和是否已读完。 */
+export type BuildLogState = {
+  content: string;
+  finished: boolean;
+  /** 尚未读到任何分片时为 undefined，请求时不带 afterSeq。 */
+  lastSeq?: number;
+};
 
 export type ActiveFullReleaseTarget = {
   build?: BuildRunRecord;

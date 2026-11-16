@@ -13,13 +13,14 @@ import {
   recentBuildStatusClass,
   recentBuildStatusLabel,
 } from "../constants";
-import type { RecentBuildRecord } from "../types";
+import type { EnvironmentTone, RecentBuildRecord } from "../types";
 
 type RecentBuildsTableProps = {
   builds: RecentBuildRecord[];
+  environmentTones: ReadonlyMap<string, EnvironmentTone>;
 };
 
-export function RecentBuildsTable({ builds }: RecentBuildsTableProps) {
+export function RecentBuildsTable({ builds, environmentTones }: RecentBuildsTableProps) {
   const columnDefs = useMemo<ColDef<RecentBuildRecord>[]>(
     () => [
       {
@@ -44,7 +45,11 @@ export function RecentBuildsTable({ builds }: RecentBuildsTableProps) {
       {
         cellRenderer: ({ value }: { value?: RecentBuildRecord["environment"] }) =>
           value ? (
-            <EnvironmentBadge className="h-5 px-2 py-0.5 font-medium" environment={value} />
+            <EnvironmentBadge
+              className="h-5 px-2 py-0.5 font-medium"
+              environment={value}
+              tone={environmentTones.get(value)}
+            />
           ) : null,
         field: "environment",
         flex: 0.8,
@@ -81,7 +86,7 @@ export function RecentBuildsTable({ builds }: RecentBuildsTableProps) {
         minWidth: 100,
       },
     ],
-    [],
+    [environmentTones],
   );
 
   const defaultColDef = useMemo<ColDef<RecentBuildRecord>>(

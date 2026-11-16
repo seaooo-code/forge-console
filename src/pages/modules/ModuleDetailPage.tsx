@@ -5,13 +5,21 @@ import {
   Box,
   Boxes,
   CircleAlert,
+  Clock,
+  ExternalLink,
+  FileCode2,
+  FolderTree,
+  GitBranch,
   GitFork,
   Hammer,
+  KeyRound,
+  LayoutList,
   Package,
   PenLine,
+  Rocket,
   UserRound,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 import { buildsSnapshotQueryKey, createBuild } from "@/api/builds";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -20,11 +28,15 @@ import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { environmentsSnapshotQueryKey, fetchEnvironmentsSnapshot } from "@/pages/environments";
 import { fetchAllReleaseRecordsSnapshot, releaseRecordsAllQueryKey } from "@/pages/release-records";
+import { useAuthStore } from "@/store/use-auth-store";
 
 import { fetchModuleDetailSnapshot, moduleDetailQueryKey } from "./api/modules-snapshot";
+import { CodeSourceProviderIcon } from "./components/CodeSourceProviderIcon";
 import { ModuleBuildDialog } from "./components/ModuleBuildDialog";
+import { ModuleBuildVariablesPanel } from "./components/ModuleBuildVariablesPanel";
+import { ModuleWebhookPanel } from "./components/ModuleWebhookPanel";
 import { PublishedBuildsPanel } from "./components/PublishedBuildsPanel";
-import { kindClass } from "./constants";
+import { codeSourceProviderLabels, kindClass } from "./constants";
 import type { ModuleRecord } from "./types";
 import { formatCommonModule } from "./utils";
 
@@ -49,6 +61,10 @@ export function ModuleDetailPage({ moduleId, onBack, onEditModule }: ModuleDetai
     queryFn: () => fetchAllReleaseRecordsSnapshot(releaseRecordsFilters),
     queryKey: releaseRecordsAllQueryKey(releaseRecordsFilters),
   });
+  const canManageModules = Boolean(
+    useAuthStore((state) => state.session?.capabilities.canManageModules),
+  );
+  const [activeTab, setActiveTab] = useState<"overview" | "variables">("overview");
   const [isBuildDialogOpen, setIsBuildDialogOpen] = useState(false);
   const [buildError, setBuildError] = useState("");
   const [buildSuccess, setBuildSuccess] = useState("");
@@ -146,40 +162,53 @@ export function ModuleDetailPage({ moduleId, onBack, onEditModule }: ModuleDetai
       </div>
 
       <div className="space-y-4 px-6 py-5">
-        <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
-          <Card className="gap-0 rounded-lg border-border py-0 shadow-sm">
-            <SectionHeader title="仓库绑定" description="模块代码源与默认分支" />
-            <div className="grid gap-3 p-4 md:grid-cols-2">
-              <DetailItem icon={GitFork} label="仓库" value={module.repository} />
-              <DetailItem icon={GitFork} label="完整仓库名" value={module.repositoryFullName} />
-              <DetailItem icon={GitFork} label="默认分支" value={module.defaultBranch ?? ""} />
-              <DetailItem icon={GitFork} label="Provider" value={module.repositoryProvider} />
-              <DetailItem
-                icon={GitFork}
-                label="Clone URL"
-                value={module.repositoryCloneUrl ?? ""}
-                wide
-              />
-              <DetailItem
-                icon={GitFork}
-                label="SSH URL"
-                value={module.repositorySshUrl ?? ""}
-                wide
-              />
-            </div>
-          </Card>
+        <div className="flex gap-1 border-border border-b" role="tablist">
+          <TabButton
+            icon={LayoutList}
+            isActive={activeTab === "overview"}
+            label="概览"
+            onClick={() => setActiveTab("overview")}
+          />
+          <TabButton
+            icon={KeyRound}
+            isActive={activeTab === "variables"}
+            label="构建变量"
+            onClick={() => setActiveTab("variables")}
+          />
+        </div>
 
-          <Card className="gap-0 rounded-lg border-border py-0 shadow-sm">
-            <SectionHeader title="模块关系" description="应用归属与通用模块依赖" />
-            <div className="grid gap-3 p-4">
-              <DetailItem icon={Boxes} label="关联应用" value={module.applicationName} />
-              <DetailItem icon={Boxes} label="应用 ID" value={module.applicationId} />
-              <DetailItem icon={Package} label="通用模块" value={formatCommonModule(module)} />
-            </div>
-          </Card>
-        </section>
+        {activeTab === "overview" ? (
+          <>
+            <section className="grid gap-4 xl:grid-cols-2">
+              <RepositoryCard module={module} />
+              <BuildConfigCard
+                environmentName={
+                  environmentOptions.find(
+                    (option) => option.value === module.buildConfig.autoBuildEnvironment,
+                  )?.label
+                }
+                module={module}
+              />
+              <ModuleWebhookPanel module={module} />
+              <Card className="gap-0 rounded-lg border-border py-0 shadow-sm">
+                <SectionHeader title="模块关系" description="应用归属与通用模块依赖" />
+                <div className="grid gap-3 p-4">
+                  <DetailItem icon={Boxes} label="关联应用" value={module.applicationName} />
+                  <DetailItem icon={Boxes} label="应用 ID" value={module.applicationId} />
+                  <DetailItem icon={Package} label="通用模块" value={formatCommonModule(module)} />
+                </div>
+              </Card>
+            </section>
 
-        <PublishedBuildsPanel isFetching={isReleaseRecordsFetching} records={releaseRecords} />
+            <PublishedBuildsPanel isFetching={isReleaseRecordsFetching} records={releaseRecords} />
+          </>
+        ) : (
+          <ModuleBuildVariablesPanel
+            canManage={canManageModules}
+            environmentOptions={environmentOptions}
+            moduleId={module.id}
+          />
+        )}
       </div>
 
       <ModuleBuildDialog
@@ -211,6 +240,154 @@ export function ModuleDetailPage({ moduleId, onBack, onEditModule }: ModuleDetai
         }}
       />
     </>
+  );
+}
+
+function TabButton({
+  icon: Icon,
+  isActive,
+  label,
+  onClick,
+}: {
+  icon: LucideIcon;
+  isActive: boolean;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      role="tab"
+      aria-selected={isActive}
+      className={cn(
+        "-mb-px h-9 gap-1.5 rounded-none border-b-2 px-3",
+        isActive
+          ? "border-primary text-foreground"
+          : "border-transparent text-muted-foreground hover:text-foreground",
+      )}
+      onClick={onClick}
+    >
+      <Icon className="size-4" />
+      {label}
+    </Button>
+  );
+}
+
+function RepositoryCard({ module }: { module: ModuleRecord }) {
+  return (
+    <Card className="gap-0 rounded-lg border-border py-0 shadow-sm">
+      <SectionHeader title="仓库绑定" description="代码源连接、仓库与默认分支" />
+      <div className="grid gap-3 p-4 md:grid-cols-2">
+        <DetailItem
+          icon={GitFork}
+          label="仓库"
+          wide
+          value={
+            module.repositoryWebUrl ? (
+              <a
+                href={module.repositoryWebUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 text-primary hover:underline"
+              >
+                {module.repositoryFullName}
+                <ExternalLink className="size-3.5" />
+              </a>
+            ) : (
+              module.repositoryFullName
+            )
+          }
+        />
+        <DetailItem
+          icon={GitFork}
+          label="代码源连接"
+          value={
+            <span className="inline-flex items-center gap-1.5">
+              <CodeSourceProviderIcon provider={module.repositoryProvider} />
+              {module.codeSourceConnectionName || module.codeSourceConnectionId}
+              <span className="font-normal text-muted-foreground text-xs">
+                {codeSourceProviderLabels[module.repositoryProvider]}
+              </span>
+            </span>
+          }
+        />
+        <DetailItem icon={GitBranch} label="默认分支" value={module.defaultBranch ?? ""} />
+        <DetailItem icon={GitFork} label="仓库 ID" value={module.repositoryId} />
+        <DetailItem icon={GitFork} label="Clone URL" value={module.repositoryCloneUrl ?? ""} />
+      </div>
+    </Card>
+  );
+}
+
+function BuildConfigCard({
+  environmentName,
+  module,
+}: {
+  environmentName: string | undefined;
+  module: ModuleRecord;
+}) {
+  const config = module.buildConfig;
+  const branches = config.autoBuildBranches ?? [];
+
+  return (
+    <Card className="gap-0 rounded-lg border-border py-0 shadow-sm">
+      <SectionHeader title="构建配置" description="Dockerfile、自动构建与预览通道" />
+      <div className="grid gap-3 p-4 md:grid-cols-2">
+        <DetailItem
+          icon={FileCode2}
+          label="Dockerfile 路径"
+          value={<span className="font-mono">{config.dockerfilePath || "-"}</span>}
+        />
+        <DetailItem
+          icon={FolderTree}
+          label="构建上下文"
+          value={<span className="font-mono">{config.buildContext || "-"}</span>}
+        />
+        <DetailItem
+          icon={GitBranch}
+          label="自动构建分支"
+          wide
+          value={
+            branches.length > 0 ? (
+              <span className="flex flex-wrap gap-1.5">
+                {branches.map((branch) => (
+                  <Badge key={branch} variant="outline" className="font-mono">
+                    {branch}
+                  </Badge>
+                ))}
+              </span>
+            ) : (
+              <span className="font-normal text-muted-foreground">未开启自动构建</span>
+            )
+          }
+        />
+        <DetailItem
+          icon={Hammer}
+          label="自动构建环境"
+          value={
+            config.autoBuildEnvironment ? (environmentName ?? config.autoBuildEnvironment) : "-"
+          }
+        />
+        <DetailItem
+          icon={Rocket}
+          label="预览通道"
+          value={
+            config.autoPreviewRelease ? (
+              <span className="inline-flex items-center gap-1.5">
+                已开启
+                <span className="inline-flex items-center gap-1 font-normal text-muted-foreground text-xs">
+                  <Clock className="size-3" />
+                  {config.autoPreviewTtlHours} 小时后过期
+                </span>
+              </span>
+            ) : (
+              <span className="font-normal text-muted-foreground">未开启</span>
+            )
+          }
+        />
+      </div>
+    </Card>
   );
 }
 
@@ -280,7 +457,7 @@ function DetailItem({
 }: {
   icon: LucideIcon;
   label: string;
-  value: string;
+  value: ReactNode;
   wide?: boolean;
 }) {
   return (

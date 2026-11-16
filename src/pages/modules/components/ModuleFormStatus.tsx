@@ -71,7 +71,7 @@ export function ModuleCodeSourceRequired({
           <div>
             <h1 className="font-semibold text-2xl text-foreground tracking-tight">新建模块</h1>
             <p className="mt-2 text-muted-foreground text-sm">
-              登记新的模块仓库，并绑定归属应用与负责人
+              登记新的模块仓库，配置构建方式，并绑定归属应用与负责人
             </p>
           </div>
         </div>
@@ -83,11 +83,11 @@ export function ModuleCodeSourceRequired({
             <div className="min-w-0">
               <div className="flex items-center gap-2 font-semibold text-sm">
                 <GitFork className="size-4 shrink-0" />
-                需要先安装代码源
+                需要先配置代码源连接
               </div>
               <p className="mt-2 max-w-2xl text-warning text-sm leading-6">
-                当前账号还没有可用的代码源授权。新建模块需要从已授权仓库中选择 Git
-                仓库，请先到代码源管理安装 GitHub App。
+                当前还没有可用的代码源连接。新建模块需要先选择连接、再从中搜索 Git
+                仓库，请先到代码源管理安装 GitHub App 或添加 GitLab 连接。
               </p>
             </div>
             <Button

@@ -220,6 +220,7 @@ function normalizeReleaseRecord(record: ReleaseRecordAPIRecord): ReleasePointerR
     moduleId: record.moduleId || "-",
     operator: record.createdBy || record.createdByUserId || "-",
     releaseType: record.releaseType,
+    runtimeVersion: record.runtimeVersion || "",
     status: record.status,
     updatedAt: formatShortRecordTime(record.updatedAt),
     updatedAtFull: formatRecordNumber(record.updatedAt),

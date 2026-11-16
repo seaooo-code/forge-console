@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
-import { ArrowLeft, PackageCheck } from "lucide-react";
+import { ArrowLeft, ExternalLink, PackageCheck } from "lucide-react";
+import type { ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -47,14 +48,20 @@ export function SectionHeader({ description, title }: { description: string; tit
 }
 
 export function DetailItem({
+  children,
   description,
+  href,
   icon: Icon,
   label,
   onClick,
   value,
   wide = false,
 }: {
+  /** 需要展示非纯文本内容（如标签组）时传入，优先于 value。 */
+  children?: ReactNode;
   description?: string;
+  /** 外部链接地址，在新窗口打开。 */
+  href?: string;
   icon: LucideIcon;
   label: string;
   onClick?: () => void;
@@ -71,7 +78,19 @@ export function DetailItem({
       <Icon className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
       <div className="min-w-0">
         <div className="text-muted-foreground text-xs">{label}</div>
-        {onClick ? (
+        {children ? (
+          <div className="mt-0.5">{children}</div>
+        ) : href ? (
+          <a
+            href={href}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1 break-all font-semibold text-primary text-sm hover:underline"
+          >
+            {value || "-"}
+            <ExternalLink className="size-3.5 shrink-0" />
+          </a>
+        ) : onClick ? (
           <Button
             variant="link"
             type="button"

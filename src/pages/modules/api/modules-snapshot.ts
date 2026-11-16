@@ -10,7 +10,14 @@ import {
   normalizeModuleListFilters,
 } from "@/api/modules";
 
-import type { ModuleMutationInput, ModuleRecord, ModuleRepositoryBinding } from "../types";
+import type {
+  CodeSourceConnectionWebhook,
+  CodeSourceRepository,
+  ModuleBuildVariable,
+  ModuleBuildVariableInput,
+  ModuleMutationInput,
+  ModuleRecord,
+} from "../types";
 
 export {
   fetchAllModulesSnapshot,
@@ -29,11 +36,37 @@ export const moduleEditQueryKey = (moduleId: string | undefined) => [
   moduleId ?? "none",
 ];
 
+// 连接列表复用代码源页的公开出口，这里只放模块页专属的仓库搜索与 webhook 查询。
+export const connectionRepositoriesQueryKey = (connectionId: string, query: string) => [
+  ...modulesRootQueryKey,
+  "connection",
+  connectionId,
+  "repositories",
+  query,
+];
+
+export const connectionWebhookQueryKey = (connectionId: string) => [
+  ...modulesRootQueryKey,
+  "connection",
+  connectionId,
+  "webhook",
+];
+
+export const moduleBuildVariablesQueryKey = (moduleId: string) => [
+  ...modulesRootQueryKey,
+  "build-variables",
+  moduleId,
+];
+
 type ModuleAPIRecord = APISchemas["Module"];
 
 type ModuleDetailAPIResponse = APISchemas["ModuleDetailResponse"];
 
 type CodeSourceRepositorySearchResponse = APISchemas["CodeSourceRepositorySearchResponse"];
+
+type BuildVariablesResponse = APISchemas["BuildVariablesResponse"];
+
+type BuildVariableDetailResponse = APISchemas["BuildVariableDetailResponse"];
 
 export class ModuleAPIError extends Error {
   readonly payload?: APIErrorPayload;
@@ -57,16 +90,27 @@ const moduleAPIErrorMessages: Record<string, string> = {
   "common module must belong to same application": "通用模块必须属于当前关联应用",
   "build record not found": "构建记录不存在",
   "build service unavailable": "构建服务暂不可用",
+  "build variable not found": "构建变量不存在",
+  "build variable service unavailable": "构建变量服务暂不可用",
+  "code source auth not configured": "代码源授权未配置",
+  "code source authorization failed": "代码源授权失败，请检查连接凭证",
+  "code source connection is not active": "代码源连接已停用，请先启用或更换连接",
+  "code source connection not found": "代码源连接不存在",
+  "code source repository not found": "仓库不存在，请重新搜索后选择",
   "environment not found": "环境不存在",
   "feature module requires common module": "功能模块必须选择当前应用的通用模块",
   forbidden: "当前账号无权限执行此操作",
   "internal server error": "服务端内部错误，请稍后重试",
-  "invalid module request": "模块参数无效，请检查表单",
+  "invalid module request": "模块参数无效，请检查仓库和构建配置",
   "invalid build request": "构建参数无效，请检查分支和环境",
+  "invalid build variable request":
+    "构建变量参数无效：key 需匹配 ^[A-Z][A-Z0-9_]{0,63}$ 且不能以 FORGE_ 开头，密钥值不能为空",
+  "invalid code source request": "代码源请求参数无效",
   "module id already exists": "模块 ID 已存在，请更换后重试",
   "module is referenced": "模块已被引用，不能删除",
   "module not found": "模块不存在",
-  "module repository already exists": "该仓库已绑定其他模块，请选择未绑定仓库",
+  "module repository already exists":
+    "该仓库已用相同 Dockerfile 路径绑定其他模块，请更换仓库或 Dockerfile 路径",
   "storage configuration not found": "环境未绑定有效存储配置，无法构建",
 };
 
@@ -102,27 +146,60 @@ export async function deleteModule(moduleId: string): Promise<void> {
   });
 }
 
-export async function searchCodeSourceRepositories(
+export async function searchConnectionRepositories(
+  connectionId: string,
   query: string,
-): Promise<ModuleRepositoryBinding[]> {
-  const params = new URLSearchParams({
-    pageSize: "10",
-    query,
-  });
+): Promise<CodeSourceRepository[]> {
+  const params = new URLSearchParams({ pageSize: "20", query });
   const payload = await fetchJSON<CodeSourceRepositorySearchResponse>(
-    `/api/v1/code-sources/github/repositories/search?${params.toString()}`,
+    `/api/v1/code-source-connections/${encodeURIComponent(connectionId)}/repositories?${params.toString()}`,
   );
 
-  return payload.repositories.map((repository) => ({
-    cloneUrl: repository.cloneUrl,
-    defaultBranch: repository.defaultBranch,
-    fullName: repository.fullName,
-    htmlUrl: repository.htmlUrl,
-    id: repository.id,
-    installationId: repository.installationId,
-    provider: repository.provider,
-    sshUrl: repository.sshUrl,
-  }));
+  return payload.repositories;
+}
+
+export function fetchConnectionWebhook(connectionId: string): Promise<CodeSourceConnectionWebhook> {
+  return fetchJSON<CodeSourceConnectionWebhook>(
+    `/api/v1/code-source-connections/${encodeURIComponent(connectionId)}/webhook`,
+  );
+}
+
+export async function fetchModuleBuildVariables(moduleId: string): Promise<ModuleBuildVariable[]> {
+  const payload = await fetchJSON<BuildVariablesResponse>(
+    `/api/v1/modules/${encodeURIComponent(moduleId)}/build-variables`,
+  );
+
+  return payload.variables;
+}
+
+export async function upsertModuleBuildVariable(
+  moduleId: string,
+  input: ModuleBuildVariableInput,
+): Promise<ModuleBuildVariable> {
+  const payload = await fetchJSON<BuildVariableDetailResponse>(
+    `/api/v1/modules/${encodeURIComponent(moduleId)}/build-variables`,
+    {
+      body: JSON.stringify(input),
+      method: "PUT",
+    },
+  );
+
+  return payload.variable;
+}
+
+export async function deleteModuleBuildVariable(
+  moduleId: string,
+  variable: Pick<ModuleBuildVariable, "environmentCode" | "key">,
+): Promise<void> {
+  const params = new URLSearchParams({ key: variable.key });
+  if (variable.environmentCode) {
+    params.set("environmentCode", variable.environmentCode);
+  }
+
+  await fetchJSON<void>(
+    `/api/v1/modules/${encodeURIComponent(moduleId)}/build-variables?${params.toString()}`,
+    { method: "DELETE" },
+  );
 }
 
 function getModuleAPIErrorMessage(path: string, status: number, payload?: APIErrorPayload) {

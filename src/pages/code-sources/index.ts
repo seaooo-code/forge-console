@@ -1,3 +1,8 @@
-export { codeSourcesSnapshotQueryKey, fetchCodeSourcesSnapshot } from "./api/code-sources-snapshot";
+export {
+  codeSourceConnectionsQueryKey,
+  codeSourcesSnapshotQueryKey,
+  fetchCodeSourceConnections,
+  fetchCodeSourcesSnapshot,
+} from "./api/code-sources-snapshot";
 export { CodeSourcesPage } from "./CodeSourcesPage";
-export type { CodeSourcesSnapshot } from "./types";
+export type { CodeSourceConnection, CodeSourcesSnapshot } from "./types";

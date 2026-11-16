@@ -34,6 +34,8 @@ type BuildsAPIResponse = APISchemas["BuildRecordsResponse"];
 
 type BuildDetailAPIResponse = APISchemas["BuildRecordDetailResponse"];
 
+type BuildCreateAPIPayload = APISchemas["BuildRecordCreateRequest"];
+
 export class BuildsAPIError extends Error {
   readonly payload?: APIErrorPayload;
   readonly status: number;
@@ -95,12 +97,12 @@ export function normalizeBuildListFilters(filters?: Partial<BuildListRequest>): 
 
 export async function createBuild(input: BuildCreateInput): Promise<BuildCreateResult> {
   const payload = await fetchJSON<BuildDetailAPIResponse>("/api/v1/builds", {
+    // 控制台只能创建手动构建；分支留空时由后端回退到模块默认分支。
     body: JSON.stringify({
-      branch: input.branch.trim(),
+      branch: input.branch.trim() || undefined,
       environment: input.environment,
       moduleId: input.moduleId,
-      triggerType: "manual",
-    }),
+    } satisfies BuildCreateAPIPayload),
     method: "POST",
   });
 
@@ -129,20 +131,34 @@ function getBuildsAPIErrorMessage(path: string, status: number, payload?: APIErr
   return error ?? `Request ${path} failed with ${status}`;
 }
 
-function normalizeBuildRecord(record: BuildRecordAPIRecord): BuildRunRecord {
+/** 构建列表和详情共用的记录转换，详情页在此基础上补充产物树等字段。 */
+export function normalizeBuildRecord(record: BuildRecordAPIRecord): BuildRunRecord {
+  const commitSha = record.commitSha.trim();
+  const repositoryWebUrl = record.repositoryWebUrl?.trim().replace(/\/+$/, "") ?? "";
+
   return {
     application: record.applicationName || "-",
     artifact: record.artifactKey || "-",
     branch: record.branch || "-",
-    commit: "-",
+    commitSha,
+    commitShortSha: commitSha.slice(0, 8),
+    // GitHub 和 GitLab 的提交页都是 {web}/commit/{sha}。
+    commitUrl:
+      commitSha && repositoryWebUrl
+        ? `${repositoryWebUrl}/commit/${encodeURIComponent(commitSha)}`
+        : "",
     createdAt: formatRecordNumber(record.createdAt),
     createdAtRaw: record.createdAt,
+    createdBy: record.createdBy,
     duration: formatDuration(record.startedAt ?? "", record.finishedAt ?? ""),
     environment: record.environment,
     id: record.id,
     module: record.moduleName || record.moduleId,
     moduleId: record.moduleId,
     operator: record.workerId || "-",
+    platforms: record.platforms ?? [],
+    repositoryWebUrl,
+    runtimeVersion: record.runtimeVersion.trim(),
     startedAt: formatTime(record.startedAt || record.queuedAt || record.createdAt),
     status: buildStatusMap[record.status],
     triggerId: record.triggerId || "-",

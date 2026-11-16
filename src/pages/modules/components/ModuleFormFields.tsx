@@ -12,23 +12,33 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { FeishuUserSearchResult } from "@/types/feishu";
-import { kindOptions } from "../constants";
-import type { ModuleFormState, ModuleKind, ModuleRecord, ModuleRepositoryBinding } from "../types";
+import { codeSourceProviderLabels, kindOptions } from "../constants";
+import type {
+  CodeSourceConnection,
+  ModuleFormState,
+  ModuleKind,
+  ModuleRecord,
+  ModuleRepositorySelection,
+} from "../types";
+import { CodeSourceProviderIcon } from "./CodeSourceProviderIcon";
 import { RepositoryPicker } from "./RepositoryPicker";
 
 type ModuleFormFieldsProps = {
   applicationOptions: Array<{ label: string; value: string }>;
   clearFormError: () => void;
   commonModuleOptions: ModuleRecord[];
+  connections: CodeSourceConnection[];
   control: Control<ModuleFormState>;
   isEditMode: boolean;
   moduleIdField: UseFormRegisterReturn;
   moduleNameField: UseFormRegisterReturn;
   onApplicationChange: (value: string) => void;
+  onConnectionChange: (value: string) => void;
   onKindChange: (value: ModuleKind) => void;
   onOwnerChange: (value: string) => void;
   onOwnerSelect: (user: FeishuUserSearchResult) => void;
-  onRepositoryChange: (repository: ModuleRepositoryBinding | null) => void;
+  onRepositoryChange: (repository: ModuleRepositorySelection | null) => void;
+  selectedConnection: CodeSourceConnection | undefined;
   selectedKind: ModuleKind;
 };
 
@@ -36,15 +46,18 @@ export function ModuleFormFields({
   applicationOptions,
   clearFormError,
   commonModuleOptions,
+  connections,
   control,
   isEditMode,
   moduleIdField,
   moduleNameField,
   onApplicationChange,
+  onConnectionChange,
   onKindChange,
   onOwnerChange,
   onOwnerSelect,
   onRepositoryChange,
+  selectedConnection,
   selectedKind,
 }: ModuleFormFieldsProps) {
   return (
@@ -177,15 +190,61 @@ export function ModuleFormFields({
           <div className="h-4 w-1 rounded-full bg-success" />
           <h2 className="font-semibold text-foreground text-sm">仓库信息</h2>
         </div>
-        <Field label="Git 仓库" className="max-w-3xl">
-          <Controller
-            control={control}
-            name="repository"
-            render={({ field }) => (
-              <RepositoryPicker value={field.value} onChange={onRepositoryChange} />
-            )}
-          />
-        </Field>
+        <div className="grid gap-4 xl:grid-cols-12">
+          <Field label="代码源连接" className="xl:col-span-4">
+            <Controller
+              control={control}
+              name="connectionId"
+              render={({ field }) => (
+                <Select value={field.value} onValueChange={onConnectionChange}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="选择代码源连接" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {connections.map((connection) => (
+                      <SelectItem
+                        key={connection.id}
+                        value={connection.id}
+                        disabled={connection.status !== "active"}
+                      >
+                        <span className="flex min-w-0 items-center gap-2">
+                          <CodeSourceProviderIcon provider={connection.provider} />
+                          <span className="truncate">{connection.name}</span>
+                          <span className="text-muted-foreground text-xs">
+                            {connection.status === "active"
+                              ? codeSourceProviderLabels[connection.provider]
+                              : "已停用"}
+                          </span>
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+            {selectedConnection ? (
+              <p className="mt-2 truncate text-muted-foreground text-xs">
+                {selectedConnection.webBaseUrl}
+                {selectedConnection.externalAccount
+                  ? ` · ${selectedConnection.externalAccount}`
+                  : ""}
+              </p>
+            ) : null}
+          </Field>
+          <Field label="Git 仓库" className="xl:col-span-8">
+            <Controller
+              control={control}
+              name="repository"
+              render={({ field }) => (
+                <RepositoryPicker
+                  connection={selectedConnection}
+                  value={field.value}
+                  onChange={onRepositoryChange}
+                />
+              )}
+            />
+          </Field>
+        </div>
       </section>
     </div>
   );

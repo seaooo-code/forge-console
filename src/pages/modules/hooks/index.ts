@@ -2,7 +2,8 @@ import { skipToken, useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { applicationsAllQueryKey, fetchAllApplicationsSnapshot } from "@/pages/applications";
-import { codeSourcesSnapshotQueryKey, fetchCodeSourcesSnapshot } from "@/pages/code-sources";
+import { codeSourceConnectionsQueryKey, fetchCodeSourceConnections } from "@/pages/code-sources";
+import { environmentsSnapshotQueryKey, fetchEnvironmentsSnapshot } from "@/pages/environments";
 
 import {
   fetchAllModulesSnapshot,
@@ -24,10 +25,27 @@ export function useModuleFormData(mode: "create" | "edit", moduleId: string | un
     queryFn: editModuleId ? () => fetchModuleDetailSnapshot(editModuleId) : skipToken,
     queryKey: moduleEditQueryKey(editModuleId),
   });
-  const { data: codeSourceSnapshot, isFetching: isCodeSourcesFetching } = useQuery({
-    queryFn: isEditMode ? skipToken : fetchCodeSourcesSnapshot,
-    queryKey: codeSourcesSnapshotQueryKey,
+  const { data: connections, isFetching: isConnectionsFetching } = useQuery({
+    queryFn: fetchCodeSourceConnections,
+    queryKey: codeSourceConnectionsQueryKey,
   });
+  const { data: environmentSnapshot } = useQuery({
+    queryFn: fetchEnvironmentsSnapshot,
+    queryKey: environmentsSnapshotQueryKey,
+  });
+  // 自动构建环境提交的是环境 code，接口里环境的 id 就是 code。
+  const environmentOptions = useMemo(
+    () =>
+      environmentSnapshot?.environments.map((environment) => ({
+        label: `${environment.name}（${environment.id}）`,
+        value: environment.id,
+      })) ?? [],
+    [environmentSnapshot],
+  );
+  const activeConnections = useMemo(
+    () => connections?.filter((connection) => connection.status === "active") ?? [],
+    [connections],
+  );
   const applicationOptions = useMemo(
     () =>
       applicationSnapshot?.applications.map((application) => ({
@@ -37,9 +55,17 @@ export function useModuleFormData(mode: "create" | "edit", moduleId: string | un
     [applicationSnapshot],
   );
   const moduleRecord = editModuleId ? moduleSnapshot?.modules[0] : undefined;
+  // 新建时只有一个可用连接就默认选中，减少一次点击。
+  const fallbackConnectionId =
+    !isEditMode && activeConnections.length === 1 ? activeConnections[0].id : "";
   const initialForm = useMemo(
-    () => buildInitialForm(isEditMode ? moduleRecord : undefined, applicationOptions[0]?.value),
-    [applicationOptions, isEditMode, moduleRecord],
+    () =>
+      buildInitialForm(
+        isEditMode ? moduleRecord : undefined,
+        applicationOptions[0]?.value,
+        fallbackConnectionId,
+      ),
+    [applicationOptions, fallbackConnectionId, isEditMode, moduleRecord],
   );
   const form = useForm<ModuleFormState>({
     defaultValues: initialForm,
@@ -62,7 +88,6 @@ export function useModuleFormData(mode: "create" | "edit", moduleId: string | un
     queryKey: modulesAllQueryKey(commonModuleFilters),
   });
   const [formError, setFormError] = useState("");
-  const hasInstalledCodeSource = codeSourceSnapshot?.apps.some((app) => app.status === "installed");
   const commonModuleOptions = useMemo(
     () =>
       commonModuleSnapshot?.modules.filter(
@@ -79,18 +104,30 @@ export function useModuleFormData(mode: "create" | "edit", moduleId: string | un
   return {
     applicationOptions,
     applicationSnapshot,
-    codeSourceSnapshot,
     commonModuleOptions,
+    connections: connections ?? [],
     editModuleId,
+    environmentOptions,
     form,
     formError,
-    hasInstalledCodeSource,
+    hasActiveConnection: activeConnections.length > 0,
     isApplicationsFetching,
-    isCodeSourcesFetching,
+    isConnectionsFetching,
     isEditMode,
     isModuleFetching,
     moduleRecord,
     selectedKind,
     setFormError,
   };
+}
+
+export function useDebouncedValue<T>(value: T, delay = 280) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handle = window.setTimeout(() => setDebouncedValue(value), delay);
+    return () => window.clearTimeout(handle);
+  }, [delay, value]);
+
+  return debouncedValue;
 }

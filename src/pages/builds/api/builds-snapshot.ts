@@ -1,15 +1,15 @@
+import { normalizeBuildRecord } from "@/api/builds";
 import { type APIErrorPayload, type APISchemas, createFetchClient } from "@/api/client";
 import type {
   BuildArtifactTree,
   BuildArtifactTreeNode,
+  BuildLogState,
   BuildRecordDetail,
-  BuildRunRecord,
-  BuildRunStatus,
 } from "../types";
 
 export const buildDetailQueryKey = (buildId: string) => ["build-detail", buildId] as const;
 
-type BuildRecordAPIStatus = APISchemas["BuildRecord"]["status"];
+export const buildLogsQueryKey = (buildId: string) => ["build-logs", buildId] as const;
 
 type BuildRecordAPIRecord = APISchemas["BuildRecord"];
 
@@ -18,6 +18,14 @@ type BuildArtifactTreeAPIRecord = APISchemas["BuildArtifactTree"];
 type BuildArtifactTreeNodeAPIRecord = APISchemas["BuildArtifactTreeNode"];
 
 type BuildDetailAPIResponse = APISchemas["BuildRecordDetailResponse"];
+
+type BuildLogsAPIResponse = APISchemas["BuildLogsResponse"];
+
+/** 后端单次最多返回的日志分片数，返回满一页时说明后面可能还有，需要继续读。 */
+const buildLogsPageLimit = 100;
+
+/** 单次轮询最多连续读取的页数，避免日志积压时一次请求链过长。 */
+const buildLogsMaxPagesPerFetch = 20;
 
 export class BuildAPIError extends Error {
   readonly payload?: APIErrorPayload;
@@ -43,7 +51,44 @@ export async function fetchBuildDetail(buildId: string): Promise<BuildRecordDeta
   return normalizeBuildDetail(payload.build);
 }
 
+/**
+ * 从 previous 记录的最后一个 seq 之后增量读取日志，并拼接到已有内容上。
+ * 返回满一页时立即继续读下一页，直到读空、读完或达到单次上限。
+ */
+export async function fetchBuildLogsAfter(
+  buildId: string,
+  previous?: BuildLogState,
+): Promise<BuildLogState> {
+  let content = previous?.content ?? "";
+  let lastSeq = previous?.lastSeq;
+  let finished = false;
+
+  for (let page = 0; page < buildLogsMaxPagesPerFetch; page += 1) {
+    const params = new URLSearchParams();
+    if (lastSeq !== undefined) {
+      params.set("afterSeq", String(lastSeq));
+    }
+    const query = params.toString();
+    const payload = await fetchJSON<BuildLogsAPIResponse>(
+      `/api/v1/builds/${encodeURIComponent(buildId)}/logs${query ? `?${query}` : ""}`,
+    );
+
+    for (const chunk of payload.chunks) {
+      content += chunk.content;
+      lastSeq = chunk.seq;
+    }
+    finished = payload.finished;
+
+    if (finished || payload.chunks.length < buildLogsPageLimit) {
+      break;
+    }
+  }
+
+  return { content, finished, lastSeq };
+}
+
 const buildAPIErrorMessages: Record<string, string> = {
+  "build log service unavailable": "构建日志服务暂不可用",
   "build record not found": "构建记录不存在",
   "build service unavailable": "构建服务暂不可用",
   "environment not found": "环境不存在",
@@ -64,28 +109,6 @@ function getBuildAPIErrorMessage(path: string, status: number, payload?: APIErro
     return buildAPIErrorMessages[error];
   }
   return error ?? `Request ${path} failed with ${status}`;
-}
-
-function normalizeBuildRecord(record: BuildRecordAPIRecord): BuildRunRecord {
-  return {
-    application: record.applicationName || "-",
-    artifact: record.artifactKey || "-",
-    branch: record.branch || "-",
-    commit: "-",
-    createdAt: formatRecordNumber(record.createdAt),
-    createdAtRaw: record.createdAt,
-    duration: formatDuration(record.startedAt, record.finishedAt),
-    environment: record.environment,
-    id: record.id,
-    module: record.moduleName || record.moduleId,
-    moduleId: record.moduleId,
-    operator: record.workerId || "-",
-    startedAt: formatTime(record.startedAt || record.queuedAt || record.createdAt),
-    status: buildStatusMap[record.status],
-    triggerId: record.triggerId || "-",
-    triggerType: record.triggerType,
-    version: record.environmentName || record.environment,
-  };
 }
 
 function normalizeBuildDetail(record: BuildRecordAPIRecord): BuildRecordDetail {
@@ -109,8 +132,8 @@ function normalizeBuildDetail(record: BuildRecordAPIRecord): BuildRecordDetail {
     queuedAt: formatFullTime(record.queuedAt),
     repositoryFullName: record.repositoryFullName || "-",
     repositoryId: record.repositoryId || "-",
-    repositoryInstallationId: record.repositoryInstallationId || "-",
-    repositoryProvider: record.repositoryProvider || "-",
+    codeSourceConnectionId: record.codeSourceConnectionId || "-",
+    repositoryProvider: record.repositoryProvider,
     startedAtFull: formatFullTime(record.startedAt),
     startedAtRaw: record.startedAt ?? "",
     storageConfigurationId: record.storageConfigurationId || "-",
@@ -146,31 +169,6 @@ function normalizeArtifactTreeNode(node: BuildArtifactTreeNodeAPIRecord): BuildA
   };
 }
 
-const buildStatusMap: Record<BuildRecordAPIStatus, BuildRunStatus> = {
-  failed: "failed",
-  pending: "queued",
-  running: "running",
-  succeeded: "success",
-};
-
-function formatTime(value?: string) {
-  if (!value) {
-    return "-";
-  }
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return new Intl.DateTimeFormat("zh-CN", {
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    month: "2-digit",
-  }).format(date);
-}
-
 function formatFullTime(value?: string) {
   return formatRecordNumber(value);
 }
@@ -192,22 +190,4 @@ function formatRecordNumber(value?: string) {
   const minute = `${date.getMinutes()}`.padStart(2, "0");
   const second = `${date.getSeconds()}`.padStart(2, "0");
   return `${year}-${month}-${day} ${hour}:${minute}:${second}`;
-}
-
-function formatDuration(startedAt?: string, finishedAt?: string) {
-  if (!startedAt) {
-    return "-";
-  }
-
-  const start = new Date(startedAt);
-  const end = finishedAt ? new Date(finishedAt) : new Date();
-  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) {
-    return "-";
-  }
-
-  const totalSeconds = Math.max(1, Math.round((end.getTime() - start.getTime()) / 1000));
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-
-  return minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
 }

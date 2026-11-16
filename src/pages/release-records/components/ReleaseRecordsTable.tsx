@@ -9,78 +9,97 @@ import {
   releaseRecordStatusClass,
   releaseRecordStatusLabels,
 } from "../constants";
-import type { ReleasePointerRecord, ReleaseRecordStatus } from "../types";
+import type { EnvironmentTone, ReleasePointerRecord, ReleaseRecordStatus } from "../types";
 
-export const releaseRecordsColumnDefs: ColDef<ReleasePointerRecord>[] = [
-  {
-    cellRenderer: ReleaseIDCell,
-    field: "id",
-    flex: 0.45,
-    headerName: "ID",
-    minWidth: 96,
-  },
-  {
-    cellRenderer: ReleaseRecordCell,
-    field: "createdAt",
-    flex: 1,
-    headerName: "发布时间",
-    minWidth: 176,
-  },
-  {
-    field: "application",
-    flex: 0.75,
-    headerName: "应用",
-    minWidth: 120,
-  },
-  {
-    cellRenderer: ModuleCell,
-    field: "module",
-    flex: 0.75,
-    headerName: "模块",
-    minWidth: 130,
-  },
-  {
-    cellRenderer: EnvironmentCell,
-    field: "environment",
-    flex: 0.58,
-    headerName: "环境",
-    minWidth: 90,
-  },
-  {
-    cellRenderer: ReleaseTypeCell,
-    field: "releaseType",
-    flex: 0.65,
-    headerName: "发布类型",
-    minWidth: 102,
-  },
-  {
-    cellRenderer: GrayConfigCell,
-    field: "grayStrategy",
-    flex: 0.82,
-    headerName: "灰度配置",
-    minWidth: 136,
-  },
-  {
-    cellRenderer: ExpiresAtCell,
-    field: "expiresAt",
-    flex: 0.8,
-    headerName: "过期时间",
-    minWidth: 132,
-  },
-  {
-    cellRenderer: StatusCell,
-    field: "status",
-    flex: 0.65,
-    headerName: "状态",
-    minWidth: 92,
-  },
-  {
-    field: "operator",
-    flex: 0.7,
-    headerName: "操作人",
-    minWidth: 100,
-  },
-];
+export function buildReleaseRecordsColumnDefs(
+  environmentTones: ReadonlyMap<string, EnvironmentTone>,
+): ColDef<ReleasePointerRecord>[] {
+  return [
+    {
+      cellRenderer: ReleaseIDCell,
+      field: "id",
+      flex: 0.45,
+      headerName: "ID",
+      minWidth: 96,
+    },
+    {
+      cellRenderer: ReleaseRecordCell,
+      field: "createdAt",
+      flex: 1,
+      headerName: "发布时间",
+      minWidth: 176,
+    },
+    {
+      field: "application",
+      flex: 0.75,
+      headerName: "应用",
+      minWidth: 120,
+    },
+    {
+      cellRenderer: ModuleCell,
+      field: "module",
+      flex: 0.75,
+      headerName: "模块",
+      minWidth: 130,
+    },
+    {
+      cellRenderer: ({ data }: ICellRendererParams<ReleasePointerRecord>) =>
+        data ? (
+          <EnvironmentBadge
+            environment={data.environment}
+            tone={environmentTones.get(data.environment)}
+          >
+            {data.environmentName}
+          </EnvironmentBadge>
+        ) : null,
+      field: "environment",
+      flex: 0.58,
+      headerName: "环境",
+      minWidth: 90,
+    },
+    {
+      cellRenderer: RuntimeVersionCell,
+      field: "runtimeVersion",
+      flex: 0.7,
+      headerName: "运行时版本",
+      minWidth: 110,
+    },
+    {
+      cellRenderer: ReleaseTypeCell,
+      field: "releaseType",
+      flex: 0.65,
+      headerName: "发布类型",
+      minWidth: 102,
+    },
+    {
+      cellRenderer: GrayConfigCell,
+      field: "grayStrategy",
+      flex: 0.82,
+      headerName: "灰度配置",
+      minWidth: 136,
+    },
+    {
+      cellRenderer: ExpiresAtCell,
+      field: "expiresAt",
+      flex: 0.8,
+      headerName: "过期时间",
+      minWidth: 132,
+    },
+    {
+      cellRenderer: StatusCell,
+      field: "status",
+      flex: 0.65,
+      headerName: "状态",
+      minWidth: 92,
+    },
+    {
+      field: "operator",
+      flex: 0.7,
+      headerName: "操作人",
+      minWidth: 100,
+    },
+  ];
+}
 
 function ReleaseRecordCell({ data }: ICellRendererParams<ReleasePointerRecord>) {
   if (!data) {
@@ -110,10 +129,12 @@ function ModuleCell({ data }: ICellRendererParams<ReleasePointerRecord>) {
   );
 }
 
-function EnvironmentCell({ data }: ICellRendererParams<ReleasePointerRecord>) {
-  return data ? (
-    <EnvironmentBadge environment={data.environment}>{data.environmentName}</EnvironmentBadge>
-  ) : null;
+function RuntimeVersionCell({ value }: ICellRendererParams<ReleasePointerRecord, string>) {
+  return value ? (
+    <span className="truncate font-mono font-semibold text-foreground text-xs">{value}</span>
+  ) : (
+    <span className="text-muted-foreground text-xs">-</span>
+  );
 }
 
 function ReleaseTypeCell({ data }: ICellRendererParams<ReleasePointerRecord>) {

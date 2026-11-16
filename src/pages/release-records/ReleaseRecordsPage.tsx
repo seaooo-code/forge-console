@@ -1,6 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { Box, GitBranch, Plus, RefreshCw, Rocket, ShieldCheck } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { buildsSnapshotQueryKey } from "@/api/builds";
 import { createBuildRelease } from "@/api/releases";
@@ -14,7 +14,7 @@ import { useAuthStore } from "@/store/use-auth-store";
 
 import { releaseRecordsSnapshotQueryKey } from "./api/release-records-snapshot";
 import { CreateReleaseDialog } from "./components/CreateReleaseDialog";
-import { releaseRecordsColumnDefs } from "./components/ReleaseRecordsTable";
+import { buildReleaseRecordsColumnDefs } from "./components/ReleaseRecordsTable";
 import { useReleaseRecordsData, useReleaseRecordsFilters } from "./hooks";
 import type { ReleaseRecordsFilters } from "./types";
 import { buildReleaseRecordsStats } from "./utils";
@@ -50,6 +50,7 @@ export function ReleaseRecordsPage({ onOpenRelease }: ReleaseRecordsPageProps) {
   const {
     buildOptions,
     environmentOptions,
+    environmentTones,
     isBuildsFetching,
     isFetching,
     moduleOptions,
@@ -67,6 +68,10 @@ export function ReleaseRecordsPage({ onOpenRelease }: ReleaseRecordsPageProps) {
   }, [clampPage, snapshot]);
 
   const stats = buildReleaseRecordsStats(snapshot);
+  const columnDefs = useMemo(
+    () => buildReleaseRecordsColumnDefs(environmentTones),
+    [environmentTones],
+  );
 
   if (!snapshot) {
     return null;
@@ -180,7 +185,7 @@ export function ReleaseRecordsPage({ onOpenRelease }: ReleaseRecordsPageProps) {
 
       <DataTable
         rows={snapshot.records}
-        columnDefs={releaseRecordsColumnDefs}
+        columnDefs={columnDefs}
         getRowId={({ data }) => data.id}
         onRowClicked={({ data }) => {
           if (data) {

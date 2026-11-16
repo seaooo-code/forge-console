@@ -14,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ReleaseRuntimeVersionNotice } from "@/pages/release-records";
 
 import type {
   ActiveFullReleaseTarget,
@@ -109,6 +110,8 @@ export function BuildReleaseDialog({
         />
 
         <div className="mt-4 space-y-4">
+          <ReleaseRuntimeVersionNotice runtimeVersion={build.runtimeVersion} />
+
           <Field label="发布类型" inputId="build-release-type">
             <Controller
               control={control}
@@ -278,7 +281,9 @@ export function BuildReleaseDialog({
           ) : null}
 
           {isDuplicateFullRelease ? (
-            <Alert variant="warning">该构建已有生效中的全量发布，不能重复提交全量发布。</Alert>
+            <Alert variant="warning">
+              该构建已是该运行时版本下生效中的全量发布，不能重复提交全量发布。
+            </Alert>
           ) : null}
           {isRollbackFullRelease ? (
             <Alert variant="warning">

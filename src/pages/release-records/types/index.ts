@@ -5,6 +5,8 @@ export type ReleaseRecordStatus = APISchemas["ReleaseRecord"]["status"];
 
 export type ReleaseRecordType = APISchemas["ReleaseRecord"]["releaseType"];
 
+export type EnvironmentTone = APISchemas["Environment"]["tone"];
+
 export type ReleaseGrayStrategy = NonNullable<APISchemas["ReleaseRecord"]["grayStrategy"]>;
 
 export type ReleaseRecordsFilters = {
@@ -41,6 +43,8 @@ export type ReleasePointerRecord = {
   moduleId: string;
   operator: string;
   releaseType: ReleaseRecordType;
+  /** 发布路由所属的运行时版本，新发布只替换同一运行时版本下的同类发布。 */
+  runtimeVersion: string;
   status: ReleaseRecordStatus;
   updatedAt: string;
   updatedAtFull: string;

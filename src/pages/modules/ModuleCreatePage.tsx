@@ -1,5 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Box, LoaderCircle, PackagePlus } from "lucide-react";
+import { useWatch } from "react-hook-form";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -7,6 +8,7 @@ import { applicationsRootQueryKey } from "@/pages/applications";
 import type { FeishuUserSearchResult } from "@/types/feishu";
 
 import { createModule, modulesRootQueryKey } from "./api/modules-snapshot";
+import { ModuleBuildConfigFields } from "./components/ModuleBuildConfigFields";
 import { ModuleFormFields } from "./components/ModuleFormFields";
 import {
   ModuleCodeSourceRequired,
@@ -14,7 +16,7 @@ import {
   ModuleFormNotFound,
 } from "./components/ModuleFormStatus";
 import { useModuleFormData } from "./hooks";
-import type { ModuleFormState, ModuleKind, ModuleRepositoryBinding } from "./types";
+import type { ModuleFormState, ModuleKind, ModuleRepositorySelection } from "./types";
 import {
   buildModuleInput,
   getOwnerUserId,
@@ -41,13 +43,14 @@ export function ModuleCreatePage({
   const {
     applicationOptions,
     applicationSnapshot,
-    codeSourceSnapshot,
     commonModuleOptions,
+    connections,
+    environmentOptions,
     form,
     formError,
-    hasInstalledCodeSource,
+    hasActiveConnection,
     isApplicationsFetching,
-    isCodeSourcesFetching,
+    isConnectionsFetching,
     isEditMode,
     isModuleFetching,
     moduleRecord,
@@ -61,6 +64,10 @@ export function ModuleCreatePage({
     register,
     setValue,
   } = form;
+  const selectedConnectionId = useWatch({ control, name: "connectionId" });
+  const selectedConnection = connections.find(
+    (connection) => connection.id === selectedConnectionId,
+  );
 
   if (
     (isEditMode && isModuleFetching && !moduleRecord) ||
@@ -69,11 +76,11 @@ export function ModuleCreatePage({
     return <ModuleFormLoading onBack={onBack} />;
   }
 
-  if (!isEditMode && isCodeSourcesFetching && !codeSourceSnapshot) {
+  if (isConnectionsFetching && connections.length === 0) {
     return <ModuleFormLoading onBack={onBack} />;
   }
 
-  if (!isEditMode && codeSourceSnapshot && !hasInstalledCodeSource) {
+  if (!isEditMode && !hasActiveConnection) {
     return <ModuleCodeSourceRequired onBack={onBack} onOpenCodeSources={onOpenCodeSources} />;
   }
 
@@ -83,8 +90,8 @@ export function ModuleCreatePage({
 
   const title = isEditMode ? "编辑模块" : "新建模块";
   const description = isEditMode
-    ? "维护模块仓库、负责人和模块关系"
-    : "登记新的模块仓库，并绑定归属应用与负责人";
+    ? "维护模块仓库、构建配置、负责人和模块关系"
+    : "登记新的模块仓库，配置构建方式，并绑定归属应用与负责人";
   const moduleIdField = register("id");
   const moduleNameField = register("name");
 
@@ -118,13 +125,15 @@ export function ModuleCreatePage({
     setValue("ownerUserId", getOwnerUserId(user), { shouldDirty: true, shouldTouch: true });
   };
 
-  const handleRepositoryChange = (repository: ModuleRepositoryBinding | null) => {
+  const handleConnectionChange = (value: string) => {
+    clearFormError();
+    setValue("connectionId", value, { shouldDirty: true, shouldTouch: true });
+    setValue("repository", null, { shouldDirty: true, shouldTouch: true });
+  };
+
+  const handleRepositoryChange = (repository: ModuleRepositorySelection | null) => {
     clearFormError();
     setValue("repository", repository, { shouldDirty: true, shouldTouch: true });
-    setValue("repositoryKeyword", repository?.fullName ?? "", {
-      shouldDirty: true,
-      shouldTouch: true,
-    });
   };
 
   const handleApplicationChange = (value: string) => {
@@ -221,22 +230,36 @@ export function ModuleCreatePage({
 
       <div className="px-6 py-5">
         <Card className="gap-0 rounded-lg border-border py-0 shadow-sm">
-          <SectionHeader title="模块基础信息" description="模块唯一标识、关联应用和仓库地址" />
+          <SectionHeader
+            title="模块配置"
+            description="模块唯一标识、关联应用、代码仓库与构建方式"
+          />
           <ModuleFormFields
             applicationOptions={applicationOptions}
             clearFormError={clearFormError}
             commonModuleOptions={commonModuleOptions}
+            connections={connections}
             control={control}
             isEditMode={isEditMode}
             moduleIdField={moduleIdField}
             moduleNameField={moduleNameField}
             onApplicationChange={handleApplicationChange}
+            onConnectionChange={handleConnectionChange}
             onKindChange={handleKindChange}
             onOwnerChange={handleOwnerChange}
             onOwnerSelect={handleOwnerSelect}
             onRepositoryChange={handleRepositoryChange}
+            selectedConnection={selectedConnection}
             selectedKind={selectedKind}
           />
+          <div className="px-4 pb-5">
+            <ModuleBuildConfigFields
+              clearFormError={clearFormError}
+              control={control}
+              environmentOptions={environmentOptions}
+              register={register}
+            />
+          </div>
         </Card>
       </div>
     </form>
