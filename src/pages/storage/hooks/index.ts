@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 
-import { testStorageConfiguration } from "../api/storage-snapshot";
+import { StorageAPIError, testStorageConfiguration } from "../api/storage-snapshot";
 import type { StorageFormState } from "../types";
 import {
   buildStorageMutationInput,
@@ -62,10 +62,11 @@ export function useStorageConnectionTest({
       await testStorageConfiguration(input, storageId);
       setTestStatus("passed");
       setTestedSignature(buildStorageTestSignature(input));
-    } catch (_error) {
+    } catch (error) {
       setTestStatus("failed");
       setTestedSignature("");
-      setFormError("测试存储配置失败，请检查连接参数");
+      const detail = error instanceof StorageAPIError ? error.payload?.detail : undefined;
+      setFormError(detail ? `测试存储配置失败：${detail}` : "测试存储配置失败，请检查连接参数");
     }
   };
 

@@ -2836,6 +2836,12 @@ export interface components {
         StorageConfigurationDetailResponse: {
             configuration: components["schemas"]["StorageConfiguration"];
         };
+        StorageConfigurationTestFailedResponse: {
+            /** @description Human readable failure reason, e.g. HTTP status and S3 error code. Never contains credentials. */
+            detail?: string;
+            /** @description Error message. */
+            error: string;
+        };
         StorageConfigurationTestRequest: {
             /** @description Access key id. Required unless id is set and both credentials are empty. */
             accessKeyId?: string;
@@ -7184,13 +7190,13 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Storage backend could not be reached. */
+            /** @description Storage connectivity test failed; detail explains the reason without secrets. */
             502: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["StorageConfigurationTestFailedResponse"];
                 };
             };
         };

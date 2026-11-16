@@ -25,7 +25,10 @@ export function StorageConnectionSection({ isEditMode, register }: StorageConnec
           <Input placeholder="例如 cn-beijing / ap-guangzhou" {...register("region")} />
         </FormSectionField>
         <FormSectionField label="Endpoint" required>
-          <Input placeholder="oss-cn-beijing.aliyuncs.com" {...register("endpoint")} />
+          <Input
+            placeholder="https://s3.example.com（S3 兼容地址，需带协议）"
+            {...register("endpoint")}
+          />
         </FormSectionField>
         <FormSectionField label="publicBaseURL">
           <Input placeholder="https://cdn.example.com/rn/prod" {...register("publicBaseUrl")} />
