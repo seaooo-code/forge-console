@@ -21,6 +21,7 @@ export const consoleGridTheme = themeQuartz.withParams({
   headerFontWeight: 600,
   headerTextColor: "var(--muted-foreground)",
   oddRowBackgroundColor: "var(--card)",
+  pinnedColumnBorder: false,
   rowBorder: false,
   rowHoverColor: "var(--hover)",
   selectedRowBackgroundColor: "var(--primary-wash)",

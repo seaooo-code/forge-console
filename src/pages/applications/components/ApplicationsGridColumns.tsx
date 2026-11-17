@@ -215,9 +215,12 @@ export function buildApplicationColumnDefs({
         onUpdateApplicationStatus: onRequestUpdateApplicationStatus,
       },
       colId: "actions",
-      flex: 0.9,
       headerName: "操作",
-      minWidth: 150,
+      // 操作列固定在右侧，表格横向滚动时始终可见；固定列不参与 flex 分配，用固定宽度。
+      lockPinned: true,
+      pinned: "right",
+      resizable: false,
+      width: 164,
       sortable: false,
     },
   ];

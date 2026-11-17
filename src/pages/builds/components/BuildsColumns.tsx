@@ -108,9 +108,12 @@ export function buildBuildsColumnDefs({
         <ActionsCell canCreateRelease={canCreateRelease} data={params.data} onPublish={onPublish} />
       ),
       colId: "actions",
-      flex: 0.65,
       headerName: "操作",
-      minWidth: 92,
+      // 操作列固定在右侧，表格横向滚动时始终可见；固定列不参与 flex 分配，用固定宽度。
+      lockPinned: true,
+      pinned: "right",
+      resizable: false,
+      width: 104,
       sortable: false,
     },
   ];
