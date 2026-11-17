@@ -113,3 +113,5 @@ bun run validate
 ```
 
 构建成功后，静态文件输出到 `dist/`。部署时需要让 Web 服务器把 React Router 的未知路径回退到 `index.html`，并在构建阶段提供正确的 `VITE_API_BASE_URL`。
+
+容器部署（Matrix 等）使用根目录的 `Dockerfile` 和 `deploy/nginx.conf`，步骤见 [`docs/deployment.md`](docs/deployment.md)。

@@ -65,7 +65,8 @@ export async function completeFeishuAuthorization(
 }
 
 async function exchangeFeishuAuthorization(code: string, state: string): Promise<AuthSession> {
-  const callbackURL = new URL(`${apiBaseUrl}/api/v1/auth/feishu/callback`);
+  // 同域部署时 apiBaseUrl 为空字符串，用当前页面地址做基准解析相对路径。
+  const callbackURL = new URL(`${apiBaseUrl}/api/v1/auth/feishu/callback`, window.location.origin);
   callbackURL.searchParams.set("code", code);
   callbackURL.searchParams.set("state", state);
 

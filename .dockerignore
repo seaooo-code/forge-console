@@ -1,0 +1,18 @@
+# 构建上下文只保留源码和构建配置。本地 .env 文件不能进入镜像，否则会覆盖构建参数 VITE_API_BASE_URL。
+.git/
+.gitignore
+.dockerignore
+Dockerfile
+.claude/
+.idea/
+.vscode/
+.DS_Store
+node_modules/
+dist/
+dist-ssr/
+*.log
+*.local
+.env
+.env.*
+docs/
+*.md

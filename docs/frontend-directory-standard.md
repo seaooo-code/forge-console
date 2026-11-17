@@ -35,6 +35,18 @@ src/
   main.tsx                # React 挂载入口，只做启动
 ```
 
+### 仓库根目录
+
+`src/` 之外的顶层目录只放工程配置，不放业务代码：
+
+```text
+docs/                     # 项目文档：目录规范、界面改版说明、部署说明
+deploy/                   # 部署配置：镜像内使用的 Nginx 配置等，由根目录 Dockerfile 引用
+public/                   # Vite 原样复制的静态文件（favicon 等）
+Dockerfile                # 生产镜像：Bun 构建 + Nginx 托管，见 docs/deployment.md
+.dockerignore             # 镜像构建上下文排除项，本地 .env 文件不能进入镜像
+```
+
 ## 分层规则
 
 - `src/main.tsx` 只负责创建 React root 并渲染 `src/app`，不写业务 UI。
