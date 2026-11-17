@@ -53,6 +53,8 @@ export type BuildRecordDetail = BuildRunRecord & {
   codeSourceConnectionId: string;
   createdAt: string;
   defaultBranch: string;
+  /** 构建时注入到 .forge/deps/ 的依赖构建，Feature 模块为所属 Common 模块的生效默认发布；没有注入时为空数组。 */
+  dependencyBuilds: APISchemas["BuildDependency"][];
   environment: string;
   environmentName: string;
   errorMessage: string;

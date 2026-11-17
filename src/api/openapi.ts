@@ -1653,6 +1653,22 @@ export interface components {
              */
             type: "directory" | "file";
         };
+        /** @description Dependency build injected into the build context under .forge/deps/. Feature modules inject the active default route builds of their Common module in the same environment. */
+        BuildDependency: {
+            /**
+             * Format: int64
+             * @description Dependency build number. 0 when the build record no longer exists.
+             */
+            buildNumber: number;
+            /** @description Dependency build record UUID. */
+            buildRecordId: string;
+            /** @description Dependency module id. */
+            moduleId: string;
+            /** @description Dependency module display name. Empty when the module no longer exists. */
+            moduleName: string;
+            /** @description runtimeVersion of the dependency build. */
+            runtimeVersion: string;
+        };
         BuildLogChunk: {
             /** @description Redacted git and docker output. */
             content: string;
@@ -1697,6 +1713,7 @@ export interface components {
             createdBy: components["schemas"]["UserSummary"] | null;
             /** @description Repository branch used by the worker when configured on the module. */
             defaultBranch?: string;
+            dependencyBuilds: components["schemas"]["BuildDependency"][];
             /** @description Environment code. */
             environment: string;
             /** @description Environment display name used in artifact object keys. */

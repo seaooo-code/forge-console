@@ -31,6 +31,7 @@ type BuildDetailPanelProps = {
   buildId: string;
   canCreateRelease: boolean;
   onClose: () => void;
+  onOpenBuild: (buildId: string) => void;
   onOpenBuildAdapter: (adapterId: string) => void;
   onOpenEnvironment: (environmentId: string) => void;
   onOpenStorage: (storageId: string) => void;
@@ -85,6 +86,7 @@ function BuildDetailContent({
   build,
   canCreateRelease,
   onClose,
+  onOpenBuild,
   onOpenBuildAdapter,
   onOpenEnvironment,
   onOpenStorage,
@@ -240,6 +242,36 @@ function BuildDetailContent({
                         : "-",
                     }
                   : null,
+                {
+                  hint:
+                    build.dependencyBuilds.length > 0
+                      ? "构建时注入到 .forge/deps/ 的产物"
+                      : undefined,
+                  label: "依赖构建",
+                  value:
+                    build.dependencyBuilds.length > 0 ? (
+                      <ul className="m-0 flex list-none flex-col gap-1 p-0">
+                        {build.dependencyBuilds.map((dependency) => (
+                          <li
+                            className="flex flex-wrap items-center gap-x-2"
+                            key={dependency.buildRecordId}
+                          >
+                            <span>{dependency.moduleName || dependency.moduleId}</span>
+                            <span className="font-mono text-muted-foreground text-xs">
+                              {dependency.runtimeVersion}
+                            </span>
+                            {link(
+                              `#${dependency.buildNumber || dependency.buildRecordId.slice(-8)}`,
+                              () => onOpenBuild(dependency.buildRecordId),
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      "-"
+                    ),
+                  wide: true,
+                },
                 { label: "产物 URL", mono: true, value: getArtifactBaseURL(build), wide: true },
               ]}
             />

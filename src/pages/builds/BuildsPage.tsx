@@ -272,6 +272,7 @@ export function BuildsPage({
             buildId={selectedBuildId}
             canCreateRelease={canCreateRelease}
             onClose={() => onSelectBuild(null)}
+            onOpenBuild={onSelectBuild}
             onOpenBuildAdapter={onOpenBuildAdapter}
             onOpenEnvironment={onOpenEnvironment}
             onOpenStorage={onOpenStorage}

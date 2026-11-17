@@ -121,6 +121,7 @@ function normalizeBuildDetail(record: BuildRecordAPIRecord): BuildRecordDetail {
     ),
     createdAt: formatRecordNumber(record.createdAt),
     defaultBranch: record.defaultBranch || "-",
+    dependencyBuilds: record.dependencyBuilds ?? [],
     environment: record.environment || "-",
     environmentName: record.environmentName || record.environment || "-",
     errorMessage: record.errorMessage || "",
