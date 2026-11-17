@@ -1,11 +1,20 @@
 import type { BuildPlatform, BuildRecordDetail, BuildRunStatus, BuildTriggerType } from "../types";
 
 export const buildStatusClass: Record<BuildRunStatus, string> = {
-  failed: "border-destructive/30 bg-destructive/10 text-destructive",
-  queued: "border-warning/40 bg-warning/10 text-warning",
-  running: "border-info/30 bg-info/10 text-info",
-  success: "border-success/30 bg-success/10 text-success",
+  failed: "bg-destructive-soft text-destructive",
+  queued: "bg-warning/14 text-warning-foreground dark:text-warning",
+  running: "bg-info-soft text-info",
+  success: "bg-success/12 text-success",
 };
+
+/** 列表摘要里的状态项，id 与构建列表接口的 status 筛选值一致；空字符串表示全部。 */
+export const buildStatusSummaryItems = [
+  { filter: "", key: "total", label: "全部", tone: "default" },
+  { filter: "running", key: "running", label: "构建中", tone: "info" },
+  { filter: "pending", key: "queued", label: "排队中", tone: "warning" },
+  { filter: "succeeded", key: "success", label: "成功", tone: "success" },
+  { filter: "failed", key: "failed", label: "失败", tone: "destructive" },
+] as const;
 
 export const buildStatusLabels: Record<BuildRunStatus, string> = {
   failed: "失败",

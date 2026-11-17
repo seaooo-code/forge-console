@@ -36,10 +36,6 @@ const BuildsPage = lazy(async () => ({
   default: (await import("@/pages/builds")).BuildsPage,
 }));
 
-const BuildDetailPage = lazy(async () => ({
-  default: (await import("@/pages/builds")).BuildDetailPage,
-}));
-
 const CodeSourcesPage = lazy(async () => ({
   default: (await import("@/pages/code-sources")).CodeSourcesPage,
 }));
@@ -174,7 +170,7 @@ function ConsoleRoutes() {
         <Route path="modules/:moduleId/edit" element={<ModuleEditRoute />} />
         <Route path="modules/:moduleId" element={<ModuleDetailRoute />} />
         <Route path="builds" element={<BuildsRoute />} />
-        <Route path="builds/:buildId" element={<BuildDetailRoute />} />
+        <Route path="builds/:buildId" element={<BuildsRoute />} />
         <Route path="release-records" element={<ReleaseRecordsRoute />} />
         <Route path="release-records/:releaseId" element={<ReleaseRecordDetailRoute />} />
         <Route path="deployments" element={<Navigate to="/release-records" replace />} />
@@ -392,26 +388,17 @@ function ModuleDetailRoute() {
 
 function BuildsRoute() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { buildId } = useParams<{ buildId: string }>();
 
   return (
     <BuildsPage
-      onOpenBuild={(buildId: string) => navigate(`/builds/${encodeURIComponent(buildId)}`)}
-    />
-  );
-}
-
-function BuildDetailRoute() {
-  const navigate = useNavigate();
-  const { buildId } = useParams<{ buildId: string }>();
-
-  if (!buildId) {
-    return <Navigate to="/builds" replace />;
-  }
-
-  return (
-    <BuildDetailPage
-      buildId={buildId}
-      onBack={() => navigate("/builds")}
+      selectedBuildId={buildId}
+      onSelectBuild={(nextBuildId: string | null) =>
+        navigate(
+          `${nextBuildId ? `/builds/${encodeURIComponent(nextBuildId)}` : "/builds"}${location.search}`,
+        )
+      }
       onOpenBuildAdapter={(adapterId: string) =>
         navigate(`/build-adapters/${encodeURIComponent(adapterId)}`)
       }

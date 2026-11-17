@@ -14,7 +14,6 @@ import {
 import { useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
@@ -28,7 +27,6 @@ import {
   getArtifactFileDownloadURL,
   getArtifactObjectKey,
 } from "../utils";
-import { SectionHeader } from "./BuildDetailSummary";
 
 export function ArtifactTreePanel({
   applicationSlug,
@@ -77,10 +75,9 @@ export function ArtifactTreePanel({
   };
 
   return (
-    <Card className="gap-0 rounded-lg py-0">
-      <SectionHeader title="产物文件" description="构建产物目录结构与文件摘要" />
-      <div className="border-border border-b px-4 py-3">
-        <div className="grid gap-3 text-sm md:grid-cols-2">
+    <div className="flex flex-col gap-4">
+      <div>
+        <div className="grid grid-cols-2 gap-3 text-sm">
           <ArtifactSummaryItem
             label="文件数量"
             value={`${build.artifactTree.fileCount || build.fileCount} 个`}
@@ -92,9 +89,9 @@ export function ArtifactTreePanel({
         </div>
       </div>
       {nodes.length > 0 ? (
-        <div className="flex flex-wrap items-center justify-between gap-3 border-border border-b px-4 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex min-w-0 flex-1 items-center gap-2">
-            <div className="relative min-w-64 flex-1">
+            <div className="relative min-w-48 flex-1">
               <Search className="-translate-y-1/2 absolute top-1/2 left-3 size-4 text-muted-foreground" />
               <Input
                 value={searchQuery}
@@ -124,7 +121,8 @@ export function ArtifactTreePanel({
             <Button
               variant="outline"
               type="button"
-              className="h-9 gap-2 border-border bg-card text-muted-foreground"
+              size="sm"
+              className="gap-1.5 text-muted-foreground"
               onClick={() => setExpandedPaths(new Set(directoryPaths))}
             >
               <ChevronsDown className="size-4" />
@@ -133,7 +131,8 @@ export function ArtifactTreePanel({
             <Button
               variant="outline"
               type="button"
-              className="h-9 gap-2 border-border bg-card text-muted-foreground"
+              size="sm"
+              className="gap-1.5 text-muted-foreground"
               onClick={() => setExpandedPaths(new Set())}
             >
               <ChevronsUp className="size-4" />
@@ -143,9 +142,9 @@ export function ArtifactTreePanel({
         </div>
       ) : null}
       {nodes.length > 0 ? (
-        <div className="p-4">
+        <div>
           {visibleNodes.length > 0 ? (
-            <div className="rounded-lg border border-border bg-muted">
+            <div className="rounded-xl bg-card p-1 shadow-edge">
               {visibleNodes.map((node) => (
                 <ArtifactTreeNodeRow
                   key={node.path}
@@ -161,8 +160,8 @@ export function ArtifactTreePanel({
               ))}
             </div>
           ) : (
-            <div className="rounded-lg border border-border bg-muted p-8 text-center">
-              <div className="mx-auto flex size-10 items-center justify-center rounded-lg bg-card text-muted-foreground">
+            <div className="rounded-xl bg-card p-8 text-center shadow-edge">
+              <div className="mx-auto flex size-10 items-center justify-center rounded-lg bg-muted text-muted-foreground">
                 <Search className="size-5" />
               </div>
               <div className="mt-3 font-semibold text-foreground text-sm">未找到匹配文件</div>
@@ -173,7 +172,7 @@ export function ArtifactTreePanel({
           )}
         </div>
       ) : (
-        <div className="p-6 text-center">
+        <div className="rounded-xl bg-card p-6 text-center shadow-edge">
           <div className="mx-auto flex size-10 items-center justify-center rounded-lg bg-muted text-muted-foreground">
             <HardDrive className="size-5" />
           </div>
@@ -183,7 +182,7 @@ export function ArtifactTreePanel({
           </div>
         </div>
       )}
-    </Card>
+    </div>
   );
 }
 
@@ -197,11 +196,11 @@ function ArtifactSummaryItem({
   value: string;
 }) {
   return (
-    <div className="min-w-0 rounded-lg border border-border bg-muted px-3 py-2">
-      <div className="text-muted-foreground text-xs">{label}</div>
+    <div className="min-w-0">
+      <div className="text-faint text-xs">{label}</div>
       <div
         className={cn(
-          "mt-1 break-all font-semibold text-foreground text-sm",
+          "mt-1 break-all font-medium text-foreground text-sm",
           monospace && "font-mono font-medium",
         )}
       >
@@ -242,14 +241,14 @@ function ArtifactTreeNodeRow({
 
   return (
     <div>
-      <div className="grid min-h-10 grid-cols-1 items-start gap-2 border-border border-b px-3 py-2 last:border-b-0 md:grid-cols-[minmax(0,1fr)_7rem_10rem_7.5rem] md:gap-3">
+      <div className="grid min-h-10 grid-cols-[minmax(0,1fr)_auto] items-start gap-3 rounded-lg px-3 py-2 hover:bg-hover">
         <div className="flex min-w-0 items-start gap-2" style={{ paddingLeft: depth * 18 }}>
           {isDirectory ? (
             <button
               type="button"
               aria-label={isExpanded ? `收起 ${node.name}` : `展开 ${node.name}`}
               aria-expanded={isExpanded}
-              className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground"
+              className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded text-muted-foreground hover:text-foreground"
               onClick={() => onToggle(node.path)}
             >
               <ChevronIcon className="size-3.5" />
@@ -264,20 +263,19 @@ function ArtifactTreeNodeRow({
             )}
           />
           <div className="min-w-0">
-            <div className="break-all font-semibold text-foreground text-sm">{node.name}</div>
+            <div className="break-all font-medium text-foreground text-sm">{node.name}</div>
+            <div className="mt-0.5 text-faint text-xs">
+              {isDirectory
+                ? "目录"
+                : `${formatBytes(node.sizeBytes)} · ${formatArtifactContentType(node.contentType)}`}
+            </div>
             {!isDirectory ? (
-              <div className="mt-1 space-y-0.5 font-mono text-[11px] text-muted-foreground leading-4">
+              <div className="mt-1 space-y-0.5 font-mono text-faint text-xs leading-4">
                 {objectKey ? <div className="break-all">{objectKey}</div> : null}
                 {node.sha256 ? <div className="break-all">sha256:{node.sha256}</div> : null}
               </div>
             ) : null}
           </div>
-        </div>
-        <div className="text-right font-mono text-muted-foreground text-xs">
-          {formatBytes(node.sizeBytes)}
-        </div>
-        <div className="break-all text-muted-foreground text-xs">
-          {isDirectory ? "目录" : formatArtifactContentType(node.contentType)}
         </div>
         <div className="flex items-center justify-end gap-1">
           {!isDirectory ? (
@@ -285,9 +283,9 @@ function ArtifactTreeNodeRow({
               {downloadUrl ? (
                 <Button
                   asChild
-                  variant="outline"
+                  variant="ghost"
                   size="icon"
-                  className="size-8 border-border bg-card text-muted-foreground"
+                  className="size-8 text-muted-foreground"
                   title="下载文件"
                 >
                   <a href={downloadUrl} target="_blank" rel="noreferrer">
@@ -296,10 +294,10 @@ function ArtifactTreeNodeRow({
                 </Button>
               ) : (
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   type="button"
                   size="icon"
-                  className="size-8 border-border bg-card text-muted-foreground"
+                  className="size-8 text-muted-foreground"
                   title="缺少应用标识，无法生成下载地址"
                   disabled
                 >
@@ -307,20 +305,20 @@ function ArtifactTreeNodeRow({
                 </Button>
               )}
               <Button
-                variant="outline"
+                variant="ghost"
                 type="button"
                 size="icon"
-                className="size-8 border-border bg-card text-muted-foreground"
+                className="size-8 text-muted-foreground"
                 title="复制相对路径"
                 onClick={() => onCopy(node.path, "相对路径")}
               >
                 <Copy className="size-3.5" />
               </Button>
               <Button
-                variant="outline"
+                variant="ghost"
                 type="button"
                 size="icon"
-                className="size-8 border-border bg-card text-muted-foreground"
+                className="size-8 text-muted-foreground"
                 title="复制 Object Key"
                 disabled={!objectKey}
                 onClick={() => onCopy(objectKey, "Object Key")}

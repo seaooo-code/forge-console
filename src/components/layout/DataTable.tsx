@@ -1,6 +1,6 @@
-import type { ColDef, RowClickedEvent } from "ag-grid-community";
+import type { ColDef, GridApi, RowClickedEvent } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
-import type { ReactNode } from "react";
+import { type ReactNode, useEffect, useRef } from "react";
 
 import { consoleGridTheme } from "@/components/common/console-grid-theme";
 import { EmptyState } from "@/components/common/StateBlock";
@@ -16,6 +16,8 @@ type DataTableProps<TRow> = {
   emptyState?: ReactNode;
   className?: string;
   loading?: boolean;
+  /** 详情面板当前打开的那一行，需要同时传 getRowId。 */
+  selectedRowId?: string;
 };
 
 /**
@@ -36,7 +38,15 @@ export function DataTable<TRow>({
   emptyState,
   className,
   loading,
+  selectedRowId,
 }: DataTableProps<TRow>) {
+  const apiRef = useRef<GridApi<TRow> | null>(null);
+  // AG Grid 不会因为 rowClassRules 的闭包变化重新计算行样式，选中项变了要手动重绘。
+  // biome-ignore lint/correctness/useExhaustiveDependencies: selectedRowId 只作为重绘时机
+  useEffect(() => {
+    apiRef.current?.redrawRows();
+  }, [selectedRowId]);
+
   if (rows.length === 0 && !loading) {
     return (
       <div className={cn("rounded-xl bg-card shadow-edge", className)}>
@@ -52,6 +62,9 @@ export function DataTable<TRow>({
   return (
     <div className={cn("overflow-hidden rounded-xl bg-card shadow-edge", className)}>
       <AgGridReact<TRow>
+        onGridReady={(event) => {
+          apiRef.current = event.api;
+        }}
         rowData={rows}
         columnDefs={columnDefs}
         theme={consoleGridTheme}
@@ -69,6 +82,14 @@ export function DataTable<TRow>({
         suppressCellFocus
         suppressContextMenu
         rowClass={onRowClicked ? "cursor-pointer" : undefined}
+        rowClassRules={
+          selectedRowId && getRowId
+            ? {
+                "bg-primary-wash!": (params) =>
+                  params.data ? getRowId({ data: params.data }) === selectedRowId : false,
+              }
+            : undefined
+        }
         onRowClicked={(event) => {
           if (!onRowClicked) {
             return;

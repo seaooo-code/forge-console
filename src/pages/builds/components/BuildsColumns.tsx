@@ -1,21 +1,25 @@
 import type { ColDef, ICellRendererParams } from "ag-grid-community";
-import { Activity, Clock3, GitBranch, PackageCheck, Rocket } from "lucide-react";
+import { GitBranch, Rocket } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-
-import { buildStatusClass, buildTriggerLabels } from "../constants";
+import { buildTriggerLabels } from "../constants";
 import type { BuildRunRecord, BuildRunStatus } from "../types";
 import { BuildCommitLink, BuildCreator, BuildPlatformBadges } from "./BuildMeta";
+import { BuildStatusBadge } from "./BuildStatusBadge";
+
+/** 详情面板打开时只保留这些列，其余信息在面板里看。 */
+const compactColumns = new Set(["number", "module", "version", "status", "createdAt"]);
 
 export function buildBuildsColumnDefs({
   canCreateRelease,
+  compact = false,
   onPublish,
 }: {
   canCreateRelease: boolean;
+  compact?: boolean;
   onPublish: (build: BuildRunRecord) => void;
 }): ColDef<BuildRunRecord>[] {
-  return [
+  const columns: ColDef<BuildRunRecord>[] = [
     {
       cellRenderer: BuildNumberCell,
       field: "number",
@@ -110,6 +114,12 @@ export function buildBuildsColumnDefs({
       sortable: false,
     },
   ];
+
+  return compact
+    ? columns
+        .filter((column) => compactColumns.has(column.field ?? column.colId ?? ""))
+        .map((column) => ({ ...column, minWidth: column.field === "createdAt" ? 150 : 76 }))
+    : columns;
 }
 
 function BuildCell({ data }: ICellRendererParams<BuildRunRecord>) {
@@ -117,7 +127,9 @@ function BuildCell({ data }: ICellRendererParams<BuildRunRecord>) {
     return null;
   }
 
-  return <span className="truncate font-semibold text-primary text-sm">{data.createdAt}</span>;
+  return (
+    <span className="truncate text-muted-foreground text-sm tabular-nums">{data.createdAt}</span>
+  );
 }
 
 function BuildNumberCell({ data }: ICellRendererParams<BuildRunRecord>) {
@@ -189,19 +201,7 @@ function StatusCell({ value }: ICellRendererParams<BuildRunRecord, BuildRunStatu
     return null;
   }
 
-  const Icon = value === "running" ? Activity : value === "queued" ? Clock3 : PackageCheck;
-
-  return (
-    <span
-      className={cn(
-        "inline-flex h-6 items-center gap-1 rounded border px-2 font-semibold text-xs leading-none",
-        buildStatusClass[value],
-      )}
-    >
-      <Icon className="size-3" />
-      {value}
-    </span>
-  );
+  return <BuildStatusBadge status={value} />;
 }
 
 function ActionsCell({
@@ -225,7 +225,7 @@ function ActionsCell({
         variant="outline"
         type="button"
         size="sm"
-        className="h-8 gap-1.5 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary"
+        className="h-7.5 gap-1.5"
         disabled={!canPublish}
         onClick={(event) => {
           event.stopPropagation();

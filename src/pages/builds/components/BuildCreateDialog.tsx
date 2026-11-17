@@ -2,7 +2,7 @@ import { LoaderCircle } from "lucide-react";
 import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 
-import { Modal, ModalFooter, ModalHeader } from "@/components/common/Modal";
+import { Drawer, DrawerBody, DrawerFooter, DrawerHeader } from "@/components/common/Drawer";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -94,22 +94,23 @@ export function BuildCreateDialog({
   }
 
   return (
-    <Modal
+    <Drawer
       isOpen={isOpen}
       onClose={onClose}
       labelledBy="build-create-dialog-title"
       describedBy="build-create-dialog-description"
       className="max-w-lg"
     >
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <ModalHeader
+      <form className="flex min-h-0 flex-1 flex-col" onSubmit={handleSubmit(onSubmit)}>
+        <DrawerHeader
+          onClose={onClose}
           title="新增构建"
           description="选择模块、分支与环境后提交构建，产物会上传到环境绑定的存储配置。"
           titleId="build-create-dialog-title"
           descriptionId="build-create-dialog-description"
         />
 
-        <div className="mt-4 space-y-4">
+        <DrawerBody className="space-y-5">
           <Field label="模块" inputId="build-create-module">
             <Controller
               control={control}
@@ -192,15 +193,14 @@ export function BuildCreateDialog({
           {!isEnvironmentsFetching && !hasEnvironmentOptions ? (
             <Alert variant="warning">暂无可用环境，请先在环境管理中创建环境。</Alert>
           ) : null}
-        </div>
+        </DrawerBody>
 
-        <ModalFooter>
+        <DrawerFooter>
           <Button variant="outline" type="button" disabled={isSubmitting} onClick={onClose}>
             取消
           </Button>
           <Button
             type="submit"
-            className="bg-primary text-primary-foreground hover:bg-primary/90"
             disabled={
               isSubmitting ||
               isModulesFetching ||
@@ -218,8 +218,8 @@ export function BuildCreateDialog({
               "提交构建"
             )}
           </Button>
-        </ModalFooter>
+        </DrawerFooter>
       </form>
-    </Modal>
+    </Drawer>
   );
 }

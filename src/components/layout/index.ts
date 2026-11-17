@@ -1,4 +1,6 @@
+export { Canvas, SidePanel } from "./Canvas";
 export { DataTable } from "./DataTable";
+export { DetailList, type DetailListItem } from "./DetailList";
 export { FilterBar } from "./FilterBar";
 export { FormActions, FormLayout } from "./FormLayout";
 export { KpiCard } from "./KpiCard";
@@ -8,4 +10,5 @@ export { PageHeader } from "./PageHeader";
 export { PageShell } from "./PageShell";
 export { PageSkeleton } from "./PageSkeleton";
 export { SectionCard } from "./SectionCard";
+export { type SummaryStat, SummaryStats } from "./SummaryStats";
 export { TablePagination } from "./TablePagination";

@@ -2,7 +2,7 @@ import { LoaderCircle } from "lucide-react";
 import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 
-import { Modal, ModalFooter, ModalHeader } from "@/components/common/Modal";
+import { Drawer, DrawerBody, DrawerFooter, DrawerHeader } from "@/components/common/Drawer";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
@@ -94,22 +94,23 @@ export function BuildReleaseDialog({
   }
 
   return (
-    <Modal
+    <Drawer
       isOpen={isOpen}
       onClose={onClose}
       labelledBy="build-release-dialog-title"
       describedBy="build-release-dialog-description"
       className="max-w-lg"
     >
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <ModalHeader
+      <form className="flex min-h-0 flex-1 flex-col" onSubmit={handleSubmit(onSubmit)}>
+        <DrawerHeader
+          onClose={onClose}
           title="发布构建"
           titleId="build-release-dialog-title"
           descriptionId="build-release-dialog-description"
-          description={`将 ${build.createdAt} 创建的构建发布到 ${build.version} 环境，发布后会更新访问路由指向。`}
+          description={`把构建 #${build.number}（${build.module}，${build.createdAt}）发布到${build.version}。`}
         />
 
-        <div className="mt-4 space-y-4">
+        <DrawerBody className="space-y-5">
           <ReleaseRuntimeVersionNotice runtimeVersion={build.runtimeVersion} />
 
           <Field label="发布类型" inputId="build-release-type">
@@ -293,17 +294,13 @@ export function BuildReleaseDialog({
           ) : null}
 
           {submitError ? <Alert variant="danger">{submitError}</Alert> : null}
-        </div>
+        </DrawerBody>
 
-        <ModalFooter>
+        <DrawerFooter>
           <Button variant="outline" type="button" disabled={isSubmitting} onClick={onClose}>
             取消
           </Button>
-          <Button
-            type="submit"
-            className="bg-primary text-primary-foreground hover:bg-primary/90"
-            disabled={isSubmitting || isDuplicateFullRelease}
-          >
+          <Button type="submit" disabled={isSubmitting || isDuplicateFullRelease}>
             {isSubmitting ? (
               <>
                 <LoaderCircle className="size-4 animate-spin" />
@@ -313,8 +310,8 @@ export function BuildReleaseDialog({
               "确认发布"
             )}
           </Button>
-        </ModalFooter>
+        </DrawerFooter>
       </form>
-    </Modal>
+    </Drawer>
   );
 }

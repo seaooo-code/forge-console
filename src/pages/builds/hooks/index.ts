@@ -1,5 +1,4 @@
 import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Activity, Circle, Clock3, LoaderCircle, PackageCheck } from "lucide-react";
 import { useMemo } from "react";
 
 import {
@@ -22,6 +21,7 @@ export function useBuildsPageData(filters: BuildListFilters) {
   const { clampPage, page, pageSize, resetPage, setPage, setPageSize } = usePagination();
   const {
     data: snapshot,
+    error,
     isFetching,
     refetch,
   } = useQuery({
@@ -88,59 +88,11 @@ export function useBuildsPageData(filters: BuildListFilters) {
       })) ?? [],
     [environmentSnapshot],
   );
-  const stats = useMemo(
-    () =>
-      snapshot
-        ? [
-            {
-              detail: "全部构建记录",
-              icon: Activity,
-              id: "total",
-              label: "总构建",
-              tone: "info" as const,
-              value: snapshot.summary.total,
-            },
-            {
-              detail: "正在执行",
-              icon: LoaderCircle,
-              id: "running",
-              label: "构建中",
-              tone: "info" as const,
-              value: snapshot.summary.running,
-            },
-            {
-              detail: "产物可发布",
-              icon: PackageCheck,
-              id: "success",
-              label: "成功",
-              tone: "success" as const,
-              value: snapshot.summary.success,
-            },
-            {
-              detail: "需要排查",
-              icon: Circle,
-              id: "failed",
-              label: "失败",
-              tone: "destructive" as const,
-              value: snapshot.summary.failed,
-            },
-            {
-              detail: "等待执行",
-              icon: Clock3,
-              id: "queued",
-              label: "排队中",
-              tone: "warning" as const,
-              value: snapshot.summary.queued,
-            },
-          ]
-        : [],
-    [snapshot],
-  );
-
   return {
     activeFullReleaseByTarget,
     clampPage,
     environmentOptions,
+    error,
     isEnvironmentsFetching,
     isFetching,
     isModulesFetching,
@@ -152,7 +104,6 @@ export function useBuildsPageData(filters: BuildListFilters) {
     setPage,
     setPageSize,
     snapshot,
-    stats,
   };
 }
 

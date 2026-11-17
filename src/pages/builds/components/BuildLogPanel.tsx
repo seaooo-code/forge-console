@@ -5,7 +5,6 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 
 import { buildDetailQueryKey } from "../api/builds-snapshot";
 import { useBuildLogs } from "../hooks";
@@ -36,10 +35,10 @@ export function BuildLogPanel({ buildId, isLive }: { buildId: string; isLive: bo
   }, [buildId, isFinished, isLive, queryClient]);
 
   return (
-    <Card className="gap-0 rounded-lg py-0">
-      <div className="flex min-h-12 flex-wrap items-center justify-between gap-2 border-border border-b px-4 py-2">
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="min-w-0">
-          <div className="flex items-center gap-2 font-semibold text-foreground text-sm">
+          <div className="flex items-center gap-2 font-medium text-foreground text-sm">
             <ScrollText className="size-4 text-muted-foreground" />
             构建日志
             {isError ? (
@@ -56,7 +55,7 @@ export function BuildLogPanel({ buildId, isLive }: { buildId: string; isLive: bo
               </Badge>
             )}
           </div>
-          <div className="text-muted-foreground text-xs">
+          <div className="mt-0.5 text-faint text-xs">
             git 与 docker 的合并输出，凭证和密钥已脱敏；超过 5 MB 时，后半段在构建结束后才能看到
           </div>
         </div>
@@ -92,7 +91,7 @@ export function BuildLogPanel({ buildId, isLive }: { buildId: string; isLive: bo
       </div>
 
       {isError ? (
-        <div className="px-4 pt-3">
+        <div>
           <Alert variant="danger">
             {error instanceof Error ? error.message : "构建日志加载失败"}
           </Alert>
@@ -101,7 +100,7 @@ export function BuildLogPanel({ buildId, isLive }: { buildId: string; isLive: bo
 
       <div
         ref={viewportRef}
-        className="m-4 h-120 overflow-auto rounded-md border border-border bg-muted px-3 py-2"
+        className="h-120 overflow-auto rounded-xl bg-surface-2 px-3.5 py-3"
         onScroll={(event) => {
           const viewport = event.currentTarget;
           const distanceToBottom =
@@ -128,6 +127,6 @@ export function BuildLogPanel({ buildId, isLive }: { buildId: string; isLive: bo
           </div>
         )}
       </div>
-    </Card>
+    </div>
   );
 }

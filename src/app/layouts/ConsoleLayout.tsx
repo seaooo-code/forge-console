@@ -10,15 +10,16 @@ import { AppSidebar } from "./components/AppSidebar";
 import { useConsoleLayoutStore } from "./model/use-console-layout-store";
 import type { NavItem } from "./types";
 
-/** 这些页面自己排布多块画布，外框不再包一层画布。 */
-const fullBleedPaths = new Set(["/"]);
+/** 这些页面自己排布多块画布（列表 + 详情面板），外框不再包一层画布。 */
+const isFullBleedPath = (path: string) =>
+  path === "/" || /^\/(builds|release-records)(\/|$)/.test(path);
 
 export function ConsoleLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const setActiveNavId = useConsoleLayoutStore((state) => state.setActiveNavId);
   const activeNav = useMemo(() => findNavItem(location.pathname), [location.pathname]);
-  const fullBleed = fullBleedPaths.has(location.pathname);
+  const fullBleed = isFullBleedPath(location.pathname);
 
   useEffect(() => {
     if (activeNav) {
