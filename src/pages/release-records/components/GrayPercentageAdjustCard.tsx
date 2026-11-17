@@ -31,7 +31,7 @@ export function GrayPercentageAdjustCard({
   onUpdate,
 }: GrayPercentageAdjustCardProps) {
   return (
-    <Card className="gap-0 rounded-lg border-border py-0 shadow-sm">
+    <Card className="gap-0 rounded-lg py-0">
       <SectionHeader title="比例灰度" />
       <div className="grid gap-4 p-4 lg:grid-cols-[1fr_auto] lg:items-end">
         <div className="space-y-2">

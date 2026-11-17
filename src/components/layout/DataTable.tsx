@@ -39,7 +39,7 @@ export function DataTable<TRow>({
 }: DataTableProps<TRow>) {
   if (rows.length === 0 && !loading) {
     return (
-      <div className={cn("rounded-xl border border-border bg-card shadow-xs", className)}>
+      <div className={cn("rounded-xl bg-card shadow-edge", className)}>
         <div className="grid place-items-center p-10">
           {emptyState ?? (
             <EmptyState title="暂无数据" description="调整筛选条件，或等待数据接入后自动出现。" />
@@ -50,9 +50,7 @@ export function DataTable<TRow>({
   }
 
   return (
-    <div
-      className={cn("overflow-hidden rounded-xl border border-border bg-card shadow-xs", className)}
-    >
+    <div className={cn("overflow-hidden rounded-xl bg-card shadow-edge", className)}>
       <AgGridReact<TRow>
         rowData={rows}
         columnDefs={columnDefs}

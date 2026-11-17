@@ -58,7 +58,7 @@ export function TablePagination({
   return (
     <div
       className={cn(
-        "flex flex-col gap-3 border-border border-t px-4 py-3 text-muted-foreground text-sm md:flex-row md:items-center md:justify-between",
+        "flex flex-col gap-3 px-4 py-3 text-muted-foreground text-sm md:flex-row md:items-center md:justify-between",
         className,
       )}
     >
@@ -123,7 +123,7 @@ export function TablePagination({
         </Button>
 
         <Select value={String(pageSize)} onValueChange={(value) => onPageSizeChange(Number(value))}>
-          <SelectTrigger className="h-8 w-28 border-border bg-card px-3 text-xs">
+          <SelectTrigger className="h-8 w-28 bg-card px-3 text-xs">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>

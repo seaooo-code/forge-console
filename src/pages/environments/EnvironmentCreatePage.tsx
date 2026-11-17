@@ -175,7 +175,7 @@ export function EnvironmentCreatePage({
       <div className="space-y-4 px-6 py-5">
         {formError ? <Alert variant="danger">{formError}</Alert> : null}
 
-        <Card className="rounded-lg border-border bg-card p-0 shadow-none">
+        <Card className="rounded-lg bg-card p-0">
           <FormSectionHeader title="基础信息" description="定义环境唯一标识、名称和视觉标识" />
           <div className="grid gap-4 px-5 pb-5 xl:grid-cols-3">
             <FormSectionField label="环境 ID" required>
@@ -215,7 +215,7 @@ export function EnvironmentCreatePage({
           </div>
         </Card>
 
-        <Card className="rounded-lg border-border bg-card p-0 shadow-none">
+        <Card className="rounded-lg bg-card p-0">
           <FormSectionHeader title="存储关联" description="环境必须绑定一个已创建的存储配置" />
           <div className="grid gap-4 px-5 pb-5 xl:grid-cols-2">
             <FormSectionField label="存储配置" required>
@@ -281,8 +281,8 @@ function EnvironmentFormLoading({ onBack }: { onBack: () => void }) {
         <div className="h-8 w-40 animate-pulse rounded bg-muted" />
       </div>
       <div className="space-y-4 px-6 py-5">
-        <Card className="h-48 animate-pulse rounded-lg border-border bg-card shadow-none" />
-        <Card className="h-48 animate-pulse rounded-lg border-border bg-card shadow-none" />
+        <Card className="h-48 animate-pulse rounded-lg bg-card" />
+        <Card className="h-48 animate-pulse rounded-lg bg-card" />
       </div>
     </>
   );

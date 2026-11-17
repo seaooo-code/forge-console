@@ -99,7 +99,7 @@ export function ModuleBuildVariablesPanel({
   };
 
   return (
-    <Card className="gap-0 rounded-lg border-border py-0 shadow-sm">
+    <Card className="gap-0 rounded-lg py-0">
       <div className="flex h-14 items-center justify-between gap-3 border-border border-b px-4">
         <div>
           <div className="font-semibold text-foreground text-sm">构建变量</div>

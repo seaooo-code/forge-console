@@ -32,7 +32,7 @@ export function StorageBasicInfoSection({
   register,
 }: StorageBasicInfoSectionProps) {
   return (
-    <Card className="rounded-lg border-border bg-card p-0 shadow-none">
+    <Card className="rounded-lg bg-card p-0">
       <FormSectionHeader title="基础信息" description="命名配置并选择对象存储适配器" />
       <div className="grid gap-4 px-5 pb-5 xl:grid-cols-3">
         <FormSectionField label="配置名称" required>

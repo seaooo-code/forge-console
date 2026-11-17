@@ -242,8 +242,8 @@ export function BuildAdapterEditPage({ adapterId, onBack, onCreated }: BuildAdap
           </Alert>
         ) : (
           <>
-            <Card className="h-48 animate-pulse rounded-lg border-border bg-card shadow-none" />
-            <Card className="h-96 animate-pulse rounded-lg border-border bg-card shadow-none" />
+            <Card className="h-48 animate-pulse rounded-lg bg-card" />
+            <Card className="h-96 animate-pulse rounded-lg bg-card" />
           </>
         )}
       </PageFrame>
@@ -349,7 +349,7 @@ export function BuildAdapterEditPage({ adapterId, onBack, onCreated }: BuildAdap
 
         <div className="grid gap-4 px-6 py-5 xl:grid-cols-5">
           <div className="min-w-0 space-y-4 xl:col-span-3">
-            <Card className="gap-0 rounded-lg border-border p-0 shadow-none">
+            <Card className="gap-0 rounded-lg p-0">
               <FormSectionHeader title="基础信息" description="名称会展示在模块的构建方式选择中" />
               <div className="grid gap-4 px-5 py-4">
                 <FieldBlock label="名称" required error={errors.name?.message}>
@@ -383,7 +383,7 @@ export function BuildAdapterEditPage({ adapterId, onBack, onCreated }: BuildAdap
               </div>
             </Card>
 
-            <Card className="gap-0 rounded-lg border-border p-0 shadow-none">
+            <Card className="gap-0 rounded-lg p-0">
               <FormSectionHeader
                 title="Dockerfile 模板"
                 description="渲染后在仓库之外生成 Dockerfile，以模块的构建上下文执行 docker build；产物仍需导出 dist/forge.json 与 dist/{platform}/。"

@@ -164,7 +164,7 @@ function ReleaseRecordDetailFallback({
         </Button>
       </div>
       <div className="px-6 py-5">
-        <Card className="rounded-lg border-border p-8 text-center shadow-sm">
+        <Card className="rounded-lg p-8 text-center">
           <div className="mx-auto flex size-10 items-center justify-center rounded-lg bg-muted text-muted-foreground">
             <RadioTower className="size-5" />
           </div>

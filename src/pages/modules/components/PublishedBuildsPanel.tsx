@@ -17,7 +17,7 @@ export function PublishedBuildsPanel({
   records: ReleasePointerRecord[];
 }) {
   return (
-    <Card className="gap-0 rounded-lg border-border py-0 shadow-sm">
+    <Card className="gap-0 rounded-lg py-0">
       <SectionHeader title="已发布构建" description="当前模块已发布的全量和标识构建" />
       {records.length > 0 ? (
         <div className="overflow-hidden">

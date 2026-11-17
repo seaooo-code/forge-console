@@ -77,7 +77,7 @@ export function ArtifactTreePanel({
   };
 
   return (
-    <Card className="gap-0 rounded-lg border-border py-0 shadow-sm">
+    <Card className="gap-0 rounded-lg py-0">
       <SectionHeader title="产物文件" description="构建产物目录结构与文件摘要" />
       <div className="border-border border-b px-4 py-3">
         <div className="grid gap-3 text-sm md:grid-cols-2">

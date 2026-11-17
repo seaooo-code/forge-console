@@ -12,7 +12,7 @@ export function ApplicationDetailFallback({ isFetching, onBack }: ApplicationDet
   return (
     <div className="flex flex-col gap-6">
       <PageHeader onBack={onBack} backLabel="返回应用管理" title="应用详情" />
-      <Card className="rounded-xl border-border p-6 shadow-xs">
+      <Card className="rounded-xl p-6">
         {isFetching ? (
           <div className="space-y-3">
             <div className="h-5 w-36 animate-pulse rounded bg-muted" />

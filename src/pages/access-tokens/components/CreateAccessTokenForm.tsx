@@ -31,7 +31,7 @@ export function CreateAccessTokenForm({
   onSubmit,
 }: CreateAccessTokenFormProps) {
   return (
-    <Card className="h-fit rounded-xl border-border bg-card p-5 shadow-xs">
+    <Card className="h-fit rounded-xl bg-card p-5">
       <div className="flex items-center gap-2">
         <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-success/10 text-success">
           <Plus className="size-4" />

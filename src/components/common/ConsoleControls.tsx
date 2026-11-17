@@ -80,7 +80,7 @@ export function ConsoleFilterSelect({
     >
       <SelectTrigger
         className={cn(
-          "h-9 w-auto min-w-28 gap-2 border-border bg-card px-3 font-medium text-muted-foreground shadow-sm",
+          "h-9 w-auto min-w-28 gap-2 bg-card px-3 font-medium text-muted-foreground",
           className,
         )}
         aria-label={`${label}筛选`}
@@ -123,7 +123,7 @@ export function ConsoleClearableFilterSelect({
           variant="outline"
           type="button"
           size="icon"
-          className="size-9 shrink-0 border-border bg-card text-muted-foreground"
+          className="size-9 shrink-0 bg-card text-muted-foreground"
           aria-label={clearLabel}
           onClick={onClear}
         >
@@ -210,7 +210,7 @@ export function ConsoleOwnerSearchFilter<TUser extends ConsoleOwnerSearchUser>({
       <Button
         variant="outline"
         type="button"
-        className="h-9 min-w-28 justify-start gap-2 border-border bg-card px-3 font-medium text-muted-foreground shadow-sm hover:bg-card hover:text-foreground"
+        className="h-9 min-w-28 justify-start gap-2 bg-card px-3 font-medium text-muted-foreground hover:bg-hover hover:text-foreground"
         aria-label={`${label}筛选`}
         onClick={() => {
           setQuery(selectedLabel);
@@ -222,7 +222,7 @@ export function ConsoleOwnerSearchFilter<TUser extends ConsoleOwnerSearchUser>({
       </Button>
 
       {isOpen ? (
-        <div className="absolute z-30 mt-1 w-72 rounded-md border border-border bg-popover p-2 shadow-lg">
+        <div className="absolute z-30 mt-1 w-72 rounded-xl bg-popover p-2 shadow-raise">
           <div className="flex items-center gap-2">
             <Input
               value={query}
@@ -236,7 +236,7 @@ export function ConsoleOwnerSearchFilter<TUser extends ConsoleOwnerSearchUser>({
                 variant="outline"
                 type="button"
                 size="icon"
-                className="size-8 shrink-0 border-border bg-card text-muted-foreground"
+                className="size-8 shrink-0 bg-card text-muted-foreground"
                 aria-label={`清空${label}筛选`}
                 onClick={() => {
                   setQuery("");
@@ -302,7 +302,7 @@ export function ConsoleSearchInput({
   return (
     <div
       className={cn(
-        "flex h-9 min-w-60 items-center gap-2 rounded-md border border-border bg-card px-3 text-muted-foreground",
+        "flex h-9 min-w-60 items-center gap-2 rounded-md bg-card px-3 text-muted-foreground shadow-edge",
         className,
       )}
     >
@@ -331,14 +331,14 @@ function ConsoleOwnerAvatar({ name, src }: { name: string; src: string }) {
 
 export function ConsoleTableFooter({ pageSize = "20", total }: ConsoleTableFooterProps) {
   return (
-    <div className="flex flex-col gap-3 border-border border-t px-4 py-3 text-muted-foreground text-sm md:flex-row md:items-center md:justify-between">
+    <div className="flex flex-col gap-3 px-4 py-3 text-muted-foreground text-sm md:flex-row md:items-center md:justify-between">
       <span>共 {total} 条</span>
       <div className="flex items-center gap-2">
         <Button
           variant="outline"
           type="button"
           size="icon"
-          className="size-8 border-border bg-card text-muted-foreground"
+          className="size-8 bg-card text-muted-foreground"
         >
           ‹
         </Button>
@@ -349,12 +349,12 @@ export function ConsoleTableFooter({ pageSize = "20", total }: ConsoleTableFoote
           variant="outline"
           type="button"
           size="icon"
-          className="size-8 border-border bg-card text-muted-foreground"
+          className="size-8 bg-card text-muted-foreground"
         >
           ›
         </Button>
         <Select defaultValue={pageSize}>
-          <SelectTrigger className="h-8 w-27 border-border bg-card px-3 text-muted-foreground text-xs shadow-none">
+          <SelectTrigger className="h-8 w-27 bg-card px-3 text-muted-foreground text-xs">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>

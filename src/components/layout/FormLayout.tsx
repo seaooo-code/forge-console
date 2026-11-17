@@ -41,7 +41,7 @@ export function FormActions({ primary, secondary, hint, className }: FormActions
   return (
     <div
       className={cn(
-        "sticky bottom-0 z-10 mt-6 -mx-6 border-border border-t bg-background/90 px-6 py-3 backdrop-blur lg:-mx-8 lg:px-8",
+        "sticky bottom-0 z-10 mt-6 -mx-6 bg-background/90 px-6 py-3 backdrop-blur lg:-mx-8 lg:px-8",
         className,
       )}
     >

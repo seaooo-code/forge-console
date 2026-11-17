@@ -30,7 +30,7 @@ type FormSectionHeaderProps = {
 /** Header row for a Card-based form section: title + description. */
 export function FormSectionHeader({ description, title }: FormSectionHeaderProps) {
   return (
-    <div className="border-border border-b px-5 py-4">
+    <div className="px-5 pt-5 pb-1">
       <h2 className="font-semibold text-foreground text-sm">{title}</h2>
       <p className="mt-1 text-muted-foreground text-xs">{description}</p>
     </div>

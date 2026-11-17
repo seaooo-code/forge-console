@@ -60,7 +60,7 @@ function EnvironmentsPageLoading() {
       <EnvironmentsHeader />
       <section className="grid gap-2.5 md:grid-cols-2 xl:grid-cols-4">
         {["one", "two", "three", "four"].map((item) => (
-          <Card key={item} className="h-40 animate-pulse rounded-xl bg-card shadow-xs" />
+          <Card key={item} className="h-40 animate-pulse rounded-xl bg-card" />
         ))}
       </section>
     </div>

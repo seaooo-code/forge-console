@@ -46,12 +46,7 @@ export function PageHeader({
   const hasRightCluster = Boolean(meta) || Boolean(actions);
 
   return (
-    <div
-      className={cn(
-        "flex flex-col gap-4 rounded-xl border border-border bg-card px-5 py-4 shadow-xs lg:px-6 lg:py-5",
-        className,
-      )}
-    >
+    <div className={cn("flex flex-col gap-4", className)}>
       {(hasTopRow || hasRightCluster) && (
         <div className="flex flex-wrap items-center justify-between gap-3">
           {hasTopRow ? (
@@ -60,7 +55,7 @@ export function PageHeader({
                 <button
                   type="button"
                   onClick={onBack}
-                  className="-ml-2 inline-flex h-7 items-center gap-1.5 rounded-md px-2 font-medium text-foreground transition-colors hover:bg-muted"
+                  className="-ml-2 inline-flex h-7 items-center gap-1.5 rounded-md px-2 font-medium text-foreground transition-colors hover:bg-hover"
                 >
                   <BackIcon className="size-3.5" />
                   {backLabel}

@@ -14,7 +14,7 @@ export function ModuleFormLoading({ onBack }: { onBack: () => void }) {
         <ArrowLeft className="size-4" />
         返回模块管理
       </Button>
-      <Card className="rounded-lg border-border p-6 shadow-none">
+      <Card className="rounded-lg p-6">
         <div className="space-y-3">
           <div className="h-5 w-36 animate-pulse rounded bg-muted" />
           <div className="h-10 w-full animate-pulse rounded bg-muted" />
@@ -37,7 +37,7 @@ export function ModuleFormNotFound({ onBack }: { onBack: () => void }) {
         <ArrowLeft className="size-4" />
         返回模块管理
       </Button>
-      <Card className="rounded-lg border-border bg-card p-6 shadow-none">
+      <Card className="rounded-lg bg-card p-6">
         <div className="font-semibold text-foreground text-sm">模块不存在</div>
         <p className="mt-1 text-muted-foreground text-sm">当前模块可能已被删除或路径无效。</p>
       </Card>
@@ -78,7 +78,7 @@ export function ModuleCodeSourceRequired({
       </div>
 
       <div className="px-6 py-5">
-        <Card className="rounded-lg border-warning/40 bg-warning/10 p-5 text-warning shadow-none">
+        <Card className="rounded-lg border-warning/40 bg-warning/10 p-5 text-warning">
           <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div className="min-w-0">
               <div className="flex items-center gap-2 font-semibold text-sm">

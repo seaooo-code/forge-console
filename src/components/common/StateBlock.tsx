@@ -58,12 +58,7 @@ export function ErrorState({
   className,
 }: ErrorStateProps) {
   return (
-    <Card
-      className={cn(
-        "border-destructive/30 bg-destructive/10 p-5 text-destructive shadow-none",
-        className,
-      )}
-    >
+    <Card className={cn("bg-destructive-soft p-5 text-destructive shadow-none", className)}>
       <p className="font-medium text-sm">{title}</p>
       <p className="mt-1 text-sm">{message}</p>
       {onRetry ? (

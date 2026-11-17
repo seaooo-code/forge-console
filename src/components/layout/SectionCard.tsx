@@ -53,7 +53,7 @@ export function SectionCard({
   return (
     <section
       className={cn(
-        "rounded-xl border border-border bg-card shadow-xs",
+        "rounded-xl bg-card shadow-edge",
         !hasHeader && paddingClass[padding],
         className,
       )}

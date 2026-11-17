@@ -1,5 +1,3 @@
-import { themeQuartz } from "@/lib/ag-grid";
-
 import type {
   ApplicationDetailMetric,
   ApplicationEnvironmentRecord,
@@ -41,29 +39,6 @@ export const applicationStatusClass: Record<ApplicationStatus, string> = {
   维护中: "border-warning/40 bg-warning/10 text-warning",
   运行中: "border-success/30 bg-success/10 text-success",
 };
-
-export const applicationsGridTheme = themeQuartz.withParams({
-  accentColor: "var(--primary)",
-  backgroundColor: "var(--card)",
-  borderColor: "var(--border)",
-  borderRadius: 0,
-  browserColorScheme: "inherit",
-  columnBorder: false,
-  fontFamily: "var(--app-font-sans)",
-  fontSize: 13,
-  foregroundColor: "var(--card-foreground)",
-  headerBackgroundColor: "var(--surface-2)",
-  headerFontSize: 12,
-  headerFontWeight: 600,
-  headerTextColor: "var(--muted-foreground)",
-  oddRowBackgroundColor: "var(--card)",
-  rowBorder: { color: "var(--border)", style: "solid", width: 1 },
-  rowHoverColor: "color-mix(in oklch, var(--primary) 8%, transparent)",
-  selectedRowBackgroundColor: "color-mix(in oklch, var(--primary) 12%, transparent)",
-  spacing: 7,
-  wrapperBorder: false,
-  wrapperBorderRadius: 0,
-});
 
 export const applicationMetricToneClass: Record<ApplicationDetailMetric["tone"], string> = {
   amber: "bg-warning/10 text-warning",

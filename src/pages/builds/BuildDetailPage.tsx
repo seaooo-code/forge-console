@@ -196,7 +196,7 @@ export function BuildDetailPage({
         ) : null}
 
         <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
-          <Card className="gap-0 rounded-lg border-border py-0 shadow-sm">
+          <Card className="gap-0 rounded-lg py-0">
             <SectionHeader title="构建信息" description="执行状态、触发来源和产物地址" />
             <div className="grid gap-3 p-4 md:grid-cols-2">
               <DetailItem
@@ -277,7 +277,7 @@ export function BuildDetailPage({
             </div>
           </Card>
 
-          <Card className="gap-0 rounded-lg border-border py-0 shadow-sm">
+          <Card className="gap-0 rounded-lg py-0">
             <SectionHeader title="上下文" description="仓库、环境和存储配置" />
             <div className="grid gap-3 p-4">
               <DetailItem

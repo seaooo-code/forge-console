@@ -15,7 +15,7 @@ type StorageConnectionSectionProps = {
 
 export function StorageConnectionSection({ isEditMode, register }: StorageConnectionSectionProps) {
   return (
-    <Card className="rounded-lg border-border bg-card p-0 shadow-none">
+    <Card className="rounded-lg bg-card p-0">
       <FormSectionHeader title="接入配置" description="S3 兼容存储连接参数和公开访问地址" />
       <div className="grid gap-4 px-5 pb-5 xl:grid-cols-2">
         <FormSectionField label="Bucket" required>

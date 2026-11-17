@@ -21,7 +21,7 @@ export function SummaryCard({
   value: string;
 }) {
   return (
-    <Card className="rounded-lg px-5 py-4 shadow-none">
+    <Card className="rounded-lg px-5 py-4">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <div className="font-medium text-muted-foreground text-sm">{label}</div>
@@ -146,7 +146,7 @@ export function BuildDetailFallback({
         </Button>
       </div>
       <div className="px-6 py-5">
-        <Card className="rounded-lg border-border p-8 text-center shadow-sm">
+        <Card className="rounded-lg p-8 text-center">
           <div className="mx-auto flex size-10 items-center justify-center rounded-lg bg-muted text-muted-foreground">
             <PackageCheck className="size-5" />
           </div>

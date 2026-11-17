@@ -11,7 +11,7 @@ type FilterBarProps = {
   search?: ReactNode;
   /** Right-side action cluster (refresh, create, export). */
   actions?: ReactNode;
-  /** Second row: advanced/secondary filters, separated by a dashed top border. */
+  /** Second row: advanced/secondary filters. */
   secondary?: ReactNode;
   className?: string;
 };
@@ -29,12 +29,7 @@ export function FilterBar({
   className,
 }: FilterBarProps) {
   return (
-    <div
-      className={cn(
-        "flex flex-col gap-3 rounded-xl border border-border bg-card px-4 py-3 shadow-xs",
-        className,
-      )}
-    >
+    <div className={cn("flex flex-col gap-2.5", className)}>
       <div className="flex flex-wrap items-center gap-2.5">
         {label ? (
           <span className="mr-1 font-medium text-muted-foreground text-xs uppercase tracking-wider">
@@ -48,11 +43,7 @@ export function FilterBar({
         </div>
       </div>
 
-      {secondary ? (
-        <div className="flex flex-wrap items-center gap-2.5 border-border border-t border-dashed pt-3">
-          {secondary}
-        </div>
-      ) : null}
+      {secondary ? <div className="flex flex-wrap items-center gap-2.5">{secondary}</div> : null}
     </div>
   );
 }

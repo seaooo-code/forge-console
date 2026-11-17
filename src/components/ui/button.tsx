@@ -14,14 +14,12 @@ const buttonVariants = cva(
         primary: "bg-primary text-primary-foreground hover:bg-primary/90",
         destructive:
           "bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/30",
-        outline:
-          "border border-border bg-card text-foreground shadow-xs hover:bg-muted hover:text-foreground",
+        outline: "bg-card text-foreground shadow-edge hover:bg-hover hover:text-foreground",
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        ghost: "hover:bg-muted hover:text-foreground",
+        ghost: "hover:bg-hover hover:text-foreground",
         link: "text-primary underline-offset-4 hover:underline",
-        /** Quiet outline with a danger-tinted border. For tertiary "danger" actions. */
-        "danger-outline":
-          "border border-destructive/30 bg-card text-destructive hover:bg-destructive/10",
+        /** Quiet outline in danger color. For tertiary "danger" actions. */
+        "danger-outline": "bg-card text-destructive shadow-edge hover:bg-destructive-soft",
       },
       size: {
         default: "h-9 px-4 text-sm",

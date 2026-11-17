@@ -263,7 +263,7 @@ export function CodeSourcesPage() {
             onRetry={() => void appsQuery.refetch()}
           />
         ) : appsQuery.isPending ? (
-          <Card className="h-24 animate-pulse rounded-xl bg-card shadow-xs" />
+          <Card className="h-24 animate-pulse rounded-xl bg-card" />
         ) : null}
 
         <section className="overflow-hidden rounded-xl border border-border bg-card shadow-xs">

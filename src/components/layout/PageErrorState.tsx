@@ -42,11 +42,11 @@ export function PageErrorState({
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center gap-3 rounded-xl border border-destructive/30 bg-destructive/10 px-6 py-12 text-center shadow-xs",
+        "flex flex-col items-center justify-center gap-3 rounded-xl bg-destructive-soft px-6 py-12 text-center",
         className,
       )}
     >
-      <span className="flex size-10 items-center justify-center rounded-lg bg-card text-destructive shadow-xs">
+      <span className="flex size-10 items-center justify-center rounded-lg bg-card text-destructive shadow-edge">
         <TriangleAlert className="size-5" />
       </span>
       <div className="space-y-1">
@@ -85,7 +85,7 @@ export function ErrorMessage({ error, onRetry, className }: ErrorMessageProps) {
   return (
     <div
       className={cn(
-        "flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-destructive",
+        "flex items-start gap-3 rounded-lg bg-destructive-soft px-4 py-3 text-destructive",
         className,
       )}
     >

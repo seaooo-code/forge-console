@@ -34,7 +34,7 @@ export function BuildAdapterParametersSection({
   const { append, fields, remove } = useFieldArray({ control, name: "parameters" });
 
   return (
-    <Card className="gap-0 rounded-lg border-border p-0 shadow-none">
+    <Card className="gap-0 rounded-lg p-0">
       <FormSectionHeader
         title="参数定义"
         description={`模块选用适配器时按这里的定义填写参数，模板中用 .Params.<key> 引用。参数不能存放密钥，最多 ${maxBuildAdapterParameters} 个。`}

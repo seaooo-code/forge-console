@@ -158,7 +158,7 @@ export function BuildAdaptersPage({
             onRetry={() => void adaptersQuery.refetch()}
           />
         ) : adaptersQuery.isPending ? (
-          <Card className="h-96 animate-pulse rounded-xl border-border bg-card shadow-xs" />
+          <Card className="h-96 animate-pulse rounded-xl bg-card" />
         ) : (
           <DataTable
             rows={adapters}

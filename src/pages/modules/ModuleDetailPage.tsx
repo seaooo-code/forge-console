@@ -200,7 +200,7 @@ export function ModuleDetailPage({
                 onOpenBuildAdapter={onOpenBuildAdapter}
               />
               <ModuleWebhookPanel module={module} />
-              <Card className="gap-0 rounded-lg border-border py-0 shadow-sm">
+              <Card className="gap-0 rounded-lg py-0">
                 <SectionHeader title="模块关系" description="应用归属与通用模块依赖" />
                 <div className="grid gap-3 p-4">
                   <DetailItem icon={Boxes} label="关联应用" value={module.applicationName} />
@@ -286,7 +286,7 @@ function TabButton({
 
 function RepositoryCard({ module }: { module: ModuleRecord }) {
   return (
-    <Card className="gap-0 rounded-lg border-border py-0 shadow-sm">
+    <Card className="gap-0 rounded-lg py-0">
       <SectionHeader title="仓库绑定" description="代码源连接、仓库与默认分支" />
       <div className="grid gap-3 p-4 md:grid-cols-2">
         <DetailItem
@@ -356,7 +356,7 @@ function BuildConfigCard({
   );
 
   return (
-    <Card className="gap-0 rounded-lg border-border py-0 shadow-sm">
+    <Card className="gap-0 rounded-lg py-0">
       <SectionHeader title="构建配置" description="构建方式、自动构建与预览通道" />
       <div className="grid gap-3 p-4 md:grid-cols-2">
         <DetailItem icon={Hammer} label="构建方式" value={buildModeLabels[buildMode]} />
@@ -569,7 +569,7 @@ function ModuleDetailFallback({ isFetching, onBack }: { isFetching: boolean; onB
         返回模块管理
       </Button>
 
-      <Card className="rounded-lg border-border p-6 shadow-none">
+      <Card className="rounded-lg p-6">
         {isFetching ? (
           <div className="space-y-3">
             <div className="h-5 w-36 animate-pulse rounded bg-muted" />

@@ -34,10 +34,7 @@ export function PageSkeleton({
       {withFilterBar ? <FilterBarSkeleton /> : null}
       {withKpis ? <KpiRowSkeleton count={kpiCount} /> : null}
       {skeletonKeys.slice(0, rows).map((id) => (
-        <div
-          key={id}
-          className="h-72 animate-pulse rounded-xl border border-border bg-card shadow-xs"
-        />
+        <div key={id} className="h-72 animate-pulse rounded-xl bg-card shadow-edge" />
       ))}
     </div>
   );
@@ -45,7 +42,7 @@ export function PageSkeleton({
 
 function HeaderSkeleton() {
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-border bg-card px-5 py-4 shadow-xs lg:px-6 lg:py-5">
+    <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between gap-3">
         <div className="h-4 w-20 animate-pulse rounded bg-muted" />
         <div className="h-8 w-28 animate-pulse rounded bg-muted" />
@@ -58,7 +55,7 @@ function HeaderSkeleton() {
 
 function FilterBarSkeleton() {
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-border bg-card px-4 py-3 shadow-xs">
+    <div className="flex flex-col gap-3">
       <div className="flex items-center gap-2.5">
         {skeletonKeys.slice(0, 3).map((id) => (
           <div key={id} className="h-9 w-28 animate-pulse rounded-md bg-muted" />
@@ -73,10 +70,7 @@ function KpiRowSkeleton({ count }: { count: number }) {
   return (
     <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
       {skeletonKeys.slice(0, count).map((id) => (
-        <div
-          key={id}
-          className="h-28 animate-pulse rounded-xl border border-border bg-card shadow-xs"
-        />
+        <div key={id} className="h-28 animate-pulse rounded-xl bg-card shadow-edge" />
       ))}
     </div>
   );

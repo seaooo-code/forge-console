@@ -25,7 +25,7 @@ export function ReleaseRecordInfoSection({
 
   return (
     <section className="grid gap-4 xl:grid-cols-[1fr_1fr]">
-      <Card className="gap-0 rounded-lg border-border py-0 shadow-sm">
+      <Card className="gap-0 rounded-lg py-0">
         <SectionHeader title="发布信息" />
         <div className="grid gap-3 p-4 md:grid-cols-2">
           <DetailItem icon={CalendarClock} label="发布时间" value={release.createdAt} />
@@ -56,7 +56,7 @@ export function ReleaseRecordInfoSection({
         </div>
       </Card>
 
-      <Card className="gap-0 rounded-lg border-border py-0 shadow-sm">
+      <Card className="gap-0 rounded-lg py-0">
         <SectionHeader title="路由指向" />
         <div className="grid gap-3 p-4 md:grid-cols-2">
           <DetailItem

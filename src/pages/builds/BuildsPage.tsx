@@ -234,7 +234,7 @@ export function BuildsPage({ onOpenBuild }: BuildsPageProps) {
           }}
         />
 
-        <Card className="rounded-xl border-border bg-card py-0 shadow-xs">
+        <Card className="rounded-xl bg-card py-0">
           <TablePagination
             page={page}
             pageSize={pageSize}

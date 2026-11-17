@@ -5,14 +5,14 @@ import type * as React from "react";
 
 import { cn } from "@/lib/utils";
 
-const alertVariants = cva("flex items-start gap-2 rounded-md border px-3 py-2 text-sm", {
+const alertVariants = cva("flex items-start gap-2 rounded-lg px-3 py-2.5 text-sm", {
   variants: {
     variant: {
-      default: "border-border bg-muted text-foreground",
-      info: "border-info/30 bg-info/10 text-info",
-      success: "border-success/30 bg-success/10 text-success",
-      warning: "border-warning/40 bg-warning/10 text-warning",
-      danger: "border-destructive/30 bg-destructive/10 text-destructive",
+      default: "bg-card text-foreground shadow-edge",
+      info: "bg-info-soft text-info",
+      success: "bg-success/12 text-success",
+      warning: "bg-warning/14 text-warning-foreground dark:text-warning",
+      danger: "bg-destructive-soft text-destructive",
     },
   },
   defaultVariants: {

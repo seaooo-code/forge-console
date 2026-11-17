@@ -36,7 +36,7 @@ export function BuildAdapterFilesSection({
   const files = useWatch({ control, name: "files" }) ?? [];
 
   return (
-    <Card className="gap-0 rounded-lg border-border p-0 shadow-none">
+    <Card className="gap-0 rounded-lg p-0">
       <FormSectionHeader
         title="辅助文件"
         description={`文件会放到构建上下文的 ${buildAdapterFilesDir}/ 下，内容同样按模板渲染；仓库里已有 ${buildAdapterFilesDir}/ 目录时构建会失败。最多 ${maxBuildAdapterFiles} 个。`}

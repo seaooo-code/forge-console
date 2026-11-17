@@ -169,7 +169,7 @@ export function StoragePage({ onCreateStorage, onEditStorage }: StoragePageProps
           getRowId={({ data }) => data.id}
         />
 
-        <Card className="rounded-xl border-border bg-card py-0 shadow-xs">
+        <Card className="rounded-xl bg-card py-0">
           <TablePagination
             page={page}
             pageSize={pageSize}
@@ -223,7 +223,7 @@ function StoragePageLoading() {
   return (
     <div className="flex flex-col gap-6">
       <StorageHeader />
-      <Card className="h-96 animate-pulse rounded-xl border-border bg-card shadow-xs" />
+      <Card className="h-96 animate-pulse rounded-xl bg-card" />
     </div>
   );
 }

@@ -8,7 +8,7 @@ import type { ApplicationDetailMetric } from "../types";
 
 export function MetricCard({ metric }: { metric: ApplicationDetailMetric }) {
   return (
-    <Card className="gap-3 rounded-lg border-border p-4 shadow-none">
+    <Card className="gap-3 rounded-lg p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="font-medium text-muted-foreground text-xs">{metric.label}</div>

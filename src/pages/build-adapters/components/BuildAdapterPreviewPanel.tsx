@@ -102,7 +102,7 @@ export function BuildAdapterPreviewPanel({
   const isPending = payload !== debouncedPayload || previewQuery.isFetching;
 
   return (
-    <Card className="gap-0 rounded-lg border-border p-0 shadow-none">
+    <Card className="gap-0 rounded-lg p-0">
       <div className="flex items-center justify-between gap-2 border-border border-b px-4 py-3">
         <div className="flex items-center gap-2">
           <Eye className="size-4 text-muted-foreground" />

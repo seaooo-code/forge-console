@@ -23,7 +23,7 @@ export function GitHubAppCard({
   const isConfigured = app.configurationStatus === "configured";
 
   return (
-    <Card className="rounded-xl border-border bg-card p-4 shadow-xs">
+    <Card className="rounded-xl bg-card p-4">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 items-start gap-3">
           <div

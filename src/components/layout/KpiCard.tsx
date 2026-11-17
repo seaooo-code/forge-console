@@ -10,7 +10,7 @@ const toneClass: Record<KpiTone, string> = {
   info: "bg-info/10 text-info",
   success: "bg-success/10 text-success",
   warning: "bg-warning/10 text-warning",
-  destructive: "bg-destructive/10 text-destructive",
+  destructive: "bg-destructive-soft text-destructive",
   muted: "bg-muted text-muted-foreground",
 };
 
@@ -47,12 +47,7 @@ export function KpiCard({
   const iconTone = toneClassName ?? toneClass[tone];
 
   return (
-    <div
-      className={cn(
-        "flex flex-col gap-3 rounded-xl border border-border bg-card p-4 shadow-xs",
-        className,
-      )}
-    >
+    <div className={cn("flex flex-col gap-3 rounded-xl bg-card p-4 shadow-edge", className)}>
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2.5">
           {Icon ? (

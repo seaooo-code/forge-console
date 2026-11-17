@@ -25,7 +25,7 @@ export function ModuleWebhookPanel({ module }: { module: ModuleRecord }) {
   });
 
   return (
-    <Card className="gap-0 rounded-lg border-border py-0 shadow-sm">
+    <Card className="gap-0 rounded-lg py-0">
       <div className="flex h-12 items-center gap-2 border-border border-b px-4">
         <Webhook className="size-4 text-muted-foreground" />
         <div>

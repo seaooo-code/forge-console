@@ -242,7 +242,7 @@ export function ModuleCreatePage({
       </div>
 
       <div className="px-6 py-5">
-        <Card className="gap-0 rounded-lg border-border py-0 shadow-sm">
+        <Card className="gap-0 rounded-lg py-0">
           <SectionHeader
             title="模块配置"
             description="模块唯一标识、关联应用、代码仓库与构建方式"

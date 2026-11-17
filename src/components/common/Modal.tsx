@@ -60,7 +60,7 @@ export function Modal({
         aria-labelledby={labelledBy}
         aria-describedby={describedBy}
         className={cn(
-          "w-full max-w-md rounded-lg border border-border bg-card p-5 text-card-foreground shadow-xl",
+          "w-full max-w-md rounded-2xl bg-card p-5 text-card-foreground shadow-raise",
           className,
         )}
       >

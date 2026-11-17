@@ -69,8 +69,8 @@ export function BuildAdapterRenderResult({ result }: BuildAdapterRenderResultPro
 
 function RenderedBlock({ content, title }: { content: string; title: string }) {
   return (
-    <div className="overflow-hidden rounded-md border border-border">
-      <div className="flex items-center justify-between gap-2 border-border border-b bg-muted px-3 py-1.5">
+    <div className="overflow-hidden rounded-lg bg-card shadow-edge">
+      <div className="flex items-center justify-between gap-2 bg-surface-2 px-3 py-1.5">
         <span className="flex min-w-0 items-center gap-1.5 font-mono text-foreground text-xs">
           <FileCode2 className="size-3.5 shrink-0 text-muted-foreground" />
           <span className="truncate">{title}</span>
