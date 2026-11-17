@@ -1,9 +1,10 @@
 import { skipToken, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Ban, Blocks, CirclePlay, LoaderCircle, RotateCw } from "lucide-react";
+import { Ban, CirclePlay, RotateCw } from "lucide-react";
 import { type ReactNode, useCallback, useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 
 import { FormSectionHeader } from "@/components/common/FormSectionHeader";
+import { PageHeader } from "@/components/layout";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -262,33 +263,30 @@ export function BuildAdapterEditPage({ adapterId, onBack, onCreated }: BuildAdap
 
   return (
     <>
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <div className="bg-card px-6 py-5">
-          <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-            <div>
-              <BackButton onBack={onBack} />
-              <div className="flex flex-wrap items-center gap-3">
-                <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                  <Blocks className="size-5" />
-                </div>
-                <h1 className="font-semibold text-2xl text-foreground tracking-tight">{title}</h1>
-                {baseAdapter ? (
-                  <>
-                    <BuildAdapterStatusBadge status={baseAdapter.status} />
-                    <Badge variant="outline" className="font-mono">
-                      v{baseAdapter.version}
-                    </Badge>
-                  </>
-                ) : null}
-              </div>
-              <p className="mt-2 text-muted-foreground text-sm">
-                {baseAdapter
-                  ? `被 ${baseAdapter.moduleCount} 个模块引用 · ${baseAdapter.updatedBy?.name || baseAdapter.updatedByUserId || "-"} 更新于 ${formatDateTime(baseAdapter.updatedAt)}`
-                  : "定义 Dockerfile 模板、辅助文件和参数，保存后模块即可选用"}
-              </p>
-            </div>
-
-            <div className="flex shrink-0 flex-wrap items-center gap-2">
+      <form className="flex flex-col gap-5" onSubmit={handleSubmit(onSubmit)}>
+        <PageHeader
+          backLabel="构建适配器"
+          onBack={onBack}
+          title={
+            <span className="flex flex-wrap items-center gap-2.5">
+              {isEditMode && baseAdapter ? baseAdapter.name || title : title}
+              {baseAdapter ? (
+                <>
+                  <BuildAdapterStatusBadge status={baseAdapter.status} />
+                  <Badge variant="neutral" className="font-mono">
+                    v{baseAdapter.version}
+                  </Badge>
+                </>
+              ) : null}
+            </span>
+          }
+          description={
+            baseAdapter
+              ? `被 ${baseAdapter.moduleCount} 个模块引用 · ${baseAdapter.updatedBy?.name || baseAdapter.updatedByUserId || "-"} 更新于 ${formatDateTime(baseAdapter.updatedAt)}`
+              : "定义 Dockerfile 模板、辅助文件和参数，保存后模块即可选用"
+          }
+          actions={
+            <>
               {baseAdapter && canManage ? (
                 <Button
                   type="button"
@@ -298,11 +296,7 @@ export function BuildAdapterEditPage({ adapterId, onBack, onCreated }: BuildAdap
                     setStatusTarget(baseAdapter);
                   }}
                 >
-                  {baseAdapter.status === "active" ? (
-                    <Ban className="size-4" />
-                  ) : (
-                    <CirclePlay className="size-4" />
-                  )}
+                  {baseAdapter.status === "active" ? <Ban /> : <CirclePlay />}
                   {baseAdapter.status === "active" ? "停用" : "启用"}
                 </Button>
               ) : null}
@@ -310,44 +304,43 @@ export function BuildAdapterEditPage({ adapterId, onBack, onCreated }: BuildAdap
                 {readOnly ? "返回" : "取消"}
               </Button>
               {readOnly ? null : (
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? <LoaderCircle className="size-4 animate-spin" /> : null}
+                <Button type="submit" loading={isSubmitting}>
                   {isEditMode ? "保存修改" : "创建适配器"}
                 </Button>
               )}
-            </div>
-          </div>
+            </>
+          }
+        />
 
-          <div className="mt-4 space-y-2 empty:hidden">
-            {readOnly ? (
-              <Alert variant="info">
-                当前账号只能查看已保存的内容，编辑和渲染预览需要平台管理员权限。
-              </Alert>
-            ) : null}
-            {isStale && !isConflict ? (
-              <Alert variant="warning">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span>
-                    适配器已被他人修改为 v{latestAdapter?.version}，你的修改基于 v
-                    {baseAdapter?.version}，请刷新后再编辑。
-                  </span>
-                  <RefreshButton onClick={() => void refreshLatest()} />
-                </div>
-              </Alert>
-            ) : null}
-            {formError ? (
-              <Alert variant="danger">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="break-all">{formError}</span>
-                  {isConflict ? <RefreshButton onClick={() => void refreshLatest()} /> : null}
-                </div>
-              </Alert>
-            ) : null}
-            {message ? <Alert variant="success">{message}</Alert> : null}
-          </div>
+        <div className="space-y-2 empty:hidden">
+          {readOnly ? (
+            <Alert variant="info">
+              当前账号只能查看已保存的内容，编辑和渲染预览需要平台管理员权限。
+            </Alert>
+          ) : null}
+          {isStale && !isConflict ? (
+            <Alert variant="warning">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span>
+                  适配器已被他人修改为 v{latestAdapter?.version}，你的修改基于 v
+                  {baseAdapter?.version}，请刷新后再编辑。
+                </span>
+                <RefreshButton onClick={() => void refreshLatest()} />
+              </div>
+            </Alert>
+          ) : null}
+          {formError ? (
+            <Alert variant="danger">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="break-all">{formError}</span>
+                {isConflict ? <RefreshButton onClick={() => void refreshLatest()} /> : null}
+              </div>
+            </Alert>
+          ) : null}
+          {message ? <Alert variant="success">{message}</Alert> : null}
         </div>
 
-        <div className="grid gap-4 px-6 py-5 xl:grid-cols-5">
+        <div className="grid gap-4 xl:grid-cols-5">
           <div className="min-w-0 space-y-4 xl:col-span-3">
             <Card className="gap-0 rounded-lg p-0">
               <FormSectionHeader title="基础信息" description="名称会展示在模块的构建方式选择中" />
@@ -457,27 +450,10 @@ export function BuildAdapterEditPage({ adapterId, onBack, onCreated }: BuildAdap
 
 function PageFrame({ children, onBack }: { children: ReactNode; onBack: () => void }) {
   return (
-    <>
-      <div className="bg-card px-6 py-5">
-        <BackButton onBack={onBack} />
-        <div className="h-8 w-48 animate-pulse rounded bg-muted" />
-      </div>
-      <div className="space-y-4 px-6 py-5">{children}</div>
-    </>
-  );
-}
-
-function BackButton({ onBack }: { onBack: () => void }) {
-  return (
-    <Button
-      variant="ghost"
-      type="button"
-      className="-ml-2 mb-3 h-8 gap-2 px-2 text-muted-foreground hover:bg-hover hover:text-foreground"
-      onClick={onBack}
-    >
-      <ArrowLeft className="size-4" />
-      返回构建适配器
-    </Button>
+    <div className="flex flex-col gap-5">
+      <PageHeader backLabel="构建适配器" onBack={onBack} title="构建适配器" />
+      {children}
+    </div>
   );
 }
 

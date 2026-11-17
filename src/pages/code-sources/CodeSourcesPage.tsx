@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { ErrorState } from "@/components/common/StateBlock";
-import { PageHeader } from "@/components/layout";
+import { ListHeader, SummaryStats } from "@/components/layout";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -60,6 +60,7 @@ export function CodeSourcesPage() {
   const [pending, setPending] = useState<{ action: CodeSourceConnectionAction; id: string } | null>(
     null,
   );
+  const [disableTarget, setDisableTarget] = useState<CodeSourceConnection | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<CodeSourceConnection | null>(null);
   const [deleteError, setDeleteError] = useState("");
 
@@ -174,6 +175,14 @@ export function CodeSourcesPage() {
     });
 
   const handleToggleStatus = (connection: CodeSourceConnection) => {
+    if (connection.status === "active") {
+      setDisableTarget(connection);
+      return;
+    }
+    applyStatus(connection);
+  };
+
+  const applyStatus = (connection: CodeSourceConnection) => {
     const nextStatus = connection.status === "active" ? "disabled" : "active";
     void runConnectionAction(connection, "status", async () => {
       const updated = await updateCodeSourceConnection(connection.id, { status: nextStatus });
@@ -211,29 +220,51 @@ export function CodeSourcesPage() {
   return (
     <>
       <div className="flex flex-col gap-6">
-        <PageHeader
-          title="代码源管理"
-          description="管理 GitHub 和 GitLab 代码源连接，模块通过连接选择仓库并拉取代码"
+        <ListHeader
+          title="代码源"
+          summary={
+            <SummaryStats
+              items={[
+                {
+                  id: "total",
+                  label: "个连接",
+                  value: connectionsQuery.data ? connectionsQuery.data.length : "-",
+                },
+                {
+                  id: "active",
+                  label: "个启用中",
+                  tone: "success",
+                  value: connectionsQuery.data
+                    ? connectionsQuery.data.filter((item) => item.status === "active").length
+                    : "-",
+                },
+              ]}
+            />
+          }
           actions={
             <>
               <Button
                 type="button"
                 variant="outline"
+                size="icon"
+                aria-label="刷新代码源"
                 onClick={() => {
                   void appsQuery.refetch();
                   void connectionsQuery.refetch();
                 }}
               >
-                <RotateCw className="size-4" />
-                刷新
+                <RotateCw />
               </Button>
               <Button type="button" disabled={!canManage} onClick={() => openDialog(null)}>
-                <Plus className="size-4" />
+                <Plus />
                 新建 GitLab 连接
               </Button>
             </>
           }
         />
+        <p className="-mt-2 m-0 text-muted-foreground text-sm">
+          模块通过这里的连接选择仓库并拉取代码。
+        </p>
 
         {!canManage ? (
           <Alert variant="info">
@@ -338,6 +369,24 @@ export function CodeSourcesPage() {
         onSubmit={handleDialogSubmit}
       />
 
+      <ConfirmDialog
+        isOpen={disableTarget !== null}
+        title="停用代码源连接"
+        description={
+          disableTarget
+            ? `停用「${disableTarget.name}」后，使用它的模块无法再拉取代码和触发构建，之后可以重新启用。`
+            : ""
+        }
+        confirmLabel="停用连接"
+        tone="danger"
+        onCancel={() => setDisableTarget(null)}
+        onConfirm={() => {
+          if (disableTarget) {
+            applyStatus(disableTarget);
+          }
+          setDisableTarget(null);
+        }}
+      />
       <ConfirmDialog
         isOpen={deleteTarget !== null}
         isPending={isDeleting}

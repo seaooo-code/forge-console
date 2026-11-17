@@ -22,7 +22,7 @@ export const buildAdapterStatusFilterOptions: Array<{
   label: string;
   value: BuildAdapterStatusFilter;
 }> = [
-  { label: "全部状态", value: "" },
+  { label: "全部", value: "" },
   { label: "启用中", value: "active" },
   { label: "已停用", value: "disabled" },
 ];

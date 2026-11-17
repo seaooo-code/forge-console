@@ -110,6 +110,13 @@ pages/applications/
 - 主题 token、CSS 变量、基础 reset 只放 `src/index.css`。
 - 字体全部自托管：UI 使用 `MiSans`（`misans` 包，Apache-2.0，只引入 Normal 子集的 Regular / Medium / Semibold 三个字重），缺字时回退到系统字体 `PingFang SC / Microsoft YaHei`；代码/等宽文本使用 `Roboto Mono`（Fontsource）。字体样式统一在 `src/main.tsx` 引入。
 - 外观采用「外框 + 画布」分区，不用分隔线：`bg-shell` 是导航所在的底色，页面内容放在 `bg-background` 的圆角画布里；画布内的白卡用 `shadow-edge` 的极淡轮廓区分。主色（`primary`）只给主操作、选中项和全量路由，比例灰度、定向灰度分别用 `route-percentage`、`route-targeted` token。
+- 交互形态统一如下，新页面照此选择：
+  - 列表页头部用 `ListHeader`，标题下的一行摘要用 `SummaryStats`（可点击时直接作为筛选）；不再使用顶部指标卡片行。表格与分页放在同一张白卡里。
+  - 内容少、需要边看列表边看详情的（构建、发布记录），用「列表 + 详情面板」：页面用 `Canvas` + `SidePanel` 自己排布两块画布，并在 `ConsoleLayout` 的 `isFullBleedPath` 里登记路径；URL 仍是 `/<list>/:id`。
+  - 内容多的详情（应用、模块、构建适配器）保留独立页面，页头统一用 `PageHeader`（带返回），分区用 `ui/tabs`，键值信息用 `DetailList`。
+  - 字段少的新建、编辑、发布表单用右侧 `Drawer`（`DrawerHeader` / `DrawerBody` / `DrawerFooter`）；字段多的表单保留独立页面，提交按钮放在底部的 `FormActions`。
+  - 停用、失效、删除等不可逆或影响线上的操作一律先经 `ConfirmDialog`，不使用 `window.confirm`。
+  - 数据回来前要有加载骨架，请求失败用 `ErrorMessage` 给出原因和重试，不允许 `return null` 留白。
 - 不新增全局 CSS 文件，除非是第三方库必须要求，并在引入处说明用途。
 - shadcn/ui 组件可按项目主题微调，但不得塞入业务文案或业务状态。
 - 业务和布局代码必须优先使用 `src/components/ui` 中的 shadcn/ui 原子组件；已有对应组件时，禁止直接写原生 `button`、`input`、`select`、`textarea`、`checkbox` 等交互控件。原生标签只允许出现在 `src/components/ui` 的无业务语义封装内部，或第三方组件明确无法替代的边界处。

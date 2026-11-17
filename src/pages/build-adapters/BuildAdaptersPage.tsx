@@ -3,17 +3,10 @@ import { Blocks, Plus, RotateCw } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { EmptyState, ErrorState } from "@/components/common/StateBlock";
-import { DataTable, FilterBar, PageHeader } from "@/components/layout";
+import { DataTable, ListHeader, SummaryStats } from "@/components/layout";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/use-auth-store";
 
 import {
@@ -25,7 +18,7 @@ import {
 } from "./api/build-adapters-snapshot";
 import { BuildAdapterStatusDialog } from "./components/BuildAdapterStatusDialog";
 import { buildBuildAdaptersColumnDefs } from "./components/BuildAdaptersColumns";
-import { buildAdapterStatusFilterOptions, emptySelectValue } from "./constants";
+import { buildAdapterStatusFilterOptions } from "./constants";
 import type { BuildAdapter, BuildAdapterStatusFilter } from "./types";
 
 type BuildAdaptersPageProps = {
@@ -86,11 +79,44 @@ export function BuildAdaptersPage({
 
   return (
     <>
-      <div className="flex flex-col gap-6">
-        <PageHeader
+      <div className="flex flex-col gap-5">
+        <ListHeader
           title="构建适配器"
-          description="平台维护的可复用构建配方：Dockerfile 模板、辅助文件和参数定义。模块选用适配器后无需在仓库里放 Dockerfile。"
+          summary={
+            <SummaryStats
+              activeId={statusFilter}
+              items={buildAdapterStatusFilterOptions.map((option) => ({
+                id: option.value,
+                label: option.label,
+                tone: option.value === "active" ? ("success" as const) : undefined,
+                value: option.value === statusFilter ? adapters.length : "",
+              }))}
+              onSelect={(value) => setStatusFilter(value as BuildAdapterStatusFilter)}
+            />
+          }
+          actions={
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                aria-label="刷新构建适配器"
+                disabled={adaptersQuery.isFetching}
+                onClick={() => void adaptersQuery.refetch()}
+              >
+                <RotateCw className={cn(adaptersQuery.isFetching && "animate-spin")} />
+              </Button>
+              <Button type="button" disabled={!canManage} onClick={onCreateBuildAdapter}>
+                <Plus />
+                新建适配器
+              </Button>
+            </>
+          }
         />
+        <p className="-mt-2 m-0 max-w-3xl text-muted-foreground text-sm">
+          平台维护的可复用构建配方：Dockerfile
+          模板、辅助文件和参数定义。模块选用适配器后，仓库里不用再放 Dockerfile。
+        </p>
 
         {!canManage ? (
           <Alert variant="info">
@@ -98,51 +124,6 @@ export function BuildAdaptersPage({
           </Alert>
         ) : null}
         {message ? <Alert variant="success">{message}</Alert> : null}
-
-        <FilterBar
-          label="适配器列表"
-          primary={
-            <Select
-              value={statusFilter || emptySelectValue}
-              onValueChange={(value) =>
-                setStatusFilter(
-                  value === emptySelectValue ? "" : (value as BuildAdapterStatusFilter),
-                )
-              }
-            >
-              <SelectTrigger className="h-8 w-36">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {buildAdapterStatusFilterOptions.map((option) => (
-                  <SelectItem key={option.label} value={option.value || emptySelectValue}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          }
-          actions={
-            <>
-              <span className="text-muted-foreground text-xs">
-                共 <span className="font-semibold text-foreground">{adapters.length}</span> 个适配器
-              </span>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                onClick={() => void adaptersQuery.refetch()}
-              >
-                <RotateCw className="size-4" />
-                刷新
-              </Button>
-              <Button type="button" size="sm" disabled={!canManage} onClick={onCreateBuildAdapter}>
-                <Plus className="size-4" />
-                新建适配器
-              </Button>
-            </>
-          }
-        />
 
         {adaptersQuery.isError && !adaptersQuery.data ? (
           <ErrorState
@@ -158,7 +139,7 @@ export function BuildAdaptersPage({
             onRetry={() => void adaptersQuery.refetch()}
           />
         ) : adaptersQuery.isPending ? (
-          <Card className="h-96 animate-pulse rounded-xl bg-card" />
+          <div className="h-96 animate-pulse rounded-xl bg-muted" />
         ) : (
           <DataTable
             rows={adapters}
