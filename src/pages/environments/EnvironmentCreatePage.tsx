@@ -1,9 +1,9 @@
 import { skipToken, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Layers3, LoaderCircle } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 
 import { fetchAllStorageConfigurationsSnapshot } from "@/api/storage-configurations";
+import { Drawer, DrawerBody, DrawerFooter, DrawerHeader } from "@/components/common/Drawer";
 import { FormSectionField, FormSectionHeader } from "@/components/common/FormSectionHeader";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -90,15 +90,24 @@ export function EnvironmentCreatePage({
     setFormError("");
   }, [initialForm, reset]);
 
-  if (
+  const isLoading =
     (isEditMode && isEnvironmentFetching && !environment) ||
-    (isStorageFetching && !storageSnapshot)
-  ) {
-    return <EnvironmentFormLoading onBack={onBack} />;
-  }
-
-  if (isEditMode && !isEnvironmentFetching && !environment) {
-    return <EnvironmentFormNotFound onBack={onBack} />;
+    (isStorageFetching && !storageSnapshot);
+  if (isLoading || (isEditMode && !environment)) {
+    return (
+      <>
+        <DrawerHeader title={isEditMode ? "编辑环境" : "新建环境"} onClose={onBack} />
+        <DrawerBody>
+          {isLoading ? (
+            <div className="h-64 animate-pulse rounded-xl bg-muted" />
+          ) : (
+            <p className="m-0 text-muted-foreground text-sm">
+              没有找到这个环境，它可能已被删除或路径无效。
+            </p>
+          )}
+        </DrawerBody>
+      </>
+    );
   }
 
   const title = isEditMode ? "编辑环境" : "新建环境";
@@ -133,51 +142,14 @@ export function EnvironmentCreatePage({
   };
 
   return (
-    <form onSubmit={handleSubmit(handleFormSubmit)}>
-      <div className="bg-card px-6 py-5">
-        <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-          <div>
-            <Button
-              variant="ghost"
-              type="button"
-              className="-ml-2 mb-3 h-8 gap-2 px-2 text-muted-foreground hover:bg-hover hover:text-foreground"
-              onClick={onBack}
-            >
-              <ArrowLeft className="size-4" />
-              返回环境管理
-            </Button>
-            <div className="flex items-center gap-3">
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                <Layers3 className="size-5" />
-              </div>
-              <div>
-                <h1 className="font-semibold text-2xl text-foreground tracking-tight">{title}</h1>
-                <p className="mt-2 text-muted-foreground text-sm">{description}</p>
-              </div>
-            </div>
-          </div>
-          <div className="flex shrink-0 items-center gap-2">
-            <Button variant="outline" type="button" onClick={onBack}>
-              取消
-            </Button>
-            <Button
-              type="submit"
-              className="bg-primary hover:bg-primary/90"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? <LoaderCircle className="size-4 animate-spin" /> : null}
-              {isEditMode ? "保存修改" : "保存环境"}
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      <div className="space-y-4 px-6 py-5">
+    <form className="flex min-h-0 flex-1 flex-col" onSubmit={handleSubmit(handleFormSubmit)}>
+      <DrawerHeader title={title} description={description} onClose={onBack} />
+      <DrawerBody className="space-y-5">
         {formError ? <Alert variant="danger">{formError}</Alert> : null}
 
         <Card className="rounded-lg bg-card p-0">
           <FormSectionHeader title="基础信息" description="定义环境唯一标识、名称和视觉标识" />
-          <div className="grid gap-4 px-5 pb-5 xl:grid-cols-3">
+          <div className="grid gap-4 px-5 pb-5 sm:grid-cols-2">
             <FormSectionField label="环境 ID" required>
               <Input
                 readOnly={isEditMode}
@@ -217,7 +189,7 @@ export function EnvironmentCreatePage({
 
         <Card className="rounded-lg bg-card p-0">
           <FormSectionHeader title="存储关联" description="环境必须绑定一个已创建的存储配置" />
-          <div className="grid gap-4 px-5 pb-5 xl:grid-cols-2">
+          <div className="grid gap-4 px-5 pb-5 sm:grid-cols-2">
             <FormSectionField label="存储配置" required>
               <Controller
                 control={control}
@@ -249,8 +221,25 @@ export function EnvironmentCreatePage({
             </FormSectionField>
           </div>
         </Card>
-      </div>
+      </DrawerBody>
+      <DrawerFooter>
+        <Button variant="outline" type="button" onClick={onBack}>
+          取消
+        </Button>
+        <Button type="submit" loading={isSubmitting}>
+          {isEditMode ? "保存修改" : "保存环境"}
+        </Button>
+      </DrawerFooter>
     </form>
+  );
+}
+
+/** 新建、编辑环境的右侧抽屉，叠在环境列表之上。 */
+export function EnvironmentFormDrawer(props: EnvironmentCreatePageProps) {
+  return (
+    <Drawer isOpen onClose={props.onBack} className="max-w-xl">
+      <EnvironmentCreatePage {...props} />
+    </Drawer>
   );
 }
 
@@ -263,47 +252,6 @@ async function updateExistingEnvironment(
   }
 
   return updateEnvironment(environmentId, input);
-}
-
-function EnvironmentFormLoading({ onBack }: { onBack: () => void }) {
-  return (
-    <>
-      <div className="bg-card px-6 py-5">
-        <Button
-          variant="ghost"
-          type="button"
-          className="-ml-2 mb-3 h-8 gap-2 px-2 text-muted-foreground hover:bg-hover hover:text-foreground"
-          onClick={onBack}
-        >
-          <ArrowLeft className="size-4" />
-          返回环境管理
-        </Button>
-        <div className="h-8 w-40 animate-pulse rounded bg-muted" />
-      </div>
-      <div className="space-y-4 px-6 py-5">
-        <Card className="h-48 animate-pulse rounded-lg bg-card" />
-        <Card className="h-48 animate-pulse rounded-lg bg-card" />
-      </div>
-    </>
-  );
-}
-
-function EnvironmentFormNotFound({ onBack }: { onBack: () => void }) {
-  return (
-    <div className="bg-card px-6 py-5">
-      <Button
-        variant="ghost"
-        type="button"
-        className="-ml-2 mb-3 h-8 gap-2 px-2 text-muted-foreground hover:bg-hover hover:text-foreground"
-        onClick={onBack}
-      >
-        <ArrowLeft className="size-4" />
-        返回环境管理
-      </Button>
-      <h1 className="font-semibold text-2xl text-foreground tracking-tight">环境不存在</h1>
-      <p className="mt-2 text-muted-foreground text-sm">当前环境不存在或路径无效。</p>
-    </div>
-  );
 }
 
 function buildInitialForm(environment?: RuntimeEnvironment): EnvironmentFormState {

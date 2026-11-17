@@ -1,4 +1,4 @@
-import type { EnvironmentCardTone, EnvironmentFormState } from "../types";
+import type { EnvironmentCardTone, EnvironmentFormState, RuntimeEnvironment } from "../types";
 
 export const defaultForm: EnvironmentFormState = {
   code: "",
@@ -9,12 +9,17 @@ export const defaultForm: EnvironmentFormState = {
   tone: "blue",
 };
 
-export const environmentToneClass: Record<EnvironmentCardTone, string> = {
-  amber: "border-t-amber-500 dark:border-t-amber-400",
-  blue: "border-t-blue-500 dark:border-t-blue-400",
-  emerald: "border-t-emerald-500 dark:border-t-emerald-400",
-  rose: "border-t-rose-500 dark:border-t-rose-400",
-  sky: "border-t-sky-500 dark:border-t-sky-400",
+export const environmentDotClass: Record<EnvironmentCardTone, string> = {
+  amber: "bg-amber-500 dark:bg-amber-400",
+  blue: "bg-blue-500 dark:bg-blue-400",
+  emerald: "bg-emerald-500 dark:bg-emerald-400",
+  rose: "bg-rose-500 dark:bg-rose-400",
+  sky: "bg-sky-500 dark:bg-sky-400",
+};
+
+export const environmentStatusLabels: Record<RuntimeEnvironment["status"], string> = {
+  gray: "灰度中",
+  healthy: "正常",
 };
 
 export const toneOptions: Array<{ label: string; value: EnvironmentCardTone }> = [

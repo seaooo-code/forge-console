@@ -1,187 +1,178 @@
 import { useQuery } from "@tanstack/react-query";
-import { Clock3, Database, type LucideIcon, Pencil, Plus, Server } from "lucide-react";
+import { Plus, RotateCw } from "lucide-react";
 
-import { PageHeader } from "@/components/layout";
+import { EmptyState } from "@/components/common/StateBlock";
+import { DetailList, ErrorMessage, ListHeader, SummaryStats } from "@/components/layout";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/use-auth-store";
 
 import { environmentsSnapshotQueryKey } from "./api/environment-query-keys";
 import { fetchEnvironmentsSnapshot } from "./api/environments-snapshot";
-import { environmentToneClass } from "./constants";
+import { environmentDotClass, environmentStatusLabels } from "./constants";
+import { EnvironmentFormDrawer } from "./EnvironmentCreatePage";
 import type { RuntimeEnvironment } from "./types";
 
 type EnvironmentsPageProps = {
+  /** 新建或编辑时在列表之上打开的抽屉；undefined 表示不打开。 */
+  drawer?: { mode: "create" } | { mode: "edit"; environmentId: string };
+  onCloseDrawer: () => void;
   onCreateEnvironment: () => void;
   onEditEnvironment: (environmentId: string) => void;
 };
 
 export function EnvironmentsPage({
+  drawer,
+  onCloseDrawer,
   onCreateEnvironment,
   onEditEnvironment,
 }: EnvironmentsPageProps) {
   const session = useAuthStore((state) => state.session);
   const canManageEnvironments = Boolean(session?.capabilities.canManageEnvironments);
-  const { data: snapshot } = useQuery({
+  const {
+    data: snapshot,
+    error,
+    isFetching,
+    refetch,
+  } = useQuery({
     queryFn: fetchEnvironmentsSnapshot,
     queryKey: environmentsSnapshotQueryKey,
   });
-
-  if (!snapshot) {
-    return <EnvironmentsPageLoading />;
-  }
+  const environments = snapshot?.environments ?? [];
+  const grayCount = environments.filter((environment) => environment.status === "gray").length;
 
   return (
-    <div className="flex flex-col gap-6">
-      <EnvironmentsHeader />
-
-      <section className="grid gap-2.5 md:grid-cols-2 xl:grid-cols-4">
-        {snapshot.environments.map((environment) => (
-          <EnvironmentCard
-            key={environment.id}
-            canManageEnvironments={canManageEnvironments}
-            environment={environment}
-            onEditEnvironment={onEditEnvironment}
+    <div className="flex flex-col gap-5">
+      <ListHeader
+        title="环境"
+        summary={
+          <SummaryStats
+            items={[
+              { id: "total", label: "个环境", value: snapshot ? environments.length : "-" },
+              { id: "gray", label: "个灰度中", tone: "warning", value: snapshot ? grayCount : "-" },
+            ]}
           />
-        ))}
-        <CreateEnvironmentCard
-          canManageEnvironments={canManageEnvironments}
-          onCreateEnvironment={onCreateEnvironment}
+        }
+        actions={
+          <>
+            <Button
+              variant="outline"
+              size="icon"
+              aria-label="刷新环境列表"
+              disabled={isFetching}
+              onClick={() => {
+                void refetch();
+              }}
+            >
+              <RotateCw className={cn(isFetching && "animate-spin")} />
+            </Button>
+            <Button type="button" disabled={!canManageEnvironments} onClick={onCreateEnvironment}>
+              <Plus />
+              新建环境
+            </Button>
+          </>
+        }
+      />
+
+      {error && !snapshot ? (
+        <ErrorMessage error={error} onRetry={() => void refetch()} />
+      ) : !snapshot ? (
+        <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {["one", "two", "three"].map((item) => (
+            <div key={item} className="h-40 animate-pulse rounded-xl bg-muted" />
+          ))}
+        </section>
+      ) : environments.length === 0 ? (
+        <div className="rounded-xl bg-card p-10 shadow-edge">
+          <EmptyState
+            title="还没有环境"
+            description="新建环境并绑定一个存储配置后，模块就可以向这个环境构建和发布。"
+          />
+        </div>
+      ) : (
+        <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {environments.map((environment) => (
+            <EnvironmentCard
+              key={environment.id}
+              canManageEnvironments={canManageEnvironments}
+              environment={environment}
+              isSelected={drawer?.mode === "edit" && drawer.environmentId === environment.id}
+              onEditEnvironment={onEditEnvironment}
+            />
+          ))}
+        </section>
+      )}
+
+      {drawer ? (
+        <EnvironmentFormDrawer
+          key={drawer.mode === "edit" ? drawer.environmentId : "new"}
+          environmentId={drawer.mode === "edit" ? drawer.environmentId : undefined}
+          mode={drawer.mode}
+          onBack={onCloseDrawer}
+          onSaved={onCloseDrawer}
         />
-      </section>
+      ) : null}
     </div>
   );
-}
-
-function EnvironmentsPageLoading() {
-  return (
-    <div className="flex flex-col gap-6">
-      <EnvironmentsHeader />
-      <section className="grid gap-2.5 md:grid-cols-2 xl:grid-cols-4">
-        {["one", "two", "three", "four"].map((item) => (
-          <Card key={item} className="h-40 animate-pulse rounded-xl bg-card" />
-        ))}
-      </section>
-    </div>
-  );
-}
-
-function EnvironmentsHeader() {
-  return <PageHeader title="环境管理" description="管理运行环境和对应的对象存储配置" />;
 }
 
 function EnvironmentCard({
   canManageEnvironments,
   environment,
+  isSelected,
   onEditEnvironment,
 }: {
   canManageEnvironments: boolean;
   environment: RuntimeEnvironment;
+  isSelected: boolean;
   onEditEnvironment: (environmentId: string) => void;
 }) {
   return (
-    <Card
+    <Button
+      type="button"
+      variant="ghost"
+      disabled={!canManageEnvironments}
+      onClick={() => onEditEnvironment(environment.id)}
       className={cn(
-        "gap-3 rounded-xl border-t-4 px-3.5 py-3.5",
-        environmentToneClass[environment.tone],
+        "h-auto flex-col items-stretch justify-start gap-4 whitespace-normal rounded-xl bg-card p-5 text-left font-normal shadow-edge hover:bg-card hover:shadow-raise disabled:opacity-100",
+        isSelected && "ring-2 ring-primary ring-inset",
       )}
     >
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex min-w-0 items-start gap-2.5">
-          <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
-            <Server className="size-4" />
-          </div>
-          <div className="min-w-0">
-            <div className="truncate font-semibold text-foreground text-sm leading-5">
+      <span className="flex items-start gap-3">
+        <i
+          className={cn(
+            "mt-1.5 size-2.5 shrink-0 rounded-sm",
+            environmentDotClass[environment.tone],
+          )}
+        />
+        <span className="min-w-0 flex-1">
+          <span className="flex items-center gap-2">
+            <span className="truncate font-medium text-base text-foreground">
               {environment.name}
-            </div>
-            <p className="mt-0.5 line-clamp-2 text-muted-foreground text-xs leading-4">
-              {environment.description}
-            </p>
-          </div>
-        </div>
-        <Button
-          variant="ghost"
-          type="button"
-          size="icon"
-          className="-mt-1 size-8 shrink-0 text-muted-foreground hover:text-primary"
-          aria-label="编辑环境"
-          disabled={!canManageEnvironments}
-          onClick={() => onEditEnvironment(environment.id)}
+            </span>
+            <span className="font-mono text-faint text-xs">{environment.id}</span>
+          </span>
+          <span className="mt-1 line-clamp-2 block text-muted-foreground text-sm">
+            {environment.description || "没有描述"}
+          </span>
+        </span>
+        <span
+          className={cn(
+            "shrink-0 rounded-md px-2 py-0.5 text-xs",
+            environment.status === "gray"
+              ? "bg-warning/14 text-warning-foreground dark:text-warning"
+              : "bg-success/12 text-success",
+          )}
         >
-          <Pencil className="size-4" />
-        </Button>
-      </div>
-
-      <div className="grid gap-1.5 pt-2 text-xs">
-        <InfoMetric icon={Clock3} label="更新" value={environment.updatedAt} />
-        <InfoMetric icon={Database} label="存储配置" value={environment.storageConfigurationName} />
-      </div>
-    </Card>
-  );
-}
-
-function InfoMetric({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: LucideIcon;
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="flex min-w-0 items-center gap-2">
-      <div className="flex shrink-0 items-center gap-1 text-muted-foreground">
-        <Icon className="size-3.5 shrink-0" />
-        <span>{label}</span>
-      </div>
-      <div className="min-w-0 flex-1 truncate text-right font-semibold text-foreground">
-        {value}
-      </div>
-    </div>
-  );
-}
-
-function CreateEnvironmentCard({
-  canManageEnvironments,
-  onCreateEnvironment,
-}: {
-  canManageEnvironments: boolean;
-  onCreateEnvironment: () => void;
-}) {
-  return (
-    <Card
-      className={cn(
-        "flex min-h-40 items-center justify-center rounded-xl border-dashed border-border bg-card/70 px-3.5 py-3.5 text-center",
-        canManageEnvironments ? "cursor-pointer hover:border-primary/45 hover:bg-card" : "",
-      )}
-      role="button"
-      aria-disabled={!canManageEnvironments}
-      tabIndex={canManageEnvironments ? 0 : -1}
-      onClick={() => {
-        if (canManageEnvironments) {
-          onCreateEnvironment();
-        }
-      }}
-      onKeyDown={(event) => {
-        if (!canManageEnvironments || (event.key !== "Enter" && event.key !== " ")) {
-          return;
-        }
-        event.preventDefault();
-        onCreateEnvironment();
-      }}
-    >
-      <div className="flex flex-col items-center gap-2.5">
-        <div className="flex size-9 items-center justify-center rounded-md bg-primary/10 text-primary">
-          <Plus className="size-4" />
-        </div>
-        <div>
-          <div className="font-semibold text-foreground text-sm">新建环境</div>
-          <p className="mt-1 text-muted-foreground text-xs leading-4">创建运行环境并绑定存储配置</p>
-        </div>
-      </div>
-    </Card>
+          {environmentStatusLabels[environment.status]}
+        </span>
+      </span>
+      <DetailList
+        items={[
+          { label: "存储配置", value: environment.storageConfigurationName || "未绑定" },
+          { label: "更新", value: environment.updatedAt },
+        ]}
+      />
+    </Button>
   );
 }

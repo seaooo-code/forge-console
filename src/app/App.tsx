@@ -48,10 +48,6 @@ const ReleaseRecordsPage = lazy(async () => ({
   default: (await import("@/pages/release-records")).ReleaseRecordsPage,
 }));
 
-const EnvironmentCreatePage = lazy(async () => ({
-  default: (await import("@/pages/environments")).EnvironmentCreatePage,
-}));
-
 const EnvironmentsPage = lazy(async () => ({
   default: (await import("@/pages/environments")).EnvironmentsPage,
 }));
@@ -175,8 +171,8 @@ function ConsoleRoutes() {
         <Route path="storage/new" element={<StorageRoute />} />
         <Route path="storage/:storageId/edit" element={<StorageRoute />} />
         <Route path="environments" element={<EnvironmentsRoute />} />
-        <Route path="environments/new" element={<EnvironmentCreateRoute />} />
-        <Route path="environments/:environmentId/edit" element={<EnvironmentEditRoute />} />
+        <Route path="environments/new" element={<EnvironmentsRoute />} />
+        <Route path="environments/:environmentId/edit" element={<EnvironmentsRoute />} />
         <Route path="access-tokens" element={<AccessTokensPage />} />
         <Route path="*" element={<ConsoleRouteNotFound />} />
       </Route>
@@ -443,42 +439,22 @@ function DeploymentDetailRedirect() {
 
 function EnvironmentsRoute() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { environmentId } = useParams<{ environmentId: string }>();
+  const drawer = environmentId
+    ? { environmentId, mode: "edit" as const }
+    : location.pathname === "/environments/new"
+      ? { mode: "create" as const }
+      : undefined;
 
   return (
     <EnvironmentsPage
+      drawer={drawer}
+      onCloseDrawer={() => navigate("/environments")}
       onCreateEnvironment={() => navigate("/environments/new")}
-      onEditEnvironment={(environmentId: string) =>
-        navigate(`/environments/${encodeURIComponent(environmentId)}/edit`)
+      onEditEnvironment={(nextEnvironmentId: string) =>
+        navigate(`/environments/${encodeURIComponent(nextEnvironmentId)}/edit`)
       }
-    />
-  );
-}
-
-function EnvironmentCreateRoute() {
-  const navigate = useNavigate();
-
-  return (
-    <EnvironmentCreatePage
-      onBack={() => navigate("/environments")}
-      onSaved={() => navigate("/environments")}
-    />
-  );
-}
-
-function EnvironmentEditRoute() {
-  const navigate = useNavigate();
-  const { environmentId } = useParams<{ environmentId: string }>();
-
-  if (!environmentId) {
-    return <Navigate to="/environments" replace />;
-  }
-
-  return (
-    <EnvironmentCreatePage
-      environmentId={environmentId}
-      mode="edit"
-      onBack={() => navigate("/environments")}
-      onSaved={() => navigate("/environments")}
     />
   );
 }
