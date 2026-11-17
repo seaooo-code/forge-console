@@ -1,5 +1,4 @@
 import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Activity, AppWindow, ArchiveX, Wrench } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 
@@ -31,7 +30,7 @@ import type {
   ApplicationStatusCode,
   HostApplication,
 } from "../types";
-import { percentage, upsertMemberInList } from "../utils";
+import { upsertMemberInList } from "../utils";
 
 export function useApplicationOptions() {
   return useQuery({
@@ -98,55 +97,9 @@ export function useApplicationsListState() {
     return () => window.clearTimeout(handle);
   }, [filters.keyword, keywordInput, updateFilters]);
 
-  const stats = useMemo(() => {
-    if (!snapshot) {
-      return [];
-    }
-
-    const { summary } = snapshot;
-    return [
-      {
-        detail: "全部接入",
-        icon: AppWindow,
-        iconTone: "info" as const,
-        id: "total",
-        label: "应用总数",
-        value: summary.total,
-      },
-      {
-        detail: percentage(summary.running, summary.total),
-        icon: Activity,
-        iconTone: "success" as const,
-        id: "running",
-        label: "运行中",
-        value: summary.running,
-      },
-      {
-        detail: percentage(summary.maintenance, summary.total),
-        icon: Wrench,
-        iconTone: "warning" as const,
-        id: "maintenance",
-        label: "维护中",
-        value: summary.maintenance,
-      },
-      {
-        detail: "归档",
-        icon: ArchiveX,
-        iconTone: "muted" as const,
-        id: "offline",
-        label: "已下线",
-        value: summary.offline,
-      },
-    ];
-  }, [snapshot]);
-
   const platformFilterOptions = useMemo(
     () => applicationOptions?.platforms ?? [],
     [applicationOptions?.platforms],
-  );
-  const statusFilterOptions = useMemo(
-    () => applicationOptions?.applicationStatuses ?? [],
-    [applicationOptions?.applicationStatuses],
   );
 
   return {
@@ -163,8 +116,6 @@ export function useApplicationsListState() {
     setPage,
     setPageSize,
     snapshot,
-    stats,
-    statusFilterOptions,
     updateFilters,
   };
 }

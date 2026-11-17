@@ -1,26 +1,15 @@
-import {
-  Activity,
-  ArchiveX,
-  Boxes,
-  MonitorSmartphone,
-  PackageCheck,
-  PenLine,
-  RadioTower,
-  Smartphone,
-} from "lucide-react";
+import { Activity, ArchiveX, PenLine } from "lucide-react";
 
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
-import { PageHeader, SectionCard } from "@/components/layout";
+import { DetailList, PageHeader } from "@/components/layout";
 import { Alert } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 
 import { ApplicationDetailFallback } from "./components/ApplicationDetailFallback";
-import { ConfigItem, InfoPill, OwnerInfoPill } from "./components/ApplicationDetailInfoPills";
 import { ApplicationEnvironmentsGrid } from "./components/ApplicationEnvironmentsGrid";
 import { ApplicationMembersSection } from "./components/ApplicationMembersSection";
-import { MetricCard } from "./components/ApplicationMetricCard";
 import { ApplicationModulesGrid } from "./components/ApplicationModulesGrid";
 import { ClientIntegrationSection } from "./components/ClientIntegrationSection";
 import { applicationStatusClass } from "./constants";
@@ -70,15 +59,22 @@ export function ApplicationDetailPage({
   const canEditApplication = detail.capabilities.canEditApplication;
   const canManageMembers = detail.capabilities.canManageMembers;
   const canUpdateStatus = detail.capabilities.canUpdateStatus;
+  const jump = (label: string, value: string, onClick: () => void) => (
+    <Button className="h-7 gap-1.5 rounded-lg px-2 font-normal" onClick={onClick} variant="ghost">
+      <span className="font-semibold text-foreground tabular-nums">{value}</span>
+      <span className="text-muted-foreground">{label}</span>
+    </Button>
+  );
+  const moduleCount = String(application.moduleCount ?? detail.modules.length);
 
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
         onBack={onBack}
-        backLabel="返回应用管理"
-        breadcrumbs={[{ label: "应用管理", href: "/apps" }, { label: application.name }]}
-        eyebrow={
-          <div className="flex flex-wrap items-center gap-2">
+        backLabel="应用"
+        title={
+          <span className="flex flex-wrap items-center gap-2.5">
+            {application.name}
             <span
               className={cn(
                 "inline-flex h-6 items-center rounded-md px-2 font-medium text-xs leading-none",
@@ -87,78 +83,56 @@ export function ApplicationDetailPage({
             >
               {application.status}
             </span>
-            <Badge variant="outline" className="font-mono text-muted-foreground">
-              {application.slug}
-            </Badge>
-          </div>
-        }
-        title={
-          <span className="flex items-center gap-3">
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <Smartphone className="size-5" />
-            </span>
-            <span className="font-semibold text-2xl text-foreground tracking-tight">
-              {application.name}
-            </span>
           </span>
         }
-        description={detail.description}
+        description={
+          <>
+            <span className="font-mono text-xs">{application.slug}</span> · {application.platform} ·
+            负责人 {application.owner || "-"}
+            {detail.description ? ` · ${detail.description}` : ""}
+          </>
+        }
         actions={
           <>
             <Button
               variant="outline"
-              size="sm"
-              onClick={() => onOpenApplicationModules(application.id)}
-            >
-              <Boxes className="size-3.5" />
-              查看模块
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onOpenApplicationBuilds(application.id)}
-            >
-              <PackageCheck className="size-3.5" />
-              查看构建
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onOpenApplicationReleases(application.id)}
-            >
-              <RadioTower className="size-3.5" />
-              查看发布
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
               disabled={!canEditApplication}
               onClick={() => onEditApplication(application.slug)}
             >
-              <PenLine className="size-3.5" />
+              <PenLine />
               编辑配置
             </Button>
             <Button
               variant={nextStatus === "offline" ? "danger-outline" : "outline"}
-              size="sm"
               disabled={!canUpdateStatus || isUpdatingStatus}
               onClick={openStatusDialog}
             >
-              <StatusActionIcon className="size-3.5" />
+              <StatusActionIcon />
               {isUpdatingStatus ? "处理中" : `${statusActionLabel}应用`}
             </Button>
           </>
         }
         below={
           <div className="flex flex-col gap-3">
-            <div className="grid min-w-0 gap-2 text-sm md:grid-cols-3">
-              <InfoPill icon={MonitorSmartphone} label="平台" value={application.platform} />
-              <OwnerInfoPill
-                avatarUrl={application.ownerAvatarUrl}
-                email={application.ownerEmail}
-                name={application.owner}
-              />
-              <InfoPill icon={PackageCheck} label="App Key" value={detail.appKey} />
+            <div className="-ml-2 flex flex-wrap items-center gap-0.5 text-sm">
+              {jump("个模块", moduleCount, () => onOpenApplicationModules(application.id))}
+              {jump("个环境", String(detail.environments.length), () =>
+                onOpenApplicationBuilds(application.id),
+              )}
+              <Button
+                className="h-7 rounded-lg px-2 font-normal text-muted-foreground"
+                onClick={() => onOpenApplicationBuilds(application.id)}
+                variant="ghost"
+              >
+                查看构建
+              </Button>
+              <Button
+                className="h-7 rounded-lg px-2 font-normal text-muted-foreground"
+                onClick={() => onOpenApplicationReleases(application.id)}
+                variant="ghost"
+              >
+                查看发布
+              </Button>
             </div>
             {actionError ? <Alert variant="danger">{actionError}</Alert> : null}
           </div>
@@ -179,33 +153,45 @@ export function ApplicationDetailPage({
         {actionError ? <Alert variant="danger">{actionError}</Alert> : null}
       </ConfirmDialog>
 
-      <section className="grid gap-3 xl:grid-cols-4">
-        {detail.metrics.map((metric) => (
-          <MetricCard key={metric.id} metric={metric} />
-        ))}
-      </section>
+      <Tabs defaultValue="integration">
+        <TabsList>
+          <TabsTrigger value="integration">接入</TabsTrigger>
+          <TabsTrigger value="members">成员 · {detail.members.length}</TabsTrigger>
+          <TabsTrigger value="environments">环境 · {detail.environments.length}</TabsTrigger>
+          <TabsTrigger value="modules">模块 · {detail.modules.length}</TabsTrigger>
+        </TabsList>
 
-      <section className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
-        <SectionCard title="应用接入配置" description="接入 RN Bundle 平台所需的关键凭证">
-          <div className="grid gap-3 md:grid-cols-2">
-            <ConfigItem icon={PackageCheck} label="App Key" value={detail.appKey} />
-          </div>
-        </SectionCard>
+        <TabsContent value="integration" className="mt-5 flex flex-col gap-4">
+          <section className="rounded-xl bg-card p-5 shadow-edge">
+            <h2 className="m-0 mb-4 font-medium text-muted-foreground text-xs">接入凭证</h2>
+            <DetailList
+              items={[
+                { hint: "客户端拉包时携带", label: "App Key", mono: true, value: detail.appKey },
+                { label: "支持平台", value: application.platform },
+              ]}
+            />
+          </section>
+          <ClientIntegrationSection clientIntegration={detail.clientIntegration} />
+        </TabsContent>
 
-        <ApplicationMembersSection
-          applicationSlug={application.slug}
-          canManageMembers={canManageMembers}
-          members={detail.members}
-          refreshApplicationDetail={refreshApplicationDetail}
-          updateMembers={updateMembers}
-        />
-      </section>
+        <TabsContent value="members" className="mt-5">
+          <ApplicationMembersSection
+            applicationSlug={application.slug}
+            canManageMembers={canManageMembers}
+            members={detail.members}
+            refreshApplicationDetail={refreshApplicationDetail}
+            updateMembers={updateMembers}
+          />
+        </TabsContent>
 
-      <ClientIntegrationSection clientIntegration={detail.clientIntegration} />
+        <TabsContent value="environments" className="mt-5">
+          <ApplicationEnvironmentsGrid environments={detail.environments} />
+        </TabsContent>
 
-      <ApplicationEnvironmentsGrid environments={detail.environments} />
-
-      <ApplicationModulesGrid modules={detail.modules} />
+        <TabsContent value="modules" className="mt-5">
+          <ApplicationModulesGrid modules={detail.modules} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { AppWindow, CircleDot, MonitorSmartphone, Plus, RefreshCw } from "lucide-react";
+import { MonitorSmartphone, Plus, RefreshCw } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 
 import { searchFeishuUsers } from "@/api/feishu-user-search";
@@ -10,14 +10,14 @@ import {
 } from "@/components/common/ConsoleControls";
 import {
   DataTable,
+  ErrorMessage,
   FilterBar,
-  KpiCard,
-  PageEmptyState,
-  PageHeader,
+  ListHeader,
+  SummaryStats,
   TablePagination,
 } from "@/components/layout";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/use-auth-store";
 
 import { applicationsRootQueryKey } from "./api/application-list-filters";
@@ -25,7 +25,6 @@ import { deleteApplication, updateApplicationStatus } from "./api/applications-s
 import { ApplicationDeleteDialog } from "./components/ApplicationDeleteDialog";
 import { ApplicationStatusDialog } from "./components/ApplicationStatusDialog";
 import { buildApplicationColumnDefs } from "./components/ApplicationsGridColumns";
-import { ApplicationsPageLoading } from "./components/ApplicationsPageLoading";
 import { useApplicationDeleteCheck, useApplicationsListState } from "./hooks";
 import type { ApplicationStatusCode, HostApplication } from "./types";
 
@@ -58,8 +57,6 @@ export function ApplicationsPage({
     setPage,
     setPageSize,
     snapshot,
-    stats,
-    statusFilterOptions,
     updateFilters,
   } = useApplicationsListState();
   const [statusActionTarget, setStatusActionTarget] = useState<HostApplication | null>(null);
@@ -99,27 +96,69 @@ export function ApplicationsPage({
     ],
   );
 
+  const header = (
+    <ListHeader
+      title="应用"
+      summary={
+        <SummaryStats
+          activeId={filters.status}
+          items={[
+            { id: "", label: "全部", value: snapshot?.summary.total ?? "-" },
+            {
+              id: "running",
+              label: "运行中",
+              tone: "success",
+              value: snapshot?.summary.running ?? "-",
+            },
+            {
+              id: "maintenance",
+              label: "维护中",
+              tone: "warning",
+              value: snapshot?.summary.maintenance ?? "-",
+            },
+            { id: "offline", label: "已下线", value: snapshot?.summary.offline ?? "-" },
+          ]}
+          onSelect={(status) => updateFilters({ status: status as ApplicationStatusCode | "" })}
+        />
+      }
+      actions={
+        <>
+          <Button
+            variant="outline"
+            size="icon"
+            aria-label="刷新应用列表"
+            disabled={isFetching}
+            onClick={() => {
+              void refetch();
+            }}
+          >
+            <RefreshCw className={cn(isFetching && "animate-spin")} />
+          </Button>
+          <Button disabled={!canCreateApplication} onClick={onCreateApplication}>
+            <Plus />
+            新建应用
+          </Button>
+        </>
+      }
+    />
+  );
+
   if (isError && !snapshot) {
     return (
-      <div className="flex flex-col gap-6">
-        <PageHeader title="应用管理" description="管理 RN Bundle 平台接入的所有宿主应用" />
-        <PageEmptyState
-          icon={AppWindow}
-          title="加载应用列表失败"
-          description={error instanceof Error ? error.message : "请稍后重试"}
-          action={
-            <Button type="button" onClick={() => void refetch()}>
-              <RefreshCw className="size-4" />
-              重试
-            </Button>
-          }
-        />
+      <div className="flex flex-col gap-5">
+        {header}
+        <ErrorMessage error={error} onRetry={() => void refetch()} />
       </div>
     );
   }
 
   if (!snapshot) {
-    return <ApplicationsPageLoading />;
+    return (
+      <div className="flex flex-col gap-5">
+        {header}
+        <div className="h-96 animate-pulse rounded-xl bg-muted" />
+      </div>
+    );
   }
 
   const { applications } = snapshot;
@@ -127,27 +166,10 @@ export function ApplicationsPage({
     statusActionTarget?.status === "已下线" ? "running" : "offline";
 
   return (
-    <div className="flex flex-col gap-6">
-      <PageHeader title="应用管理" description="管理 RN Bundle 平台接入的所有宿主应用" />
-
-      <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-        {stats.map((item) => {
-          const Icon = item.icon;
-          return (
-            <KpiCard
-              key={item.id}
-              icon={Icon}
-              label={item.label}
-              value={item.value}
-              detail={item.detail}
-              tone={item.iconTone}
-            />
-          );
-        })}
-      </section>
+    <div className="flex flex-col gap-5">
+      {header}
 
       <FilterBar
-        label="筛选"
         primary={
           <>
             <ConsoleClearableFilterSelect
@@ -158,15 +180,6 @@ export function ApplicationsPage({
               clearLabel="清空平台筛选"
               onClear={() => updateFilters({ platform: "" })}
               onValueChange={(value) => updateFilters({ platform: value })}
-            />
-            <ConsoleClearableFilterSelect
-              icon={CircleDot}
-              label="状态"
-              value={filters.status}
-              options={statusFilterOptions}
-              clearLabel="清空状态筛选"
-              onClear={() => updateFilters({ status: "" })}
-              onValueChange={(value) => updateFilters({ status: value as ApplicationStatusCode })}
             />
             <ConsoleOwnerSearchFilter
               value={filters.owner}
@@ -180,40 +193,21 @@ export function ApplicationsPage({
             />
           </>
         }
-        actions={
-          <>
-            <Button size="sm" disabled={!canCreateApplication} onClick={onCreateApplication}>
-              <Plus className="size-4" />
-              新建应用
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              aria-label="刷新应用列表"
-              disabled={isFetching}
-              onClick={() => {
-                void refetch();
-              }}
-            >
-              <RefreshCw className="size-4" />
-            </Button>
-          </>
-        }
       />
 
-      <DataTable
-        rows={applications}
-        columnDefs={columnDefs}
-        getRowId={({ data }) => data.id}
-        rowActionSelector="[data-application-row-action]"
-        onRowClicked={(event) => {
-          if (event.data) {
-            onOpenApplication(event.data.slug);
-          }
-        }}
-      />
-
-      <Card className="rounded-xl bg-card py-0">
+      <div className="overflow-hidden rounded-xl bg-card shadow-edge">
+        <DataTable
+          className="rounded-none shadow-none"
+          rows={applications}
+          columnDefs={columnDefs}
+          getRowId={({ data }) => data.id}
+          rowActionSelector="[data-application-row-action]"
+          onRowClicked={(event) => {
+            if (event.data) {
+              onOpenApplication(event.data.slug);
+            }
+          }}
+        />
         <TablePagination
           page={page}
           pageSize={pageSize}
@@ -221,7 +215,7 @@ export function ApplicationsPage({
           onPageChange={setPage}
           onPageSizeChange={setPageSize}
         />
-      </Card>
+      </div>
 
       <ApplicationStatusDialog
         isPending={isUpdatingStatus}

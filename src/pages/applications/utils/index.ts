@@ -131,11 +131,3 @@ export function upsertMemberInList(
 
   return members.map((member, index) => (index === existingIndex ? nextMember : member));
 }
-
-export function percentage(value: number, total: number) {
-  if (total === 0) {
-    return "0%";
-  }
-
-  return `${Math.round((value / total) * 100)}%`;
-}

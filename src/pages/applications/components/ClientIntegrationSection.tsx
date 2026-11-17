@@ -83,15 +83,15 @@ function FieldDescriptionTable({
   title: string;
 }) {
   return (
-    <div className="overflow-hidden rounded-md shadow-edge">
-      <div className="flex h-10 items-center bg-muted px-3 font-semibold text-foreground text-sm">
+    <div className="overflow-hidden rounded-lg bg-card shadow-edge">
+      <div className="flex h-10 items-center px-3 font-medium text-foreground text-sm">
         {title}
       </div>
       {fields.length ? (
         <div className="overflow-x-auto">
           <table className="w-full min-w-180 table-fixed border-collapse text-left text-sm">
             <thead className="bg-card text-muted-foreground text-xs">
-              <tr className="border-border border-b">
+              <tr>
                 <th className="w-52 px-3 py-2 font-medium">字段</th>
                 <th className="w-24 px-3 py-2 font-medium">类型</th>
                 <th className="w-20 px-3 py-2 font-medium">必填</th>
@@ -99,9 +99,9 @@ function FieldDescriptionTable({
                 <th className="w-56 px-3 py-2 font-medium">示例</th>
               </tr>
             </thead>
-            <tbody className="flex flex-col gap-1 p-1">
+            <tbody>
               {fields.map((field) => (
-                <tr key={`${title}-${field.name}`} className="bg-card">
+                <tr key={`${title}-${field.name}`} className="align-top hover:bg-hover">
                   <td className="break-all px-3 py-2 font-mono text-foreground">{field.name}</td>
                   <td className="break-all px-3 py-2 text-muted-foreground">{field.type || "-"}</td>
                   <td className="px-3 py-2 text-muted-foreground">

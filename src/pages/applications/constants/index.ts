@@ -1,5 +1,4 @@
 import type {
-  ApplicationDetailMetric,
   ApplicationEnvironmentRecord,
   ApplicationEnvironmentStatus,
   ApplicationEnvironmentStatusCode,
@@ -38,14 +37,6 @@ export const applicationStatusClass: Record<ApplicationStatus, string> = {
   已下线: "bg-muted text-muted-foreground",
   维护中: "bg-warning/14 text-warning",
   运行中: "bg-success/12 text-success",
-};
-
-export const applicationMetricToneClass: Record<ApplicationDetailMetric["tone"], string> = {
-  amber: "bg-warning/10 text-warning",
-  blue: "bg-info/10 text-info",
-  emerald: "bg-success/10 text-success",
-  rose: "bg-destructive/10 text-destructive",
-  slate: "bg-muted text-muted-foreground",
 };
 
 export const applicationEnvironmentStatusClass: Record<
