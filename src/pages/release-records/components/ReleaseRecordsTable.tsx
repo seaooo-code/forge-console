@@ -1,20 +1,18 @@
 import type { ColDef, ICellRendererParams } from "ag-grid-community";
-import { Rocket, ShieldCheck } from "lucide-react";
 
 import { EnvironmentBadge } from "@/components/common/EnvironmentBadge";
-import { cn } from "@/lib/utils";
-
-import {
-  getReleaseRecordTypeLabel,
-  releaseRecordStatusClass,
-  releaseRecordStatusLabels,
-} from "../constants";
+import { getReleaseRecordTypeLabel } from "../constants";
 import type { EnvironmentTone, ReleasePointerRecord, ReleaseRecordStatus } from "../types";
+import { ReleaseStatusBadge } from "./ReleaseBadges";
+
+/** 详情面板打开时只保留这些列。 */
+const compactColumns = new Set(["id", "module", "environment", "releaseType", "status"]);
 
 export function buildReleaseRecordsColumnDefs(
   environmentTones: ReadonlyMap<string, EnvironmentTone>,
+  compact = false,
 ): ColDef<ReleasePointerRecord>[] {
-  return [
+  const columns: ColDef<ReleasePointerRecord>[] = [
     {
       cellRenderer: ReleaseIDCell,
       field: "id",
@@ -99,6 +97,12 @@ export function buildReleaseRecordsColumnDefs(
       minWidth: 100,
     },
   ];
+
+  return compact
+    ? columns
+        .filter((column) => compactColumns.has(column.field ?? ""))
+        .map((column) => ({ ...column, minWidth: 80 }))
+    : columns;
 }
 
 function ReleaseRecordCell({ data }: ICellRendererParams<ReleasePointerRecord>) {
@@ -106,7 +110,11 @@ function ReleaseRecordCell({ data }: ICellRendererParams<ReleasePointerRecord>) 
     return null;
   }
 
-  return <span className="truncate font-semibold text-primary text-sm">{data.createdAtShort}</span>;
+  return (
+    <span className="truncate text-muted-foreground text-sm tabular-nums">
+      {data.createdAtShort}
+    </span>
+  );
 }
 
 function ReleaseIDCell({ value }: ICellRendererParams<ReleasePointerRecord, string>) {
@@ -167,7 +175,10 @@ function GrayConfigCell({ data }: ICellRendererParams<ReleasePointerRecord>) {
       <div className="min-w-0 flex-1">
         <div className="font-semibold text-foreground text-xs">{percentage}%</div>
         <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-muted">
-          <div className="h-full rounded-full bg-primary" style={{ width: `${percentage}%` }} />
+          <div
+            className="h-full rounded-full bg-route-percentage"
+            style={{ width: `${percentage}%` }}
+          />
         </div>
       </div>
     );
@@ -189,17 +200,5 @@ function StatusCell({ value }: ICellRendererParams<ReleasePointerRecord, Release
     return null;
   }
 
-  const Icon = value === "active" ? ShieldCheck : Rocket;
-
-  return (
-    <span
-      className={cn(
-        "inline-flex h-6 items-center gap-1 rounded border px-2 font-semibold text-xs leading-none",
-        releaseRecordStatusClass[value],
-      )}
-    >
-      <Icon className="size-3" />
-      {releaseRecordStatusLabels[value]}
-    </span>
-  );
+  return <ReleaseStatusBadge status={value} />;
 }

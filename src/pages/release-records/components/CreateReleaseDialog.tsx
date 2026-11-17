@@ -1,9 +1,8 @@
 import { LoaderCircle } from "lucide-react";
 import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
-
+import { Drawer, DrawerBody, DrawerFooter, DrawerHeader } from "@/components/common/Drawer";
 import { Field } from "@/components/common/Field";
-import { Modal, ModalFooter, ModalHeader } from "@/components/common/Modal";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
@@ -90,22 +89,23 @@ export function CreateReleaseDialog({
   }
 
   return (
-    <Modal
+    <Drawer
       isOpen={isOpen}
       onClose={onClose}
       labelledBy="release-create-dialog-title"
       describedBy="release-create-dialog-description"
       className="max-w-lg"
     >
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <ModalHeader
+      <form className="flex min-h-0 flex-1 flex-col" onSubmit={handleSubmit(onSubmit)}>
+        <DrawerHeader
+          onClose={onClose}
           title="新建发布"
           titleId="release-create-dialog-title"
           descriptionId="release-create-dialog-description"
           description="选择已成功的构建记录并配置发布类型，提交后会更新访问路由指向。"
         />
 
-        <div className="mt-4 space-y-4">
+        <DrawerBody className="space-y-5">
           <Field
             label="构建记录"
             htmlFor="release-create-build"
@@ -328,17 +328,13 @@ export function CreateReleaseDialog({
             <Alert variant="warning">暂无可发布的成功构建，请先完成构建。</Alert>
           ) : null}
           {submitError ? <Alert variant="danger">{submitError}</Alert> : null}
-        </div>
+        </DrawerBody>
 
-        <ModalFooter>
+        <DrawerFooter>
           <Button variant="outline" type="button" disabled={isSubmitting} onClick={onClose}>
             取消
           </Button>
-          <Button
-            type="submit"
-            className="bg-primary text-primary-foreground hover:bg-primary/90"
-            disabled={isSubmitting || !hasBuildOptions}
-          >
+          <Button type="submit" disabled={isSubmitting || !hasBuildOptions}>
             {isSubmitting ? (
               <>
                 <LoaderCircle className="size-4 animate-spin" />
@@ -348,8 +344,8 @@ export function CreateReleaseDialog({
               "确认发布"
             )}
           </Button>
-        </ModalFooter>
+        </DrawerFooter>
       </form>
-    </Modal>
+    </Drawer>
   );
 }

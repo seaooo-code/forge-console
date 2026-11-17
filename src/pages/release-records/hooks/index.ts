@@ -81,6 +81,7 @@ export function useReleaseRecordsData(
 ) {
   const {
     data: snapshot,
+    error,
     isFetching,
     refetch,
   } = useQuery({
@@ -137,6 +138,7 @@ export function useReleaseRecordsData(
     buildOptions,
     environmentOptions,
     environmentTones,
+    error,
     isBuildsFetching,
     isFetching,
     moduleOptions,

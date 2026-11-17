@@ -1,8 +1,8 @@
 import type { ReleasePointerRecord, ReleaseRecordStatus, ReleaseRecordType } from "../types";
 
 export const releaseRecordStatusClass: Record<ReleaseRecordStatus, string> = {
-  active: "border-success/30 bg-success/10 text-success",
-  inactive: "border-border bg-muted text-muted-foreground",
+  active: "bg-success/12 text-success",
+  inactive: "bg-muted text-muted-foreground",
 };
 
 export const releaseRecordStatusLabels: Record<ReleaseRecordStatus, string> = {

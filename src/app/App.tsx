@@ -48,10 +48,6 @@ const ReleaseRecordsPage = lazy(async () => ({
   default: (await import("@/pages/release-records")).ReleaseRecordsPage,
 }));
 
-const ReleaseRecordDetailPage = lazy(async () => ({
-  default: (await import("@/pages/release-records")).ReleaseRecordDetailPage,
-}));
-
 const EnvironmentCreatePage = lazy(async () => ({
   default: (await import("@/pages/environments")).EnvironmentCreatePage,
 }));
@@ -172,7 +168,7 @@ function ConsoleRoutes() {
         <Route path="builds" element={<BuildsRoute />} />
         <Route path="builds/:buildId" element={<BuildsRoute />} />
         <Route path="release-records" element={<ReleaseRecordsRoute />} />
-        <Route path="release-records/:releaseId" element={<ReleaseRecordDetailRoute />} />
+        <Route path="release-records/:releaseId" element={<ReleaseRecordsRoute />} />
         <Route path="deployments" element={<Navigate to="/release-records" replace />} />
         <Route path="deployments/:releaseId" element={<DeploymentDetailRedirect />} />
         <Route path="code-sources" element={<CodeSourcesPage />} />
@@ -414,28 +410,17 @@ function BuildsRoute() {
 
 function ReleaseRecordsRoute() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { releaseId } = useParams<{ releaseId: string }>();
 
   return (
     <ReleaseRecordsPage
-      onOpenRelease={(releaseId: string) =>
-        navigate(`/release-records/${encodeURIComponent(releaseId)}`)
+      selectedReleaseId={releaseId}
+      onSelectRelease={(nextReleaseId: string | null) =>
+        navigate(
+          `${nextReleaseId ? `/release-records/${encodeURIComponent(nextReleaseId)}` : "/release-records"}${location.search}`,
+        )
       }
-    />
-  );
-}
-
-function ReleaseRecordDetailRoute() {
-  const navigate = useNavigate();
-  const { releaseId } = useParams<{ releaseId: string }>();
-
-  if (!releaseId) {
-    return <Navigate to="/release-records" replace />;
-  }
-
-  return (
-    <ReleaseRecordDetailPage
-      releaseId={releaseId}
-      onBack={() => navigate("/release-records")}
       onOpenApplication={(applicationSlug: string) =>
         navigate(`/apps/${encodeURIComponent(applicationSlug)}`)
       }
