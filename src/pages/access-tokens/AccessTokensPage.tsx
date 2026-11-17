@@ -1,11 +1,15 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { KeyRound, RotateCw } from "lucide-react";
+import { Plus, RotateCw } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
+import { Drawer } from "@/components/common/Drawer";
+import { EmptyState } from "@/components/common/StateBlock";
+import { ErrorMessage, ListHeader, SummaryStats } from "@/components/layout";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/use-auth-store";
 
 import {
@@ -17,11 +21,6 @@ import {
   updateArtifactAccessTokenStatus,
 } from "./api/access-tokens-snapshot";
 import { AccessTokenRow } from "./components/AccessTokenRow";
-import {
-  AccessTokensHeader,
-  AccessTokensPageError,
-  AccessTokensPageLoading,
-} from "./components/AccessTokensStates";
 import { CreateAccessTokenForm } from "./components/CreateAccessTokenForm";
 import type { ArtifactAccessTokenRecord, ArtifactAccessTokenStatus } from "./types";
 import { type AccessTokenFormState, buildCreateInput, defaultAccessTokenForm } from "./utils";
@@ -34,6 +33,7 @@ export function AccessTokensPage() {
     data: snapshot,
     error,
     isError,
+    isFetching,
     refetch,
   } = useQuery({
     queryFn: fetchAccessTokensSnapshot,
@@ -48,6 +48,8 @@ export function AccessTokensPage() {
     defaultValues: defaultAccessTokenForm,
   });
   const [deleteTarget, setDeleteTarget] = useState<ArtifactAccessTokenRecord | null>(null);
+  const [disableTarget, setDisableTarget] = useState<ArtifactAccessTokenRecord | null>(null);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -89,6 +91,7 @@ export function AccessTokensPage() {
       const token = await createArtifactAccessToken(input);
       await queryClient.invalidateQueries({ queryKey: accessTokensSnapshotQueryKey });
       reset(defaultAccessTokenForm);
+      setIsCreateOpen(false);
       setCreatedTokenDialog({ name: token.name, plainToken: generatedToken });
       setGeneratedToken("");
       setMessage(`产物访问令牌「${token.name}」已创建。`);
@@ -97,6 +100,13 @@ export function AccessTokensPage() {
     } finally {
       setIsCreating(false);
     }
+  };
+
+  const closeCreate = () => {
+    setIsCreateOpen(false);
+    setGeneratedToken("");
+    setErrorMessage("");
+    reset(defaultAccessTokenForm);
   };
 
   const handleStatusChange = async (
@@ -118,95 +128,131 @@ export function AccessTokensPage() {
     }
   };
 
-  if (!snapshot) {
-    return isError ? (
-      <AccessTokensPageError
-        message={error instanceof Error ? error.message : "读取访问令牌失败，请稍后重试"}
-        onRetry={() => void refetch()}
-      />
-    ) : (
-      <AccessTokensPageLoading />
-    );
-  }
+  const activeCount = snapshot?.tokens.filter((token) => token.status === "active").length ?? 0;
 
   return (
     <>
-      <div className="flex flex-col gap-6">
-        <AccessTokensHeader />
-
-        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_23rem]">
-          <section className="overflow-hidden rounded-xl bg-card shadow-edge">
-            <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
-              <div className="flex min-w-0 items-center gap-2">
-                <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
-                  <KeyRound className="size-4" />
-                </div>
-                <div className="min-w-0">
-                  <h2 className="font-semibold text-foreground text-sm">产物访问令牌</h2>
-                  <p className="text-muted-foreground text-xs">
-                    共 {snapshot.tokens.length} 条令牌
-                  </p>
-                </div>
-              </div>
+      <div className="flex flex-col gap-5">
+        <ListHeader
+          title="访问令牌"
+          summary={
+            <SummaryStats
+              items={[
+                { id: "total", label: "个令牌", value: snapshot ? snapshot.tokens.length : "-" },
+                {
+                  id: "active",
+                  label: "个启用中",
+                  tone: "success",
+                  value: snapshot ? activeCount : "-",
+                },
+              ]}
+            />
+          }
+          actions={
+            <>
               <Button
                 type="button"
                 variant="outline"
-                size="sm"
+                size="icon"
+                aria-label="刷新访问令牌"
+                disabled={isFetching}
                 onClick={() => void refetch()}
-                className="gap-1.5"
               >
-                <RotateCw className="size-4" />
-                刷新
+                <RotateCw className={cn(isFetching && "animate-spin")} />
               </Button>
-            </div>
+              <Button
+                type="button"
+                disabled={!canManageAccessTokens}
+                onClick={() => {
+                  setErrorMessage("");
+                  setIsCreateOpen(true);
+                }}
+              >
+                <Plus />
+                新建令牌
+              </Button>
+            </>
+          }
+        />
+        <p className="-mt-2 m-0 text-muted-foreground text-sm">
+          客户端拉取产物 manifest 和调用后端下载接口时携带这些令牌。
+        </p>
 
-            {message ? (
-              <div className="px-4 py-3">
-                <Alert variant="info">{message}</Alert>
-              </div>
-            ) : null}
-            {errorMessage ? (
-              <div className="px-4 py-3">
-                <Alert variant="danger">{errorMessage}</Alert>
-              </div>
-            ) : null}
+        {message ? <Alert variant="success">{message}</Alert> : null}
+        {errorMessage && !isCreateOpen ? <Alert variant="danger">{errorMessage}</Alert> : null}
 
-            {snapshot.tokens.length === 0 ? (
-              <div className="px-4 py-12 text-center">
-                <div className="mx-auto flex size-10 items-center justify-center rounded-md bg-muted text-muted-foreground">
-                  <KeyRound className="size-5" />
-                </div>
-                <div className="mt-3 font-medium text-foreground text-sm">暂无产物访问令牌</div>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-1 p-1">
-                {snapshot.tokens.map((token) => (
-                  <AccessTokenRow
-                    key={token.id}
-                    token={token}
-                    canManageAccessTokens={canManageAccessTokens}
-                    isPending={pendingStatusTokenId === token.id}
-                    onDelete={(target) => setDeleteTarget(target)}
-                    onStatusChange={(target, status) => void handleStatusChange(target, status)}
-                  />
-                ))}
-              </div>
-            )}
+        {!snapshot ? (
+          isError ? (
+            <ErrorMessage error={error} onRetry={() => void refetch()} />
+          ) : (
+            <div className="h-64 animate-pulse rounded-xl bg-muted" />
+          )
+        ) : snapshot.tokens.length === 0 ? (
+          <div className="rounded-xl bg-card p-10 shadow-edge">
+            <EmptyState
+              title="还没有访问令牌"
+              description="新建一个令牌，供客户端拉取产物 manifest 时使用。"
+            />
+          </div>
+        ) : (
+          <section className="flex flex-col gap-1 rounded-xl bg-card p-1 shadow-edge">
+            {snapshot.tokens.map((token) => (
+              <AccessTokenRow
+                key={token.id}
+                token={token}
+                canManageAccessTokens={canManageAccessTokens}
+                isPending={pendingStatusTokenId === token.id}
+                onDelete={(target) => setDeleteTarget(target)}
+                onStatusChange={(target, status) =>
+                  status === "disabled"
+                    ? setDisableTarget(target)
+                    : void handleStatusChange(target, status)
+                }
+              />
+            ))}
           </section>
-
-          <CreateAccessTokenForm
-            canManageAccessTokens={canManageAccessTokens}
-            control={control}
-            errors={errors}
-            generatedToken={generatedToken}
-            isCreating={isCreating}
-            isGenerating={isGenerating}
-            onGenerate={() => void handleGenerate()}
-            onSubmit={handleSubmit(handleCreate)}
-          />
-        </div>
+        )}
       </div>
 
+      <Drawer isOpen={isCreateOpen} onClose={closeCreate}>
+        {errorMessage ? (
+          <div className="px-6 pt-5">
+            <Alert variant="danger">{errorMessage}</Alert>
+          </div>
+        ) : null}
+        <CreateAccessTokenForm
+          canManageAccessTokens={canManageAccessTokens}
+          control={control}
+          errors={errors}
+          generatedToken={generatedToken}
+          isCreating={isCreating}
+          isGenerating={isGenerating}
+          onClose={closeCreate}
+          onGenerate={() => void handleGenerate()}
+          onSubmit={handleSubmit(handleCreate)}
+        />
+      </Drawer>
+
+      <ConfirmDialog
+        isOpen={disableTarget !== null}
+        isPending={Boolean(disableTarget && pendingStatusTokenId === disableTarget.id)}
+        title="停用访问令牌"
+        description={
+          disableTarget
+            ? `停用「${disableTarget.name}」后，使用它的客户端会立即拉不到产物，之后可以重新启用。`
+            : ""
+        }
+        confirmLabel="停用令牌"
+        tone="danger"
+        onCancel={() => setDisableTarget(null)}
+        onConfirm={async () => {
+          if (!disableTarget) {
+            return;
+          }
+          await handleStatusChange(disableTarget, "disabled");
+          setDisableTarget(null);
+        }}
+      />
       <ConfirmDialog
         isOpen={deleteTarget !== null}
         isPending={isDeleting}

@@ -24,8 +24,8 @@ export function AccessTokenRow({
   const StatusIcon = isDisabled ? Ban : ShieldCheck;
 
   return (
-    <div className="grid gap-3 px-4 py-4 md:grid-cols-2 2xl:grid-cols-[minmax(14rem,1.4fr)_minmax(5rem,0.6fr)_minmax(7rem,0.7fr)_minmax(6rem,0.65fr)_minmax(7rem,0.7fr)_auto] 2xl:items-center">
-      <div className="min-w-0 md:col-span-2 2xl:col-span-1">
+    <div className="grid gap-3 rounded-lg px-4 py-3 hover:bg-hover md:grid-cols-2 lg:grid-cols-[minmax(14rem,1.4fr)_minmax(5rem,0.6fr)_minmax(7rem,0.7fr)_minmax(6rem,0.65fr)_minmax(7rem,0.7fr)_auto] lg:items-center">
+      <div className="min-w-0 md:col-span-2 lg:col-span-1">
         <div className="flex min-w-0 items-center gap-2">
           <span className="min-w-0 flex-1 truncate font-semibold text-foreground text-sm">
             {token.name}
@@ -40,7 +40,7 @@ export function AccessTokenRow({
       <TokenMeta label="创建时间" value={formatDisplayTime(token.createdAt)} />
       <TokenMeta label="最近使用" value={formatDisplayTime(token.lastUsedAt)} />
       <TokenMeta label="过期时间" value={formatDisplayTime(token.expiresAt)} />
-      <div className="flex items-center justify-start gap-1.5 md:col-span-2 2xl:col-span-1 2xl:justify-end">
+      <div className="flex items-center justify-start gap-1.5 md:col-span-2 lg:col-span-1 lg:justify-end">
         <Button
           type="button"
           variant="outline"
@@ -53,12 +53,14 @@ export function AccessTokenRow({
         </Button>
         <Button
           type="button"
-          variant="outline"
+          variant="ghost"
           size="icon"
+          aria-label="删除访问令牌"
+          className="size-8 text-muted-foreground hover:bg-destructive-soft hover:text-destructive"
           disabled={!canManageAccessTokens}
           onClick={() => onDelete(token)}
         >
-          <Trash2 className="size-4 text-destructive" />
+          <Trash2 className="size-4" />
         </Button>
       </div>
     </div>
@@ -76,7 +78,7 @@ function TokenStatusBadge({ token }: { token: ArtifactAccessTokenRecord }) {
 
   if (token.status === "disabled") {
     return (
-      <Badge variant="outline" className="shrink-0 border-border text-muted-foreground">
+      <Badge variant="neutral" className="shrink-0">
         已停用
       </Badge>
     );
@@ -93,7 +95,7 @@ function TokenStatusBadge({ token }: { token: ArtifactAccessTokenRecord }) {
 function TokenMeta({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0">
-      <div className="text-muted-foreground text-xs">{label}</div>
+      <div className="text-faint text-xs">{label}</div>
       <div className="mt-1 truncate text-foreground text-xs">{value}</div>
     </div>
   );

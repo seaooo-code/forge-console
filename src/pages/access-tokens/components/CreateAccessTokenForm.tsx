@@ -1,9 +1,9 @@
-import { Copy, KeyRound, Plus } from "lucide-react";
-import type { FormEvent, ReactNode } from "react";
+import { Check, Copy, KeyRound } from "lucide-react";
+import { type FormEvent, type ReactNode, useState } from "react";
 import { type Control, Controller, type FieldErrors } from "react-hook-form";
 
+import { DrawerBody, DrawerFooter, DrawerHeader } from "@/components/common/Drawer";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { Input } from "@/components/ui/input";
 
@@ -16,6 +16,7 @@ type CreateAccessTokenFormProps = {
   generatedToken: string;
   isCreating: boolean;
   isGenerating: boolean;
+  onClose: () => void;
   onGenerate: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 };
@@ -27,22 +28,26 @@ export function CreateAccessTokenForm({
   generatedToken,
   isCreating,
   isGenerating,
+  onClose,
   onGenerate,
   onSubmit,
 }: CreateAccessTokenFormProps) {
-  return (
-    <Card className="h-fit rounded-xl bg-card p-5">
-      <div className="flex items-center gap-2">
-        <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-success/10 text-success">
-          <Plus className="size-4" />
-        </div>
-        <div>
-          <h2 className="font-semibold text-foreground text-sm">新增令牌</h2>
-          <p className="text-muted-foreground text-xs">先生成明文令牌，再保存访问配置</p>
-        </div>
-      </div>
+  const [copied, setCopied] = useState(false);
+  const copyToken = () => {
+    void navigator.clipboard?.writeText(generatedToken).then(() => {
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1800);
+    });
+  };
 
-      <form className="mt-5 space-y-4" onSubmit={onSubmit}>
+  return (
+    <form className="flex min-h-0 flex-1 flex-col" onSubmit={onSubmit}>
+      <DrawerHeader
+        title="新建访问令牌"
+        description="先生成明文令牌，再填写名称和过期时间保存。"
+        onClose={onClose}
+      />
+      <DrawerBody className="space-y-5">
         <div className="rounded-lg bg-surface-2 p-3">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
@@ -72,10 +77,10 @@ export function CreateAccessTokenForm({
                 variant="outline"
                 size="sm"
                 className="w-fit"
-                onClick={() => void navigator.clipboard?.writeText(generatedToken)}
+                onClick={copyToken}
               >
-                <Copy className="size-4" />
-                复制
+                {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
+                {copied ? "已复制" : "复制"}
               </Button>
             </div>
           ) : null}
@@ -106,16 +111,20 @@ export function CreateAccessTokenForm({
             </Field>
           )}
         />
+      </DrawerBody>
+      <DrawerFooter>
+        <Button type="button" variant="outline" onClick={onClose}>
+          取消
+        </Button>
         <Button
           type="submit"
-          disabled={!canManageAccessTokens || isCreating || !generatedToken}
-          className="w-full bg-primary hover:bg-primary/90"
+          loading={isCreating}
+          disabled={!canManageAccessTokens || !generatedToken}
         >
-          <Plus className="size-4" />
-          {isCreating ? "创建中" : "保存令牌"}
+          保存令牌
         </Button>
-      </form>
-    </Card>
+      </DrawerFooter>
+    </form>
   );
 }
 
