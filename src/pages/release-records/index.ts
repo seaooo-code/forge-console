@@ -2,10 +2,12 @@ export {
   fetchAllReleaseRecordsSnapshot,
   fetchReleaseRecordDetail,
   fetchReleaseRecordsSnapshot,
+  inactivateTargetedGrayRelease,
   releaseRecordDetailQueryKey,
   releaseRecordsAllQueryKey,
   releaseRecordsSnapshotQueryKey,
   releaseRecordsSnapshotQueryKeyWithFilters,
+  updateReleaseGrayPercentage,
 } from "./api/release-records-snapshot";
 export { ReleaseRuntimeVersionNotice } from "./components/ReleaseRuntimeVersionNotice";
 export {

@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router";
 import { fetchGlobalEnums, globalEnumsQueryKey } from "@/api/enums";
 import { searchFeishuUsers } from "@/api/feishu-user-search";
-import { ApplicationScopeSelect } from "@/components/common/ApplicationScopeSelect";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import {
   ConsoleClearableFilterSelect,
@@ -38,7 +37,7 @@ type ModulesPageProps = {
 
 export function ModulesPage({ onCreateModule, onEditModule, onOpenModule }: ModulesPageProps) {
   const queryClient = useQueryClient();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const storedApplicationId = useApplicationScopeStore((state) => state.applicationId);
   const setStoredApplicationId = useApplicationScopeStore((state) => state.setApplicationId);
   const initialApplicationId = searchParams.get("applicationId")?.trim() || storedApplicationId;
@@ -106,35 +105,10 @@ export function ModulesPage({ onCreateModule, onEditModule, onOpenModule }: Modu
     setFilters((current) => ({ ...current, ...patch }));
     resetPage();
   };
-  const updateApplicationScope = (applicationId: string) => {
-    const normalizedApplicationId = applicationId.trim();
-    setStoredApplicationId(normalizedApplicationId);
-    setSearchParams((current) => {
-      const next = new URLSearchParams(current);
-      if (normalizedApplicationId) {
-        next.set("applicationId", normalizedApplicationId);
-      } else {
-        next.delete("applicationId");
-      }
-      return next;
-    });
-    updateFilters({ applicationId: normalizedApplicationId });
-  };
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader
-        title="模块管理"
-        description="管理模块仓库、归属应用、负责人和模块关系"
-        below={
-          <div className="flex flex-wrap items-center gap-2">
-            <ApplicationScopeSelect
-              value={filters.applicationId}
-              onValueChange={updateApplicationScope}
-            />
-          </div>
-        }
-      />
+      <PageHeader title="模块管理" description="管理模块仓库、归属应用、负责人和模块关系" />
 
       <section className="grid gap-3 md:grid-cols-3">
         {stats.map((item) => (

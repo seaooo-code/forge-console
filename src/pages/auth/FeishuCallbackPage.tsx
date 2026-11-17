@@ -4,7 +4,6 @@ import { useNavigate, useSearchParams } from "react-router";
 
 import { completeFeishuAuthorization, takeStoredAuthRedirectPath } from "@/api/feishu-auth";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuthStore } from "@/store/use-auth-store";
 
 export function FeishuCallbackPage() {
@@ -53,24 +52,31 @@ export function FeishuCallbackPage() {
   }, [navigate, searchParams, setSession]);
 
   return (
-    <main className="grid min-h-screen place-items-center bg-background px-6 text-foreground">
-      <Card className="w-full max-w-md rounded-lg border-border bg-card shadow-sm">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
+    <main className="flex min-h-screen bg-shell p-2 text-foreground">
+      <div className="flex flex-1 items-center justify-center rounded-2xl bg-background shadow-edge">
+        <div className="w-full max-w-sm rounded-2xl bg-card p-8 shadow-raise">
+          <span
+            className={
+              error
+                ? "flex size-9 items-center justify-center rounded-xl bg-destructive-soft text-destructive"
+                : "flex size-9 items-center justify-center rounded-xl bg-muted text-muted-foreground"
+            }
+          >
             {error ? (
-              <AlertTriangle className="size-5 text-warning" />
+              <AlertTriangle className="size-4.5" />
             ) : (
-              <Loader2 className="size-5 animate-spin text-muted-foreground" />
+              <Loader2 className="size-4.5 animate-spin" />
             )}
-            飞书登录
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-muted-foreground text-sm">
-            {error || "正在校验授权结果并同步用户信息。"}
+          </span>
+          <h1 className="m-0 mt-5 font-semibold text-xl tracking-tight">
+            {error ? "登录没有完成" : "正在登录"}
+          </h1>
+          <p className="m-0 mt-2 text-muted-foreground text-sm leading-relaxed">
+            {error || "正在校验飞书授权并同步你的账号信息。"}
           </p>
           {error ? (
             <Button
+              className="mt-6 w-full"
               onClick={() => navigate("/login", { replace: true })}
               type="button"
               variant="outline"
@@ -78,8 +84,8 @@ export function FeishuCallbackPage() {
               返回登录页
             </Button>
           ) : null}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </main>
   );
 }

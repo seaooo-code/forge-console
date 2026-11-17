@@ -1,15 +1,13 @@
 export type NavItem = {
   id: string;
-  isMock?: boolean;
   label: string;
   href: string;
   icon: NavIconName;
-  /** Optional small badge / counter shown on the right of the item. */
-  meta?: string;
 };
 
 export type NavGroup = {
-  label: string;
+  /** 分组标题；首组为主菜单，不显示标题。 */
+  label?: string;
   items: NavItem[];
 };
 
@@ -19,8 +17,8 @@ export type NavIconName =
   | "build"
   | "buildAdapter"
   | "codeSource"
-  | "dashboard"
   | "environment"
   | "module"
+  | "overview"
   | "releaseRecord"
   | "storage";

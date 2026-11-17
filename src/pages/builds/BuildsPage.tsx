@@ -5,7 +5,6 @@ import { useSearchParams } from "react-router";
 
 import { buildsSnapshotQueryKey, createBuild } from "@/api/builds";
 import { createBuildRelease } from "@/api/releases";
-import { ApplicationScopeSelect } from "@/components/common/ApplicationScopeSelect";
 import { ConsoleClearableFilterSelect } from "@/components/common/ConsoleControls";
 import { DataTable, FilterBar, KpiCard, PageHeader, TablePagination } from "@/components/layout";
 import { Alert } from "@/components/ui/alert";
@@ -44,7 +43,7 @@ type BuildsPageProps = {
 
 export function BuildsPage({ onOpenBuild }: BuildsPageProps) {
   const queryClient = useQueryClient();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const storedApplicationId = useApplicationScopeStore((state) => state.applicationId);
   const setStoredApplicationId = useApplicationScopeStore((state) => state.setApplicationId);
   const initialApplicationId = searchParams.get("applicationId")?.trim() || storedApplicationId;
@@ -104,23 +103,6 @@ export function BuildsPage({ onOpenBuild }: BuildsPageProps) {
       clampPage(snapshot.pagination.total);
     }
   }, [clampPage, snapshot]);
-  const updateApplicationScope = useCallback(
-    (applicationId: string) => {
-      const normalizedApplicationId = applicationId.trim();
-      setStoredApplicationId(normalizedApplicationId);
-      setSearchParams((current) => {
-        const next = new URLSearchParams(current);
-        if (normalizedApplicationId) {
-          next.set("applicationId", normalizedApplicationId);
-        } else {
-          next.delete("applicationId");
-        }
-        return next;
-      });
-      updateFilters({ applicationId: normalizedApplicationId, moduleId: "" });
-    },
-    [setSearchParams, setStoredApplicationId, updateFilters],
-  );
   const openReleaseDialog = useCallback((build: BuildRunRecord) => {
     setReleaseBuild(build);
     setReleaseError("");
@@ -145,14 +127,6 @@ export function BuildsPage({ onOpenBuild }: BuildsPageProps) {
         <PageHeader
           title="构建管理"
           description="汇总所有模块构建执行，支持手动新增构建并跟踪 Webhook 触发结果"
-          below={
-            <div className="flex flex-wrap items-center gap-2">
-              <ApplicationScopeSelect
-                value={filters.applicationId}
-                onValueChange={updateApplicationScope}
-              />
-            </div>
-          }
         />
 
         <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">

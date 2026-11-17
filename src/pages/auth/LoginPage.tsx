@@ -1,100 +1,102 @@
-import { ArrowRight, Fingerprint } from "lucide-react";
+import { ArrowRight, GitCompare, Layers, Undo2 } from "lucide-react";
 
 import { beginFeishuAuthorization } from "@/api/feishu-auth";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 type LoginPageProps = {
   redirectPath: string;
 };
 
+const highlights = [
+  { icon: Layers, text: "按模块和环境查看线上是哪个构建，全量与灰度一起看" },
+  { icon: GitCompare, text: "发布前对比与当前全量的提交差异" },
+  { icon: Undo2, text: "出问题时直接回退到更早的构建" },
+];
+
 export function LoginPage({ redirectPath }: LoginPageProps) {
   return (
-    <main className="min-h-screen bg-surface text-foreground">
-      <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col px-5 py-6 sm:px-8 lg:px-10">
-        <header className="flex h-12 items-center">
-          <div className="inline-flex items-center gap-2 font-semibold text-foreground text-sm">
-            <span className="flex size-7 items-center justify-center rounded-md bg-primary text-primary-foreground text-xs">
-              F
+    <main className="flex min-h-screen bg-shell p-2 text-foreground">
+      <div className="grid w-full flex-1 overflow-hidden rounded-2xl bg-background shadow-edge lg:grid-cols-[minmax(0,1fr)_minmax(400px,0.8fr)]">
+        <section className="flex min-w-0 flex-col px-8 py-8 sm:px-12 lg:py-10">
+          <div className="flex items-center gap-2.5">
+            <span className="flex size-7 items-center justify-center rounded-lg bg-primary font-semibold text-primary-foreground text-xs">
+              RN
             </span>
-            <span>Forge Console</span>
+            <span className="font-semibold text-sm">RN Bundle 平台</span>
           </div>
-        </header>
 
-        <div className="grid flex-1 items-center gap-10 py-10 lg:grid-cols-[minmax(0,1fr)_minmax(360px,420px)] lg:py-14">
-          <section className="order-2 min-w-0 lg:order-1">
-            <div className="max-w-2xl space-y-4">
-              <p className="font-semibold text-primary text-sm">RN Bundle 管理后台</p>
-              <h1 className="font-semibold text-5xl text-foreground tracking-normal sm:text-6xl">
-                Forge Console
-              </h1>
-              <p className="max-w-xl text-base text-muted-foreground leading-7">
-                登录后进入 Forge Console 管理后台。
-              </p>
-            </div>
+          <div className="my-auto max-w-xl py-12">
+            <h1 className="m-0 font-semibold text-4xl leading-tight tracking-tight">
+              构建、灰度发布和回退
+              <br />
+              RN 业务包
+            </h1>
+            <ul className="m-0 mt-8 flex list-none flex-col gap-3.5 p-0">
+              {highlights.map(({ icon: Icon, text }) => (
+                <li key={text} className="flex items-center gap-3 text-muted-foreground text-sm">
+                  <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-muted text-foreground">
+                    <Icon className="size-3.5" />
+                  </span>
+                  {text}
+                </li>
+              ))}
+            </ul>
 
-            <div className="mt-10 max-w-2xl overflow-hidden rounded-lg border border-border bg-card shadow-xs">
-              <div className="flex h-11 items-center gap-2 border-border border-b bg-muted/60 px-4">
-                <span className="size-2 rounded-full bg-destructive/70" />
-                <span className="size-2 rounded-full bg-warning/80" />
-                <span className="size-2 rounded-full bg-success/80" />
-                <span className="ml-3 h-2 w-28 rounded-full bg-muted-foreground/15" />
-              </div>
-              <div className="grid gap-5 p-5 sm:grid-cols-[minmax(0,1fr)_160px]">
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <div className="h-3 w-36 rounded-full bg-primary/25" />
-                    <div className="h-3 w-52 max-w-full rounded-full bg-muted" />
-                  </div>
-                  <div className="grid grid-cols-3 gap-3">
-                    <div className="h-18 rounded-md border border-border bg-surface-2" />
-                    <div className="h-18 rounded-md border border-border bg-accent/45" />
-                    <div className="h-18 rounded-md border border-border bg-success/15" />
-                  </div>
-                  <div className="space-y-2 rounded-md border border-border bg-surface-2 p-3">
-                    <div className="h-2 w-full rounded-full bg-muted-foreground/15" />
-                    <div className="h-2 w-5/6 rounded-full bg-muted-foreground/15" />
-                    <div className="h-2 w-2/3 rounded-full bg-muted-foreground/15" />
-                  </div>
-                </div>
-                <div className="flex flex-col justify-between rounded-md border border-border bg-background p-4">
-                  <div className="space-y-2">
-                    <div className="h-2 w-20 rounded-full bg-info/35" />
-                    <div className="h-2 w-28 rounded-full bg-muted" />
-                    <div className="h-2 w-16 rounded-full bg-muted" />
-                  </div>
-                  <div className="mt-10 grid grid-cols-2 gap-2">
-                    <div className="h-9 rounded-md bg-primary/15" />
-                    <div className="h-9 rounded-md bg-success/20" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
+            <RoutePreview />
+          </div>
+        </section>
 
-          <section className="order-1 min-w-0 lg:order-2">
-            <Card className="rounded-lg border-border bg-card py-0 shadow-sm">
-              <CardHeader className="px-6 pt-6">
-                <div className="mb-4 flex size-11 items-center justify-center rounded-md bg-success/15 text-success">
-                  <Fingerprint className="size-5" />
-                </div>
-                <CardTitle className="text-2xl">飞书登录</CardTitle>
-                <CardDescription>使用飞书账号进入 Forge Console。</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4 px-6 pb-6">
-                <Button
-                  className="h-11 w-full justify-between"
-                  onClick={() => beginFeishuAuthorization(redirectPath)}
-                  type="button"
-                >
-                  <span>使用飞书账号登录</span>
-                  <ArrowRight className="size-4" />
-                </Button>
-              </CardContent>
-            </Card>
-          </section>
-        </div>
+        <section className="flex items-center justify-center bg-shell/60 px-8 py-12 lg:bg-transparent">
+          <div className="w-full max-w-sm rounded-2xl bg-card p-8 shadow-raise">
+            <h2 className="m-0 font-semibold text-xl tracking-tight">登录</h2>
+            <p className="m-0 mt-2 text-muted-foreground text-sm leading-relaxed">
+              使用飞书账号登录。能看到哪些应用、能否发布，跟随你在平台里的角色。
+            </p>
+            <Button
+              className="mt-7 h-11 w-full justify-between rounded-xl px-4"
+              onClick={() => beginFeishuAuthorization(redirectPath)}
+              type="button"
+            >
+              使用飞书账号登录
+              <ArrowRight />
+            </Button>
+            <p className="m-0 mt-4 text-faint text-xs leading-relaxed">
+              登录后没有需要的权限，请联系平台管理员在应用成员里添加你。
+            </p>
+          </div>
+        </section>
       </div>
     </main>
+  );
+}
+
+/** 一格「线上现状」的示意：全量、比例灰度、定向灰度同时生效。 */
+function RoutePreview() {
+  return (
+    <div aria-hidden="true" className="mt-10 max-w-sm rounded-2xl bg-card p-1.5 shadow-edge">
+      <div className="rounded-xl bg-primary-soft px-3.5 py-3 ring-2 ring-primary ring-inset">
+        <div className="flex items-center gap-1.5 text-muted-foreground text-xs">
+          <i className="size-2 rounded-sm bg-rose-500" />
+          car-home · 生产
+        </div>
+        <div className="mt-2 flex items-baseline gap-2 text-xs">
+          <span className="font-medium text-foreground text-sm tabular-nums">#4201</span>
+          <span className="text-primary-text">全量</span>
+          <span className="ml-auto text-faint">3 天前</span>
+        </div>
+        <div className="my-1.5 flex h-1.5 gap-0.5">
+          <i className="w-4/5 rounded-full bg-primary" />
+          <i className="w-1/5 rounded-full bg-route-percentage" />
+        </div>
+        <div className="flex items-baseline gap-2 text-xs">
+          <span className="font-medium text-foreground text-sm tabular-nums">#4215</span>
+          <span className="text-route-percentage">比例 20%</span>
+        </div>
+        <div className="mt-0.5 flex items-baseline gap-2 text-xs">
+          <span className="font-medium text-foreground text-sm tabular-nums">#4219</span>
+          <span className="text-route-targeted">定向 qa-zhangwei</span>
+        </div>
+      </div>
+    </div>
   );
 }

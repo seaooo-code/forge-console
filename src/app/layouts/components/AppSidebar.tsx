@@ -1,31 +1,36 @@
 import type { LucideIcon } from "lucide-react";
 import {
-  AppWindow,
-  Blocks,
-  Boxes,
+  Activity,
+  CircleArrowUp,
   Database,
-  Gauge,
   GitFork,
   KeyRound,
-  Layers3,
-  ServerCog,
+  Layers,
+  LayoutGrid,
+  Package,
+  Server,
+  Smartphone,
 } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 import { useConsoleLayoutStore } from "../model/use-console-layout-store";
 import type { NavGroup, NavIconName, NavItem } from "../types";
+import { ApplicationSwitcher } from "./ApplicationSwitcher";
+import { ThemeSwitch } from "./ThemeSwitch";
+import { UserMenu } from "./UserMenu";
 
 const navIcons: Record<NavIconName, LucideIcon> = {
   accessToken: KeyRound,
-  app: AppWindow,
-  build: ServerCog,
-  buildAdapter: Blocks,
+  app: Smartphone,
+  build: Package,
+  buildAdapter: Layers,
   codeSource: GitFork,
-  dashboard: Gauge,
-  environment: Layers3,
-  module: Boxes,
-  releaseRecord: ServerCog,
+  environment: Server,
+  module: LayoutGrid,
+  overview: Activity,
+  releaseRecord: CircleArrowUp,
   storage: Database,
 };
 
@@ -36,76 +41,44 @@ type AppSidebarProps = {
 
 export function AppSidebar({ navGroups, onNavigate }: AppSidebarProps) {
   const activeNavId = useConsoleLayoutStore((state) => state.activeNavId);
-  const setActiveNavId = useConsoleLayoutStore((state) => state.setActiveNavId);
 
   return (
-    <aside className="flex h-full w-full flex-col border-border border-r bg-card text-foreground lg:sticky lg:top-0 lg:h-screen lg:w-64 lg:shrink-0">
-      <div className="flex h-14 items-center gap-3 border-border border-b px-5">
-        <BrandMark />
-        <div className="min-w-0">
-          <div className="truncate font-semibold text-foreground text-sm">RN Bundle 平台</div>
-          <div className="truncate text-muted-foreground text-xs">Engineering Console</div>
-        </div>
+    <aside className="flex w-full shrink-0 flex-col px-3 pt-3 pb-2 lg:sticky lg:top-0 lg:h-screen lg:w-57">
+      <div className="flex items-center gap-2.5 px-2 pt-1.5 pb-4">
+        <span className="flex size-6 items-center justify-center rounded-md bg-primary font-semibold text-[10px] text-primary-foreground">
+          RN
+        </span>
+        <span className="font-semibold text-foreground text-sm">RN Bundle 平台</span>
       </div>
 
-      <nav className="flex-1 space-y-5 overflow-y-auto px-3 py-4">
+      <ApplicationSwitcher />
+
+      <nav aria-label="主导航" className="mt-4 flex-1 overflow-y-auto">
         {navGroups.map((group) => (
-          <div key={group.label} className="space-y-1">
-            <div className="px-3 font-medium text-[11px] text-muted-foreground/70 uppercase tracking-wider">
-              {group.label}
+          <div key={group.label ?? "main"} className={cn(group.label && "mt-4")}>
+            {group.label ? (
+              <div className="px-2.5 pb-1.5 text-faint text-xs">{group.label}</div>
+            ) : null}
+            <div className="flex flex-col gap-px">
+              {group.items.map((item) => (
+                <NavLink
+                  key={item.id}
+                  active={activeNavId === item.id}
+                  icon={navIcons[item.icon]}
+                  item={item}
+                  onClick={() => onNavigate(item)}
+                />
+              ))}
             </div>
-            {group.items.map((item) => (
-              <NavLink
-                key={item.id}
-                item={item}
-                active={activeNavId === item.id}
-                icon={navIcons[item.icon]}
-                onClick={() => {
-                  setActiveNavId(item.id);
-                  onNavigate(item);
-                }}
-              />
-            ))}
           </div>
         ))}
       </nav>
 
-      <div className="border-border border-t px-4 py-3">
-        <div className="text-center text-[10px] text-muted-foreground/70">
-          v2.8.4 · build 20260609
-        </div>
+      <div className="flex items-center gap-2 pt-2">
+        <UserMenu />
+        <ThemeSwitch />
       </div>
     </aside>
-  );
-}
-
-function BrandMark() {
-  return (
-    <svg
-      className="size-9 shrink-0 rounded-lg shadow-xs ring-1 ring-emerald-200/80"
-      viewBox="0 0 64 64"
-      role="img"
-      aria-label="RN Bundle 平台"
-    >
-      <rect width="64" height="64" rx="16" fill="#ecfdf5" />
-      <rect x="12" y="12" width="20" height="20" rx="6" fill="#5ee0aa" />
-      <path
-        d="M20 44h24c4.4 0 8-3.6 8-8s-3.6-8-8-8H32"
-        fill="none"
-        stroke="#0f172a"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="6"
-      />
-      <path
-        d="M42 22l8 6-8 6"
-        fill="none"
-        stroke="#059669"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="5"
-      />
-    </svg>
   );
 }
 
@@ -124,52 +97,14 @@ function NavLink({ active, icon: Icon, item, onClick }: NavLinkProps) {
       onClick={onClick}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "group relative h-10 w-full justify-start gap-3 overflow-hidden rounded-lg px-3 text-left transition-colors",
+        "h-8.5 w-full justify-start gap-2.5 rounded-lg px-2.5 font-normal text-sm",
         active
-          ? "bg-primary/10 text-primary"
-          : "text-muted-foreground hover:bg-muted hover:text-foreground",
+          ? "bg-background font-medium text-foreground shadow-edge hover:bg-background [&_svg]:text-primary"
+          : "text-muted-foreground hover:bg-foreground/5 hover:text-foreground [&_svg]:text-faint hover:[&_svg]:text-muted-foreground",
       )}
     >
-      {/* Active indicator: 3px solid bar on the left edge */}
-      <span
-        aria-hidden="true"
-        className={cn(
-          "absolute top-1.5 bottom-1.5 left-0 w-0.75 rounded-full transition-all",
-          active ? "bg-primary" : "bg-transparent",
-        )}
-      />
-      <span
-        className={cn(
-          "flex size-7 shrink-0 items-center justify-center rounded-md transition-colors",
-          active ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground",
-        )}
-      >
-        <Icon className="size-3.5" />
-      </span>
-      <span className="min-w-0 flex-1 leading-tight">
-        <span className="block truncate font-medium text-sm">{item.label}</span>
-      </span>
-      {item.isMock ? (
-        <span
-          className={cn(
-            "shrink-0 rounded px-1.5 py-0.5 font-medium text-[10px] leading-none",
-            active ? "bg-primary/15 text-primary" : "bg-warning/15 text-warning",
-          )}
-          title="暂未接真实接口"
-        >
-          未接
-        </span>
-      ) : null}
-      {item.meta ? (
-        <span
-          className={cn(
-            "shrink-0 rounded-md px-1.5 py-0.5 font-medium text-[11px] tabular-nums leading-none",
-            active ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground",
-          )}
-        >
-          {item.meta}
-        </span>
-      ) : null}
+      <Icon />
+      <span className="truncate">{item.label}</span>
     </Button>
   );
 }

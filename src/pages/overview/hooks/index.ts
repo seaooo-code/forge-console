@@ -1,0 +1,134 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+
+import {
+  buildsAllQueryKey,
+  buildsRootQueryKey,
+  createBuild,
+  fetchAllBuildsSnapshot,
+} from "@/api/builds";
+import { fetchAllModulesSnapshot, modulesAllQueryKey } from "@/api/modules";
+import { createBuildRelease } from "@/api/releases";
+import { codeSourceConnectionsQueryKey, fetchCodeSourceConnections } from "@/pages/code-sources";
+import { environmentsSnapshotQueryKey, fetchEnvironmentsSnapshot } from "@/pages/environments";
+import {
+  fetchAllReleaseRecordsSnapshot,
+  inactivateTargetedGrayRelease,
+  releaseRecordsAllQueryKey,
+  releaseRecordsSnapshotQueryKey,
+  updateReleaseGrayPercentage,
+} from "@/pages/release-records";
+
+import { activeBuildsRefetchIntervalMs } from "../constants";
+import type { OverviewModel, ReleaseComposerForm } from "../types";
+import { expiresAtAfterDays } from "../utils";
+
+export function useOverviewData(applicationId: string) {
+  const enabled = Boolean(applicationId);
+  const modules = useQuery({
+    enabled,
+    queryFn: () => fetchAllModulesSnapshot({ applicationId }),
+    queryKey: modulesAllQueryKey({ applicationId }),
+  });
+  const environments = useQuery({
+    queryFn: fetchEnvironmentsSnapshot,
+    queryKey: environmentsSnapshotQueryKey,
+  });
+  const releases = useQuery({
+    enabled,
+    queryFn: () => fetchAllReleaseRecordsSnapshot({ applicationId, status: "active" }),
+    queryKey: releaseRecordsAllQueryKey({ applicationId, status: "active" }),
+  });
+  const builds = useQuery({
+    enabled,
+    queryFn: () => fetchAllBuildsSnapshot({ applicationId }),
+    queryKey: buildsAllQueryKey({ applicationId }),
+    refetchInterval: (query) =>
+      query.state.data?.builds.some(
+        (build) => build.status === "queued" || build.status === "running",
+      )
+        ? activeBuildsRefetchIntervalMs
+        : false,
+  });
+  // 只有代码源管理员能读连接列表；读不到时首页不提示凭证过期，不当作错误。
+  const connections = useQuery({
+    queryFn: fetchCodeSourceConnections,
+    queryKey: codeSourceConnectionsQueryKey,
+    retry: false,
+  });
+
+  const model: OverviewModel | null =
+    modules.data && environments.data && releases.data && builds.data
+      ? {
+          builds: builds.data.builds,
+          environments: environments.data.environments,
+          modules: modules.data.modules,
+          releases: releases.data.records,
+        }
+      : null;
+  const error = modules.error ?? environments.error ?? releases.error ?? builds.error ?? null;
+
+  return {
+    connections: connections.data ?? [],
+    error,
+    isLoading: enabled && !model && !error,
+    model,
+    refetch: () =>
+      Promise.all([
+        modules.refetch(),
+        environments.refetch(),
+        releases.refetch(),
+        builds.refetch(),
+      ]),
+  };
+}
+
+function useInvalidateRoutes() {
+  const queryClient = useQueryClient();
+  return () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: releaseRecordsSnapshotQueryKey }),
+      queryClient.invalidateQueries({ queryKey: buildsRootQueryKey }),
+    ]);
+}
+
+export function useReleaseBuild() {
+  const invalidate = useInvalidateRoutes();
+  return useMutation({
+    mutationFn: ({ buildId, form }: { buildId: string; form: ReleaseComposerForm }) =>
+      createBuildRelease({
+        buildRecordId: buildId,
+        expiresAt: expiresAtAfterDays(form.expiresInDays),
+        grayPercentage: form.grayPercentage,
+        grayStrategy: form.kind === "targeted" ? "targeted" : "percentage",
+        identifier: form.identifier,
+        releaseType: form.kind === "full" ? "full" : "gray",
+      }),
+    onSuccess: invalidate,
+  });
+}
+
+export function useUpdateGrayPercentage() {
+  const invalidate = useInvalidateRoutes();
+  return useMutation({
+    mutationFn: ({ grayPercentage, releaseId }: { grayPercentage: number; releaseId: string }) =>
+      updateReleaseGrayPercentage(releaseId, grayPercentage),
+    onSuccess: invalidate,
+  });
+}
+
+export function useInactivateTargeted() {
+  const invalidate = useInvalidateRoutes();
+  return useMutation({
+    mutationFn: (releaseId: string) => inactivateTargetedGrayRelease(releaseId),
+    onSuccess: invalidate,
+  });
+}
+
+export function useRebuild() {
+  const invalidate = useInvalidateRoutes();
+  return useMutation({
+    mutationFn: (input: { branch: string; environment: string; moduleId: string }) =>
+      createBuild(input),
+    onSuccess: invalidate,
+  });
+}

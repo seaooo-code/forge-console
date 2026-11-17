@@ -33,7 +33,7 @@ const emptyReleaseRecordsFilters: ReleaseRecordsFilters = {
 };
 
 export function useReleaseRecordsFilters() {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const storedApplicationId = useApplicationScopeStore((state) => state.applicationId);
   const setStoredApplicationId = useApplicationScopeStore((state) => state.setApplicationId);
   const initialApplicationId = searchParams.get("applicationId")?.trim() || storedApplicationId;
@@ -63,21 +63,6 @@ export function useReleaseRecordsFilters() {
     setStoredApplicationId(nextApplicationId);
   }, [resetPage, searchParams, setStoredApplicationId, storedApplicationId]);
 
-  const updateApplicationScope = (applicationId: string) => {
-    const normalizedApplicationId = applicationId.trim();
-    setStoredApplicationId(normalizedApplicationId);
-    setSearchParams((current) => {
-      const next = new URLSearchParams(current);
-      if (normalizedApplicationId) {
-        next.set("applicationId", normalizedApplicationId);
-      } else {
-        next.delete("applicationId");
-      }
-      return next;
-    });
-    updateFilters({ applicationId: normalizedApplicationId, moduleId: "" });
-  };
-
   return {
     clampPage,
     filters,
@@ -85,7 +70,6 @@ export function useReleaseRecordsFilters() {
     pageSize,
     setPage,
     setPageSize,
-    updateApplicationScope,
     updateFilters,
   };
 }

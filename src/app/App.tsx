@@ -2,7 +2,6 @@ import { lazy, useEffect } from "react";
 import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from "react-router";
 
 import { fetchAuthSession } from "@/api/feishu-auth";
-import { Card } from "@/components/ui/card";
 import { FeishuCallbackPage, LoginPage } from "@/pages/auth";
 import { useAuthStore } from "@/store/use-auth-store";
 import { useSystemThemeSync } from "@/store/use-system-theme-sync";
@@ -45,8 +44,8 @@ const CodeSourcesPage = lazy(async () => ({
   default: (await import("@/pages/code-sources")).CodeSourcesPage,
 }));
 
-const DashboardPage = lazy(async () => ({
-  default: (await import("@/pages/dashboard")).DashboardPage,
+const OverviewPage = lazy(async () => ({
+  default: (await import("@/pages/overview")).OverviewPage,
 }));
 
 const ReleaseRecordsPage = lazy(async () => ({
@@ -155,8 +154,8 @@ function isAuthRoute(path: string) {
 
 function SessionLoadingPage() {
   return (
-    <main className="grid min-h-screen place-items-center bg-background px-6 text-foreground">
-      <Card className="h-24 w-full max-w-sm animate-pulse bg-card shadow-sm" />
+    <main className="flex min-h-screen bg-shell p-2 text-foreground">
+      <div className="flex-1 animate-pulse rounded-2xl bg-background shadow-edge" />
     </main>
   );
 }
@@ -165,7 +164,7 @@ function ConsoleRoutes() {
   return (
     <Routes>
       <Route element={<ConsoleLayout />}>
-        <Route index element={<DashboardPage />} />
+        <Route index element={<OverviewRoute />} />
         <Route path="apps" element={<ApplicationsRoute />} />
         <Route path="apps/new" element={<ApplicationCreateRoute />} />
         <Route path="apps/:applicationSlug/edit" element={<ApplicationEditRoute />} />
@@ -194,6 +193,18 @@ function ConsoleRoutes() {
         <Route path="*" element={<ConsoleRouteNotFound />} />
       </Route>
     </Routes>
+  );
+}
+
+function OverviewRoute() {
+  const navigate = useNavigate();
+
+  return (
+    <OverviewPage
+      onCreateModule={() => navigate("/modules/new")}
+      onOpenBuild={(buildId: string) => navigate(`/builds/${encodeURIComponent(buildId)}`)}
+      onOpenCodeSources={() => navigate("/code-sources")}
+    />
   );
 }
 

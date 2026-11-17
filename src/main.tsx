@@ -1,7 +1,9 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
-import "@fontsource-variable/roboto-flex";
+import "misans/lib/Normal/MiSans-Regular.min.css";
+import "misans/lib/Normal/MiSans-Medium.min.css";
+import "misans/lib/Normal/MiSans-Semibold.min.css";
 import "@fontsource/roboto-mono/latin-400.css";
 import "@fontsource/roboto-mono/latin-500.css";
 import "@fontsource/roboto-mono/latin-600.css";

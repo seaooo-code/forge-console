@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 
 import { buildsSnapshotQueryKey } from "@/api/builds";
 import { createBuildRelease } from "@/api/releases";
-import { ApplicationScopeSelect } from "@/components/common/ApplicationScopeSelect";
 import { ConsoleClearableFilterSelect } from "@/components/common/ConsoleControls";
 import { DataTable, FilterBar, KpiCard, PageHeader, TablePagination } from "@/components/layout";
 import { Alert } from "@/components/ui/alert";
@@ -37,16 +36,8 @@ export function ReleaseRecordsPage({ onOpenRelease }: ReleaseRecordsPageProps) {
   const queryClient = useQueryClient();
   const session = useAuthStore((state) => state.session);
   const canCreateRelease = Boolean(session?.capabilities.canCreateRelease);
-  const {
-    clampPage,
-    filters,
-    page,
-    pageSize,
-    setPage,
-    setPageSize,
-    updateApplicationScope,
-    updateFilters,
-  } = useReleaseRecordsFilters();
+  const { clampPage, filters, page, pageSize, setPage, setPageSize, updateFilters } =
+    useReleaseRecordsFilters();
   const {
     buildOptions,
     environmentOptions,
@@ -79,18 +70,7 @@ export function ReleaseRecordsPage({ onOpenRelease }: ReleaseRecordsPageProps) {
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader
-        title="发布管理"
-        description="管理构建产物发布后的访问路由指向变更"
-        below={
-          <div className="flex flex-wrap items-center gap-2">
-            <ApplicationScopeSelect
-              value={filters.applicationId}
-              onValueChange={updateApplicationScope}
-            />
-          </div>
-        }
-      />
+      <PageHeader title="发布管理" description="管理构建产物发布后的访问路由指向变更" />
 
       <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {stats.map((item) => (
