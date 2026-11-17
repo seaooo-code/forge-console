@@ -419,15 +419,13 @@ export function BuildAdapterEditPage({ adapterId, onBack, onCreated }: BuildAdap
           </div>
 
           <div className="min-w-0 space-y-4 xl:col-span-2">
-            <div className="space-y-4 xl:sticky xl:top-4">
-              {canManage ? (
-                <BuildAdapterPreviewPanel
-                  control={control}
-                  onTemplateErrorChange={handlePreviewTemplateError}
-                />
-              ) : null}
-              <BuildAdapterTemplateGuide />
-            </div>
+            {canManage ? (
+              <BuildAdapterPreviewPanel
+                control={control}
+                onTemplateErrorChange={handlePreviewTemplateError}
+              />
+            ) : null}
+            <BuildAdapterTemplateGuide />
           </div>
         </div>
       </form>

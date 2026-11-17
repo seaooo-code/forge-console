@@ -10,7 +10,7 @@ export function Canvas({ className, children }: { className?: string; children: 
   return (
     <section
       className={cn(
-        "min-h-0 min-w-0 flex-1 overflow-y-auto rounded-xl bg-background px-6 py-6 shadow-edge lg:px-8 lg:py-7",
+        "relative min-h-0 min-w-0 flex-1 overflow-y-auto rounded-xl bg-background px-6 py-6 shadow-edge lg:px-8 lg:py-7",
         className,
       )}
     >

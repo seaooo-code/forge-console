@@ -49,7 +49,7 @@ export function ConsoleLayout() {
               <Outlet />
             </Suspense>
           ) : (
-            <section className="min-h-0 min-w-0 flex-1 overflow-y-auto rounded-xl bg-background shadow-edge">
+            <section className="relative min-h-0 min-w-0 flex-1 overflow-y-auto rounded-xl bg-background shadow-edge">
               <div className="px-6 py-6 lg:px-8 lg:py-7">
                 <Suspense fallback={<PageFallback />}>
                   <Outlet />
