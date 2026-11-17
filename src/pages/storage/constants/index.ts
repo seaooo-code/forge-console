@@ -33,9 +33,9 @@ export const adapterToneClass: Record<StorageAdapter, string> = {
 };
 
 export const statusClass: Record<StorageStatus, string> = {
-  disabled: "border-border bg-muted text-muted-foreground",
-  error: "border-destructive/30 bg-destructive/10 text-destructive",
-  healthy: "border-success/30 bg-success/10 text-success",
+  disabled: "bg-muted text-muted-foreground",
+  error: "bg-destructive-soft text-destructive",
+  healthy: "bg-success/12 text-success",
 };
 
 export const statusLabel: Record<StorageStatus, string> = {

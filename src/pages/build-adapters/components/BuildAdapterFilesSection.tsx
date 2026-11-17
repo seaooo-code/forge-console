@@ -43,7 +43,7 @@ export function BuildAdapterFilesSection({
       />
       <div className="space-y-4 px-5 py-4">
         {fields.length === 0 ? (
-          <div className="flex items-center gap-2 rounded-md border border-border border-dashed px-3 py-4 text-muted-foreground text-sm">
+          <div className="flex items-center gap-2 rounded-lg bg-surface-2 px-3 py-4 text-muted-foreground text-sm">
             <FolderOpen className="size-4" />
             暂无辅助文件
           </div>
@@ -73,11 +73,11 @@ export function BuildAdapterFilesSection({
           });
 
           return (
-            <div key={item.id} className="space-y-2 rounded-md border border-border p-3">
+            <div key={item.id} className="space-y-2 rounded-md shadow-edge p-3">
               <div className="flex items-start gap-2">
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center rounded-md border border-input shadow-xs focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50">
-                    <span className="shrink-0 border-border border-r bg-muted px-2.5 py-2 font-mono text-muted-foreground text-xs leading-5">
+                  <div className="flex items-center rounded-md border border-input focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50">
+                    <span className="shrink-0 bg-surface-2 px-2.5 py-2 font-mono text-muted-foreground text-xs leading-5">
                       {buildAdapterFilesDir}/
                     </span>
                     <Input

@@ -10,7 +10,7 @@ export function InfoPill({
   value: string;
 }) {
   return (
-    <div className="flex min-w-0 items-center gap-2 rounded-lg border border-border bg-muted px-3 py-2">
+    <div className="flex min-w-0 items-center gap-2 rounded-lg bg-surface-2 px-3 py-2">
       <Icon className="size-4 shrink-0 text-muted-foreground" />
       <div className="min-w-0">
         <div className="text-muted-foreground text-xs">{label}</div>
@@ -30,7 +30,7 @@ export function OwnerInfoPill({
   name: string;
 }) {
   return (
-    <div className="flex min-w-0 items-center gap-2 rounded-lg border border-border bg-muted px-3 py-2">
+    <div className="flex min-w-0 items-center gap-2 rounded-lg bg-surface-2 px-3 py-2">
       <OwnerAvatar avatarUrl={avatarUrl} name={name} />
       <div className="min-w-0">
         <div className="text-muted-foreground text-xs">负责人</div>
@@ -63,7 +63,7 @@ export function ConfigItem({
   value: string;
 }) {
   return (
-    <div className="flex min-w-0 gap-3 rounded-md border border-border bg-card px-3 py-3">
+    <div className="flex min-w-0 gap-3 rounded-md bg-card shadow-edge px-3 py-3">
       <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
         <Icon className="size-4" />
       </div>

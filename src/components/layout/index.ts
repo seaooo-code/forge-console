@@ -4,6 +4,7 @@ export { DetailList, type DetailListItem } from "./DetailList";
 export { FilterBar } from "./FilterBar";
 export { FormActions, FormLayout } from "./FormLayout";
 export { KpiCard } from "./KpiCard";
+export { ListHeader } from "./ListHeader";
 export { PageEmptyState, pageEmptyAction } from "./PageEmptyState";
 export { ErrorMessage, PageErrorState } from "./PageErrorState";
 export { PageHeader } from "./PageHeader";

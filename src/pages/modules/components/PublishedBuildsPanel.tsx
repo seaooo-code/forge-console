@@ -21,7 +21,7 @@ export function PublishedBuildsPanel({
       <SectionHeader title="已发布构建" description="当前模块已发布的全量和标识构建" />
       {records.length > 0 ? (
         <div className="overflow-hidden">
-          <div className="hidden border-border border-b bg-muted px-4 py-2 font-medium text-muted-foreground text-xs xl:grid xl:grid-cols-[110px_170px_110px_100px_minmax(140px,1fr)_92px_120px]">
+          <div className="hidden px-4 py-2 font-medium text-faint text-xs xl:grid xl:grid-cols-[110px_170px_110px_100px_minmax(140px,1fr)_92px_120px]">
             <span>构建 ID</span>
             <span>发布时间</span>
             <span>环境</span>
@@ -30,7 +30,7 @@ export function PublishedBuildsPanel({
             <span>状态</span>
             <span>操作人</span>
           </div>
-          <div className="divide-y divide-border">
+          <div className="flex flex-col gap-1 p-1">
             {records.map((record) => (
               <div
                 key={record.id}
@@ -82,7 +82,7 @@ export function PublishedBuildsPanel({
 
 function SectionHeader({ description, title }: { description: string; title: string }) {
   return (
-    <div className="flex h-12 items-center justify-between border-border border-b px-4">
+    <div className="flex h-12 items-center justify-between px-4">
       <div>
         <div className="font-semibold text-foreground text-sm">{title}</div>
         <div className="text-muted-foreground text-xs">{description}</div>
@@ -107,7 +107,7 @@ function ReleaseStatusBadge({ status }: { status: ReleasePointerRecord["status"]
   return (
     <span
       className={cn(
-        "inline-flex h-6 items-center gap-1 rounded border px-2 font-semibold text-xs leading-none",
+        "inline-flex h-6 items-center gap-1 rounded-md px-2 font-semibold text-xs leading-none",
         releaseRecordStatusClass[status],
       )}
     >

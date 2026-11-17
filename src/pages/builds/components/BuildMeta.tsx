@@ -71,10 +71,10 @@ export function BuildCreator({ createdBy }: Pick<BuildRunRecord, "createdBy">) {
         <img
           src={createdBy.avatarUrl}
           alt=""
-          className="size-5 shrink-0 rounded-full border border-border object-cover"
+          className="size-5 shrink-0 rounded-full object-cover"
         />
       ) : (
-        <span className="flex size-5 shrink-0 items-center justify-center rounded-full border border-border bg-muted text-muted-foreground">
+        <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
           <UserRound className="size-3" />
         </span>
       )}

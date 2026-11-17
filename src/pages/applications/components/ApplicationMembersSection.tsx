@@ -75,7 +75,7 @@ export function ApplicationMembersSection({
         title="成员权限"
         description="维护应用成员的角色与接入权限"
         actions={
-          <Badge variant="outline" className="border-border text-muted-foreground">
+          <Badge variant="outline" className="text-muted-foreground">
             {members.length} 人
           </Badge>
         }
@@ -230,7 +230,7 @@ function MemberRow({
   onRoleChange: (member: ApplicationMemberRecord, role: ApplicationMemberRecord["role"]) => void;
 }) {
   return (
-    <div className="flex items-center justify-between gap-3 rounded-md border border-border bg-muted px-3 py-2.5">
+    <div className="flex items-center justify-between gap-3 rounded-md bg-surface-2 px-3 py-2.5">
       <div className="flex min-w-0 items-center gap-2">
         <MemberAvatar member={member} />
         <div className="min-w-0">
@@ -264,7 +264,7 @@ function MemberRow({
             type="button"
             variant="outline"
             size="icon"
-            className="size-8 border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive"
+            className="size-8 text-destructive hover:bg-destructive-soft hover:text-destructive"
             disabled={disabled}
             aria-label="移除成员权限"
             onClick={() => onDelete(member)}
@@ -273,7 +273,7 @@ function MemberRow({
           </Button>
         </div>
       ) : (
-        <Badge variant="outline" className="border-info/30 bg-info/10 text-info">
+        <Badge variant="outline" className="bg-info-soft text-info">
           {member.role}
         </Badge>
       )}

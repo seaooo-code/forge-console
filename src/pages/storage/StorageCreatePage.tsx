@@ -159,20 +159,20 @@ export function StorageCreatePage({
 
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)}>
-      <div className="border-border border-b bg-card px-6 py-5">
+      <div className="bg-card px-6 py-5">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div>
             <Button
               variant="ghost"
               type="button"
-              className="-ml-2 mb-3 h-8 gap-2 px-2 text-muted-foreground hover:bg-muted hover:text-foreground"
+              className="-ml-2 mb-3 h-8 gap-2 px-2 text-muted-foreground hover:bg-hover hover:text-foreground"
               onClick={onBack}
             >
               <ArrowLeft className="size-4" />
               返回存储管理
             </Button>
             <div className="flex items-center gap-3">
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                 <CloudUpload className="size-5" />
               </div>
               <div>

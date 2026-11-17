@@ -103,7 +103,7 @@ export function BuildAdapterPreviewPanel({
 
   return (
     <Card className="gap-0 rounded-lg p-0">
-      <div className="flex items-center justify-between gap-2 border-border border-b px-4 py-3">
+      <div className="flex items-center justify-between gap-2 px-4 py-3">
         <div className="flex items-center gap-2">
           <Eye className="size-4 text-muted-foreground" />
           <h2 className="font-semibold text-foreground text-sm">渲染预览</h2>
@@ -174,7 +174,7 @@ export function BuildAdapterPreviewPanel({
         ) : null}
 
         {!hasTemplate ? (
-          <p className="rounded-md border border-border border-dashed px-3 py-4 text-center text-muted-foreground text-xs">
+          <p className="rounded-lg bg-surface-2 px-3 py-4 text-center text-muted-foreground text-xs">
             填写 Dockerfile 模板后自动预览
           </p>
         ) : previewQuery.isError ? (

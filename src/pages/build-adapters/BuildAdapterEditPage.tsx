@@ -263,12 +263,12 @@ export function BuildAdapterEditPage({ adapterId, onBack, onCreated }: BuildAdap
   return (
     <>
       <form onSubmit={handleSubmit(onSubmit)}>
-        <div className="border-border border-b bg-card px-6 py-5">
+        <div className="bg-card px-6 py-5">
           <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
             <div>
               <BackButton onBack={onBack} />
               <div className="flex flex-wrap items-center gap-3">
-                <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                   <Blocks className="size-5" />
                 </div>
                 <h1 className="font-semibold text-2xl text-foreground tracking-tight">{title}</h1>
@@ -458,7 +458,7 @@ export function BuildAdapterEditPage({ adapterId, onBack, onCreated }: BuildAdap
 function PageFrame({ children, onBack }: { children: ReactNode; onBack: () => void }) {
   return (
     <>
-      <div className="border-border border-b bg-card px-6 py-5">
+      <div className="bg-card px-6 py-5">
         <BackButton onBack={onBack} />
         <div className="h-8 w-48 animate-pulse rounded bg-muted" />
       </div>
@@ -472,7 +472,7 @@ function BackButton({ onBack }: { onBack: () => void }) {
     <Button
       variant="ghost"
       type="button"
-      className="-ml-2 mb-3 h-8 gap-2 px-2 text-muted-foreground hover:bg-muted hover:text-foreground"
+      className="-ml-2 mb-3 h-8 gap-2 px-2 text-muted-foreground hover:bg-hover hover:text-foreground"
       onClick={onBack}
     >
       <ArrowLeft className="size-4" />

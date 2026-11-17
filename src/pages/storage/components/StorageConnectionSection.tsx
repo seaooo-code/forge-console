@@ -60,12 +60,12 @@ function RegionLabel() {
           variant="ghost"
           size="icon"
           type="button"
-          className="size-5 rounded-full p-0 text-muted-foreground hover:bg-muted hover:text-foreground"
+          className="size-5 rounded-full p-0 text-muted-foreground hover:bg-hover hover:text-foreground"
           aria-label="Region 配置说明"
         >
           <CircleHelp className="size-3.5" />
         </Button>
-        <span className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 hidden w-80 -translate-x-1/2 rounded-md border border-border bg-card px-3 py-2 text-left font-normal text-muted-foreground text-xs leading-5 shadow-lg group-focus-within:block group-hover:block">
+        <span className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 hidden w-80 -translate-x-1/2 rounded-md bg-card shadow-edge px-3 py-2 text-left font-normal text-muted-foreground text-xs leading-5 shadow-lg group-focus-within:block group-hover:block">
           AWS S3、阿里云 OSS、腾讯云 COS、华为云 OBS 填写服务商的 Region；MinIO、Ceph RGW
           等私有部署填写服务端配置的 Region，未单独配置时通常为 us-east-1。
         </span>

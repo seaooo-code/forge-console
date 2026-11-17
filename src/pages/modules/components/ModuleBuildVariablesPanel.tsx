@@ -100,7 +100,7 @@ export function ModuleBuildVariablesPanel({
 
   return (
     <Card className="gap-0 rounded-lg py-0">
-      <div className="flex h-14 items-center justify-between gap-3 border-border border-b px-4">
+      <div className="flex h-14 items-center justify-between gap-3 px-4">
         <div>
           <div className="font-semibold text-foreground text-sm">构建变量</div>
           <div className="text-muted-foreground text-xs">
@@ -158,9 +158,7 @@ export function ModuleBuildVariablesPanel({
 
       {!error && variables.length > 0 ? (
         <div className="overflow-hidden">
-          <div
-            className={`hidden border-border border-b bg-muted px-4 py-2 font-medium text-muted-foreground text-xs xl:grid ${gridColumns}`}
-          >
+          <div className={`hidden px-4 py-2 font-medium text-faint text-xs xl:grid ${gridColumns}`}>
             <span>Key</span>
             <span>作用环境</span>
             <span>值</span>
@@ -169,7 +167,7 @@ export function ModuleBuildVariablesPanel({
             <span>更新时间</span>
             <span>操作</span>
           </div>
-          <div className="divide-y divide-border">
+          <div className="flex flex-col gap-1 p-1">
             {variables.map((variable) => (
               <div
                 key={`${variable.key}:${variable.environmentCode}`}

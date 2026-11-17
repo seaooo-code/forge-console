@@ -15,7 +15,7 @@ export function ReleaseRuntimeVersionNotice({ runtimeVersion }: { runtimeVersion
 
   return (
     <div className="grid gap-2">
-      <div className="flex items-center justify-between gap-3 rounded-md border border-border bg-muted px-3 py-2">
+      <div className="flex items-center justify-between gap-3 rounded-lg bg-surface-2 px-3 py-2">
         <span className="text-muted-foreground text-xs">运行时版本</span>
         <span className="truncate font-mono font-semibold text-foreground text-sm">
           {runtimeVersion}

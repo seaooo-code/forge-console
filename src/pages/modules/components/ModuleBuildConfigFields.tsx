@@ -82,7 +82,7 @@ export function ModuleBuildConfigFields({
   });
 
   return (
-    <section className="border-border border-t pt-5">
+    <section className="pt-6">
       <div className="mb-3 flex items-center gap-2">
         <div className="h-4 w-1 rounded-full bg-info" />
         <h2 className="font-semibold text-foreground text-sm">构建配置</h2>
@@ -110,10 +110,7 @@ export function ModuleBuildConfigFields({
                     {buildModeLabels.adapter}
                   </TabsTrigger>
                 </TabsList>
-                <TabsContent
-                  value="dockerfile"
-                  className="rounded-md border border-border bg-muted/40 px-3 py-3"
-                >
+                <TabsContent value="dockerfile" className="rounded-md bg-surface-2/40 px-3 py-3">
                   <div className="grid gap-4 xl:grid-cols-12">
                     <Field
                       label="Dockerfile 路径"
@@ -127,10 +124,7 @@ export function ModuleBuildConfigFields({
                     </Field>
                   </div>
                 </TabsContent>
-                <TabsContent
-                  value="adapter"
-                  className="rounded-md border border-border bg-muted/40 px-3 py-3"
-                >
+                <TabsContent value="adapter" className="rounded-md bg-surface-2/40 px-3 py-3">
                   <AdapterFields
                     adapters={adapters}
                     adaptersError={adaptersError}
@@ -232,7 +226,7 @@ export function ModuleBuildConfigFields({
         </Field>
 
         <Field label="预览通道" className="md:col-span-2 xl:col-span-4">
-          <div className="space-y-3 rounded-md border border-border bg-muted/40 px-3 py-3">
+          <div className="space-y-3 rounded-md bg-surface-2/40 px-3 py-3">
             <Controller
               control={control}
               name="buildConfig.autoPreviewRelease"

@@ -186,7 +186,7 @@ export function ApplicationCreatePage({
         breadcrumbs={[{ label: "应用管理", href: "/apps" }, { label: title }]}
         title={
           <span className="flex items-center gap-2">
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-xs">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
               <PackagePlus className="size-5" />
             </span>
             <span>{title}</span>
@@ -206,7 +206,7 @@ export function ApplicationCreatePage({
       />
 
       {formError ? (
-        <Alert variant="danger" className="border-destructive/30 bg-destructive/10">
+        <Alert variant="danger" className="bg-destructive-soft">
           {formError}
         </Alert>
       ) : null}

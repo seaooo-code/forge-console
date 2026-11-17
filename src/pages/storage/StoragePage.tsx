@@ -246,7 +246,7 @@ function StorageNameCell({ data }: ICellRendererParams<StorageConfigRecord>) {
     <div className="flex h-full min-w-0 items-center gap-3">
       <div
         className={cn(
-          "flex size-8 shrink-0 items-center justify-center rounded-md shadow-sm",
+          "flex size-8 shrink-0 items-center justify-center rounded-md",
           adapterToneClass[data.adapter],
         )}
       >
@@ -304,7 +304,7 @@ function StatusCell({ value }: ICellRendererParams<StorageConfigRecord, StorageS
   return (
     <span
       className={cn(
-        "inline-flex h-6 items-center gap-1 rounded border px-2 font-medium text-xs leading-none",
+        "inline-flex h-6 items-center gap-1 rounded-md px-2 font-medium text-xs leading-none",
         statusClass[value],
       )}
     >

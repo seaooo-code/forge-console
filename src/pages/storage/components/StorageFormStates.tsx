@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 export function StorageFormLoading({ onBack }: { onBack: () => void }) {
   return (
     <>
-      <div className="border-border border-b bg-card px-6 py-5">
+      <div className="bg-card px-6 py-5">
         <Button
           variant="ghost"
           type="button"
@@ -28,11 +28,11 @@ export function StorageFormLoading({ onBack }: { onBack: () => void }) {
 
 export function StorageFormNotFound({ onBack }: { onBack: () => void }) {
   return (
-    <div className="border-border border-b bg-card px-6 py-5">
+    <div className="bg-card px-6 py-5">
       <Button
         variant="ghost"
         type="button"
-        className="-ml-2 mb-3 h-8 gap-2 px-2 text-muted-foreground hover:bg-muted hover:text-foreground"
+        className="-ml-2 mb-3 h-8 gap-2 px-2 text-muted-foreground hover:bg-hover hover:text-foreground"
         onClick={onBack}
       >
         <ArrowLeft className="size-4" />

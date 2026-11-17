@@ -1,20 +1,22 @@
 import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Boxes, Plus, RefreshCw } from "lucide-react";
+import { Plus, RefreshCw } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router";
-import { fetchGlobalEnums, globalEnumsQueryKey } from "@/api/enums";
 import { searchFeishuUsers } from "@/api/feishu-user-search";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
+import { ConsoleOwnerSearchFilter, ConsoleSearchInput } from "@/components/common/ConsoleControls";
 import {
-  ConsoleClearableFilterSelect,
-  ConsoleOwnerSearchFilter,
-  ConsoleSearchInput,
-} from "@/components/common/ConsoleControls";
-import { DataTable, FilterBar, KpiCard, PageHeader, TablePagination } from "@/components/layout";
+  DataTable,
+  ErrorMessage,
+  FilterBar,
+  ListHeader,
+  SummaryStats,
+  TablePagination,
+} from "@/components/layout";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { usePagination } from "@/hooks/use-pagination";
+import { cn } from "@/lib/utils";
 import { applicationsRootQueryKey } from "@/pages/applications";
 import { useApplicationScopeStore } from "@/store/use-application-scope-store";
 import { useAuthStore } from "@/store/use-auth-store";
@@ -27,7 +29,6 @@ import {
 } from "./api/modules-snapshot";
 import { buildModuleColumns } from "./components/ModulesTableCells";
 import type { ModuleKind, ModuleListFilters, ModuleRecord } from "./types";
-import { buildModuleStats } from "./utils";
 
 type ModulesPageProps = {
   onCreateModule: () => void;
@@ -55,16 +56,13 @@ export function ModulesPage({ onCreateModule, onEditModule, onOpenModule }: Modu
   const [isDeleting, setIsDeleting] = useState(false);
   const {
     data: snapshot,
+    error,
     isFetching,
     refetch,
   } = useQuery({
     placeholderData: keepPreviousData,
     queryFn: () => fetchModulesSnapshot({ ...filters, page, pageSize }),
     queryKey: modulesSnapshotQueryKey({ ...filters, page, pageSize }),
-  });
-  const { data: globalEnums } = useQuery({
-    queryFn: fetchGlobalEnums,
-    queryKey: globalEnumsQueryKey,
   });
 
   useEffect(() => {
@@ -86,10 +84,6 @@ export function ModulesPage({ onCreateModule, onEditModule, onOpenModule }: Modu
     }
   }, [clampPage, snapshot]);
 
-  const kindOptions = useMemo(() => globalEnums?.moduleKinds ?? [], [globalEnums]);
-
-  const stats = useMemo(() => buildModuleStats(snapshot), [snapshot]);
-
   const columnDefs = useMemo(
     () =>
       buildModuleColumns({
@@ -107,36 +101,54 @@ export function ModulesPage({ onCreateModule, onEditModule, onOpenModule }: Modu
   };
 
   return (
-    <div className="flex flex-col gap-6">
-      <PageHeader title="模块管理" description="管理模块仓库、归属应用、负责人和模块关系" />
-
-      <section className="grid gap-3 md:grid-cols-3">
-        {stats.map((item) => (
-          <KpiCard
-            key={item.id}
-            icon={item.icon}
-            label={item.label}
-            value={item.value}
-            detail={item.detail}
-            tone={item.tone}
-            toneClassName={item.iconClass}
+    <div className="flex flex-col gap-5">
+      <ListHeader
+        title="模块"
+        summary={
+          <SummaryStats
+            activeId={filters.kind}
+            items={[
+              { id: "", label: "全部", value: snapshot?.summary.total ?? "-" },
+              {
+                id: "Common",
+                label: "通用模块",
+                tone: "warning",
+                value: snapshot?.summary.common ?? "-",
+              },
+              {
+                id: "Feature",
+                label: "功能模块",
+                tone: "info",
+                value: snapshot?.summary.feature ?? "-",
+              },
+            ]}
+            onSelect={(kind) => updateFilters({ kind: kind as ModuleKind | "" })}
           />
-        ))}
-      </section>
+        }
+        actions={
+          <>
+            <Button
+              variant="outline"
+              size="icon"
+              aria-label="刷新模块列表"
+              disabled={isFetching}
+              onClick={() => {
+                void refetch();
+              }}
+            >
+              <RefreshCw className={cn(isFetching && "animate-spin")} />
+            </Button>
+            <Button disabled={!canManageModules} onClick={onCreateModule}>
+              <Plus />
+              新建模块
+            </Button>
+          </>
+        }
+      />
 
       <FilterBar
-        label="筛选"
         primary={
           <>
-            <ConsoleClearableFilterSelect
-              icon={Boxes}
-              label="类型"
-              value={filters.kind}
-              options={kindOptions}
-              clearLabel="清空类型筛选"
-              onClear={() => updateFilters({ kind: "" })}
-              onValueChange={(value) => updateFilters({ kind: value as ModuleKind })}
-            />
             <ConsoleOwnerSearchFilter
               value={filters.owner}
               searchUsers={searchFeishuUsers}
@@ -149,49 +161,35 @@ export function ModulesPage({ onCreateModule, onEditModule, onOpenModule }: Modu
             />
           </>
         }
-        actions={
-          <>
-            <Button size="sm" disabled={!canManageModules} onClick={onCreateModule}>
-              <Plus className="size-4" />
-              新建模块
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              aria-label="刷新模块列表"
-              disabled={isFetching}
-              onClick={() => {
-                void refetch();
-              }}
-            >
-              <RefreshCw className="size-4" />
-            </Button>
-          </>
-        }
       />
 
-      <DataTable
-        rows={modules}
-        columnDefs={columnDefs}
-        getRowId={({ data }) => data.id}
-        loading={isFetching}
-        rowActionSelector="[data-module-row-action]"
-        onRowClicked={(event) => {
-          if (event.data) {
-            onOpenModule(event.data.id);
-          }
-        }}
-      />
-
-      <Card className="rounded-xl bg-card py-0">
-        <TablePagination
-          page={page}
-          pageSize={pageSize}
-          total={snapshot?.pagination.total ?? 0}
-          onPageChange={setPage}
-          onPageSizeChange={setPageSize}
-        />
-      </Card>
+      {error && !snapshot ? (
+        <ErrorMessage error={error} onRetry={() => void refetch()} />
+      ) : !snapshot ? (
+        <div className="h-96 animate-pulse rounded-xl bg-muted" />
+      ) : (
+        <div className="overflow-hidden rounded-xl bg-card shadow-edge">
+          <DataTable
+            className="rounded-none shadow-none"
+            rows={modules}
+            columnDefs={columnDefs}
+            getRowId={({ data }) => data.id}
+            rowActionSelector="[data-module-row-action]"
+            onRowClicked={(event) => {
+              if (event.data) {
+                onOpenModule(event.data.id);
+              }
+            }}
+          />
+          <TablePagination
+            page={page}
+            pageSize={pageSize}
+            total={snapshot.pagination.total}
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
+          />
+        </div>
+      )}
 
       <ConfirmDialog
         isOpen={deleteTarget !== null}

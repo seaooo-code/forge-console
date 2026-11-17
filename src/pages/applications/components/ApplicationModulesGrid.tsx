@@ -47,7 +47,7 @@ function ModuleKindCell({
   return (
     <span
       className={cn(
-        "inline-flex h-6 items-center rounded border px-2 font-semibold text-xs leading-none",
+        "inline-flex h-6 items-center rounded-md px-2 font-semibold text-xs leading-none",
         applicationModuleKindClass[value],
       )}
     >

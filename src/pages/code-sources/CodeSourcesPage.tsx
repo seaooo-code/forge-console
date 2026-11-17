@@ -266,8 +266,8 @@ export function CodeSourcesPage() {
           <Card className="h-24 animate-pulse rounded-xl bg-card" />
         ) : null}
 
-        <section className="overflow-hidden rounded-xl border border-border bg-card shadow-xs">
-          <div className="flex items-center gap-2 border-border border-b px-4 py-3">
+        <section className="overflow-hidden rounded-xl bg-card shadow-edge">
+          <div className="flex items-center gap-2 px-4 py-3">
             <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
               <GitBranch className="size-4" />
             </div>
@@ -308,7 +308,7 @@ export function CodeSourcesPage() {
               </p>
             </div>
           ) : (
-            <div className="divide-y divide-border">
+            <div className="flex flex-col gap-1 p-1">
               {connections.map((connection) => (
                 <CodeSourceConnectionRow
                   key={connection.id}

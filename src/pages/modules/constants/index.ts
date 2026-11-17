@@ -37,8 +37,13 @@ export const defaultForm: ModuleFormState = {
 };
 
 export const kindClass: Record<ModuleKind, string> = {
-  Common: "border-warning/40 bg-warning/10 text-warning",
-  Feature: "border-info/30 bg-info/10 text-info",
+  Common: "bg-warning/14 text-warning-foreground dark:text-warning",
+  Feature: "bg-info-soft text-info",
+};
+
+export const kindLabels: Record<ModuleKind, string> = {
+  Common: "通用模块",
+  Feature: "功能模块",
 };
 
 export const kindOptions: Array<{ label: string; value: ModuleKind }> = [

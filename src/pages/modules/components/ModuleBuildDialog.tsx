@@ -1,6 +1,6 @@
 import { type ReactNode, useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { Modal, ModalFooter, ModalHeader } from "@/components/common/Modal";
+import { Drawer, DrawerBody, DrawerFooter, DrawerHeader } from "@/components/common/Drawer";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -61,22 +61,23 @@ export function ModuleBuildDialog({
   }
 
   return (
-    <Modal
+    <Drawer
       isOpen={isOpen}
       onClose={onClose}
       labelledBy="module-build-dialog-title"
       describedBy="module-build-dialog-description"
       className="max-w-lg"
     >
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <ModalHeader
+      <form className="flex min-h-0 flex-1 flex-col" onSubmit={handleSubmit(onSubmit)}>
+        <DrawerHeader
+          onClose={onClose}
           title="新增构建"
           titleId="module-build-dialog-title"
           descriptionId="module-build-dialog-description"
           description={`为「${module.name}」创建构建记录，产物将上传到所选环境绑定的存储配置。`}
         />
 
-        <div className="mt-4 space-y-4">
+        <DrawerBody className="space-y-5">
           <Field label="分支" inputId="module-build-branch">
             <Input
               id="module-build-branch"
@@ -108,22 +109,21 @@ export function ModuleBuildDialog({
           {!isEnvironmentsFetching && !hasEnvironmentOptions ? (
             <Alert variant="warning">暂无可用环境，请先在环境管理中创建环境。</Alert>
           ) : null}
-        </div>
+        </DrawerBody>
 
-        <ModalFooter>
+        <DrawerFooter>
           <Button variant="outline" type="button" disabled={isSubmitting} onClick={onClose}>
             取消
           </Button>
           <Button
             type="submit"
-            className="bg-primary text-primary-foreground hover:bg-primary/90"
             disabled={isSubmitting || isEnvironmentsFetching || !hasEnvironmentOptions}
           >
             {isSubmitting ? "提交中" : "提交构建"}
           </Button>
-        </ModalFooter>
+        </DrawerFooter>
       </form>
-    </Modal>
+    </Drawer>
   );
 }
 

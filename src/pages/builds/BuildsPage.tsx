@@ -11,6 +11,7 @@ import {
   DataTable,
   ErrorMessage,
   FilterBar,
+  ListHeader,
   SidePanel,
   SummaryStats,
   TablePagination,
@@ -141,43 +142,44 @@ export function BuildsPage({
     <>
       <Canvas className={cn(hasPanel && "hidden xl:block")}>
         <div className="flex flex-col gap-5">
-          <header className="flex flex-wrap items-end justify-between gap-4">
-            <div className="min-w-0">
-              <h1 className="m-0 font-semibold text-2xl text-foreground tracking-tight">构建</h1>
+          <ListHeader
+            title="构建"
+            summary={
               <SummaryStats
-                className="mt-2"
                 activeId={filters.status}
                 items={summaryItems}
                 onSelect={(status) =>
                   updateFilters({ status: status as BuildListFilters["status"] })
                 }
               />
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="icon"
-                aria-label="刷新构建列表"
-                disabled={isFetching}
-                onClick={() => {
-                  void refetch();
-                }}
-              >
-                <RefreshCw className={cn(isFetching && "animate-spin")} />
-              </Button>
-              <Button
-                type="button"
-                disabled={!canCreateBuild}
-                onClick={() => {
-                  setBuildError("");
-                  setIsCreateBuildDialogOpen(true);
-                }}
-              >
-                <Plus />
-                新建构建
-              </Button>
-            </div>
-          </header>
+            }
+            actions={
+              <>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  aria-label="刷新构建列表"
+                  disabled={isFetching}
+                  onClick={() => {
+                    void refetch();
+                  }}
+                >
+                  <RefreshCw className={cn(isFetching && "animate-spin")} />
+                </Button>
+                <Button
+                  type="button"
+                  disabled={!canCreateBuild}
+                  onClick={() => {
+                    setBuildError("");
+                    setIsCreateBuildDialogOpen(true);
+                  }}
+                >
+                  <Plus />
+                  新建构建
+                </Button>
+              </>
+            }
+          />
 
           <FilterBar
             primary={

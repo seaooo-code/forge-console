@@ -43,7 +43,7 @@ export function CreateAccessTokenForm({
       </div>
 
       <form className="mt-5 space-y-4" onSubmit={onSubmit}>
-        <div className="rounded-lg border border-border bg-muted p-3">
+        <div className="rounded-lg bg-surface-2 p-3">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
               <div className="font-medium text-foreground text-xs">明文令牌</div>
@@ -64,7 +64,7 @@ export function CreateAccessTokenForm({
           </div>
           {generatedToken ? (
             <div className="mt-3 flex flex-col gap-2">
-              <code className="min-w-0 overflow-x-auto rounded-md border border-border bg-card px-3 py-2 font-mono text-foreground text-xs">
+              <code className="min-w-0 overflow-x-auto rounded-md bg-card shadow-edge px-3 py-2 font-mono text-foreground text-xs">
                 {generatedToken}
               </code>
               <Button

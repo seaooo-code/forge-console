@@ -1,5 +1,4 @@
 import { format, isValid, parseISO } from "date-fns";
-import { Boxes, Layers3, Package } from "lucide-react";
 import type { FeishuUserSearchResult } from "@/types/feishu";
 import { updateModule } from "../api/modules-snapshot";
 import {
@@ -14,46 +13,7 @@ import type {
   ModuleFormState,
   ModuleMutationInput,
   ModuleRecord,
-  ModulesSnapshot,
 } from "../types";
-
-export function buildModuleStats(overviewSnapshot: ModulesSnapshot | undefined) {
-  const summary = overviewSnapshot?.summary ?? {
-    common: 0,
-    feature: 0,
-    total: 0,
-  };
-
-  return [
-    {
-      detail: "已接入真实仓库",
-      icon: Boxes,
-      iconClass: "bg-info/10 text-info",
-      id: "total",
-      label: "模块总数",
-      tone: "info" as const,
-      value: summary.total,
-    },
-    {
-      detail: "依赖基础",
-      icon: Layers3,
-      iconClass: "bg-warning/10 text-warning",
-      id: "common",
-      label: "通用模块",
-      tone: "warning" as const,
-      value: summary.common,
-    },
-    {
-      detail: "业务模块",
-      icon: Package,
-      iconClass: "bg-info/10 text-info",
-      id: "feature",
-      label: "功能模块",
-      tone: "info" as const,
-      value: summary.feature,
-    },
-  ];
-}
 
 export function formatCommonModule(module: ModuleRecord) {
   if (module.kind === "Common") {

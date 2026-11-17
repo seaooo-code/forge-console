@@ -41,7 +41,7 @@ export function BuildAdapterParametersSection({
       />
       <div className="space-y-3 px-5 py-4">
         {fields.length === 0 ? (
-          <div className="flex items-center gap-2 rounded-md border border-border border-dashed px-3 py-4 text-muted-foreground text-sm">
+          <div className="flex items-center gap-2 rounded-lg bg-surface-2 px-3 py-4 text-muted-foreground text-sm">
             <SlidersHorizontal className="size-4" />
             暂无参数
           </div>

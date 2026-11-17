@@ -1,8 +1,7 @@
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
-
+import { Drawer, DrawerBody, DrawerFooter, DrawerHeader } from "@/components/common/Drawer";
 import { Field } from "@/components/common/Field";
-import { Modal, ModalFooter, ModalHeader } from "@/components/common/Modal";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,15 +50,16 @@ export function GitLabConnectionDialog({
   };
 
   return (
-    <Modal
+    <Drawer
       isOpen={isOpen}
       onClose={handleClose}
       labelledBy="gitlab-connection-dialog-title"
       describedBy="gitlab-connection-dialog-description"
       className="max-w-lg"
     >
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <ModalHeader
+      <form className="flex min-h-0 flex-1 flex-col" onSubmit={handleSubmit(onSubmit)}>
+        <DrawerHeader
+          onClose={onClose}
           title={isEdit ? "编辑 GitLab 连接" : "新建 GitLab 连接"}
           description={
             isEdit
@@ -70,7 +70,7 @@ export function GitLabConnectionDialog({
           descriptionId="gitlab-connection-dialog-description"
         />
 
-        <div className="mt-4 space-y-4">
+        <DrawerBody className="space-y-5">
           <Field
             label="名称"
             htmlFor="gitlab-connection-name"
@@ -128,17 +128,17 @@ export function GitLabConnectionDialog({
             />
           </Field>
           {submitError ? <Alert variant="danger">{submitError}</Alert> : null}
-        </div>
+        </DrawerBody>
 
-        <ModalFooter>
+        <DrawerFooter>
           <Button type="button" variant="outline" disabled={isSubmitting} onClick={handleClose}>
             取消
           </Button>
           <Button type="submit" disabled={isSubmitting}>
             {isSubmitting ? "校验并保存中" : "保存"}
           </Button>
-        </ModalFooter>
+        </DrawerFooter>
       </form>
-    </Modal>
+    </Drawer>
   );
 }

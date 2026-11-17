@@ -1,6 +1,6 @@
 import { type ReactNode, useEffect } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
-import { Modal, ModalFooter, ModalHeader } from "@/components/common/Modal";
+import { Drawer, DrawerBody, DrawerFooter, DrawerHeader } from "@/components/common/Drawer";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -77,7 +77,7 @@ export function BuildVariableDialog({
   }
 
   return (
-    <Modal
+    <Drawer
       isOpen={isOpen}
       onClose={isSubmitting ? undefined : onClose}
       labelledBy="build-variable-dialog-title"
@@ -85,19 +85,21 @@ export function BuildVariableDialog({
       className="max-w-lg"
     >
       <form
+        className="flex min-h-0 flex-1 flex-col"
         onSubmit={handleSubmit(async (form) => {
           const keepSecret = isEditingSecret && form.isSecret && form.value === "";
           await onSubmit(keepSecret ? null : { ...form, key: form.key.trim() });
         })}
       >
-        <ModalHeader
+        <DrawerHeader
+          onClose={onClose}
           title={isEditMode ? "编辑构建变量" : "新增构建变量"}
           titleId="build-variable-dialog-title"
           descriptionId="build-variable-dialog-description"
           description="普通变量通过 --build-arg 传入，密钥变量通过 BuildKit --secret 传入且只写不读。同名变量的环境专属值优先于全部环境。"
         />
 
-        <div className="mt-4 space-y-4">
+        <DrawerBody className="space-y-5">
           <Field label="Key" error={errors.key?.message}>
             <Input
               readOnly={isEditMode}
@@ -202,18 +204,18 @@ export function BuildVariableDialog({
           </Field>
 
           {submitError ? <Alert variant="danger">{submitError}</Alert> : null}
-        </div>
+        </DrawerBody>
 
-        <ModalFooter>
+        <DrawerFooter>
           <Button type="button" variant="outline" disabled={isSubmitting} onClick={onClose}>
             取消
           </Button>
           <Button type="submit" disabled={isSubmitting}>
             {isSubmitting ? "保存中" : "保存"}
           </Button>
-        </ModalFooter>
+        </DrawerFooter>
       </form>
-    </Modal>
+    </Drawer>
   );
 }
 

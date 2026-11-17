@@ -135,8 +135,8 @@ export function AccessTokensPage() {
         <AccessTokensHeader />
 
         <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_23rem]">
-          <section className="overflow-hidden rounded-xl border border-border bg-card shadow-xs">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-border border-b px-4 py-3">
+          <section className="overflow-hidden rounded-xl bg-card shadow-edge">
+            <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
               <div className="flex min-w-0 items-center gap-2">
                 <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
                   <KeyRound className="size-4" />
@@ -161,12 +161,12 @@ export function AccessTokensPage() {
             </div>
 
             {message ? (
-              <div className="border-border border-b px-4 py-3">
+              <div className="px-4 py-3">
                 <Alert variant="info">{message}</Alert>
               </div>
             ) : null}
             {errorMessage ? (
-              <div className="border-border border-b px-4 py-3">
+              <div className="px-4 py-3">
                 <Alert variant="danger">{errorMessage}</Alert>
               </div>
             ) : null}
@@ -179,7 +179,7 @@ export function AccessTokensPage() {
                 <div className="mt-3 font-medium text-foreground text-sm">暂无产物访问令牌</div>
               </div>
             ) : (
-              <div className="divide-y divide-border">
+              <div className="flex flex-col gap-1 p-1">
                 {snapshot.tokens.map((token) => (
                   <AccessTokenRow
                     key={token.id}
@@ -260,7 +260,7 @@ export function AccessTokensPage() {
         }}
       >
         {createdTokenDialog ? (
-          <code className="block overflow-x-auto rounded-md border border-border bg-muted px-3 py-2 font-mono text-foreground text-xs">
+          <code className="block overflow-x-auto rounded-md bg-surface-2 px-3 py-2 font-mono text-foreground text-xs">
             {createdTokenDialog.plainToken}
           </code>
         ) : null}

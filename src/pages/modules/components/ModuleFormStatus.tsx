@@ -8,7 +8,7 @@ export function ModuleFormLoading({ onBack }: { onBack: () => void }) {
       <Button
         variant="ghost"
         type="button"
-        className="-ml-2 h-8 gap-2 px-2 text-muted-foreground hover:bg-muted hover:text-foreground"
+        className="-ml-2 h-8 gap-2 px-2 text-muted-foreground hover:bg-hover hover:text-foreground"
         onClick={onBack}
       >
         <ArrowLeft className="size-4" />
@@ -31,7 +31,7 @@ export function ModuleFormNotFound({ onBack }: { onBack: () => void }) {
       <Button
         variant="ghost"
         type="button"
-        className="-ml-2 h-8 gap-2 px-2 text-muted-foreground hover:bg-muted hover:text-foreground"
+        className="-ml-2 h-8 gap-2 px-2 text-muted-foreground hover:bg-hover hover:text-foreground"
         onClick={onBack}
       >
         <ArrowLeft className="size-4" />
@@ -54,18 +54,18 @@ export function ModuleCodeSourceRequired({
 }) {
   return (
     <>
-      <div className="border-border border-b bg-card px-6 py-5">
+      <div className="bg-card px-6 py-5">
         <Button
           variant="ghost"
           type="button"
-          className="-ml-2 mb-3 h-8 gap-2 px-2 text-muted-foreground hover:bg-muted hover:text-foreground"
+          className="-ml-2 mb-3 h-8 gap-2 px-2 text-muted-foreground hover:bg-hover hover:text-foreground"
           onClick={onBack}
         >
           <ArrowLeft className="size-4" />
           返回模块管理
         </Button>
         <div className="flex items-center gap-3">
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             <PackagePlus className="size-5" />
           </div>
           <div>
@@ -78,7 +78,7 @@ export function ModuleCodeSourceRequired({
       </div>
 
       <div className="px-6 py-5">
-        <Card className="rounded-lg border-warning/40 bg-warning/10 p-5 text-warning">
+        <Card className="rounded-lg bg-warning/14 p-5 text-warning">
           <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div className="min-w-0">
               <div className="flex items-center gap-2 font-semibold text-sm">

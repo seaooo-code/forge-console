@@ -81,20 +81,20 @@ export function ApplicationDetailPage({
           <div className="flex flex-wrap items-center gap-2">
             <span
               className={cn(
-                "inline-flex h-6 items-center rounded border px-2 font-medium text-xs leading-none",
+                "inline-flex h-6 items-center rounded-md px-2 font-medium text-xs leading-none",
                 applicationStatusClass[application.status],
               )}
             >
               {application.status}
             </span>
-            <Badge variant="outline" className="border-border font-mono text-muted-foreground">
+            <Badge variant="outline" className="font-mono text-muted-foreground">
               {application.slug}
             </Badge>
           </div>
         }
         title={
           <span className="flex items-center gap-3">
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-xs">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
               <Smartphone className="size-5" />
             </span>
             <span className="font-semibold text-2xl text-foreground tracking-tight">

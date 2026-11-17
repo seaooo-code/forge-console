@@ -13,7 +13,7 @@ export function Field({ children, className, label }: FieldProps) {
 
 export function CheckOption({ checked, label, onCheckedChange }: CheckOptionProps) {
   return (
-    <div className="flex h-9 items-center gap-2 rounded-md border border-border bg-card px-3 text-foreground text-sm">
+    <div className="flex h-9 items-center gap-2 rounded-md bg-card shadow-edge px-3 text-foreground text-sm">
       <Checkbox checked={checked} onCheckedChange={(value) => onCheckedChange?.(value === true)} />
       <span>{label}</span>
     </div>

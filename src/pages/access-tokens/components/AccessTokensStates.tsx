@@ -16,13 +16,13 @@ export function AccessTokensPageError({
   return (
     <div className="flex flex-col gap-6">
       <AccessTokensHeader />
-      <Card className="rounded-xl border-destructive/30 bg-destructive/10 p-5 text-destructive">
+      <Card className="rounded-xl bg-destructive-soft p-5 text-destructive">
         <div className="font-medium text-sm">访问令牌接口不可用</div>
         <div className="mt-2 text-sm">{message}</div>
         <Button
           type="button"
           variant="outline"
-          className="mt-4 border-destructive/30 bg-card text-destructive hover:bg-destructive/10"
+          className="mt-4 text-destructive hover:bg-destructive-soft"
           onClick={onRetry}
         >
           重试

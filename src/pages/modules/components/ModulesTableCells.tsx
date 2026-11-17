@@ -82,7 +82,7 @@ function ModuleCell({ data }: ICellRendererParams<ModuleRecord>) {
     <div className="flex h-full items-center gap-3">
       <div
         className={cn(
-          "flex size-8 shrink-0 items-center justify-center rounded-md shadow-sm",
+          "flex size-8 shrink-0 items-center justify-center rounded-md",
           data.kind === "Common" ? "bg-warning/10 text-warning" : "bg-info/10 text-info",
         )}
       >
@@ -106,7 +106,7 @@ function KindCell({ value }: ICellRendererParams<ModuleRecord, ModuleRecord["kin
   return (
     <span
       className={cn(
-        "inline-flex h-6 items-center rounded border px-2 font-semibold text-xs leading-none",
+        "inline-flex h-6 items-center rounded-md px-2 font-semibold text-xs leading-none",
         kindClass[value],
       )}
     >

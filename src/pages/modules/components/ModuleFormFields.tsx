@@ -185,7 +185,7 @@ export function ModuleFormFields({
         </div>
       </section>
 
-      <section className="border-border border-t pt-5">
+      <section className="pt-6">
         <div className="mb-3 flex items-center gap-2">
           <div className="h-4 w-1 rounded-full bg-success" />
           <h2 className="font-semibold text-foreground text-sm">仓库信息</h2>

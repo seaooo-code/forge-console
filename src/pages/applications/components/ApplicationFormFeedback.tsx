@@ -23,7 +23,7 @@ export function ApplicationFormOptionsError({ onBack }: ApplicationFormFeedbackP
   return (
     <div className="flex flex-col gap-6">
       <PageHeader onBack={onBack} backLabel="返回应用管理" title="应用选项加载失败" />
-      <Alert variant="danger" className="border-destructive/30 bg-destructive/10">
+      <Alert variant="danger" className="bg-destructive-soft">
         应用选项加载失败，请刷新后重试
       </Alert>
     </div>

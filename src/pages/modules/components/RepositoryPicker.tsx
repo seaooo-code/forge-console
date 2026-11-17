@@ -54,7 +54,7 @@ export function RepositoryPicker({
 
   if (value) {
     return (
-      <div className="flex items-center gap-3 rounded-md border border-border bg-muted px-3 py-2">
+      <div className="flex items-center gap-3 rounded-md bg-surface-2 px-3 py-2">
         <GitFork className="size-4 shrink-0 text-muted-foreground" />
         <div className="min-w-0 flex-1">
           <div className="truncate font-medium text-foreground text-sm">{value.fullName}</div>
@@ -108,7 +108,7 @@ export function RepositoryPicker({
         />
       </div>
       {shouldSearch ? (
-        <div className="absolute z-20 mt-1 max-h-72 w-full overflow-auto rounded-md border border-border bg-card py-1 shadow-lg">
+        <div className="absolute z-20 mt-1 max-h-72 w-full overflow-auto rounded-xl bg-popover p-1 shadow-raise">
           {isFetching ? (
             <div className="flex h-10 items-center gap-2 px-3 text-muted-foreground text-sm">
               <LoaderCircle className="size-4 animate-spin" />
@@ -128,7 +128,7 @@ export function RepositoryPicker({
               key={repository.externalRepositoryId}
               type="button"
               variant="ghost"
-              className="h-auto w-full justify-start rounded-none px-3 py-2 text-left font-normal hover:bg-muted"
+              className="h-auto w-full justify-start rounded-none px-3 py-2 text-left font-normal hover:bg-hover"
               onMouseDown={(event) => event.preventDefault()}
               onClick={() => handleRepositorySelect(repository)}
             >

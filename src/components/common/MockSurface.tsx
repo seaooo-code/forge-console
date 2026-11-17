@@ -35,7 +35,7 @@ export function MockCard({ children, className, ...props }: React.ComponentProps
 function MockOverlay() {
   return (
     <div className="pointer-events-none absolute inset-0 z-20 rounded-[inherit] bg-background/25">
-      <span className="absolute top-2 right-2 rounded border border-info/30 bg-card/85 px-2 py-0.5 font-mono font-semibold text-[10px] text-info uppercase tracking-wide shadow-sm">
+      <span className="absolute top-2 right-2 rounded border border-info/30 bg-card/85 px-2 py-0.5 font-mono font-semibold text-[10px] text-info uppercase tracking-wide">
         mock
       </span>
     </div>

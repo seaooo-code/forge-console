@@ -35,9 +35,9 @@ export const emptyApplicationListFilters: ApplicationListFilters = {
 };
 
 export const applicationStatusClass: Record<ApplicationStatus, string> = {
-  已下线: "border-border bg-muted text-muted-foreground",
-  维护中: "border-warning/40 bg-warning/10 text-warning",
-  运行中: "border-success/30 bg-success/10 text-success",
+  已下线: "bg-muted text-muted-foreground",
+  维护中: "bg-warning/14 text-warning",
+  运行中: "bg-success/12 text-success",
 };
 
 export const applicationMetricToneClass: Record<ApplicationDetailMetric["tone"], string> = {
@@ -52,9 +52,9 @@ export const applicationEnvironmentStatusClass: Record<
   ApplicationEnvironmentRecord["status"],
   string
 > = {
-  健康: "border-success/30 bg-success/10 text-success",
-  灰度中: "border-warning/40 bg-warning/10 text-warning",
-  维护中: "border-border bg-muted text-muted-foreground",
+  健康: "bg-success/12 text-success",
+  灰度中: "bg-warning/14 text-warning",
+  维护中: "bg-muted text-muted-foreground",
 };
 
 export const applicationEnvironmentStatusLabelByCode: Record<
@@ -67,6 +67,6 @@ export const applicationEnvironmentStatusLabelByCode: Record<
 };
 
 export const applicationModuleKindClass: Record<ApplicationModuleRecord["kind"], string> = {
-  Common: "border-warning/40 bg-warning/10 text-warning",
-  Feature: "border-info/30 bg-info/10 text-info",
+  Common: "bg-warning/14 text-warning",
+  Feature: "bg-info-soft text-info",
 };

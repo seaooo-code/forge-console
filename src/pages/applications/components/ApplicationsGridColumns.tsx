@@ -14,7 +14,7 @@ export function AppNameCell({ data }: ICellRendererParams<HostApplication>) {
 
   return (
     <div className="flex h-full items-center gap-3">
-      <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground shadow-xs">
+      <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground">
         <Smartphone className="size-4" />
       </div>
       <div className="min-w-0 leading-tight">
@@ -36,7 +36,7 @@ export function StatusCell({
     <div className="flex h-full items-center">
       <span
         className={cn(
-          "inline-flex h-6 items-center rounded border px-2 font-medium text-xs leading-none",
+          "inline-flex h-6 items-center rounded-md px-2 font-medium text-xs leading-none",
           applicationStatusClass[value],
         )}
       >

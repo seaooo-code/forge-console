@@ -1,9 +1,8 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Box, LoaderCircle, PackagePlus } from "lucide-react";
 import { useWatch } from "react-hook-form";
+import { FormActions, PageHeader } from "@/components/layout";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { applicationsRootQueryKey } from "@/pages/applications";
 import type { FeishuUserSearchResult } from "@/types/feishu";
 
@@ -196,105 +195,59 @@ export function ModuleCreatePage({
   };
 
   return (
-    <form onSubmit={handleSubmit(handleFormSubmit)}>
-      <div className="border-border border-b bg-card px-6 py-5">
-        <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-          <div>
-            <Button
-              variant="ghost"
-              type="button"
-              className="-ml-2 mb-3 h-8 gap-2 px-2 text-muted-foreground hover:bg-muted hover:text-foreground"
-              onClick={onBack}
-            >
-              <ArrowLeft className="size-4" />
-              返回模块管理
-            </Button>
-            <div className="flex items-center gap-3">
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
-                <PackagePlus className="size-5" />
-              </div>
-              <div>
-                <h1 className="font-semibold text-2xl text-foreground tracking-tight">{title}</h1>
-                <p className="mt-2 text-muted-foreground text-sm">{description}</p>
-              </div>
-            </div>
-          </div>
+    <form className="flex flex-col gap-5" onSubmit={handleSubmit(handleFormSubmit)}>
+      <PageHeader backLabel="模块" onBack={onBack} title={title} description={description} />
 
-          <div className="flex shrink-0 items-center gap-2">
-            <Button variant="outline" type="button" onClick={onBack}>
-              取消
-            </Button>
-            <Button
-              type="submit"
-              className="bg-primary hover:bg-primary/90"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? <LoaderCircle className="size-4 animate-spin" /> : null}
-              {isEditMode ? "保存修改" : "创建模块"}
-            </Button>
-          </div>
-        </div>
-        {formError ? (
-          <Alert variant="danger" className="mt-4">
-            {formError}
-          </Alert>
-        ) : null}
-      </div>
+      {formError ? <Alert variant="danger">{formError}</Alert> : null}
 
-      <div className="px-6 py-5">
-        <Card className="gap-0 rounded-lg py-0">
-          <SectionHeader
-            title="模块配置"
-            description="模块唯一标识、关联应用、代码仓库与构建方式"
-          />
-          <ModuleFormFields
-            applicationOptions={applicationOptions}
+      <section className="rounded-xl bg-card shadow-edge">
+        <ModuleFormFields
+          applicationOptions={applicationOptions}
+          clearFormError={clearFormError}
+          commonModuleOptions={commonModuleOptions}
+          connections={connections}
+          control={control}
+          isEditMode={isEditMode}
+          moduleIdField={moduleIdField}
+          moduleNameField={moduleNameField}
+          onApplicationChange={handleApplicationChange}
+          onConnectionChange={handleConnectionChange}
+          onKindChange={handleKindChange}
+          onOwnerChange={handleOwnerChange}
+          onOwnerSelect={handleOwnerSelect}
+          onRepositoryChange={handleRepositoryChange}
+          selectedConnection={selectedConnection}
+          selectedKind={selectedKind}
+        />
+        <div className="px-4 pb-5">
+          <ModuleBuildConfigFields
+            adapters={adaptersQuery.data}
+            adaptersError={adaptersQuery.error}
             clearFormError={clearFormError}
-            commonModuleOptions={commonModuleOptions}
-            connections={connections}
             control={control}
-            isEditMode={isEditMode}
-            moduleIdField={moduleIdField}
-            moduleNameField={moduleNameField}
-            onApplicationChange={handleApplicationChange}
-            onConnectionChange={handleConnectionChange}
-            onKindChange={handleKindChange}
-            onOwnerChange={handleOwnerChange}
-            onOwnerSelect={handleOwnerSelect}
-            onRepositoryChange={handleRepositoryChange}
-            selectedConnection={selectedConnection}
-            selectedKind={selectedKind}
+            currentAdapterId={moduleRecord?.buildConfig.buildAdapterId ?? ""}
+            currentAdapterName={moduleRecord?.buildConfig.buildAdapterName ?? ""}
+            environmentOptions={environmentOptions}
+            isAdaptersLoading={adaptersQuery.isPending}
+            moduleId={isEditMode ? moduleRecord?.id : undefined}
+            register={register}
           />
-          <div className="px-4 pb-5">
-            <ModuleBuildConfigFields
-              adapters={adaptersQuery.data}
-              adaptersError={adaptersQuery.error}
-              clearFormError={clearFormError}
-              control={control}
-              currentAdapterId={moduleRecord?.buildConfig.buildAdapterId ?? ""}
-              currentAdapterName={moduleRecord?.buildConfig.buildAdapterName ?? ""}
-              environmentOptions={environmentOptions}
-              isAdaptersLoading={adaptersQuery.isPending}
-              moduleId={isEditMode ? moduleRecord?.id : undefined}
-              register={register}
-            />
-          </div>
-        </Card>
-      </div>
-    </form>
-  );
-}
+        </div>
+      </section>
 
-function SectionHeader({ description, title }: { description: string; title: string }) {
-  return (
-    <div className="flex h-14 items-center gap-3 border-border border-b px-4">
-      <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
-        <Box className="size-4" />
-      </div>
-      <div className="min-w-0">
-        <div className="font-semibold text-foreground text-sm">{title}</div>
-        <div className="truncate text-muted-foreground text-xs">{description}</div>
-      </div>
-    </div>
+      <FormActions
+        className="mt-0"
+        secondary={
+          <Button variant="outline" type="button" onClick={onBack}>
+            取消
+          </Button>
+        }
+        primary={
+          <Button type="submit" loading={isSubmitting}>
+            {isEditMode ? "保存修改" : "创建模块"}
+          </Button>
+        }
+      />
+    </form>
   );
 }

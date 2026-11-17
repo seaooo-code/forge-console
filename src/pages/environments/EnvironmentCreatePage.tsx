@@ -134,20 +134,20 @@ export function EnvironmentCreatePage({
 
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)}>
-      <div className="border-border border-b bg-card px-6 py-5">
+      <div className="bg-card px-6 py-5">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div>
             <Button
               variant="ghost"
               type="button"
-              className="-ml-2 mb-3 h-8 gap-2 px-2 text-muted-foreground hover:bg-muted hover:text-foreground"
+              className="-ml-2 mb-3 h-8 gap-2 px-2 text-muted-foreground hover:bg-hover hover:text-foreground"
               onClick={onBack}
             >
               <ArrowLeft className="size-4" />
               返回环境管理
             </Button>
             <div className="flex items-center gap-3">
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                 <Layers3 className="size-5" />
               </div>
               <div>
@@ -268,11 +268,11 @@ async function updateExistingEnvironment(
 function EnvironmentFormLoading({ onBack }: { onBack: () => void }) {
   return (
     <>
-      <div className="border-border border-b bg-card px-6 py-5">
+      <div className="bg-card px-6 py-5">
         <Button
           variant="ghost"
           type="button"
-          className="-ml-2 mb-3 h-8 gap-2 px-2 text-muted-foreground hover:bg-muted hover:text-foreground"
+          className="-ml-2 mb-3 h-8 gap-2 px-2 text-muted-foreground hover:bg-hover hover:text-foreground"
           onClick={onBack}
         >
           <ArrowLeft className="size-4" />
@@ -290,11 +290,11 @@ function EnvironmentFormLoading({ onBack }: { onBack: () => void }) {
 
 function EnvironmentFormNotFound({ onBack }: { onBack: () => void }) {
   return (
-    <div className="border-border border-b bg-card px-6 py-5">
+    <div className="bg-card px-6 py-5">
       <Button
         variant="ghost"
         type="button"
-        className="-ml-2 mb-3 h-8 gap-2 px-2 text-muted-foreground hover:bg-muted hover:text-foreground"
+        className="-ml-2 mb-3 h-8 gap-2 px-2 text-muted-foreground hover:bg-hover hover:text-foreground"
         onClick={onBack}
       >
         <ArrowLeft className="size-4" />

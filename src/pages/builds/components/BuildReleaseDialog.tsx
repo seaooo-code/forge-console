@@ -214,7 +214,7 @@ export function BuildReleaseDialog({
                       type="button"
                       variant="outline"
                       size="sm"
-                      className="h-8 border-border bg-card text-foreground"
+                      className="h-8 text-foreground"
                       onClick={() =>
                         setValue("expiresAt", targetedGrayExpiresAt(days), {
                           shouldDirty: true,

@@ -52,13 +52,13 @@ export function TemplateEditor({
     <div className="space-y-2">
       <div
         className={cn(
-          "flex overflow-hidden rounded-md border border-input bg-card shadow-xs",
+          "flex overflow-hidden rounded-md border border-input bg-card",
           error && "border-destructive/60",
         )}
       >
         <div
           aria-hidden="true"
-          className="shrink-0 select-none border-border border-r bg-muted px-2 py-2 text-right font-mono text-muted-foreground text-xs leading-5"
+          className="shrink-0 select-none bg-surface-2 px-2 py-2 text-right font-mono text-muted-foreground text-xs leading-5"
         >
           {Array.from({ length: lineCount }, (_, index) => {
             const line = index + 1;

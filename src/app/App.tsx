@@ -372,6 +372,7 @@ function ModuleDetailRoute() {
     <ModuleDetailPage
       moduleId={moduleId}
       onBack={() => navigate("/modules")}
+      onOpenBuild={(buildId: string) => navigate(`/builds/${encodeURIComponent(buildId)}`)}
       onOpenBuildAdapter={(adapterId: string) =>
         navigate(`/build-adapters/${encodeURIComponent(adapterId)}`)
       }

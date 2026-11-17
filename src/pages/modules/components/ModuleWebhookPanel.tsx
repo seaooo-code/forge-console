@@ -26,7 +26,7 @@ export function ModuleWebhookPanel({ module }: { module: ModuleRecord }) {
 
   return (
     <Card className="gap-0 rounded-lg py-0">
-      <div className="flex h-12 items-center gap-2 border-border border-b px-4">
+      <div className="flex h-12 items-center gap-2 px-4">
         <Webhook className="size-4 text-muted-foreground" />
         <div>
           <div className="font-semibold text-foreground text-sm">Webhook 配置</div>
@@ -35,7 +35,7 @@ export function ModuleWebhookPanel({ module }: { module: ModuleRecord }) {
       </div>
       <div className="space-y-3 p-4 text-sm">
         {isGitHub ? (
-          <div className="flex items-start gap-3 rounded-md border border-success/30 bg-success/10 px-3 py-3">
+          <div className="flex items-start gap-3 rounded-md bg-success/12 px-3 py-3">
             <CodeSourceProviderIcon provider="github" className="mt-0.5" />
             <div>
               <div className="font-medium text-foreground">已由 GitHub App 统一接收</div>
@@ -112,7 +112,7 @@ function CopyableValue({
   return (
     <div>
       <div className="mb-1 font-medium text-muted-foreground text-xs">{label}</div>
-      <div className="flex items-center gap-1 rounded-md border border-border bg-muted px-3 py-1.5">
+      <div className="flex items-center gap-1 rounded-md bg-surface-2 px-3 py-1.5">
         <code className="min-w-0 flex-1 break-all font-mono text-foreground text-xs">
           {isVisible ? value : "•".repeat(Math.min(value.length, 24))}
         </code>

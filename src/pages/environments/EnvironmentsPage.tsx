@@ -83,7 +83,7 @@ function EnvironmentCard({
   return (
     <Card
       className={cn(
-        "gap-3 rounded-xl border-t-4 px-3.5 py-3.5 shadow-xs",
+        "gap-3 rounded-xl border-t-4 px-3.5 py-3.5",
         environmentToneClass[environment.tone],
       )}
     >
@@ -114,7 +114,7 @@ function EnvironmentCard({
         </Button>
       </div>
 
-      <div className="grid gap-1.5 border-border border-t pt-2 text-xs">
+      <div className="grid gap-1.5 pt-2 text-xs">
         <InfoMetric icon={Clock3} label="更新" value={environment.updatedAt} />
         <InfoMetric icon={Database} label="存储配置" value={environment.storageConfigurationName} />
       </div>
@@ -154,7 +154,7 @@ function CreateEnvironmentCard({
   return (
     <Card
       className={cn(
-        "flex min-h-40 items-center justify-center rounded-xl border-dashed border-border bg-card/70 px-3.5 py-3.5 text-center shadow-xs",
+        "flex min-h-40 items-center justify-center rounded-xl border-dashed border-border bg-card/70 px-3.5 py-3.5 text-center",
         canManageEnvironments ? "cursor-pointer hover:border-primary/45 hover:bg-card" : "",
       )}
       role="button"
