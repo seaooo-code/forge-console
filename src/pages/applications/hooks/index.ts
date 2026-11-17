@@ -120,9 +120,6 @@ export function useApplicationsListState() {
   };
 }
 
-export type ApplicationsListStats = ReturnType<typeof useApplicationsListState>["stats"];
-export type ApplicationsListStatItem = ApplicationsListStats[number];
-
 export function useApplicationDetail(applicationSlug: string) {
   const queryClient = useQueryClient();
   const { data: snapshot, isFetching } = useQuery({

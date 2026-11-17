@@ -84,9 +84,7 @@ function FieldDescriptionTable({
 }) {
   return (
     <div className="overflow-hidden rounded-lg bg-card shadow-edge">
-      <div className="flex h-10 items-center px-3 font-medium text-foreground text-sm">
-        {title}
-      </div>
+      <div className="flex h-10 items-center px-3 font-medium text-foreground text-sm">{title}</div>
       {fields.length ? (
         <div className="overflow-x-auto">
           <table className="w-full min-w-180 table-fixed border-collapse text-left text-sm">
