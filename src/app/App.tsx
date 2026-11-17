@@ -68,10 +68,6 @@ const ModuleDetailPage = lazy(async () => ({
   default: (await import("@/pages/modules")).ModuleDetailPage,
 }));
 
-const StorageCreatePage = lazy(async () => ({
-  default: (await import("@/pages/storage")).StorageCreatePage,
-}));
-
 const StoragePage = lazy(async () => ({
   default: (await import("@/pages/storage")).StoragePage,
 }));
@@ -176,8 +172,8 @@ function ConsoleRoutes() {
         <Route path="build-adapters/new" element={<BuildAdapterCreateRoute />} />
         <Route path="build-adapters/:adapterId" element={<BuildAdapterEditRoute />} />
         <Route path="storage" element={<StorageRoute />} />
-        <Route path="storage/new" element={<StorageCreateRoute />} />
-        <Route path="storage/:storageId/edit" element={<StorageEditRoute />} />
+        <Route path="storage/new" element={<StorageRoute />} />
+        <Route path="storage/:storageId/edit" element={<StorageRoute />} />
         <Route path="environments" element={<EnvironmentsRoute />} />
         <Route path="environments/new" element={<EnvironmentCreateRoute />} />
         <Route path="environments/:environmentId/edit" element={<EnvironmentEditRoute />} />
@@ -489,39 +485,22 @@ function EnvironmentEditRoute() {
 
 function StorageRoute() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { storageId } = useParams<{ storageId: string }>();
+  const drawer = storageId
+    ? { mode: "edit" as const, storageId }
+    : location.pathname === "/storage/new"
+      ? { mode: "create" as const }
+      : undefined;
 
   return (
     <StoragePage
+      drawer={drawer}
+      onCloseDrawer={() => navigate("/storage")}
       onCreateStorage={() => navigate("/storage/new")}
-      onEditStorage={(storageId: string) =>
-        navigate(`/storage/${encodeURIComponent(storageId)}/edit`)
+      onEditStorage={(nextStorageId: string) =>
+        navigate(`/storage/${encodeURIComponent(nextStorageId)}/edit`)
       }
-    />
-  );
-}
-
-function StorageCreateRoute() {
-  const navigate = useNavigate();
-
-  return (
-    <StorageCreatePage onBack={() => navigate("/storage")} onSaved={() => navigate("/storage")} />
-  );
-}
-
-function StorageEditRoute() {
-  const navigate = useNavigate();
-  const { storageId } = useParams<{ storageId: string }>();
-
-  if (!storageId) {
-    return <Navigate to="/storage" replace />;
-  }
-
-  return (
-    <StorageCreatePage
-      mode="edit"
-      onBack={() => navigate("/storage")}
-      onSaved={() => navigate("/storage")}
-      storageId={storageId}
     />
   );
 }

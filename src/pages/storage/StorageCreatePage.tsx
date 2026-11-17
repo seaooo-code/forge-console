@@ -1,8 +1,8 @@
 import { skipToken, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, CloudUpload, LoaderCircle } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 
+import { Drawer, DrawerBody, DrawerFooter, DrawerHeader } from "@/components/common/Drawer";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import type { FeishuUserSearchResult } from "@/types/feishu";
@@ -11,7 +11,6 @@ import { storageEditQueryKey, storageSnapshotQueryKey } from "./api/storage-quer
 import { createStorageConfiguration, fetchStorageDetailSnapshot } from "./api/storage-snapshot";
 import { StorageBasicInfoSection } from "./components/StorageBasicInfoSection";
 import { StorageConnectionSection } from "./components/StorageConnectionSection";
-import { StorageFormLoading, StorageFormNotFound } from "./components/StorageFormStates";
 import { useStorageConnectionTest } from "./hooks";
 import type { StorageFormState } from "./types";
 import {
@@ -83,12 +82,21 @@ export function StorageCreatePage({
     resetTestState();
   }, [initialForm, reset, resetTestState]);
 
-  if (isEditMode && isFetching && !storageConfig) {
-    return <StorageFormLoading onBack={onBack} />;
-  }
-
-  if (isEditMode && !isFetching && !storageConfig) {
-    return <StorageFormNotFound onBack={onBack} />;
+  if (isEditMode && !storageConfig) {
+    return (
+      <>
+        <DrawerHeader title="编辑存储配置" onClose={onBack} />
+        <DrawerBody>
+          {isFetching ? (
+            <div className="h-80 animate-pulse rounded-xl bg-muted" />
+          ) : (
+            <p className="m-0 text-muted-foreground text-sm">
+              没有找到这份存储配置，它可能已被删除或路径无效。
+            </p>
+          )}
+        </DrawerBody>
+      </>
+    );
   }
 
   const title = isEditMode ? "编辑存储配置" : "新增存储配置";
@@ -158,47 +166,9 @@ export function StorageCreatePage({
       : "测试配置";
 
   return (
-    <form onSubmit={handleSubmit(handleFormSubmit)}>
-      <div className="bg-card px-6 py-5">
-        <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-          <div>
-            <Button
-              variant="ghost"
-              type="button"
-              className="-ml-2 mb-3 h-8 gap-2 px-2 text-muted-foreground hover:bg-hover hover:text-foreground"
-              onClick={onBack}
-            >
-              <ArrowLeft className="size-4" />
-              返回存储管理
-            </Button>
-            <div className="flex items-center gap-3">
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                <CloudUpload className="size-5" />
-              </div>
-              <div>
-                <h1 className="font-semibold text-2xl text-foreground tracking-tight">{title}</h1>
-                <p className="mt-2 text-muted-foreground text-sm">{description}</p>
-              </div>
-            </div>
-          </div>
-          <div className="flex shrink-0 items-center gap-2">
-            <Button variant="outline" type="button" onClick={onBack}>
-              取消
-            </Button>
-            <Button
-              type={isCurrentTestPassed ? "submit" : "button"}
-              className="bg-primary hover:bg-primary/90"
-              disabled={isSubmitting || isTesting}
-              onClick={isCurrentTestPassed ? undefined : () => void handleTestConfiguration()}
-            >
-              {isSubmitting || isTesting ? <LoaderCircle className="size-4 animate-spin" /> : null}
-              {primaryActionLabel}
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      <div className="space-y-4 px-6 py-5">
+    <form className="flex min-h-0 flex-1 flex-col" onSubmit={handleSubmit(handleFormSubmit)}>
+      <DrawerHeader title={title} description={description} onClose={onBack} />
+      <DrawerBody className="space-y-5">
         {formError ? <Alert variant="danger">{formError}</Alert> : null}
         {isCurrentTestPassed ? <Alert variant="success">当前配置测试通过，可以保存。</Alert> : null}
         {isTestStale ? <Alert variant="warning">字段已变更，请重新测试后再保存。</Alert> : null}
@@ -210,7 +180,28 @@ export function StorageCreatePage({
           register={register}
         />
         <StorageConnectionSection isEditMode={isEditMode} register={register} />
-      </div>
+      </DrawerBody>
+      <DrawerFooter>
+        <Button variant="outline" type="button" onClick={onBack}>
+          取消
+        </Button>
+        <Button
+          type={isCurrentTestPassed ? "submit" : "button"}
+          loading={isSubmitting || isTesting}
+          onClick={isCurrentTestPassed ? undefined : () => void handleTestConfiguration()}
+        >
+          {primaryActionLabel}
+        </Button>
+      </DrawerFooter>
     </form>
+  );
+}
+
+/** 新建、编辑存储配置的右侧抽屉，叠在存储列表之上。 */
+export function StorageFormDrawer(props: StorageCreatePageProps) {
+  return (
+    <Drawer isOpen onClose={props.onBack} className="max-w-2xl">
+      <StorageCreatePage {...props} />
+    </Drawer>
   );
 }

@@ -13,10 +13,15 @@ import {
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { fetchStorageConfigurationsSnapshot } from "@/api/storage-configurations";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
-import { DataTable, FilterBar, PageHeader, TablePagination } from "@/components/layout";
+import {
+  DataTable,
+  ErrorMessage,
+  ListHeader,
+  SummaryStats,
+  TablePagination,
+} from "@/components/layout";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { usePagination } from "@/hooks/use-pagination";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/use-auth-store";
@@ -25,18 +30,32 @@ import type { StorageConfigRecord, StorageStatus } from "@/types/storage";
 import { storagePageQueryKey, storageSnapshotQueryKey } from "./api/storage-query-keys";
 import { deleteStorageConfiguration } from "./api/storage-snapshot";
 import { adapterToneClass, statusClass, statusLabel } from "./constants";
+import { StorageFormDrawer } from "./StorageCreatePage";
 
 type StoragePageProps = {
+  /** 新建或编辑时在列表之上打开的抽屉；undefined 表示不打开。 */
+  drawer?: { mode: "create" } | { mode: "edit"; storageId: string };
+  onCloseDrawer: () => void;
   onCreateStorage: () => void;
   onEditStorage: (storageId: string) => void;
 };
 
-export function StoragePage({ onCreateStorage, onEditStorage }: StoragePageProps) {
+export function StoragePage({
+  drawer,
+  onCloseDrawer,
+  onCreateStorage,
+  onEditStorage,
+}: StoragePageProps) {
   const queryClient = useQueryClient();
   const session = useAuthStore((state) => state.session);
   const canManageStorage = Boolean(session?.capabilities.canManageStorage);
   const { clampPage, page, pageSize, setPage, setPageSize } = usePagination();
-  const { data: snapshot } = useQuery({
+  const {
+    data: snapshot,
+    error,
+    isFetching,
+    refetch,
+  } = useQuery({
     placeholderData: keepPreviousData,
     queryFn: () => fetchStorageConfigurationsSnapshot({ page, pageSize }),
     queryKey: storagePageQueryKey({ page, pageSize }),
@@ -79,27 +98,27 @@ export function StoragePage({ onCreateStorage, onEditStorage }: StoragePageProps
         cellRenderer: BucketCell,
         field: "bucket",
         flex: 1.15,
-        headerName: "BUCKET",
+        headerName: "Bucket",
         minWidth: 190,
       },
       {
         field: "region",
         flex: 0.75,
-        headerName: "REGION",
+        headerName: "Region",
         minWidth: 116,
       },
       {
         cellRenderer: EndpointCell,
         field: "endpoint",
         flex: 1.15,
-        headerName: "ENDPOINT",
+        headerName: "Endpoint",
         minWidth: 210,
       },
       {
         cellRenderer: PublicBaseUrlCell,
         field: "publicBaseUrl",
         flex: 1.2,
-        headerName: "PUBLIC BASE URL",
+        headerName: "公开访问地址",
         minWidth: 210,
       },
       {
@@ -132,53 +151,85 @@ export function StoragePage({ onCreateStorage, onEditStorage }: StoragePageProps
     [canManageStorage, handleRequestDeleteStorage, onEditStorage],
   );
 
-  if (!snapshot) {
-    return <StoragePageLoading />;
-  }
-
   return (
     <>
-      <div className="flex flex-col gap-6">
-        <StorageHeader />
-
-        <FilterBar
-          label="存储配置列表"
+      <div className="flex flex-col gap-5">
+        <ListHeader
+          title="存储"
+          summary={
+            <SummaryStats
+              items={[
+                {
+                  id: "total",
+                  label: "份 S3 兼容存储配置，用于 Bundle 产物上传与分发",
+                  value: snapshot?.pagination.total ?? "-",
+                },
+              ]}
+            />
+          }
           actions={
             <>
-              <span className="text-muted-foreground text-xs">
-                共{" "}
-                <span className="font-semibold text-foreground">{snapshot.pagination.total}</span>{" "}
-                条配置
-              </span>
               <Button
-                type="button"
-                size="sm"
-                disabled={!canManageStorage}
-                onClick={onCreateStorage}
+                variant="outline"
+                size="icon"
+                aria-label="刷新存储配置"
+                disabled={isFetching}
+                onClick={() => {
+                  void refetch();
+                }}
               >
-                <Plus className="size-4" />
-                新增存储配置
+                <RotateCw className={cn(isFetching && "animate-spin")} />
+              </Button>
+              <Button type="button" disabled={!canManageStorage} onClick={onCreateStorage}>
+                <Plus />
+                新建存储配置
               </Button>
             </>
           }
         />
 
-        <DataTable
-          rows={snapshot.configurations}
-          columnDefs={columnDefs}
-          getRowId={({ data }) => data.id}
-        />
-
-        <Card className="rounded-xl bg-card py-0">
-          <TablePagination
-            page={page}
-            pageSize={pageSize}
-            total={snapshot.pagination.total}
-            onPageChange={setPage}
-            onPageSizeChange={setPageSize}
-          />
-        </Card>
+        {error && !snapshot ? (
+          <ErrorMessage error={error} onRetry={() => void refetch()} />
+        ) : !snapshot ? (
+          <div className="h-96 animate-pulse rounded-xl bg-muted" />
+        ) : (
+          <div className="overflow-hidden rounded-xl bg-card shadow-edge">
+            <DataTable
+              className="rounded-none shadow-none"
+              rows={snapshot.configurations}
+              columnDefs={columnDefs}
+              getRowId={({ data }) => data.id}
+              onRowClicked={
+                canManageStorage
+                  ? (event) => {
+                      if (event.data) {
+                        onEditStorage(event.data.id);
+                      }
+                    }
+                  : undefined
+              }
+              rowActionSelector="[data-storage-row-action]"
+              selectedRowId={drawer?.mode === "edit" ? drawer.storageId : undefined}
+            />
+            <TablePagination
+              page={page}
+              pageSize={pageSize}
+              total={snapshot.pagination.total}
+              onPageChange={setPage}
+              onPageSizeChange={setPageSize}
+            />
+          </div>
+        )}
       </div>
+      {drawer ? (
+        <StorageFormDrawer
+          key={drawer.mode === "edit" ? drawer.storageId : "new"}
+          mode={drawer.mode}
+          onBack={onCloseDrawer}
+          onSaved={onCloseDrawer}
+          storageId={drawer.mode === "edit" ? drawer.storageId : undefined}
+        />
+      ) : null}
       <ConfirmDialog
         isOpen={deleteTarget !== null}
         isPending={isDeleting}
@@ -216,24 +267,6 @@ export function StoragePage({ onCreateStorage, onEditStorage }: StoragePageProps
         {deleteError ? <Alert variant="danger">{deleteError}</Alert> : null}
       </ConfirmDialog>
     </>
-  );
-}
-
-function StoragePageLoading() {
-  return (
-    <div className="flex flex-col gap-6">
-      <StorageHeader />
-      <Card className="h-96 animate-pulse rounded-xl bg-card" />
-    </div>
-  );
-}
-
-function StorageHeader() {
-  return (
-    <PageHeader
-      title="存储管理"
-      description="S3-Compatible 对象存储配置，统一管理 Bundle 产物上传与分发入口"
-    />
   );
 }
 
@@ -331,7 +364,7 @@ function ActionsCell({
   }
 
   return (
-    <div className="flex h-full items-center gap-1">
+    <div className="flex h-full items-center gap-1" data-storage-row-action="true">
       <Button
         variant="ghost"
         type="button"

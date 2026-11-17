@@ -34,7 +34,7 @@ export function StorageBasicInfoSection({
   return (
     <Card className="rounded-lg bg-card p-0">
       <FormSectionHeader title="基础信息" description="命名配置并选择对象存储适配器" />
-      <div className="grid gap-4 px-5 pb-5 xl:grid-cols-3">
+      <div className="grid gap-4 px-5 pb-5 sm:grid-cols-2">
         <FormSectionField label="配置名称" required>
           <Input placeholder="例如：小米汽车-生产OSS" {...register("name")} />
         </FormSectionField>
