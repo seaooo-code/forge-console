@@ -26,9 +26,12 @@ export function readLastLoginTenant() {
 export function beginFeishuAuthorization(redirectPath: string, tenantId: string) {
   window.sessionStorage.setItem(authRedirectStorageKey, normalizeRedirectPath(redirectPath));
   window.localStorage.setItem(lastTenantStorageKey, tenantId);
-  window.location.assign(
-    `${apiBaseUrl}/api/v1/auth/feishu/authorize?tenant=${encodeURIComponent(tenantId)}`,
-  );
+  // 回调地址按前端自身域名拼出，后端只接受 {origin}/login/feishu/callback，飞书再按应用白名单校验一次。
+  const query = new URLSearchParams({
+    redirect: `${window.location.origin}/login/feishu/callback`,
+    tenant: tenantId,
+  });
+  window.location.assign(`${apiBaseUrl}/api/v1/auth/feishu/authorize?${query.toString()}`);
 }
 
 export async function fetchAuthSession(): Promise<AuthSession | null> {

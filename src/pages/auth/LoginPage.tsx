@@ -16,6 +16,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+import { fetchSetupRequired, setupStatusQueryKey } from "./api";
+
 type LoginPageProps = {
   redirectPath: string;
 };
@@ -106,11 +108,7 @@ function LoginAction({ redirectPath }: { redirectPath: string }) {
     );
   }
   if (tenants && tenants.length === 0) {
-    return (
-      <p className="m-0 mt-7 rounded-xl bg-muted px-4 py-3 text-muted-foreground text-sm">
-        平台还没有配置飞书租户，请联系管理员。
-      </p>
-    );
+    return <NoTenantNotice />;
   }
 
   return (
@@ -139,6 +137,37 @@ function LoginAction({ redirectPath }: { redirectPath: string }) {
         <ArrowRight />
       </Button>
     </div>
+  );
+}
+
+/** 没有可登录的租户：平台从未初始化时给出初始化入口，否则说明租户都被停用了。 */
+function NoTenantNotice() {
+  const { data: setupRequired } = useQuery({
+    queryFn: fetchSetupRequired,
+    queryKey: setupStatusQueryKey,
+  });
+
+  if (setupRequired) {
+    return (
+      <div className="mt-7 space-y-3">
+        <p className="m-0 rounded-xl bg-muted px-4 py-3 text-muted-foreground text-sm leading-relaxed">
+          平台还没有初始化。用服务启动日志里的初始化令牌，配置第一个飞书租户。
+        </p>
+        <Button
+          className="h-11 w-full justify-between rounded-xl px-4"
+          type="button"
+          onClick={() => window.location.assign("/setup")}
+        >
+          初始化平台
+          <ArrowRight />
+        </Button>
+      </div>
+    );
+  }
+  return (
+    <p className="m-0 mt-7 rounded-xl bg-muted px-4 py-3 text-muted-foreground text-sm">
+      没有可登录的飞书租户，请联系管理员。
+    </p>
   );
 }
 

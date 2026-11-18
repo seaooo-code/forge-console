@@ -893,6 +893,40 @@ export interface paths {
         patch: operations["inactivateTargetedGrayRelease"];
         trace?: never;
     };
+    "/api/v1/setup/feishu-tenant": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create the first Feishu tenant with the setup token from the server log */
+        post: operations["setupFirstFeishuTenant"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/setup/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Whether the platform still needs its first Feishu tenant */
+        get: operations["getSetupStatus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/storage/configurations": {
         parameters: {
             query?: never;
@@ -2931,6 +2965,22 @@ export interface components {
             releases: components["schemas"]["ReleaseRecord"][];
             summary: components["schemas"]["ReleaseRecordSummary"];
         };
+        SetupFeishuTenantRequest: {
+            /** @description Feishu app id (cli_...). */
+            appId: string;
+            /** @description Feishu app secret, stored encrypted. */
+            appSecret: string;
+            /** @description Tenant id, lowercase letters, digits and dashes. */
+            id: string;
+            /** @description Tenant display name. */
+            name: string;
+            /** @description Setup token printed in the server log at startup. */
+            token: string;
+        };
+        SetupStatusResponse: {
+            /** @description True when no Feishu tenant exists yet. */
+            setupRequired: boolean;
+        };
         StorageConfiguration: {
             /**
              * @description Storage adapter.
@@ -4189,9 +4239,11 @@ export interface operations {
     };
     authorizeFeishu: {
         parameters: {
-            query?: {
+            query: {
                 /** @description Feishu tenant id. Optional when exactly one tenant is active. */
                 tenant?: string;
+                /** @description Callback URL built by the console: {origin}/login/feishu/callback. Must be whitelisted in the Feishu app. */
+                redirect: string;
             };
             header?: never;
             path?: never;
@@ -4206,7 +4258,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Several tenants are active and none was selected. */
+            /** @description Invalid redirect URL, or several tenants are active and none was selected. */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -7430,6 +7482,114 @@ export interface operations {
             };
             /** @description Release not found. */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    setupFirstFeishuTenant: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description First tenant payload with setup token. */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetupFeishuTenantRequest"];
+            };
+        };
+        responses: {
+            /** @description First tenant created; the first user to log in becomes SuperAdmin. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FeishuTenantDetailResponse"];
+                };
+            };
+            /** @description Invalid Feishu tenant request. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Setup token is wrong. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Platform already has a tenant; setup is closed. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too many requests. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getSetupStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Setup status. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SetupStatusResponse"];
+                };
+            };
+            /** @description Too many requests. */
+            429: {
                 headers: {
                     [name: string]: unknown;
                 };

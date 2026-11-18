@@ -2,7 +2,7 @@ import { lazy, useEffect } from "react";
 import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from "react-router";
 
 import { fetchAuthSession } from "@/api/feishu-auth";
-import { FeishuCallbackPage, LoginPage } from "@/pages/auth";
+import { FeishuCallbackPage, LoginPage, SetupPage } from "@/pages/auth";
 import { useAuthStore } from "@/store/use-auth-store";
 import { useSystemThemeSync } from "@/store/use-system-theme-sync";
 
@@ -74,6 +74,7 @@ const StoragePage = lazy(async () => ({
 
 const loginPath = "/login";
 const feishuCallbackPath = "/login/feishu/callback";
+const setupPath = "/setup";
 
 export function App() {
   const location = useLocation();
@@ -86,7 +87,7 @@ export function App() {
   const routePath = location.pathname;
 
   useEffect(() => {
-    if (routePath === feishuCallbackPath || session) {
+    if (routePath === feishuCallbackPath || routePath === setupPath || session) {
       return;
     }
 
@@ -119,6 +120,11 @@ export function App() {
 
   if (routePath === feishuCallbackPath) {
     return <FeishuCallbackPage />;
+  }
+
+  // 首次初始化页不需要登录，后端只在还没有任何租户时允许提交。
+  if (routePath === setupPath) {
+    return <SetupPage />;
   }
 
   if (isSessionLoading) {
