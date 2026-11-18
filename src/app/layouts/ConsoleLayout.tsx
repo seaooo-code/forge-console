@@ -5,6 +5,7 @@ import { navGroups } from "@/app/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/store/use-auth-store";
 
 import { AppSidebar } from "./components/AppSidebar";
 import { useConsoleLayoutStore } from "./model/use-console-layout-store";
@@ -20,6 +21,16 @@ export function ConsoleLayout() {
   const setActiveNavId = useConsoleLayoutStore((state) => state.setActiveNavId);
   const activeNav = useMemo(() => findNavItem(location.pathname), [location.pathname]);
   const fullBleed = isFullBleedPath(location.pathname);
+  const capabilities = useAuthStore((state) => state.session?.capabilities);
+  // 带 capability 的菜单只对拥有该能力的用户显示，例如飞书租户只给 SuperAdmin。
+  const visibleNavGroups = useMemo(
+    () =>
+      navGroups.map((group) => ({
+        ...group,
+        items: group.items.filter((item) => !item.capability || capabilities?.[item.capability]),
+      })),
+    [capabilities],
+  );
 
   useEffect(() => {
     if (activeNav) {
@@ -41,7 +52,7 @@ export function ConsoleLayout() {
   return (
     <main className="min-h-screen bg-shell text-foreground">
       <div className="flex min-h-screen flex-col lg:h-screen lg:flex-row">
-        <AppSidebar navGroups={navGroups} onNavigate={handleNavigate} />
+        <AppSidebar navGroups={visibleNavGroups} onNavigate={handleNavigate} />
 
         <div className={cn("flex min-h-0 min-w-0 flex-1 p-2 lg:pl-0", fullBleed && "gap-2")}>
           {fullBleed ? (

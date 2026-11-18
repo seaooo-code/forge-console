@@ -1,8 +1,12 @@
+import type { GlobalCapabilities } from "@/types/auth";
+
 export type NavItem = {
   id: string;
   label: string;
   href: string;
   icon: NavIconName;
+  /** 只对拥有该全局能力的用户显示。 */
+  capability?: keyof GlobalCapabilities;
 };
 
 export type NavGroup = {
@@ -18,6 +22,7 @@ export type NavIconName =
   | "buildAdapter"
   | "codeSource"
   | "environment"
+  | "feishuTenant"
   | "module"
   | "overview"
   | "releaseRecord"

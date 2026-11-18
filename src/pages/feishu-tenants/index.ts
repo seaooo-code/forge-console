@@ -1,0 +1,1 @@
+export { FeishuTenantsPage } from "./FeishuTenantsPage";

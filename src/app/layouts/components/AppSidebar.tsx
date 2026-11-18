@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import {
   Activity,
+  Building2,
   CircleArrowUp,
   Database,
   GitFork,
@@ -28,6 +29,7 @@ const navIcons: Record<NavIconName, LucideIcon> = {
   buildAdapter: Layers,
   codeSource: GitFork,
   environment: Server,
+  feishuTenant: Building2,
   module: LayoutGrid,
   overview: Activity,
   releaseRecord: CircleArrowUp,

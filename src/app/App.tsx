@@ -52,6 +52,10 @@ const EnvironmentsPage = lazy(async () => ({
   default: (await import("@/pages/environments")).EnvironmentsPage,
 }));
 
+const FeishuTenantsPage = lazy(async () => ({
+  default: (await import("@/pages/feishu-tenants")).FeishuTenantsPage,
+}));
+
 const ModulesPage = lazy(async () => ({
   default: (await import("@/pages/modules")).ModulesPage,
 }));
@@ -173,6 +177,9 @@ function ConsoleRoutes() {
         <Route path="environments" element={<EnvironmentsRoute />} />
         <Route path="environments/new" element={<EnvironmentsRoute />} />
         <Route path="environments/:environmentId/edit" element={<EnvironmentsRoute />} />
+        <Route path="feishu-tenants" element={<FeishuTenantsRoute />} />
+        <Route path="feishu-tenants/new" element={<FeishuTenantsRoute />} />
+        <Route path="feishu-tenants/:tenantId/edit" element={<FeishuTenantsRoute />} />
         <Route path="access-tokens" element={<AccessTokensPage />} />
         <Route path="*" element={<ConsoleRouteNotFound />} />
       </Route>
@@ -454,6 +461,28 @@ function EnvironmentsRoute() {
       onCreateEnvironment={() => navigate("/environments/new")}
       onEditEnvironment={(nextEnvironmentId: string) =>
         navigate(`/environments/${encodeURIComponent(nextEnvironmentId)}/edit`)
+      }
+    />
+  );
+}
+
+function FeishuTenantsRoute() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { tenantId } = useParams<{ tenantId: string }>();
+  const drawer = tenantId
+    ? { mode: "edit" as const, tenantId }
+    : location.pathname === "/feishu-tenants/new"
+      ? { mode: "create" as const }
+      : undefined;
+
+  return (
+    <FeishuTenantsPage
+      drawer={drawer}
+      onCloseDrawer={() => navigate("/feishu-tenants")}
+      onCreateTenant={() => navigate("/feishu-tenants/new")}
+      onEditTenant={(nextTenantId: string) =>
+        navigate(`/feishu-tenants/${encodeURIComponent(nextTenantId)}/edit`)
       }
     />
   );

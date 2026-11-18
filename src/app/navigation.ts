@@ -18,6 +18,13 @@ export const navGroups: NavGroup[] = [
       { id: "storage", label: "存储", href: "/storage", icon: "storage" },
       { id: "environments", label: "环境", href: "/environments", icon: "environment" },
       { id: "access-tokens", label: "访问令牌", href: "/access-tokens", icon: "accessToken" },
+      {
+        id: "feishu-tenants",
+        label: "飞书租户",
+        href: "/feishu-tenants",
+        icon: "feishuTenant",
+        capability: "canManageFeishuTenants",
+      },
     ],
   },
 ];

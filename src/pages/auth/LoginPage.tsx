@@ -1,7 +1,20 @@
+import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, GitCompare, Layers, Undo2 } from "lucide-react";
+import { useState } from "react";
 
-import { beginFeishuAuthorization } from "@/api/feishu-auth";
+import {
+  beginFeishuAuthorization,
+  fetchLoginTenants,
+  readLastLoginTenant,
+} from "@/api/feishu-auth";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type LoginPageProps = {
   redirectPath: string;
@@ -52,14 +65,7 @@ export function LoginPage({ redirectPath }: LoginPageProps) {
             <p className="m-0 mt-2 text-muted-foreground text-sm leading-relaxed">
               使用飞书账号登录。能看到哪些应用、能否发布，跟随你在平台里的角色。
             </p>
-            <Button
-              className="mt-7 h-11 w-full justify-between rounded-xl px-4"
-              onClick={() => beginFeishuAuthorization(redirectPath)}
-              type="button"
-            >
-              使用飞书账号登录
-              <ArrowRight />
-            </Button>
+            <LoginAction redirectPath={redirectPath} />
             <p className="m-0 mt-4 text-faint text-xs leading-relaxed">
               登录后没有需要的权限，请联系平台管理员在应用成员里添加你。
             </p>
@@ -67,6 +73,72 @@ export function LoginPage({ redirectPath }: LoginPageProps) {
         </section>
       </div>
     </main>
+  );
+}
+
+/** 只有一个租户时直接登录；多个租户时先选租户，默认选中上次使用的租户。 */
+function LoginAction({ redirectPath }: { redirectPath: string }) {
+  const {
+    data: tenants,
+    error,
+    isPending,
+    refetch,
+  } = useQuery({
+    queryFn: fetchLoginTenants,
+    queryKey: ["auth", "login-tenants"],
+    staleTime: 60_000,
+  });
+  const [pickedTenantId, setPickedTenantId] = useState("");
+  const lastTenantId = readLastLoginTenant();
+  const selectedTenantId =
+    [pickedTenantId, lastTenantId].find((id) => tenants?.some((tenant) => tenant.id === id)) ??
+    tenants?.[0]?.id ??
+    "";
+
+  if (error) {
+    return (
+      <div className="mt-7 space-y-3">
+        <p className="m-0 text-destructive text-sm">读取登录租户失败：{error.message}</p>
+        <Button className="w-full" variant="outline" type="button" onClick={() => void refetch()}>
+          重试
+        </Button>
+      </div>
+    );
+  }
+  if (tenants && tenants.length === 0) {
+    return (
+      <p className="m-0 mt-7 rounded-xl bg-muted px-4 py-3 text-muted-foreground text-sm">
+        平台还没有配置飞书租户，请联系管理员。
+      </p>
+    );
+  }
+
+  return (
+    <div className="mt-7 space-y-3">
+      {tenants && tenants.length > 1 ? (
+        <Select value={selectedTenantId} onValueChange={setPickedTenantId}>
+          <SelectTrigger aria-label="选择飞书租户" className="h-11 w-full rounded-xl px-4">
+            <SelectValue placeholder="选择飞书租户" />
+          </SelectTrigger>
+          <SelectContent>
+            {tenants.map((tenant) => (
+              <SelectItem key={tenant.id} value={tenant.id}>
+                {tenant.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      ) : null}
+      <Button
+        className="h-11 w-full justify-between rounded-xl px-4"
+        disabled={isPending || !selectedTenantId}
+        onClick={() => beginFeishuAuthorization(redirectPath, selectedTenantId)}
+        type="button"
+      >
+        使用飞书账号登录
+        <ArrowRight />
+      </Button>
+    </div>
   );
 }
 

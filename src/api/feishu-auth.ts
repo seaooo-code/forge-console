@@ -1,13 +1,34 @@
 import { apiBaseUrl } from "@/api/client";
-import type { AuthSession, FeishuAuthResponse, GlobalRole } from "@/types/auth";
+import type { AuthSession, FeishuAuthResponse, FeishuLoginTenant, GlobalRole } from "@/types/auth";
 
 const authRedirectStorageKey = "forge-console.auth-redirect-path";
+const lastTenantStorageKey = "forge-console.last-feishu-tenant";
 const authorizationRequests = new Map<string, Promise<AuthSession>>();
 let sessionRequest: Promise<AuthSession | null> | null = null;
 
-export function beginFeishuAuthorization(redirectPath: string) {
+/** 登录页可选的飞书租户，接口不需要登录。 */
+export async function fetchLoginTenants(): Promise<FeishuLoginTenant[]> {
+  const response = await fetch(`${apiBaseUrl}/api/v1/auth/feishu/tenants`, {
+    credentials: "include",
+  });
+  if (!response.ok) {
+    const errorMessage = await readErrorMessage(response);
+    throw new Error(errorMessage || `读取登录租户失败：${response.status}`);
+  }
+  const payload = (await response.json()) as { tenants: FeishuLoginTenant[] };
+  return payload.tenants;
+}
+
+export function readLastLoginTenant() {
+  return window.localStorage.getItem(lastTenantStorageKey) ?? "";
+}
+
+export function beginFeishuAuthorization(redirectPath: string, tenantId: string) {
   window.sessionStorage.setItem(authRedirectStorageKey, normalizeRedirectPath(redirectPath));
-  window.location.assign(`${apiBaseUrl}/api/v1/auth/feishu/authorize`);
+  window.localStorage.setItem(lastTenantStorageKey, tenantId);
+  window.location.assign(
+    `${apiBaseUrl}/api/v1/auth/feishu/authorize?tenant=${encodeURIComponent(tenantId)}`,
+  );
 }
 
 export async function fetchAuthSession(): Promise<AuthSession | null> {
@@ -94,12 +115,14 @@ function toAuthSession(payload: FeishuAuthResponse): AuthSession {
       canManageBuildAdapters: Boolean(payload.capabilities?.canManageBuildAdapters),
       canManageCodeSources: Boolean(payload.capabilities?.canManageCodeSources),
       canManageEnvironments: Boolean(payload.capabilities?.canManageEnvironments),
+      canManageFeishuTenants: Boolean(payload.capabilities?.canManageFeishuTenants),
       canManageModules: Boolean(payload.capabilities?.canManageModules),
       canManageStorage: Boolean(payload.capabilities?.canManageStorage),
       canCreateBuild: Boolean(payload.capabilities?.canCreateBuild),
       canCreateRelease: Boolean(payload.capabilities?.canCreateRelease),
     },
     roles: (payload.roles ?? []) as GlobalRole[],
+    tenant: payload.tenant ?? { id: "", name: "" },
     token: payload.token,
     user: payload.user,
   };

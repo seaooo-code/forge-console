@@ -61,6 +61,9 @@ export function UserMenu() {
             {user.enterpriseEmail ? (
               <div className="truncate text-faint text-xs">{user.enterpriseEmail}</div>
             ) : null}
+            {session.tenant.name ? (
+              <div className="truncate text-faint text-xs">租户：{session.tenant.name}</div>
+            ) : null}
           </div>
         </div>
         <Button
