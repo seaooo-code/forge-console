@@ -11,6 +11,7 @@ import { useAuthStore } from "@/store/use-auth-store";
 import type { BuildRunRecord } from "@/types/builds";
 
 import { AttentionList } from "./components/AttentionList";
+import { CreateApplicationGuide } from "./components/CreateApplicationGuide";
 import { RouteInspector } from "./components/RouteInspector";
 import { RouteMatrix } from "./components/RouteMatrix";
 import { releaseKindLabels } from "./constants";
@@ -32,6 +33,7 @@ import {
 } from "./utils";
 
 type OverviewPageProps = {
+  onCreateApplication: () => void;
   onCreateModule: () => void;
   onOpenBuild: (buildId: string) => void;
   onOpenCodeSources: () => void;
@@ -40,6 +42,7 @@ type OverviewPageProps = {
 const canvas = "min-h-0 rounded-xl bg-background shadow-edge";
 
 export function OverviewPage({
+  onCreateApplication,
   onCreateModule,
   onOpenBuild,
   onOpenCodeSources,
@@ -116,7 +119,7 @@ export function OverviewPage({
   }, [environments, modules, select, selected]);
 
   if (!applicationId) {
-    return <PickApplication />;
+    return <PickApplication onCreateApplication={onCreateApplication} />;
   }
   if (error) {
     return (
@@ -360,9 +363,12 @@ function resolveSelection(
   return module && env ? { environment: env.id, moduleId: module.id } : null;
 }
 
-function PickApplication() {
+function PickApplication({ onCreateApplication }: { onCreateApplication: () => void }) {
   const setApplicationId = useApplicationScopeStore((state) => state.setApplicationId);
-  const { data: applications = [] } = useQuery({
+  const canCreateApplication = useAuthStore((state) =>
+    Boolean(state.session?.capabilities.canCreateApplication),
+  );
+  const { data: applications = [], isSuccess } = useQuery({
     queryFn: fetchApplicationScopeOptions,
     queryKey: applicationScopeOptionsQueryKey,
   });
@@ -371,8 +377,13 @@ function PickApplication() {
     <section className={cn(canvas, "flex-1 overflow-y-auto px-8 py-10")}>
       <h1 className="m-0 font-semibold text-2xl tracking-tight">线上现状</h1>
       <p className="m-0 mt-1.5 text-muted-foreground text-sm">
-        线上现状按应用展示。选一个应用开始，之后也可以在左上角切换。
+        {isSuccess && applications.length === 0
+          ? "线上现状按应用展示每个模块在各环境的全量与灰度。"
+          : "线上现状按应用展示。选一个应用开始，之后也可以在左上角切换。"}
       </p>
+      {isSuccess && applications.length === 0 ? (
+        <CreateApplicationGuide canCreate={canCreateApplication} onCreate={onCreateApplication} />
+      ) : null}
       <div className="mt-6 grid max-w-3xl grid-cols-1 gap-2.5 sm:grid-cols-2">
         {applications.map((application) => (
           <Button

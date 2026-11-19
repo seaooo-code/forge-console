@@ -198,6 +198,7 @@ function OverviewRoute() {
 
   return (
     <OverviewPage
+      onCreateApplication={() => navigate("/apps/new")}
       onCreateModule={() => navigate("/modules/new")}
       onOpenBuild={(buildId: string) => navigate(`/builds/${encodeURIComponent(buildId)}`)}
       onOpenCodeSources={() => navigate("/code-sources")}
