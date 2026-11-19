@@ -12,7 +12,8 @@ type FormSectionFieldProps = {
  */
 export function FormSectionField({ children, label, required = false }: FormSectionFieldProps) {
   return (
-    <div className="grid gap-2">
+    // min-w-0：放在网格列里时不被内容撑宽，长选项和长文本在列内截断，不会盖住相邻字段。
+    <div className="flex min-w-0 flex-col gap-2">
       <span className="font-medium text-foreground text-sm">
         {label}
         {required ? <span className="ml-1 text-destructive">*</span> : null}
