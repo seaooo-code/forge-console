@@ -49,7 +49,7 @@ export function OwnerPicker<TUser extends OwnerSearchUser>({
 
   useEffect(() => {
     const query = value.trim();
-    if (!isOpen || selectedOwner || query.length < 2) {
+    if (!isOpen || selectedOwner || !query) {
       setUsers([]);
       setIsLoading(false);
       return;
@@ -149,7 +149,7 @@ function OwnerSearchResults<TUser extends OwnerSearchUser>({
   query: string;
   users: TUser[];
 }) {
-  if (query.trim().length < 2) {
+  if (!query.trim()) {
     return null;
   }
 

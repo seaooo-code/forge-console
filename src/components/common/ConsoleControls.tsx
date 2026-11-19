@@ -160,7 +160,7 @@ export function ConsoleOwnerSearchFilter<TUser extends ConsoleOwnerSearchUser>({
 
   useEffect(() => {
     const keyword = query.trim();
-    if (!isOpen || keyword.length < 2) {
+    if (!isOpen || !keyword) {
       setUsers([]);
       setIsLoading(false);
       return;
@@ -257,7 +257,7 @@ export function ConsoleOwnerSearchFilter<TUser extends ConsoleOwnerSearchUser>({
                 搜索中
               </div>
             ) : null}
-            {!isLoading && query.trim().length >= 2 && users.length === 0 ? (
+            {!isLoading && query.trim() && users.length === 0 ? (
               <div className="px-2 py-2 text-muted-foreground text-sm">未找到匹配人员</div>
             ) : null}
             {users.map((user) => (
