@@ -3002,6 +3002,8 @@ export interface components {
             bucket: string;
             /** @description S3-compatible endpoint. */
             endpoint: string;
+            /** @description Use path-style addressing (endpoint/bucket) instead of virtual-hosted style (bucket.endpoint). Enable for services without per-bucket subdomains, such as MinIO or FDS internal endpoints. Defaults to false. */
+            forcePathStyle: boolean;
             /** @description Storage configuration id. */
             id: string;
             /** @description Last verification display time. */
@@ -3038,6 +3040,8 @@ export interface components {
             bucket: string;
             /** @description S3-compatible endpoint. */
             endpoint: string;
+            /** @description Use path-style addressing (endpoint/bucket) instead of virtual-hosted style (bucket.endpoint). Enable for services without per-bucket subdomains, such as MinIO or FDS internal endpoints. Defaults to false. */
+            forcePathStyle?: boolean;
             /** @description Storage configuration display name. */
             name: string;
             /** @description Configuration owner. */
@@ -3087,6 +3091,8 @@ export interface components {
             bucket: string;
             /** @description S3-compatible endpoint. */
             endpoint: string;
+            /** @description Use path-style addressing (endpoint/bucket) instead of virtual-hosted style (bucket.endpoint). Enable for services without per-bucket subdomains, such as MinIO or FDS internal endpoints. Defaults to false. */
+            forcePathStyle?: boolean;
             /** @description Existing storage configuration id. When set and both credentials are empty, the stored pair is used. */
             id?: string;
             /** @description Storage configuration display name. */
@@ -3138,6 +3144,8 @@ export interface components {
             bucket: string;
             /** @description S3-compatible endpoint. */
             endpoint: string;
+            /** @description Use path-style addressing (endpoint/bucket) instead of virtual-hosted style (bucket.endpoint). Enable for services without per-bucket subdomains, such as MinIO or FDS internal endpoints. Defaults to false. */
+            forcePathStyle?: boolean;
             /** @description Storage configuration display name. */
             name: string;
             /** @description Configuration owner. */

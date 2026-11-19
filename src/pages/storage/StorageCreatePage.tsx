@@ -179,7 +179,7 @@ export function StorageCreatePage({
           onOwnerSelect={handleOwnerSelect}
           register={register}
         />
-        <StorageConnectionSection isEditMode={isEditMode} register={register} />
+        <StorageConnectionSection control={control} isEditMode={isEditMode} register={register} />
       </DrawerBody>
       <DrawerFooter>
         <Button variant="outline" type="button" onClick={onBack}>

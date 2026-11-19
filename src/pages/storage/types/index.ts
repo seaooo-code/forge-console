@@ -15,6 +15,7 @@ export type StorageFormState = {
   adapter: StorageAdapter;
   bucket: string;
   endpoint: string;
+  forcePathStyle: boolean;
   name: string;
   owner: string;
   ownerAvatarUrl: string;

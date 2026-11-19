@@ -7,6 +7,7 @@ export const defaultForm: StorageFormState = {
   adapter: "S3",
   bucket: "",
   endpoint: "",
+  forcePathStyle: false,
   name: "",
   owner: "",
   ownerAvatarUrl: "",

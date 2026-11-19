@@ -1,19 +1,25 @@
 import { CircleHelp } from "lucide-react";
-import type { UseFormRegister } from "react-hook-form";
+import { type Control, Controller, type UseFormRegister } from "react-hook-form";
 
 import { FormSectionField, FormSectionHeader } from "@/components/common/FormSectionHeader";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 
 import type { StorageFormState } from "../types";
 
 type StorageConnectionSectionProps = {
+  control: Control<StorageFormState>;
   isEditMode: boolean;
   register: UseFormRegister<StorageFormState>;
 };
 
-export function StorageConnectionSection({ isEditMode, register }: StorageConnectionSectionProps) {
+export function StorageConnectionSection({
+  control,
+  isEditMode,
+  register,
+}: StorageConnectionSectionProps) {
   return (
     <Card className="rounded-lg bg-card p-0">
       <FormSectionHeader title="接入配置" description="S3 兼容存储连接参数和公开访问地址" />
@@ -33,6 +39,26 @@ export function StorageConnectionSection({ isEditMode, register }: StorageConnec
         <FormSectionField label="publicBaseURL">
           <Input placeholder="https://cdn.example.com/rn/prod" {...register("publicBaseUrl")} />
         </FormSectionField>
+        <Controller
+          control={control}
+          name="forcePathStyle"
+          render={({ field }) => (
+            <div className="flex items-start gap-2 xl:col-span-2">
+              <Checkbox
+                id="storage-force-path-style"
+                checked={field.value}
+                onCheckedChange={(checked) => field.onChange(checked === true)}
+              />
+              <label
+                htmlFor="storage-force-path-style"
+                className="cursor-pointer text-sm leading-5"
+              >
+                <span className="text-foreground">使用路径风格访问（path-style）</span>
+                <span className="mt-0.5 block text-muted-foreground text-xs">{pathStyleHint}</span>
+              </label>
+            </div>
+          )}
+        />
         <FormSectionField label="Access Key ID" required={!isEditMode}>
           <Input
             placeholder={isEditMode ? "留空表示不更新" : "只保存到服务端密钥托管"}
@@ -50,6 +76,11 @@ export function StorageConnectionSection({ isEditMode, register }: StorageConnec
     </Card>
   );
 }
+
+// 写成一个字符串，避免 JSX 换行在中文句子之间插入空格。
+const pathStyleHint =
+  "默认把 Bucket 拼进域名（bucket.endpoint）。MinIO、Ceph、FDS 内网域名等没有 Bucket 子域名的服务需要勾选，" +
+  "改为 endpoint/bucket；测试连通性时报“无法解析 Endpoint 域名 bucket.xxx”通常就是这个原因。";
 
 function RegionLabel() {
   return (
