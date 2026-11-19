@@ -8,6 +8,7 @@ import {
 } from "@/api/builds";
 import { fetchAllModulesSnapshot, modulesAllQueryKey } from "@/api/modules";
 import { createBuildRelease } from "@/api/releases";
+import { fetchAllStorageConfigurationsSnapshot } from "@/api/storage-configurations";
 import { codeSourceConnectionsQueryKey, fetchCodeSourceConnections } from "@/pages/code-sources";
 import { environmentsSnapshotQueryKey, fetchEnvironmentsSnapshot } from "@/pages/environments";
 import {
@@ -21,6 +22,28 @@ import {
 import { activeBuildsRefetchIntervalMs } from "../constants";
 import type { OverviewModel, ReleaseComposerForm } from "../types";
 import { expiresAtAfterDays } from "../utils";
+
+/** 起步清单的进度：已有多少存储和环境。没有存储权限的用户读不到存储列表，此时只按环境判断。 */
+export function useSetupProgress() {
+  const storage = useQuery({
+    queryFn: fetchAllStorageConfigurationsSnapshot,
+    queryKey: ["overview", "setup-storage"],
+    // 用户刚去别的页面添加完存储或环境再回来，进度要马上更新，不能等缓存过期。
+    refetchOnMount: "always",
+    retry: false,
+  });
+  const environments = useQuery({
+    queryFn: fetchEnvironmentsSnapshot,
+    queryKey: environmentsSnapshotQueryKey,
+    refetchOnMount: "always",
+  });
+
+  return {
+    environmentCount: environments.data?.environments.length ?? 0,
+    isReady: environments.isSuccess && (storage.isSuccess || storage.isError),
+    storageCount: storage.data?.configurations.length ?? 0,
+  };
+}
 
 export function useOverviewData(applicationId: string) {
   const enabled = Boolean(applicationId);

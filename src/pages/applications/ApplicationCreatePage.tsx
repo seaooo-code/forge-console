@@ -1,5 +1,5 @@
 import { skipToken, useQuery, useQueryClient } from "@tanstack/react-query";
-import { PackagePlus } from "lucide-react";
+import { ArrowRight, PackagePlus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { searchFeishuUsers } from "@/api/feishu-user-search";
@@ -15,6 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useAuthStore } from "@/store/use-auth-store";
 import { applicationEditQueryKey, applicationsRootQueryKey } from "./api/application-list-filters";
 import { createApplication, fetchApplicationDetailSnapshot } from "./api/applications-snapshot";
 import {
@@ -40,9 +41,13 @@ export function ApplicationCreatePage({
   applicationSlug,
   mode = "create",
   onBack,
+  onCreateEnvironment,
   onSaved,
 }: ApplicationCreatePageProps) {
   const queryClient = useQueryClient();
+  const canManageEnvironments = useAuthStore((state) =>
+    Boolean(state.session?.capabilities.canManageEnvironments),
+  );
   const isEditMode = mode === "edit";
   const editApplicationSlug = isEditMode ? applicationSlug : undefined;
   const { data: applicationSnapshot, isFetching: isApplicationFetching } = useQuery({
@@ -198,7 +203,12 @@ export function ApplicationCreatePage({
             <Button variant="outline" type="button" onClick={onBack} size="sm">
               取消
             </Button>
-            <Button type="submit" size="sm" disabled={isSubmitting} loading={isSubmitting}>
+            <Button
+              type="submit"
+              size="sm"
+              disabled={isSubmitting || environmentOptions.length === 0}
+              loading={isSubmitting}
+            >
               {isEditMode ? "保存修改" : "创建应用"}
             </Button>
           </>
@@ -318,6 +328,29 @@ export function ApplicationCreatePage({
           </Field>
 
           <Field label="环境接入">
+            {applicationOptions && environmentOptions.length === 0 ? (
+              <Alert variant="warning" className="rounded-xl">
+                <div className="font-medium">还没有可接入的环境</div>
+                <p className="m-0 mt-0.5 text-sm leading-relaxed">
+                  应用至少需要接入一个环境，环境又需要绑定存储配置。请先创建环境，再回来创建应用。
+                </p>
+                {onCreateEnvironment && canManageEnvironments ? (
+                  <Button
+                    className="mt-2 h-8 gap-1.5 rounded-lg px-3"
+                    onClick={onCreateEnvironment}
+                    size="sm"
+                    type="button"
+                    variant="outline"
+                  >
+                    去创建环境
+                    <ArrowRight />
+                  </Button>
+                ) : null}
+                {canManageEnvironments ? null : (
+                  <p className="m-0 mt-1.5 text-xs">你没有环境管理权限，请联系平台管理员。</p>
+                )}
+              </Alert>
+            ) : null}
             <div className="grid gap-2 md:grid-cols-3 xl:grid-cols-5">
               {environmentOptions.map((environment) => (
                 <Controller

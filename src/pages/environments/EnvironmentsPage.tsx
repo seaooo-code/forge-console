@@ -18,6 +18,8 @@ type EnvironmentsPageProps = {
   drawer?: { mode: "create" } | { mode: "edit"; environmentId: string };
   onCloseDrawer: () => void;
   onCreateEnvironment: () => void;
+  /** 新建环境时没有存储配置，引导去创建存储。 */
+  onCreateStorage?: () => void;
   onEditEnvironment: (environmentId: string) => void;
 };
 
@@ -25,6 +27,7 @@ export function EnvironmentsPage({
   drawer,
   onCloseDrawer,
   onCreateEnvironment,
+  onCreateStorage,
   onEditEnvironment,
 }: EnvironmentsPageProps) {
   const session = useAuthStore((state) => state.session);
@@ -109,6 +112,7 @@ export function EnvironmentsPage({
           environmentId={drawer.mode === "edit" ? drawer.environmentId : undefined}
           mode={drawer.mode}
           onBack={onCloseDrawer}
+          onCreateStorage={onCreateStorage}
           onSaved={onCloseDrawer}
         />
       ) : null}

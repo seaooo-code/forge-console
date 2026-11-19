@@ -74,6 +74,8 @@ export type ApplicationCreatePageProps = {
   applicationSlug?: string;
   mode?: "create" | "edit";
   onBack: () => void;
+  /** 没有可接入的环境时，引导去创建环境。 */
+  onCreateEnvironment?: () => void;
   onSaved?: (applicationSlug: string) => void;
 };
 

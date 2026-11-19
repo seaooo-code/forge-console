@@ -199,7 +199,9 @@ function OverviewRoute() {
   return (
     <OverviewPage
       onCreateApplication={() => navigate("/apps/new")}
+      onCreateEnvironment={() => navigate("/environments/new")}
       onCreateModule={() => navigate("/modules/new")}
+      onCreateStorage={() => navigate("/storage/new")}
       onOpenBuild={(buildId: string) => navigate(`/builds/${encodeURIComponent(buildId)}`)}
       onOpenCodeSources={() => navigate("/code-sources")}
     />
@@ -228,6 +230,7 @@ function ApplicationCreateRoute() {
   return (
     <ApplicationCreatePage
       onBack={() => navigate("/apps")}
+      onCreateEnvironment={() => navigate("/environments/new")}
       onSaved={(applicationSlug: string) =>
         navigate(`/apps/${encodeURIComponent(applicationSlug)}`)
       }
@@ -466,6 +469,7 @@ function EnvironmentsRoute() {
       drawer={drawer}
       onCloseDrawer={() => navigate("/environments")}
       onCreateEnvironment={() => navigate("/environments/new")}
+      onCreateStorage={() => navigate("/storage/new")}
       onEditEnvironment={(nextEnvironmentId: string) =>
         navigate(`/environments/${encodeURIComponent(nextEnvironmentId)}/edit`)
       }

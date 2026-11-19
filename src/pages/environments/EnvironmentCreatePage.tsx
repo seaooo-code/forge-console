@@ -1,4 +1,5 @@
 import { skipToken, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ArrowRight } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 
@@ -16,6 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useAuthStore } from "@/store/use-auth-store";
 import type { StorageConfigRecord } from "@/types/storage";
 
 import {
@@ -40,6 +42,8 @@ type EnvironmentCreatePageProps = {
   environmentId?: string;
   mode?: "create" | "edit";
   onBack: () => void;
+  /** 没有存储配置时，引导去创建存储。 */
+  onCreateStorage?: () => void;
   onSaved?: (environmentId: string) => void;
 };
 
@@ -47,9 +51,13 @@ export function EnvironmentCreatePage({
   environmentId,
   mode = "create",
   onBack,
+  onCreateStorage,
   onSaved,
 }: EnvironmentCreatePageProps) {
   const queryClient = useQueryClient();
+  const canManageStorage = useAuthStore((state) =>
+    Boolean(state.session?.capabilities.canManageStorage),
+  );
   const isEditMode = mode === "edit";
   const editEnvironmentId = isEditMode ? environmentId : undefined;
   const storageOptionsScope = editEnvironmentId ? editEnvironmentId : "new";
@@ -189,6 +197,31 @@ export function EnvironmentCreatePage({
 
         <Card className="rounded-lg bg-card p-0">
           <FormSectionHeader title="存储关联" description="环境必须绑定一个已创建的存储配置" />
+          {storageSnapshot && storageConfigurations.length === 0 ? (
+            <div className="px-5 pb-4">
+              <Alert variant="warning" className="rounded-xl">
+                <div className="font-medium">还没有存储配置</div>
+                <p className="m-0 mt-0.5 text-sm leading-relaxed">
+                  环境必须绑定一个存储配置，构建产物会发布到这个存储里。请先添加存储，再回来创建环境。
+                </p>
+                {onCreateStorage && canManageStorage ? (
+                  <Button
+                    className="mt-2 h-8 gap-1.5 rounded-lg px-3"
+                    onClick={onCreateStorage}
+                    size="sm"
+                    type="button"
+                    variant="outline"
+                  >
+                    去添加存储
+                    <ArrowRight />
+                  </Button>
+                ) : null}
+                {canManageStorage ? null : (
+                  <p className="m-0 mt-1.5 text-xs">你没有存储管理权限，请联系平台管理员。</p>
+                )}
+              </Alert>
+            </div>
+          ) : null}
           <div className="grid gap-4 px-5 pb-5 sm:grid-cols-2">
             <FormSectionField label="存储配置" required>
               <Controller
@@ -226,7 +259,11 @@ export function EnvironmentCreatePage({
         <Button variant="outline" type="button" onClick={onBack}>
           取消
         </Button>
-        <Button type="submit" loading={isSubmitting}>
+        <Button
+          type="submit"
+          disabled={!isEditMode && storageConfigurations.length === 0}
+          loading={isSubmitting}
+        >
           {isEditMode ? "保存修改" : "保存环境"}
         </Button>
       </DrawerFooter>

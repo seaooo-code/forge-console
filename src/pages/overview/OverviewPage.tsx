@@ -20,6 +20,7 @@ import {
   useOverviewData,
   useRebuild,
   useReleaseBuild,
+  useSetupProgress,
   useUpdateGrayPercentage,
 } from "./hooks";
 import type { CellKey, ReleaseComposerForm, RouteEntry } from "./types";
@@ -34,7 +35,9 @@ import {
 
 type OverviewPageProps = {
   onCreateApplication: () => void;
+  onCreateEnvironment: () => void;
   onCreateModule: () => void;
+  onCreateStorage: () => void;
   onOpenBuild: (buildId: string) => void;
   onOpenCodeSources: () => void;
 };
@@ -43,7 +46,9 @@ const canvas = "min-h-0 rounded-xl bg-background shadow-edge";
 
 export function OverviewPage({
   onCreateApplication,
+  onCreateEnvironment,
   onCreateModule,
+  onCreateStorage,
   onOpenBuild,
   onOpenCodeSources,
 }: OverviewPageProps) {
@@ -119,7 +124,13 @@ export function OverviewPage({
   }, [environments, modules, select, selected]);
 
   if (!applicationId) {
-    return <PickApplication onCreateApplication={onCreateApplication} />;
+    return (
+      <PickApplication
+        onCreateApplication={onCreateApplication}
+        onCreateEnvironment={onCreateEnvironment}
+        onCreateStorage={onCreateStorage}
+      />
+    );
   }
   if (error) {
     return (
@@ -363,11 +374,18 @@ function resolveSelection(
   return module && env ? { environment: env.id, moduleId: module.id } : null;
 }
 
-function PickApplication({ onCreateApplication }: { onCreateApplication: () => void }) {
+function PickApplication({
+  onCreateApplication,
+  onCreateEnvironment,
+  onCreateStorage,
+}: {
+  onCreateApplication: () => void;
+  onCreateEnvironment: () => void;
+  onCreateStorage: () => void;
+}) {
   const setApplicationId = useApplicationScopeStore((state) => state.setApplicationId);
-  const canCreateApplication = useAuthStore((state) =>
-    Boolean(state.session?.capabilities.canCreateApplication),
-  );
+  const capabilities = useAuthStore((state) => state.session?.capabilities);
+  const { isReady, ...progress } = useSetupProgress();
   const { data: applications = [], isSuccess } = useQuery({
     queryFn: fetchApplicationScopeOptions,
     queryKey: applicationScopeOptionsQueryKey,
@@ -382,7 +400,18 @@ function PickApplication({ onCreateApplication }: { onCreateApplication: () => v
           : "线上现状按应用展示。选一个应用开始，之后也可以在左上角切换。"}
       </p>
       {isSuccess && applications.length === 0 ? (
-        <CreateApplicationGuide canCreate={canCreateApplication} onCreate={onCreateApplication} />
+        <CreateApplicationGuide
+          capabilities={{
+            application: Boolean(capabilities?.canCreateApplication),
+            environment: Boolean(capabilities?.canManageEnvironments),
+            storage: Boolean(capabilities?.canManageStorage),
+          }}
+          isReady={isReady}
+          onCreateApplication={onCreateApplication}
+          onCreateEnvironment={onCreateEnvironment}
+          onCreateStorage={onCreateStorage}
+          progress={progress}
+        />
       ) : null}
       <div className="mt-6 grid max-w-3xl grid-cols-1 gap-2.5 sm:grid-cols-2">
         {applications.map((application) => (
