@@ -2,10 +2,10 @@ import { LoaderCircle } from "lucide-react";
 import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 
+import { BranchPicker } from "@/components/common/BranchPicker";
 import { Drawer, DrawerBody, DrawerFooter, DrawerHeader } from "@/components/common/Drawer";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -41,7 +41,6 @@ export function BuildCreateDialog({
     formState: { errors, isSubmitting },
     getValues,
     handleSubmit,
-    register,
     reset,
     setValue,
     watch,
@@ -149,12 +148,21 @@ export function BuildCreateDialog({
           </Field>
 
           <Field label="分支" inputId="build-create-branch">
-            <Input
-              id="build-create-branch"
-              placeholder={selectedModule?.defaultBranch || "输入 Git 分支"}
-              {...register("branch", {
-                validate: (value) => (value.trim() ? true : "请输入分支"),
-              })}
+            <Controller
+              control={control}
+              name="branch"
+              rules={{ validate: (value) => (value.trim() ? true : "请输入分支") }}
+              render={({ field }) => (
+                <BranchPicker
+                  id="build-create-branch"
+                  moduleId={selectedModuleId}
+                  defaultBranch={selectedModule?.defaultBranch}
+                  invalid={Boolean(errors.branch)}
+                  value={field.value}
+                  onBlur={field.onBlur}
+                  onChange={field.onChange}
+                />
+              )}
             />
             {errors.branch ? (
               <div className="text-destructive text-xs">{errors.branch.message}</div>

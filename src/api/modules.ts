@@ -29,7 +29,16 @@ export const moduleDetailQueryKey = (moduleId: string | undefined) => [
   moduleId ?? "none",
 ];
 
+export const moduleBranchesQueryKey = (moduleId: string, query: string) => [
+  ...modulesRootQueryKey,
+  "branches",
+  moduleId,
+  query,
+];
+
 type ModuleAPIRecord = APISchemas["Module"];
+
+type ModuleBranchesAPIResponse = APISchemas["ModuleBranchesResponse"];
 
 type ModuleDetailAPIResponse = APISchemas["ModuleDetailResponse"];
 
@@ -97,6 +106,16 @@ export async function fetchModuleDetailSnapshot(moduleId: string): Promise<Modul
       total: 1,
     },
   };
+}
+
+/** 搜索模块绑定仓库的分支，后端最多返回 50 条。 */
+export async function searchModuleBranches(moduleId: string, query: string): Promise<string[]> {
+  const params = new URLSearchParams({ query });
+  const payload = await fetchJSON<ModuleBranchesAPIResponse>(
+    `/api/v1/modules/${encodeURIComponent(moduleId)}/branches?${params.toString()}`,
+  );
+
+  return payload.branches;
 }
 
 export function normalizeModuleListFilters(

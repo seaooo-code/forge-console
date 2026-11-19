@@ -1,9 +1,9 @@
 import { type ReactNode, useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
+import { BranchPicker } from "@/components/common/BranchPicker";
 import { Drawer, DrawerBody, DrawerFooter, DrawerHeader } from "@/components/common/Drawer";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -35,7 +35,6 @@ export function ModuleBuildDialog({
     control,
     formState: { isSubmitting },
     handleSubmit,
-    register,
     reset,
   } = useForm<ModuleBuildFormState>({
     defaultValues: {
@@ -79,10 +78,19 @@ export function ModuleBuildDialog({
 
         <DrawerBody className="space-y-5">
           <Field label="分支" inputId="module-build-branch">
-            <Input
-              id="module-build-branch"
-              placeholder={module.defaultBranch || "输入 Git 分支"}
-              {...register("branch")}
+            <Controller
+              control={control}
+              name="branch"
+              render={({ field }) => (
+                <BranchPicker
+                  id="module-build-branch"
+                  moduleId={module.id}
+                  defaultBranch={module.defaultBranch}
+                  value={field.value}
+                  onBlur={field.onBlur}
+                  onChange={field.onChange}
+                />
+              )}
             />
           </Field>
           <Field label="环境" inputId="module-build-environment">

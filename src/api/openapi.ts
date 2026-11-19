@@ -788,6 +788,23 @@ export interface paths {
         patch: operations["updateModule"];
         trace?: never;
     };
+    "/api/v1/modules/{id}/branches": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Search branches of the module repository */
+        get: operations["searchModuleBranches"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/modules/{id}/build-variables": {
         parameters: {
             query?: never;
@@ -2628,6 +2645,10 @@ export interface components {
              * @description Module update time.
              */
             updatedAt?: string;
+        };
+        ModuleBranchesResponse: {
+            /** @description Matched branch names. */
+            branches: string[];
         };
         ModuleBuildConfig: {
             /** @description Branch globs that trigger builds on push. Empty disables automatic builds. */
@@ -7010,6 +7031,77 @@ export interface operations {
             };
             /** @description Server error. */
             500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    searchModuleBranches: {
+        parameters: {
+            query?: {
+                /** @description Branch name keyword. Empty lists branches in provider order. */
+                query?: string;
+            };
+            header?: never;
+            path: {
+                /** @description Module id. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Matched branch names, at most 50. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ModuleBranchesResponse"];
+                };
+            };
+            /** @description Code source connection is inactive or request is invalid. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Current user cannot create builds for this module. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Module or code source connection not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Code source provider request failed. */
+            502: {
                 headers: {
                     [name: string]: unknown;
                 };
