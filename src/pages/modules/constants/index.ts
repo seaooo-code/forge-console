@@ -9,12 +9,15 @@ export const defaultModuleBuildConfig: ModuleFormState["buildConfig"] = {
   buildAdapterParams: {},
   buildContext: ".",
   buildMode: "dockerfile",
+  ciArtifactPath: "dist",
+  ciJob: "",
   dockerfilePath: "Dockerfile",
 };
 
 export const buildModeLabels: Record<BuildMode, string> = {
   adapter: "构建适配器",
   dockerfile: "仓库 Dockerfile",
+  gitlab_ci: "GitLab CI",
 };
 
 export const defaultForm: ModuleFormState = {

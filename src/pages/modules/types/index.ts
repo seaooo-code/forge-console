@@ -50,6 +50,10 @@ export type ModuleBuildConfigFormState = {
   buildAdapterParams: Record<string, string>;
   buildContext: string;
   buildMode: BuildMode;
+  /** gitlab_ci 模式：job artifacts 里产物根目录的相对路径，默认 dist。 */
+  ciArtifactPath: string;
+  /** gitlab_ci 模式：产出构建产物的 CI job 名。 */
+  ciJob: string;
   dockerfilePath: string;
 };
 

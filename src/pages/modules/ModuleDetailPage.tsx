@@ -334,7 +334,12 @@ function BuildConfigDetails({
                 </Button>
               ),
             }
-          : { label: "Dockerfile 路径", mono: true, value: config.dockerfilePath || "-" },
+          : buildMode === "gitlab_ci"
+            ? { label: "CI job", mono: true, value: config.ciJob || "-" }
+            : { label: "Dockerfile 路径", mono: true, value: config.dockerfilePath || "-" },
+        buildMode === "gitlab_ci"
+          ? { label: "产物目录", mono: true, value: config.ciArtifactPath || "-" }
+          : null,
         adapterId
           ? {
               label: "适配器参数",

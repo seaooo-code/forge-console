@@ -49,6 +49,8 @@ export type BuildRunRecord = {
   number: number;
   operator: string;
   platforms: string[];
+  /** gitlab_ci 构建在 GitLab 上创建的 pipeline 链接，其他构建或 pipeline 尚未创建时为空字符串。 */
+  ciPipelineUrl: string;
   /** 适配器构建渲染出的 Dockerfile 的 sha256，Dockerfile 构建为空字符串。 */
   renderedDockerfileSha256: string;
   repositoryWebUrl: string;

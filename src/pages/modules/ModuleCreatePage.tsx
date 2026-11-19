@@ -223,6 +223,7 @@ export function ModuleCreatePage({
           <ModuleBuildConfigFields
             adapters={adaptersQuery.data}
             adaptersError={adaptersQuery.error}
+            ciSupported={selectedConnection?.provider === "gitlab"}
             clearFormError={clearFormError}
             control={control}
             currentAdapterId={moduleRecord?.buildConfig.buildAdapterId ?? ""}

@@ -220,6 +220,21 @@ function BuildDetailContent({
                   mono: true,
                   value: build.workerId,
                 },
+                build.ciPipelineUrl
+                  ? {
+                      label: "GitLab pipeline",
+                      value: (
+                        <a
+                          className="text-primary text-sm hover:underline"
+                          href={build.ciPipelineUrl}
+                          rel="noreferrer"
+                          target="_blank"
+                        >
+                          打开 pipeline
+                        </a>
+                      ),
+                    }
+                  : null,
                 buildAdapterId
                   ? {
                       hint:

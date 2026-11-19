@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-import { Blocks, Eye, FileCode2, Plus, Trash2 } from "lucide-react";
+import { Blocks, Eye, FileCode2, GitBranch, Plus, Trash2 } from "lucide-react";
 import type { ReactNode } from "react";
 import {
   type Control,
@@ -41,6 +41,8 @@ type ModuleBuildConfigFieldsProps = {
   /** 构建适配器列表查询结果；无读取权限时 adaptersError 为 403。 */
   adapters: BuildAdapter[] | undefined;
   adaptersError: unknown;
+  /** 所选代码源是否支持把构建转交给 CI（目前只有 GitLab）。 */
+  ciSupported: boolean;
   clearFormError: () => void;
   control: Control<ModuleFormState>;
   /** 模块已保存的适配器 id：已停用的适配器只在模块正在使用时出现在下拉框里。 */
@@ -56,6 +58,7 @@ type ModuleBuildConfigFieldsProps = {
 export function ModuleBuildConfigFields({
   adapters,
   adaptersError,
+  ciSupported,
   clearFormError,
   control,
   currentAdapterId,
@@ -109,6 +112,13 @@ export function ModuleBuildConfigFields({
                     <Blocks />
                     {buildModeLabels.adapter}
                   </TabsTrigger>
+                  <TabsTrigger
+                    value="gitlab_ci"
+                    disabled={!ciSupported && field.value !== "gitlab_ci"}
+                  >
+                    <GitBranch />
+                    {buildModeLabels.gitlab_ci}
+                  </TabsTrigger>
                 </TabsList>
                 <TabsContent value="dockerfile" className="rounded-md bg-surface-2/40 px-3 py-3">
                   <div className="grid gap-4 xl:grid-cols-12">
@@ -137,22 +147,63 @@ export function ModuleBuildConfigFields({
                     register={register}
                   />
                 </TabsContent>
+                <TabsContent value="gitlab_ci" className="rounded-md bg-surface-2/40 px-3 py-3">
+                  <div className="space-y-4">
+                    {ciSupported ? null : (
+                      <Alert variant="warning">
+                        当前代码源不支持 GitLab CI 构建，请选择 GitLab 连接。
+                      </Alert>
+                    )}
+                    <div className="grid gap-4 xl:grid-cols-12">
+                      <Field
+                        label="CI job"
+                        required
+                        hint="产出构建产物的 job 名，需与仓库 .gitlab-ci.yml 里的 job 名一致；同一仓库可用不同 job 绑定多个模块"
+                        className="xl:col-span-4"
+                      >
+                        <Input
+                          className="font-mono"
+                          placeholder="forge_build"
+                          {...withClear(register("buildConfig.ciJob"))}
+                        />
+                      </Field>
+                      <Field
+                        label="产物目录"
+                        hint="job artifacts 里的产物根目录，相对路径，默认 dist；需包含 forge.json 和平台目录"
+                        className="xl:col-span-4"
+                      >
+                        <Input
+                          className="font-mono"
+                          placeholder="dist"
+                          {...withClear(register("buildConfig.ciArtifactPath"))}
+                        />
+                      </Field>
+                    </div>
+                    <p className="text-muted-foreground text-xs">
+                      构建时 Forge 在构建分支上触发 pipeline 并传入 FORGE_*
+                      变量和模块的构建变量（含密钥变量，GitLab 项目成员可见）。GitLab 连接的令牌需要
+                      api 权限，并在项目上至少是 Developer 角色。
+                    </p>
+                  </div>
+                </TabsContent>
               </Tabs>
             )}
           />
         </Field>
 
-        <Field
-          label="构建上下文"
-          hint={
-            buildMode === "adapter"
-              ? "相对仓库根目录，默认 .；适配器的辅助文件会放到其下的 .forge/"
-              : "相对仓库根目录，默认 ."
-          }
-          className="xl:col-span-4"
-        >
-          <Input placeholder="." {...withClear(register("buildConfig.buildContext"))} />
-        </Field>
+        {buildMode === "gitlab_ci" ? null : (
+          <Field
+            label="构建上下文"
+            hint={
+              buildMode === "adapter"
+                ? "相对仓库根目录，默认 .；适配器的辅助文件会放到其下的 .forge/"
+                : "相对仓库根目录，默认 ."
+            }
+            className="xl:col-span-4"
+          >
+            <Input placeholder="." {...withClear(register("buildConfig.buildContext"))} />
+          </Field>
+        )}
         <Field label="自动构建环境" hint="填写自动构建分支时必选" className="xl:col-span-4">
           <Controller
             control={control}
@@ -280,7 +331,7 @@ function AdapterFields({
   isAdaptersLoading,
   moduleId,
   register,
-}: Omit<ModuleBuildConfigFieldsProps, "environmentOptions">) {
+}: Omit<ModuleBuildConfigFieldsProps, "ciSupported" | "environmentOptions">) {
   const buildAdapterId = useWatch({ control, name: "buildConfig.buildAdapterId" });
   const paramValues = useWatch({ control, name: "buildConfig.buildAdapterParams" });
   const { errors } = useFormState({ control, name: "buildConfig.buildAdapterParams" });

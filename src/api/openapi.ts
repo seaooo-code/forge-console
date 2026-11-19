@@ -1803,6 +1803,13 @@ export interface components {
              * @description Build adapter version used by an adapter build.
              */
             buildAdapterVersion?: number | null;
+            /**
+             * Format: int64
+             * @description GitLab pipeline id created for a gitlab_ci build. 0 for other builds or before the pipeline is created.
+             */
+            ciPipelineId?: number;
+            /** @description Web URL of the GitLab pipeline created for a gitlab_ci build. Empty for other builds. */
+            ciPipelineUrl?: string;
             /** @description Code source connection id of the module repository. */
             codeSourceConnectionId: string;
             /** @description Commit built by this record. Webhook builds record the pushed commit; manual builds fill it after checkout. */
@@ -2645,10 +2652,14 @@ export interface components {
             /** @description Docker build context relative to the repository root, default ".". */
             buildContext?: string;
             /**
-             * @description Build mode. dockerfile uses the repository Dockerfile (default); adapter uses a platform build adapter.
+             * @description Build mode. dockerfile uses the repository Dockerfile (default); adapter uses a platform build adapter; gitlab_ci hands the build to the repository's GitLab CI pipeline (GitLab connections only).
              * @enum {string}
              */
-            buildMode?: "dockerfile" | "adapter";
+            buildMode?: "dockerfile" | "adapter" | "gitlab_ci";
+            /** @description Relative path of the artifact root inside the job artifacts, default "dist". Only used in gitlab_ci mode. */
+            ciArtifactPath?: string;
+            /** @description Name of the CI job that produces the build artifacts. Required in gitlab_ci mode and must be empty in other modes. */
+            ciJob?: string;
             /** @description Dockerfile path relative to the repository root. Defaults to FORGE_WORKER_DOCKERFILE. Only used in dockerfile mode. */
             dockerfilePath?: string;
         };

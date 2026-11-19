@@ -162,6 +162,7 @@ export function normalizeBuildRecord(record: BuildRecordAPIRecord): BuildRunReco
     number: record.number,
     operator: record.workerId || "-",
     platforms: record.platforms ?? [],
+    ciPipelineUrl: record.ciPipelineUrl?.trim() ?? "",
     renderedDockerfileSha256: record.renderedDockerfileSha256?.trim() ?? "",
     repositoryWebUrl,
     runtimeVersion: record.runtimeVersion.trim(),

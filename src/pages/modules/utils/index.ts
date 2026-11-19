@@ -63,6 +63,8 @@ export function buildInitialForm(
       buildAdapterParams: { ...(buildConfig.buildAdapterParams ?? {}) },
       buildContext: buildConfig.buildContext || defaultModuleBuildConfig.buildContext,
       buildMode: buildConfig.buildMode ?? "dockerfile",
+      ciArtifactPath: buildConfig.ciArtifactPath || defaultModuleBuildConfig.ciArtifactPath,
+      ciJob: buildConfig.ciJob ?? "",
       dockerfilePath: buildConfig.dockerfilePath || defaultModuleBuildConfig.dockerfilePath,
     },
     commonModuleId: moduleRecord.commonModuleId ?? "",
@@ -90,7 +92,7 @@ export function buildInitialForm(
 
 /**
  * adapter 为当前选中的构建适配器：参数只保留它声明过的 key 且去掉空值（后端拒绝未声明的参数）。
- * dockerfile 模式不能带适配器字段，提交时整体清掉。
+ * dockerfile 模式不能带适配器字段，提交时整体清掉；只有 gitlab_ci 模式才带 CI 字段。
  */
 export function buildModuleInput(
   form: ModuleFormState,
@@ -101,6 +103,7 @@ export function buildModuleInput(
     ...new Set(buildConfig.autoBuildBranches.map((branch) => branch.value.trim()).filter(Boolean)),
   ];
   const isAdapterMode = buildConfig.buildMode === "adapter";
+  const isCIMode = buildConfig.buildMode === "gitlab_ci";
 
   return {
     applicationId: form.applicationId,
@@ -115,6 +118,8 @@ export function buildModuleInput(
         : undefined,
       buildContext: buildConfig.buildContext.trim(),
       buildMode: buildConfig.buildMode,
+      ciArtifactPath: isCIMode ? buildConfig.ciArtifactPath.trim() : undefined,
+      ciJob: isCIMode ? buildConfig.ciJob.trim() : undefined,
       dockerfilePath: buildConfig.dockerfilePath.trim(),
     },
     commonModuleId: form.kind === "Feature" ? form.commonModuleId.trim() : undefined,
@@ -193,14 +198,24 @@ function validateBuildConfig(config: ModuleBuildConfig) {
     return "请选择构建适配器";
   }
 
-  // 适配器模式不使用 Dockerfile 路径，留空时后端回填默认值。
-  if (config.buildMode !== "adapter" && !dockerfilePath) {
+  const ciJob = config.ciJob ?? "";
+  const ciArtifactPath = config.ciArtifactPath ?? "";
+  if (config.buildMode === "gitlab_ci" && !ciJob) {
+    return "请填写 CI job 名";
+  }
+  if (config.buildMode === "gitlab_ci" && (ciJob.length > 255 || /[\r\n]/.test(ciJob))) {
+    return "CI job 名不能超过 255 个字符，也不能包含换行";
+  }
+
+  // 适配器和 GitLab CI 模式不使用 Dockerfile 路径，留空时后端回填默认值。
+  if (config.buildMode === "dockerfile" && !dockerfilePath) {
     return "请填写 Dockerfile 路径";
   }
 
   for (const [label, value] of [
     ["Dockerfile 路径", dockerfilePath],
     ["构建上下文", buildContext],
+    ["产物目录", ciArtifactPath],
   ] as const) {
     if (
       value.length > 255 ||
