@@ -9,6 +9,7 @@ import {
   readLastLoginTenant,
   readPendingFeishuLogin,
 } from "@/api/feishu-auth";
+import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -103,8 +104,10 @@ function LoginAction({ redirectPath }: { redirectPath: string }) {
 
   if (error) {
     return (
-      <div className="mt-7 space-y-3">
-        <p className="m-0 text-destructive text-sm">读取登录租户失败：{error.message}</p>
+      <div className="mt-7 flex flex-col gap-3">
+        <Alert variant="danger" className="rounded-xl px-4 py-3">
+          读取登录租户失败：{error.message}
+        </Alert>
         <Button className="w-full" variant="outline" type="button" onClick={() => void refetch()}>
           重试
         </Button>
@@ -116,7 +119,7 @@ function LoginAction({ redirectPath }: { redirectPath: string }) {
   }
 
   return (
-    <div className="mt-7 space-y-3">
+    <div className="mt-7 flex flex-col gap-3">
       {tenants && tenants.length > 1 ? (
         <Select value={selectedTenantId} onValueChange={setPickedTenantId}>
           <SelectTrigger aria-label="选择飞书租户" className="h-11 w-full rounded-xl px-4">
@@ -182,10 +185,13 @@ function NoTenantNotice() {
 
   if (setupRequired) {
     return (
-      <div className="mt-7 space-y-3">
-        <p className="m-0 rounded-xl bg-muted px-4 py-3 text-muted-foreground text-sm leading-relaxed">
-          平台还没有初始化。用服务启动日志里的初始化令牌，配置第一个飞书租户。
-        </p>
+      <div className="mt-7 flex flex-col gap-4">
+        <Alert variant="info" className="rounded-xl px-4 py-3">
+          <div className="font-medium">平台还没有初始化</div>
+          <p className="m-0 mt-0.5 text-sm leading-relaxed">
+            用服务启动日志里的初始化令牌，配置第一个飞书租户。
+          </p>
+        </Alert>
         <Button
           className="h-11 w-full justify-between rounded-xl px-4"
           type="button"
@@ -198,9 +204,9 @@ function NoTenantNotice() {
     );
   }
   return (
-    <p className="m-0 mt-7 rounded-xl bg-muted px-4 py-3 text-muted-foreground text-sm">
+    <Alert variant="warning" className="mt-7 rounded-xl px-4 py-3">
       没有可登录的飞书租户，请联系管理员。
-    </p>
+    </Alert>
   );
 }
 
