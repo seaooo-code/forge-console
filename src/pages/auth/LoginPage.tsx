@@ -1,11 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, GitCompare, Layers, Undo2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import {
   beginFeishuAuthorization,
+  clearPendingFeishuLogin,
   fetchLoginTenants,
   readLastLoginTenant,
+  readPendingFeishuLogin,
 } from "@/api/feishu-auth";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,6 +19,7 @@ import {
 } from "@/components/ui/select";
 
 import { fetchSetupRequired, setupStatusQueryKey } from "./api";
+import { FeishuRedirectNotice } from "./components/FeishuRedirectNotice";
 
 type LoginPageProps = {
   redirectPath: string;
@@ -68,6 +71,7 @@ export function LoginPage({ redirectPath }: LoginPageProps) {
               使用飞书账号登录。能看到哪些应用、能否发布，跟随你在平台里的角色。
             </p>
             <LoginAction redirectPath={redirectPath} />
+            <PendingLoginNotice />
             <p className="m-0 mt-4 text-faint text-xs leading-relaxed">
               登录后没有需要的权限，请联系平台管理员在应用成员里添加你。
             </p>
@@ -137,6 +141,35 @@ function LoginAction({ redirectPath }: { redirectPath: string }) {
         <ArrowRight />
       </Button>
     </div>
+  );
+}
+
+/** 上一次登录发起后没有回到回调页时，提示可能是当前域名不在飞书的重定向白名单里。 */
+function PendingLoginNotice() {
+  const [pending, setPending] = useState(readPendingFeishuLogin);
+
+  // 从飞书的错误页点浏览器「后退」回来时，页面可能直接从 bfcache 恢复，不会重新渲染，这里重新读一次标记。
+  useEffect(() => {
+    const refresh = (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        setPending(readPendingFeishuLogin());
+      }
+    };
+    window.addEventListener("pageshow", refresh);
+    return () => window.removeEventListener("pageshow", refresh);
+  }, []);
+
+  if (!pending) {
+    return null;
+  }
+  return (
+    <FeishuRedirectNotice
+      callbackUrl={pending.callbackUrl}
+      onDismiss={() => {
+        clearPendingFeishuLogin();
+        setPending(null);
+      }}
+    />
   );
 }
 

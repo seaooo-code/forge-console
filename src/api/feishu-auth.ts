@@ -3,6 +3,9 @@ import type { AuthSession, FeishuAuthResponse, FeishuLoginTenant, GlobalRole } f
 
 const authRedirectStorageKey = "forge-console.auth-redirect-path";
 const lastTenantStorageKey = "forge-console.last-feishu-tenant";
+const pendingLoginStorageKey = "forge-console.feishu-login-pending";
+/** 发起登录后超过这个时间还没回到回调页，就不再认为「上次登录没有完成」。 */
+const pendingLoginMaxAgeMs = 30 * 60 * 1000;
 const authorizationRequests = new Map<string, Promise<AuthSession>>();
 let sessionRequest: Promise<AuthSession | null> | null = null;
 
@@ -23,12 +26,56 @@ export function readLastLoginTenant() {
   return window.localStorage.getItem(lastTenantStorageKey) ?? "";
 }
 
+export type PendingFeishuLogin = {
+  /** 本次登录传给飞书的回调地址。 */
+  callbackUrl: string;
+  tenantId: string;
+};
+
+/**
+ * 读取「已发起、但没有回到回调页」的登录。飞书对不在白名单里的回调地址会直接展示错误页，不会跳回来，
+ * 前端读不到这个错误，只能靠这个标记在用户回到登录页时提示去飞书后台添加域名。到达回调页时标记会被清掉。
+ */
+export function readPendingFeishuLogin(): PendingFeishuLogin | null {
+  const raw = window.sessionStorage.getItem(pendingLoginStorageKey);
+  if (!raw) {
+    return null;
+  }
+  try {
+    const value = JSON.parse(raw) as {
+      callbackUrl?: string;
+      startedAt?: number;
+      tenantId?: string;
+    };
+    if (
+      value.callbackUrl &&
+      typeof value.startedAt === "number" &&
+      Date.now() - value.startedAt <= pendingLoginMaxAgeMs
+    ) {
+      return { callbackUrl: value.callbackUrl, tenantId: value.tenantId ?? "" };
+    }
+  } catch {
+    // 标记损坏时当作没有，下面统一清掉。
+  }
+  window.sessionStorage.removeItem(pendingLoginStorageKey);
+  return null;
+}
+
+export function clearPendingFeishuLogin() {
+  window.sessionStorage.removeItem(pendingLoginStorageKey);
+}
+
 export function beginFeishuAuthorization(redirectPath: string, tenantId: string) {
   window.sessionStorage.setItem(authRedirectStorageKey, normalizeRedirectPath(redirectPath));
   window.localStorage.setItem(lastTenantStorageKey, tenantId);
   // 回调地址按前端自身域名拼出，后端只接受 {origin}/login/feishu/callback，飞书再按应用白名单校验一次。
+  const callbackUrl = `${window.location.origin}/login/feishu/callback`;
+  window.sessionStorage.setItem(
+    pendingLoginStorageKey,
+    JSON.stringify({ callbackUrl, startedAt: Date.now(), tenantId }),
+  );
   const query = new URLSearchParams({
-    redirect: `${window.location.origin}/login/feishu/callback`,
+    redirect: callbackUrl,
     tenant: tenantId,
   });
   window.location.assign(`${apiBaseUrl}/api/v1/auth/feishu/authorize?${query.toString()}`);

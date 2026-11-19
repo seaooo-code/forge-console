@@ -2,7 +2,11 @@ import { AlertTriangle, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 
-import { completeFeishuAuthorization, takeStoredAuthRedirectPath } from "@/api/feishu-auth";
+import {
+  clearPendingFeishuLogin,
+  completeFeishuAuthorization,
+  takeStoredAuthRedirectPath,
+} from "@/api/feishu-auth";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/store/use-auth-store";
 
@@ -13,6 +17,8 @@ export function FeishuCallbackPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    // 能回到回调页，说明飞书接受了当前域名的回调地址。
+    clearPendingFeishuLogin();
     const denied = searchParams.get("error");
     const code = searchParams.get("code");
     const state = searchParams.get("state");
