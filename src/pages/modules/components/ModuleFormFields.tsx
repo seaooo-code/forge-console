@@ -167,7 +167,7 @@ export function ModuleFormFields({
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="选择关联应用的通用模块" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent emptyText="暂无通用模块">
                       {commonModuleOptions.map((module) => (
                         <SelectItem key={module.id} value={module.id}>
                           {module.name}

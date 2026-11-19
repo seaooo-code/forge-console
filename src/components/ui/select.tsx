@@ -1,6 +1,6 @@
 import * as SelectPrimitive from "@radix-ui/react-select";
-import { Check, ChevronDown, ChevronUp } from "lucide-react";
-import type * as React from "react";
+import { Check, ChevronDown, ChevronUp, Inbox } from "lucide-react";
+import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -43,8 +43,14 @@ function SelectContent({
   className,
   children,
   position = "popper",
+  emptyText = "暂无可选项",
   ...props
-}: React.ComponentProps<typeof SelectPrimitive.Content>) {
+}: React.ComponentProps<typeof SelectPrimitive.Content> & {
+  /** 没有任何选项时展示的空状态文案。 */
+  emptyText?: React.ReactNode;
+}) {
+  const isEmpty = React.Children.toArray(children).length === 0;
+
   return (
     <SelectPrimitive.Portal>
       <SelectPrimitive.Content
@@ -60,7 +66,15 @@ function SelectContent({
         <SelectPrimitive.Viewport
           className={cn("min-w-32 p-1", position === "popper" && "w-full scroll-my-1")}
         >
-          {children}
+          {isEmpty ? (
+            // 空选项时给出占位，宽度跟随触发器，避免弹层缩成一条细线。
+            <div className="flex w-[calc(var(--radix-select-trigger-width)-0.5rem)] flex-col items-center justify-center gap-2 py-6 text-muted-foreground text-sm">
+              <Inbox className="size-5 opacity-60" />
+              <span>{emptyText}</span>
+            </div>
+          ) : (
+            children
+          )}
         </SelectPrimitive.Viewport>
         <SelectScrollDownButton />
       </SelectPrimitive.Content>
