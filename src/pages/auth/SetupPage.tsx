@@ -3,6 +3,7 @@ import { ArrowRight, CheckCircle2 } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 
+import { CopyableCode } from "@/components/common/CopyableCode";
 import { FormSectionField } from "@/components/common/FormSectionHeader";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -154,9 +155,7 @@ export function SetupPage() {
               </FormSectionField>
               <div className="rounded-xl bg-muted px-4 py-3 text-muted-foreground text-xs leading-relaxed">
                 在飞书开放平台的应用「安全设置 → 重定向 URL」里添加：
-                <code className="mt-1 block break-all font-mono text-foreground">
-                  {callbackURL}
-                </code>
+                <CopyableCode className="my-1.5" label="回调地址" value={callbackURL} />
                 并在「权限管理」开通：持续访问已授权数据、搜索用户、获取通讯录基本信息、获取用户邮箱。
               </div>
 
