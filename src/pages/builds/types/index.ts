@@ -12,7 +12,6 @@ import type {
 } from "@/types/builds";
 import type {
   BuildReleaseFormState as SharedBuildReleaseFormState,
-  BuildReleaseGrayStrategy as SharedBuildReleaseGrayStrategy,
   BuildReleaseType as SharedBuildReleaseType,
 } from "@/types/releases";
 
@@ -23,8 +22,6 @@ export type BuildPlatform = SharedBuildPlatform;
 export type BuildTriggerType = SharedBuildTriggerType;
 
 export type BuildReleaseType = SharedBuildReleaseType;
-
-export type BuildReleaseGrayStrategy = SharedBuildReleaseGrayStrategy;
 
 export type BuildRunRecord = SharedBuildRunRecord;
 

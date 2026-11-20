@@ -85,7 +85,6 @@ export function RouteMatrix({
       <div className="flex items-center gap-4 px-1.5 pt-2 text-muted-foreground text-xs">
         <Legend className="bg-primary" label="全量" />
         <Legend className="bg-route-percentage" label="比例灰度" />
-        <Legend className="bg-route-targeted" label="定向灰度" />
         <span className="ml-auto text-faint">方向键切换格子，Esc 收起发布面板</span>
       </div>
     </section>
@@ -154,14 +153,6 @@ function Cell({ builds, cell, id, label, onSelect, selected }: CellProps) {
               />
             </>
           ) : null}
-          {cell?.targeted.map((entry) => (
-            <Lane
-              key={entry.release.id}
-              number={entry.build?.number}
-              tag={`定向 ${entry.release.identifier}`}
-              tagClass="text-route-targeted"
-            />
-          ))}
         </>
       )}
       {newer || running ? (

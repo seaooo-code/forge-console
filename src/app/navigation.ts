@@ -6,6 +6,7 @@ export const navGroups: NavGroup[] = [
       { id: "overview", label: "线上现状", href: "/", icon: "overview" },
       { id: "builds", label: "构建", href: "/builds", icon: "build" },
       { id: "release-records", label: "发布记录", href: "/release-records", icon: "releaseRecord" },
+      { id: "test-plans", label: "提测单", href: "/test-plans", icon: "testPlan" },
       { id: "modules", label: "模块", href: "/modules", icon: "module" },
       { id: "apps", label: "应用", href: "/apps", icon: "app" },
     ],

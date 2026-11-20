@@ -5,7 +5,7 @@ import type { CodeSourceConnection } from "@/pages/code-sources";
 import type { BuildRunRecord } from "@/types/builds";
 import type { ModuleRecord } from "@/types/modules";
 
-import { credentialExpiringWithinMs, targetedExpiringWithinMs } from "../constants";
+import { credentialExpiringWithinMs } from "../constants";
 import type {
   AttentionItem,
   CandidateAction,
@@ -42,12 +42,10 @@ export function buildRouteCells(model: OverviewModel, runtimeVersion: string) {
       full: null,
       moduleId: release.moduleId,
       percentage: null,
-      targeted: [],
     };
     const entry: RouteEntry = { build: buildsById.get(release.buildRecordId) ?? null, release };
     if (release.releaseType === "full") cell.full = entry;
     else if (release.grayStrategy === "percentage") cell.percentage = entry;
-    else cell.targeted.push(entry);
     cells.set(key, cell);
   }
 
@@ -55,7 +53,7 @@ export function buildRouteCells(model: OverviewModel, runtimeVersion: string) {
 }
 
 export const isEmptyCell = (cell: RouteCell | undefined) =>
-  !cell || (!cell.full && !cell.percentage && cell.targeted.length === 0);
+  !cell || (!cell.full && !cell.percentage);
 
 /** 格子里列出的构建：同一运行时版本的成功构建，加上还没产出版本号的排队、进行中和失败构建。 */
 export function cellBuilds(builds: BuildRunRecord[], key: CellKey, runtimeVersion: string) {
@@ -71,15 +69,10 @@ export function cellBuilds(builds: BuildRunRecord[], key: CellKey, runtimeVersio
 
 export function routeUsages(cell: RouteCell | undefined, buildId: string) {
   if (!cell) return [];
-  const usages: { kind: "full" | "percentage" | "targeted"; label: string }[] = [];
+  const usages: { kind: "full" | "percentage"; label: string }[] = [];
   if (cell.full?.release.buildRecordId === buildId) usages.push({ kind: "full", label: "全量" });
   if (cell.percentage?.release.buildRecordId === buildId) {
     usages.push({ kind: "percentage", label: `比例 ${cell.percentage.release.grayPercentage}%` });
-  }
-  for (const entry of cell.targeted) {
-    if (entry.release.buildRecordId === buildId) {
-      usages.push({ kind: "targeted", label: `定向 ${entry.release.identifier}` });
-    }
   }
   return usages;
 }
@@ -131,13 +124,7 @@ export function expiresInLabel(value: string) {
   return `${formatDistanceToNowStrict(date, { locale: zhCN })}后过期`;
 }
 
-export function expiresAtAfterDays(days: number) {
-  const value = new Date();
-  value.setDate(value.getDate() + days);
-  return value.toISOString();
-}
-
-/** 首页「需要处理」：每个格子最近一次构建失败、即将过期的定向灰度、即将过期的代码源凭证。 */
+/** 首页「需要处理」：每个格子最近一次构建失败、即将过期的代码源凭证。 */
 export function collectAttentionItems(
   model: OverviewModel,
   connections: CodeSourceConnection[],
@@ -161,18 +148,6 @@ export function collectAttentionItems(
         module: modulesById.get(build.moduleId) ?? null,
       });
     }
-  }
-
-  const buildsById = new Map(model.builds.map((build) => [build.id, build]));
-  for (const release of model.releases) {
-    if (release.status !== "active" || release.grayStrategy !== "targeted") continue;
-    const expiresAt = new Date(release.expiresAtRaw).getTime();
-    if (Number.isNaN(expiresAt) || expiresAt - now > targetedExpiringWithinMs) continue;
-    items.push({
-      entry: { build: buildsById.get(release.buildRecordId) ?? null, release },
-      id: `release-${release.id}`,
-      kind: "targeted-expiring",
-    });
   }
 
   for (const connection of connections) {

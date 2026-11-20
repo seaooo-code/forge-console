@@ -306,6 +306,7 @@ function normalizeApplicationCapabilities(
     canCreateBuild: Boolean(capabilities?.canCreateBuild),
     canEditApplication: Boolean(capabilities?.canEditApplication),
     canManageMembers: Boolean(capabilities?.canManageMembers),
+    canManageTestPlans: Boolean(capabilities?.canManageTestPlans),
     canRelease: Boolean(capabilities?.canRelease),
     canUpdateStatus: Boolean(capabilities?.canUpdateStatus),
   };

@@ -16,7 +16,6 @@ import { Modal, ModalFooter, ModalHeader } from "@/components/common/Modal";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -28,12 +27,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { hasControlCharacter } from "@/utils";
 
-import {
-  buildModeLabels,
-  emptySelectValue,
-  maxAutoBuildBranches,
-  maxAutoPreviewTtlHours,
-} from "../constants";
+import { buildModeLabels, emptySelectValue, maxAutoBuildBranches } from "../constants";
 import type { BuildAdapter, BuildMode, ModuleFormState } from "../types";
 import { pickAdapterParams } from "../utils";
 
@@ -72,7 +66,6 @@ export function ModuleBuildConfigFields({
     control,
     name: "buildConfig.autoBuildBranches",
   });
-  const autoPreviewRelease = useWatch({ control, name: "buildConfig.autoPreviewRelease" });
   const buildMode = useWatch({ control, name: "buildConfig.buildMode" });
   const withClear = <Name extends string>(
     field: UseFormRegisterReturn<Name>,
@@ -273,47 +266,6 @@ export function ModuleBuildConfigFields({
               <Plus className="size-3.5" />
               添加分支规则
             </Button>
-          </div>
-        </Field>
-
-        <Field label="预览通道" className="md:col-span-2 xl:col-span-4">
-          <div className="space-y-3 rounded-md bg-surface-2/40 px-3 py-3">
-            <Controller
-              control={control}
-              name="buildConfig.autoPreviewRelease"
-              render={({ field }) => (
-                <div className="flex items-start gap-2">
-                  <Checkbox
-                    id="module-auto-preview-release"
-                    checked={field.value}
-                    onCheckedChange={(checked) => {
-                      clearFormError();
-                      field.onChange(checked === true);
-                    }}
-                  />
-                  <label
-                    htmlFor="module-auto-preview-release"
-                    className="cursor-pointer text-foreground text-sm leading-5"
-                  >
-                    自动构建成功后，按分支名创建定向发布
-                  </label>
-                </div>
-              )}
-            />
-            <div className="flex items-center gap-2">
-              <Input
-                type="number"
-                min={1}
-                max={maxAutoPreviewTtlHours}
-                step={1}
-                disabled={!autoPreviewRelease}
-                className="w-28"
-                {...withClear(register("buildConfig.autoPreviewTtlHours", { valueAsNumber: true }))}
-              />
-              <span className="text-muted-foreground text-xs">
-                小时后过期（1 - {maxAutoPreviewTtlHours}）
-              </span>
-            </div>
           </div>
         </Field>
       </div>

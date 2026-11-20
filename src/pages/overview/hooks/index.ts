@@ -13,7 +13,6 @@ import { codeSourceConnectionsQueryKey, fetchCodeSourceConnections } from "@/pag
 import { environmentsSnapshotQueryKey, fetchEnvironmentsSnapshot } from "@/pages/environments";
 import {
   fetchAllReleaseRecordsSnapshot,
-  inactivateTargetedGrayRelease,
   releaseRecordsAllQueryKey,
   releaseRecordsSnapshotQueryKey,
   updateReleaseGrayPercentage,
@@ -21,7 +20,6 @@ import {
 
 import { activeBuildsRefetchIntervalMs } from "../constants";
 import type { OverviewModel, ReleaseComposerForm } from "../types";
-import { expiresAtAfterDays } from "../utils";
 
 /** 起步清单的进度：已有多少存储和环境。没有存储权限的用户读不到存储列表，此时只按环境判断。 */
 export function useSetupProgress() {
@@ -120,10 +118,7 @@ export function useReleaseBuild() {
     mutationFn: ({ buildId, form }: { buildId: string; form: ReleaseComposerForm }) =>
       createBuildRelease({
         buildRecordId: buildId,
-        expiresAt: expiresAtAfterDays(form.expiresInDays),
         grayPercentage: form.grayPercentage,
-        grayStrategy: form.kind === "targeted" ? "targeted" : "percentage",
-        identifier: form.identifier,
         releaseType: form.kind === "full" ? "full" : "gray",
       }),
     onSuccess: invalidate,
@@ -135,14 +130,6 @@ export function useUpdateGrayPercentage() {
   return useMutation({
     mutationFn: ({ grayPercentage, releaseId }: { grayPercentage: number; releaseId: string }) =>
       updateReleaseGrayPercentage(releaseId, grayPercentage),
-    onSuccess: invalidate,
-  });
-}
-
-export function useInactivateTargeted() {
-  const invalidate = useInvalidateRoutes();
-  return useMutation({
-    mutationFn: (releaseId: string) => inactivateTargetedGrayRelease(releaseId),
     onSuccess: invalidate,
   });
 }

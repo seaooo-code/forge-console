@@ -751,6 +751,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/me/test-accounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List my test accounts */
+        get: operations["listMyTestAccounts"];
+        put?: never;
+        /** Save a test account */
+        post: operations["upsertMyTestAccount"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/test-accounts/{environment}/{userId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete a test account */
+        delete: operations["deleteMyTestAccount"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/modules": {
         parameters: {
             query?: never;
@@ -893,23 +928,6 @@ export interface paths {
         patch: operations["updateReleaseGrayPercentage"];
         trace?: never;
     };
-    "/api/v1/releases/{id}/inactivate": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        /** Inactivate targeted gray release */
-        patch: operations["inactivateTargetedGrayRelease"];
-        trace?: never;
-    };
     "/api/v1/setup/feishu-tenant": {
         parameters: {
             query?: never;
@@ -996,6 +1014,162 @@ export interface paths {
         head?: never;
         /** Update storage configuration */
         patch: operations["updateStorageConfiguration"];
+        trace?: never;
+    };
+    "/api/v1/test-plans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List test plans */
+        get: operations["listTestPlans"];
+        put?: never;
+        /** Create test plan */
+        post: operations["createTestPlan"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/test-plans/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get test plan detail */
+        get: operations["getTestPlan"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update test plan name or link */
+        patch: operations["updateTestPlan"];
+        trace?: never;
+    };
+    "/api/v1/test-plans/{id}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Close test plan */
+        post: operations["closeTestPlan"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/test-plans/{id}/extend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Change test plan expiration */
+        post: operations["extendTestPlan"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/test-plans/{id}/items/{moduleId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Set the build of a module in a test plan */
+        put: operations["setTestPlanItem"];
+        post?: never;
+        /** Remove a module from a test plan */
+        delete: operations["deleteTestPlanItem"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/test-plans/{id}/join": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Join a test plan with my test accounts */
+        post: operations["joinTestPlan"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/test-plans/{id}/leave": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Remove my test accounts from a test plan */
+        post: operations["leaveTestPlan"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/test-plans/{id}/members": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add client user ids to a test plan */
+        post: operations["addTestPlanMembers"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/test-plans/{id}/members/{userId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Remove a client user id from a test plan */
+        delete: operations["removeTestPlanMember"];
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/webhooks/github": {
@@ -1137,6 +1311,8 @@ export interface components {
             canEditApplication: boolean;
             /** @description Whether current user can manage this application members. */
             canManageMembers: boolean;
+            /** @description Whether current user can create and manage test plans for this application. */
+            canManageTestPlans: boolean;
             /** @description Whether current user can create or rollback releases for this application. */
             canRelease: boolean;
             /** @description Whether current user can update this application status. */
@@ -1528,11 +1704,9 @@ export interface components {
              * @description Matched gray strategy.
              * @enum {string}
              */
-            grayStrategy?: "" | "targeted" | "percentage";
+            grayStrategy?: "" | "percentage";
             /** @description Module id. */
             id: string;
-            /** @description Matched targeting identifier for targeted gray releases. */
-            identifier?: string;
             /**
              * @description Module kind.
              * @enum {string}
@@ -1542,19 +1716,24 @@ export interface components {
             manifestKey: string;
             /** @description Module display name. */
             name: string;
-            /** @description Matched release UUID. */
+            /** @description Matched release UUID. Empty when the module came from a test plan. */
             releaseId: string;
             /**
-             * @description Matched release type.
+             * @description Matched release type. Empty when the module came from a test plan.
              * @enum {string}
              */
-            releaseType: "full" | "gray";
+            releaseType: "" | "full" | "gray";
+            /**
+             * @description Which rule matched this module.
+             * @enum {string}
+             */
+            source: "testPlan" | "percentage" | "full";
+            /** @description Matched test plan when source is testPlan, otherwise null. */
+            testPlan: components["schemas"]["TestPlanRef"] | null;
         };
         ArtifactManifestResponse: {
             application: components["schemas"]["ArtifactManifestApplication"];
             environment: components["schemas"]["ArtifactManifestEnvironment"];
-            /** @description Requested targeting identifier. */
-            identifier: string;
             missingModules: components["schemas"]["ArtifactMissingModule"][];
             modules: components["schemas"]["ArtifactManifestModule"][];
             /**
@@ -1564,6 +1743,8 @@ export interface components {
             platform: "android" | "ios" | "harmonyos";
             /** @description Requested runtimeVersion. */
             runtimeVersion: string;
+            /** @description Requested client user id, empty when not provided. */
+            userId: string;
         };
         ArtifactMissingModule: {
             /** @description Module id. */
@@ -2304,6 +2485,8 @@ export interface components {
             platforms: components["schemas"]["EnumOption"][];
         };
         Environment: {
+            /** @description Whether test plans in this environment take effect in client manifest resolution. Defaults to false. */
+            allowTestPlans: boolean;
             /** @description Environment description. */
             description: string;
             /** @description Environment id. */
@@ -2331,6 +2514,8 @@ export interface components {
             updatedAt: string;
         };
         EnvironmentCreateRequest: {
+            /** @description Whether test plans in this environment take effect in client manifest resolution. Defaults to false. */
+            allowTestPlans?: boolean;
             /** @description Environment id. */
             code: string;
             /** @description Environment description. */
@@ -2354,6 +2539,8 @@ export interface components {
             environment: components["schemas"]["Environment"];
         };
         EnvironmentUpdateRequest: {
+            /** @description Whether test plans in this environment take effect in client manifest resolution. Defaults to false. */
+            allowTestPlans?: boolean;
             /** @description Environment id. */
             code: string;
             /** @description Environment description. */
@@ -2580,6 +2767,8 @@ export interface components {
             canManageModules: boolean;
             /** @description Whether current user can manage storage configurations. */
             canManageStorage: boolean;
+            /** @description Whether current user can manage test plans of every application. */
+            canManageTestPlans: boolean;
         };
         HealthResponse: {
             /** @description Health status. */
@@ -2655,11 +2844,11 @@ export interface components {
             autoBuildBranches?: string[];
             /** @description Environment code for automatic builds. Required when autoBuildBranches is not empty. */
             autoBuildEnvironment?: string;
-            /** @description Create a targeted release named after the branch when an automatic build succeeds. */
+            /** @description Deprecated and ignored: the preview channel was replaced by test plan items that follow a branch. */
             autoPreviewRelease?: boolean;
             /**
              * Format: int32
-             * @description Preview release lifetime in hours, 1-8760, default 168.
+             * @description Deprecated and ignored together with autoPreviewRelease.
              */
             autoPreviewTtlHours?: number;
             /** @description Build adapter id. Required in adapter mode and must be empty in dockerfile mode. A newly selected adapter must be active. */
@@ -2817,24 +3006,17 @@ export interface components {
             /** @description Release description. */
             description?: string;
             /**
-             * Format: date-time
-             * @description Expiration time. Required for targeted gray releases and forbidden otherwise.
-             */
-            expiresAt?: string;
-            /**
              * Format: int32
              * @description Initial percentage for percentage gray releases. Create supports 0 to 99.
              */
             grayPercentage?: number;
             /**
-             * @description Gray strategy. Required for gray releases.
+             * @description Gray strategy. Required for gray releases; only percentage is supported. Targeted gray was replaced by test plans.
              * @enum {string}
              */
-            grayStrategy?: "" | "targeted" | "percentage";
-            /** @description Targeting identifier. Required for targeted gray releases and forbidden otherwise. */
-            identifier?: string;
+            grayStrategy?: "" | "percentage";
             /**
-             * @description Release type. full updates the default route, gray updates a targeted or percentage gray route.
+             * @description Release type. full updates the default route, gray updates the percentage gray route.
              * @enum {string}
              */
             releaseType: "full" | "gray";
@@ -2874,7 +3056,7 @@ export interface components {
             environment: string;
             /** @description Environment display name. */
             environmentName: string;
-            /** @description Expiration time for targeted gray releases, or empty otherwise. */
+            /** @description Expiration time of historical targeted gray releases, or empty otherwise. */
             expiresAt?: string;
             /**
              * Format: int32
@@ -2882,14 +3064,12 @@ export interface components {
              */
             grayPercentage?: number;
             /**
-             * @description Gray strategy.
+             * @description Gray strategy. Historical releases may still show targeted, which was replaced by test plans.
              * @enum {string}
              */
             grayStrategy?: "" | "targeted" | "percentage";
             /** @description Release UUID. */
             id: string;
-            /** @description Targeting identifier for targeted gray releases. */
-            identifier?: string;
             /** @description Module id. */
             moduleId: string;
             /** @description Module display name. */
@@ -2960,14 +3140,12 @@ export interface components {
              */
             grayPercentage?: number;
             /**
-             * @description Gray strategy.
+             * @description Gray strategy. Historical releases may still show targeted.
              * @enum {string}
              */
             grayStrategy?: "" | "targeted" | "percentage";
             /** @description Release route id. */
             id: string;
-            /** @description Targeting identifier for identifier routes. */
-            identifier?: string;
             /** @description Module id. */
             moduleId: string;
             /** @description Module display name. */
@@ -2975,7 +3153,7 @@ export interface components {
             /** @description Release UUID. */
             releaseId: string;
             /**
-             * @description Route type.
+             * @description Route type. Historical routes may still show identifier.
              * @enum {string}
              */
             routeType: "default" | "identifier" | "percentage";
@@ -3198,6 +3376,284 @@ export interface components {
         StorageConfigurationsResponse: {
             configurations: components["schemas"]["StorageConfiguration"][];
             pagination: components["schemas"]["Pagination"];
+        };
+        TestAccount: {
+            /**
+             * Format: date-time
+             * @description Saved time.
+             */
+            createdAt: string;
+            /** @description Environment code. Account systems may differ between environments. */
+            environment: string;
+            /** @description Note. */
+            note: string;
+            /** @description Client user id. */
+            userId: string;
+        };
+        TestAccountRequest: {
+            /** @description Environment code. */
+            environment: string;
+            /** @description Optional note, at most 64 characters. */
+            note?: string;
+            /** @description Client user id, 1-64 characters of [A-Za-z0-9._-]. */
+            userId: string;
+        };
+        TestAccountsResponse: {
+            testAccounts: components["schemas"]["TestAccount"][];
+        };
+        TestPlan: {
+            /** @description Application id. */
+            applicationId: string;
+            /** @description Application display name. */
+            applicationName: string;
+            /** @description Application slug. */
+            applicationSlug: string;
+            /** @description Close time, or empty. */
+            closedAt: string;
+            /**
+             * Format: date-time
+             * @description Creation time.
+             */
+            createdAt: string;
+            /** @description Creator display name. */
+            createdBy: string;
+            /** @description Creator user id. */
+            createdByUserId: string;
+            /** @description Environment code. */
+            environment: string;
+            /** @description Environment display name. */
+            environmentName: string;
+            /**
+             * Format: date-time
+             * @description Expiration time.
+             */
+            expiresAt: string;
+            /** @description Test plan UUID. */
+            id: string;
+            /**
+             * Format: int32
+             * @description Item count.
+             */
+            itemCount: number;
+            /** @description Related link, for example the requirement ticket. */
+            link: string;
+            /**
+             * Format: int32
+             * @description Member count.
+             */
+            memberCount: number;
+            /** @description Test plan name, for example the requirement title. */
+            name: string;
+            /**
+             * @description Derived status. Only open test plans take effect and take part in conflict checks.
+             * @enum {string}
+             */
+            status: "open" | "closed" | "expired";
+            /**
+             * Format: date-time
+             * @description Last change of the plan, its items or members.
+             */
+            updatedAt: string;
+        };
+        TestPlanConflictErrorResponse: {
+            /** @description Branch in use. */
+            branch?: string;
+            conflicts?: components["schemas"]["TestPlanMemberConflict"][];
+            /**
+             * @description Conflict kind.
+             * @enum {string}
+             */
+            error: "test plan member conflict" | "test plan branch in use" | "test plan closed" | "test plans disabled for environment";
+            /** @description Module whose branch is in use. */
+            moduleId?: string;
+            /** @description Test plan occupying the branch. */
+            testPlan?: components["schemas"]["TestPlanRef"] | null;
+        };
+        TestPlanCreateRequest: {
+            /** @description Application id. */
+            applicationId: string;
+            /** @description Environment code. The environment must be bound to the application and allow test plans. */
+            environment: string;
+            /**
+             * Format: date-time
+             * @description Optional expiration, default 7 days, at most 30 days from now.
+             */
+            expiresAt?: string;
+            items?: components["schemas"]["TestPlanItemRequest"][];
+            /** @description Optional http(s) link. */
+            link?: string;
+            members?: components["schemas"]["TestPlanMemberRequest"][];
+            /** @description Name, 1-100 characters. */
+            name: string;
+            /** @description Remove conflicting user ids from the other test plans instead of returning 409 test plan member conflict. */
+            resolveConflicts?: boolean;
+        };
+        TestPlanDetailResponse: {
+            /** @description Items contain both a Common module and Feature modules. Feature builds were built against the released common, not the common build in this test plan, so they may be incompatible. */
+            commonDependencyWarning: boolean;
+            events: components["schemas"]["TestPlanEvent"][];
+            items: components["schemas"]["TestPlanItem"][];
+            members: components["schemas"]["TestPlanMember"][];
+            testPlan: components["schemas"]["TestPlan"];
+        };
+        TestPlanEvent: {
+            /** @description Who did it; empty for automatic updates. */
+            actor: string;
+            /**
+             * Format: date-time
+             * @description Event time.
+             */
+            createdAt: string;
+            /** @description Event specific fields, for example userId, moduleIds and causedByTestPlanId for member_removed_by_conflict. */
+            detail: Record<string, never>;
+            /**
+             * Format: int64
+             * @description Event id.
+             */
+            id: number;
+            /**
+             * @description Event kind.
+             * @enum {string}
+             */
+            kind: "created" | "updated" | "closed" | "extended" | "item_set" | "item_deleted" | "item_followed" | "member_added" | "member_removed" | "member_removed_by_conflict";
+        };
+        TestPlanExtendRequest: {
+            /**
+             * Format: date-time
+             * @description New expiration, in the future and at most 30 days from now.
+             */
+            expiresAt: string;
+        };
+        TestPlanItem: {
+            /** @description Bound branch. The same branch of a module belongs to at most one open test plan per environment. */
+            branch: string;
+            /**
+             * Format: int64
+             * @description Build number within the module.
+             */
+            buildNumber: number;
+            /** @description Current build record UUID. */
+            buildRecordId: string;
+            /** @description Commit SHA of the build. */
+            commitSha: string;
+            /**
+             * @description follow: replaced by every newer succeeded build of the branch. pinned: fixed build.
+             * @enum {string}
+             */
+            mode: "follow" | "pinned";
+            /** @description Module id. */
+            moduleId: string;
+            /**
+             * @description Module kind.
+             * @enum {string}
+             */
+            moduleKind: "Common" | "Feature";
+            /** @description Module display name. */
+            moduleName: string;
+            /** @description Platforms in the build. */
+            platforms: string[];
+            /** @description runtimeVersion of the build. Clients with another runtimeVersion skip this item. */
+            runtimeVersion: string;
+            /**
+             * Format: date-time
+             * @description Last update time.
+             */
+            updatedAt: string;
+            /** @description Who last set the item; empty when updated by a followed build. */
+            updatedBy: string;
+        };
+        TestPlanItemRequest: {
+            /** @description Branch to bind. */
+            branch: string;
+            /** @description Build to use. Required for pinned; for follow, empty means the latest succeeded build of the branch. */
+            buildRecordId?: string;
+            /**
+             * @description Defaults to follow.
+             * @enum {string}
+             */
+            mode?: "follow" | "pinned";
+            /** @description Module id of this application. */
+            moduleId: string;
+        };
+        TestPlanItemSetRequest: {
+            /** @description Branch to bind. */
+            branch: string;
+            /** @description Build to use. Required for pinned; for follow, empty means the latest succeeded build of the branch. */
+            buildRecordId?: string;
+            /**
+             * @description Defaults to follow.
+             * @enum {string}
+             */
+            mode?: "follow" | "pinned";
+            /** @description Remove conflicting user ids from the other test plans instead of returning 409 test plan member conflict. */
+            resolveConflicts?: boolean;
+        };
+        TestPlanJoinRequest: {
+            /** @description Remove conflicting user ids from the other test plans instead of returning 409 test plan member conflict. */
+            resolveConflicts?: boolean;
+            /** @description My test account user ids to add; empty adds all of them in the test plan environment. */
+            userIds?: string[];
+        };
+        TestPlanLeaveRequest: {
+            /** @description My test account user ids to remove; empty removes all. */
+            userIds?: string[];
+        };
+        TestPlanMember: {
+            /** @description Who added the member. */
+            addedBy: string;
+            /**
+             * Format: date-time
+             * @description Added time.
+             */
+            createdAt: string;
+            /** @description Note, for example who the account belongs to. */
+            note: string;
+            /** @description Client user id, matched against the manifest userId. */
+            userId: string;
+        };
+        TestPlanMemberConflict: {
+            /** @description Modules contained in both test plans. */
+            moduleIds: string[];
+            testPlan: components["schemas"]["TestPlanRef"];
+            /** @description Client user id that is also in another open test plan. */
+            userId: string;
+        };
+        TestPlanMemberRequest: {
+            /** @description Optional note, at most 64 characters. */
+            note?: string;
+            /** @description Client user id, 1-64 characters of [A-Za-z0-9._-]. */
+            userId: string;
+        };
+        TestPlanMembersAddRequest: {
+            members: components["schemas"]["TestPlanMemberRequest"][];
+            /** @description Remove conflicting user ids from the other test plans instead of returning 409 test plan member conflict. */
+            resolveConflicts?: boolean;
+        };
+        /** @description Test plan detail after the change. removed lists user ids that were removed from other test plans because resolveConflicts was true. */
+        TestPlanMutationResponse: {
+            /** @description Same as TestPlanDetailResponse. */
+            commonDependencyWarning: boolean;
+            events: components["schemas"]["TestPlanEvent"][];
+            items: components["schemas"]["TestPlanItem"][];
+            members: components["schemas"]["TestPlanMember"][];
+            removed: components["schemas"]["TestPlanMemberConflict"][];
+            testPlan: components["schemas"]["TestPlan"];
+        };
+        TestPlanRef: {
+            /** @description Test plan UUID. */
+            id: string;
+            /** @description Test plan name. */
+            name: string;
+        };
+        TestPlanUpdateRequest: {
+            /** @description New link; empty string clears it. */
+            link?: string;
+            /** @description New name. */
+            name?: string;
+        };
+        TestPlansResponse: {
+            pagination: components["schemas"]["Pagination"];
+            testPlans: components["schemas"]["TestPlan"][];
         };
         UserSummary: {
             /** @description Avatar URL. Empty when the user has no avatar. */
@@ -4146,9 +4602,7 @@ export interface operations {
                 platform: "android" | "ios" | "harmonyos";
                 /** @description Client runtimeVersion. Only routes with exactly this runtimeVersion are matched. 1-64 characters of [A-Za-z0-9._-]. */
                 runtimeVersion: string;
-                /** @description Optional targeting identifier. Targeted gray wins when present, percentage gray may use userId, otherwise default release is used. */
-                identifier?: string;
-                /** @description Optional user id for percentage gray bucketing. */
+                /** @description Optional client user id, for example the signed-in account id. Each module resolves in order: an active test plan this user is a member of, then percentage gray bucketed by userId, then the full release. Without userId only full releases are returned. */
                 userId?: string;
             };
             header?: never;
@@ -6757,6 +7211,149 @@ export interface operations {
             };
         };
     };
+    listMyTestAccounts: {
+        parameters: {
+            query?: {
+                /** @description Only accounts of this environment. */
+                environment?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description My test accounts. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TestAccountsResponse"];
+                };
+            };
+            /** @description Authentication is required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    upsertMyTestAccount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Test account payload. */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TestAccountRequest"];
+            };
+        };
+        responses: {
+            /** @description Test account saved; an existing one only updates its note. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TestAccount"];
+                };
+            };
+            /** @description Invalid request. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication is required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    deleteMyTestAccount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Environment code. */
+                environment: string;
+                /** @description Client user id. */
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication is required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Test account not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     listModules: {
         parameters: {
             query?: {
@@ -7439,8 +8036,6 @@ export interface operations {
                 environment: string;
                 /** @description Optional runtimeVersion. When present only routes of this runtimeVersion are resolved, otherwise the newest matching route of any runtimeVersion wins. */
                 runtimeVersion?: string;
-                /** @description Optional targeting identifier. Falls back to the default route when no identifier route exists. */
-                identifier?: string;
                 /** @description Optional user id for percentage gray bucketing. */
                 userId?: string;
             };
@@ -7524,65 +8119,6 @@ export interface operations {
                 };
             };
             /** @description Current user cannot update this release. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Release not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Server error. */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-        };
-    };
-    inactivateTargetedGrayRelease: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Release UUID. */
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Targeted gray release inactivated. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ReleaseDetailResponse"];
-                };
-            };
-            /** @description Release is not an active targeted gray release. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Current user cannot rollback this release. */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -8021,6 +8557,870 @@ export interface operations {
             };
             /** @description Storage configuration not found. */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    listTestPlans: {
+        parameters: {
+            query?: {
+                /** @description Filter by application id. */
+                applicationId?: string;
+                /** @description Filter by environment code. */
+                environment?: string;
+                /** @description open: open and not expired. closed: closed or expired. */
+                status?: "open" | "closed";
+                /** @description Only test plans that contain this client user id. */
+                memberUserId?: string;
+                /** @description One-based page number. */
+                page?: number;
+                /** @description Rows per page. */
+                pageSize?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Test plan list. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TestPlansResponse"];
+                };
+            };
+            /** @description Invalid filters. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication is required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    createTestPlan: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Test plan creation payload. */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TestPlanCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Test plan created. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TestPlanMutationResponse"];
+                };
+            };
+            /** @description Invalid request, or a build is not a succeeded build of that module, branch and environment. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication is required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Current user cannot manage test plans of this application. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Module not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict. error is "test plan member conflict" with conflicts (retry with resolveConflicts=true to remove those user ids from the other test plans), "test plan branch in use" with the occupying test plan, "test plan closed", or "test plans disabled for environment". */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TestPlanConflictErrorResponse"];
+                };
+            };
+            /** @description Server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getTestPlan: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Test plan UUID. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Test plan detail. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TestPlanDetailResponse"];
+                };
+            };
+            /** @description Authentication is required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Test plan not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    updateTestPlan: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Test plan UUID. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        /** @description Fields to update. */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TestPlanUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Test plan updated. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TestPlanDetailResponse"];
+                };
+            };
+            /** @description Invalid request. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication is required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Current user cannot manage this test plan. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Test plan not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Test plan is closed or expired. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    closeTestPlan: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Test plan UUID. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Test plan closed. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TestPlanDetailResponse"];
+                };
+            };
+            /** @description Authentication is required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Current user cannot manage this test plan. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Test plan not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Test plan is already closed or expired. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    extendTestPlan: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Test plan UUID. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        /** @description New expiration. */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TestPlanExtendRequest"];
+            };
+        };
+        responses: {
+            /** @description Expiration changed. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TestPlanDetailResponse"];
+                };
+            };
+            /** @description expiresAt must be in the future and at most 30 days from now. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication is required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Current user cannot manage this test plan. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Test plan not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Test plan is closed or expired; create a new one instead. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    setTestPlanItem: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Test plan UUID. */
+                id: string;
+                /** @description Module id. */
+                moduleId: string;
+            };
+            cookie?: never;
+        };
+        /** @description Item payload. */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TestPlanItemSetRequest"];
+            };
+        };
+        responses: {
+            /** @description Item set. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TestPlanMutationResponse"];
+                };
+            };
+            /** @description Invalid request, or no usable build for the branch. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication is required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Current user cannot manage this test plan. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Test plan or module not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict. error is "test plan member conflict" with conflicts (retry with resolveConflicts=true to remove those user ids from the other test plans), "test plan branch in use" with the occupying test plan, "test plan closed", or "test plans disabled for environment". */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TestPlanConflictErrorResponse"];
+                };
+            };
+            /** @description Server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    deleteTestPlanItem: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Test plan UUID. */
+                id: string;
+                /** @description Module id. */
+                moduleId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Item removed. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TestPlanDetailResponse"];
+                };
+            };
+            /** @description Authentication is required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Current user cannot manage this test plan. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Test plan or item not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Test plan is closed or expired. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    joinTestPlan: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Test plan UUID. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        /** @description Which of my test accounts to add. Empty userIds adds all of my test accounts in the test plan environment. */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TestPlanJoinRequest"];
+            };
+        };
+        responses: {
+            /** @description Joined. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TestPlanMutationResponse"];
+                };
+            };
+            /** @description Invalid user ids or member limit exceeded. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication is required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Test plan not found, or the user ids are not my test accounts in this environment. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict. error is "test plan member conflict" with conflicts (retry with resolveConflicts=true to remove those user ids from the other test plans), "test plan branch in use" with the occupying test plan, "test plan closed", or "test plans disabled for environment". */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TestPlanConflictErrorResponse"];
+                };
+            };
+            /** @description Server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    leaveTestPlan: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Test plan UUID. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        /** @description Which of my test accounts to remove. Empty userIds removes all. */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TestPlanLeaveRequest"];
+            };
+        };
+        responses: {
+            /** @description Left. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TestPlanDetailResponse"];
+                };
+            };
+            /** @description Authentication is required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Test plan not found, or none of my test accounts is a member. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Test plan is closed or expired. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    addTestPlanMembers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Test plan UUID. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        /** @description Members to add. */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TestPlanMembersAddRequest"];
+            };
+        };
+        responses: {
+            /** @description Members added. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TestPlanMutationResponse"];
+                };
+            };
+            /** @description Invalid user ids or member limit exceeded. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication is required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Current user cannot manage this test plan. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Test plan not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict. error is "test plan member conflict" with conflicts (retry with resolveConflicts=true to remove those user ids from the other test plans), "test plan branch in use" with the occupying test plan, "test plan closed", or "test plans disabled for environment". */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TestPlanConflictErrorResponse"];
+                };
+            };
+            /** @description Server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    removeTestPlanMember: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Test plan UUID. */
+                id: string;
+                /** @description Client user id. */
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Member removed. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TestPlanDetailResponse"];
+                };
+            };
+            /** @description Authentication is required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Current user cannot manage this test plan. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Test plan or member not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Test plan is closed or expired. */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

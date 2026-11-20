@@ -2,7 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { applicationScopeOptionsQueryKey, fetchApplicationScopeOptions } from "@/api/applications";
-import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { PageErrorState } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -16,7 +15,6 @@ import { RouteInspector } from "./components/RouteInspector";
 import { RouteMatrix } from "./components/RouteMatrix";
 import { releaseKindLabels } from "./constants";
 import {
-  useInactivateTargeted,
   useOverviewData,
   useRebuild,
   useReleaseBuild,
@@ -61,12 +59,10 @@ export function OverviewPage({
   const [pickedVersion, setPickedVersion] = useState("");
   const [picked, setPicked] = useState<CellKey | null>(null);
   const [composerBuildId, setComposerBuildId] = useState("");
-  const [confirmReleaseId, setConfirmReleaseId] = useState("");
   const [toast, setToast] = useState("");
 
   const releaseBuild = useReleaseBuild();
   const updateGray = useUpdateGrayPercentage();
-  const inactivate = useInactivateTargeted();
   const rebuild = useRebuild();
 
   const runtimeVersions = useMemo(() => (model ? collectRuntimeVersions(model) : []), [model]);
@@ -87,10 +83,9 @@ export function OverviewPage({
     return () => window.clearTimeout(timer);
   }, [toast]);
 
-  const select = useCallback((key: CellKey, version?: string) => {
+  const select = useCallback((key: CellKey) => {
     setPicked(key);
     setComposerBuildId("");
-    if (version) setPickedVersion(version);
   }, []);
 
   useEffect(() => {
@@ -156,14 +151,12 @@ export function OverviewPage({
   const moduleName = (moduleId: string) =>
     modules.find((module) => module.id === moduleId)?.name ?? moduleId;
   let percentageCount = 0;
-  let targetedCount = 0;
   let newerCells = 0;
   for (const module of modules) {
     for (const env of environments) {
       const key = { environment: env.id, moduleId: module.id };
       const cell = cells.get(cellId(key));
       if (cell?.percentage) percentageCount += 1;
-      targetedCount += cell?.targeted.length ?? 0;
       if (newerBuildCount(cellBuilds(model.builds, key, runtimeVersion), cell)) newerCells += 1;
     }
   }
@@ -201,17 +194,6 @@ export function OverviewPage({
     }
   };
 
-  const confirmInactivate = async () => {
-    try {
-      await inactivate.mutateAsync(confirmReleaseId);
-      setToast("定向灰度已失效，这些请求回到比例灰度或全量");
-    } catch (mutationError) {
-      setToast(mutationError instanceof Error ? mutationError.message : "定向灰度失效失败");
-    } finally {
-      setConfirmReleaseId("");
-    }
-  };
-
   const handleRebuild = async (input: {
     branch: string;
     environment: string;
@@ -233,8 +215,8 @@ export function OverviewPage({
           <div>
             <h1 className="m-0 font-semibold text-2xl tracking-tight">线上现状</h1>
             <p className="m-0 mt-1.5 text-muted-foreground text-sm">
-              {modules.length} 个模块 · {percentageCount} 条比例灰度、{targetedCount}{" "}
-              条定向灰度生效中 · {newerCells} 个格子有新构建可发布
+              {modules.length} 个模块 · {percentageCount} 条比例灰度生效中 · {newerCells}{" "}
+              个格子有新构建可发布
             </p>
           </div>
           {runtimeVersions.length ? (
@@ -267,11 +249,9 @@ export function OverviewPage({
 
         <AttentionList
           canCreateBuild={canCreateBuild}
-          canCreateRelease={canCreateRelease}
           environments={environments}
           items={attention}
           moduleName={moduleName}
-          onInactivate={setConfirmReleaseId}
           onOpenBuild={onOpenBuild}
           onOpenCodeSources={onOpenCodeSources}
           onRebuild={handleRebuild}
@@ -315,7 +295,6 @@ export function OverviewPage({
             environment={selectedEnv}
             module={selectedModule}
             onCloseComposer={() => setComposerBuildId("")}
-            onInactivate={setConfirmReleaseId}
             onOpenBuild={onOpenBuild}
             onOpenComposer={setComposerBuildId}
             onRelease={handleRelease}
@@ -328,17 +307,6 @@ export function OverviewPage({
           </p>
         )}
       </aside>
-
-      <ConfirmDialog
-        confirmLabel="手动失效"
-        description="失效后，命中这个定向标识的请求会回到比例灰度或全量，不能撤销。"
-        isOpen={Boolean(confirmReleaseId)}
-        isPending={inactivate.isPending}
-        onCancel={() => setConfirmReleaseId("")}
-        onConfirm={() => void confirmInactivate()}
-        title="让这条定向灰度失效？"
-        tone="danger"
-      />
 
       <output
         aria-live="polite"

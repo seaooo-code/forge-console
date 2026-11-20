@@ -23,7 +23,7 @@ export function getReleaseRecordTypeLabel(
   }
 
   if (record.grayStrategy === "targeted") {
-    return "定向灰度";
+    return "定向（已停用）";
   }
   if (record.grayStrategy === "percentage") {
     return "比例灰度";
@@ -32,17 +32,14 @@ export function getReleaseRecordTypeLabel(
 }
 
 export function getReleaseRecordTargetLabel(
-  record: Pick<
-    ReleasePointerRecord,
-    "grayPercentage" | "grayStrategy" | "identifier" | "releaseType"
-  >,
+  record: Pick<ReleasePointerRecord, "grayPercentage" | "grayStrategy" | "releaseType">,
 ) {
   if (record.releaseType !== "gray") {
     return "默认访问路由";
   }
 
   if (record.grayStrategy === "targeted") {
-    return record.identifier ? `标识 ${record.identifier}` : "定向标识";
+    return "定向（已停用）";
   }
   if (record.grayStrategy === "percentage") {
     return `比例 ${record.grayPercentage}%`;

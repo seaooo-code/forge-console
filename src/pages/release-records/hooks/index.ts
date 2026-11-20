@@ -16,7 +16,6 @@ import { useApplicationScopeStore } from "@/store/use-application-scope-store";
 import {
   fetchReleaseRecordDetail,
   fetchReleaseRecordsSnapshot,
-  inactivateTargetedGrayRelease,
   releaseRecordDetailQueryKey,
   releaseRecordsSnapshotQueryKey,
   releaseRecordsSnapshotQueryKeyWithFilters,
@@ -152,8 +151,6 @@ export function useReleaseRecordDetail(releaseId: string) {
   const [grayPercentageInput, setGrayPercentageInput] = useState("0");
   const [grayPercentageError, setGrayPercentageError] = useState("");
   const [grayPercentageMessage, setGrayPercentageMessage] = useState("");
-  const [inactivateError, setInactivateError] = useState("");
-  const [inactivateMessage, setInactivateMessage] = useState("");
   const {
     data: release,
     error,
@@ -191,28 +188,6 @@ export function useReleaseRecordDetail(releaseId: string) {
       ]);
     },
   });
-  const inactivateMutation = useMutation({
-    mutationFn: () => inactivateTargetedGrayRelease(releaseId),
-    onError: (mutationError) => {
-      setInactivateMessage("");
-      setInactivateError(
-        mutationError instanceof Error ? mutationError.message : "定向灰度失效失败",
-      );
-    },
-    onSuccess: async (updatedRelease) => {
-      setInactivateError("");
-      setInactivateMessage("定向灰度已失效");
-      queryClient.setQueryData(releaseRecordDetailQueryKey(releaseId), updatedRelease);
-
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: releaseRecordDetailQueryKey(releaseId) }),
-        queryClient.invalidateQueries({ queryKey: releaseRecordsSnapshotQueryKey }),
-        releaseModuleId && releaseModuleId !== "-"
-          ? queryClient.invalidateQueries({ queryKey: moduleDetailQueryKey(releaseModuleId) })
-          : Promise.resolve(),
-      ]);
-    },
-  });
 
   useEffect(() => {
     if (release?.releaseType === "gray" && release.grayStrategy === "percentage") {
@@ -228,16 +203,11 @@ export function useReleaseRecordDetail(releaseId: string) {
     grayPercentageInput,
     grayPercentageMessage,
     grayPercentageMutation,
-    inactivateError,
-    inactivateMessage,
-    inactivateMutation,
     isFetching,
     moduleSnapshot,
     release,
     setGrayPercentageError,
     setGrayPercentageInput,
     setGrayPercentageMessage,
-    setInactivateError,
-    setInactivateMessage,
   };
 }

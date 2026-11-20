@@ -236,10 +236,7 @@ export function ReleaseRecordsPage({
           try {
             const releaseCreatedAt = await createBuildRelease({
               buildRecordId: form.buildRecordId,
-              expiresAt: form.expiresAt,
               grayPercentage: form.grayPercentage,
-              grayStrategy: form.grayStrategy,
-              identifier: form.identifier,
               releaseType: form.releaseType,
             });
             setReleaseSuccess(`发布已生效：${releaseCreatedAt}`);

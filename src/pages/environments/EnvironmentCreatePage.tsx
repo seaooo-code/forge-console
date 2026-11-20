@@ -9,6 +9,7 @@ import { FormSectionField, FormSectionHeader } from "@/components/common/FormSec
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -254,6 +255,36 @@ export function EnvironmentCreatePage({
             </FormSectionField>
           </div>
         </Card>
+        <Card className="rounded-lg bg-card p-0">
+          <FormSectionHeader
+            title="提测单"
+            description="开启后，这个环境里的提测单会对客户端生效：成员账号请求时拿到提测单里的构建"
+          />
+          <div className="px-5 pb-5">
+            <Controller
+              control={control}
+              name="allowTestPlans"
+              render={({ field }) => (
+                <div className="flex items-start gap-2">
+                  <Checkbox
+                    id="environment-allow-test-plans"
+                    checked={field.value}
+                    onCheckedChange={(checked) => field.onChange(checked === true)}
+                  />
+                  <label
+                    htmlFor="environment-allow-test-plans"
+                    className="cursor-pointer text-sm leading-5"
+                  >
+                    <span className="text-foreground">允许提测单</span>
+                    <span className="mt-0.5 block text-muted-foreground text-xs">
+                      {allowTestPlansHint}
+                    </span>
+                  </label>
+                </div>
+              )}
+            />
+          </div>
+        </Card>
       </DrawerBody>
       <DrawerFooter>
         <Button variant="outline" type="button" onClick={onBack}>
@@ -291,12 +322,17 @@ async function updateExistingEnvironment(
   return updateEnvironment(environmentId, input);
 }
 
+// 写成一个字符串，避免 JSX 换行在中文句子之间插入空格。
+const allowTestPlansHint =
+  "默认关闭。提测单按客户端上报的 userId 匹配，它决定的是给谁下发哪个包，不是访问控制。";
+
 function buildInitialForm(environment?: RuntimeEnvironment): EnvironmentFormState {
   if (!environment) {
     return defaultForm;
   }
 
   return {
+    allowTestPlans: environment.allowTestPlans,
     code: environment.id,
     description: environment.description,
     name: environment.name,
@@ -311,6 +347,7 @@ function buildEnvironmentInput(
   environment?: RuntimeEnvironment,
 ): EnvironmentMutationInput {
   return {
+    allowTestPlans: form.allowTestPlans,
     code: form.code.trim(),
     description: form.description.trim(),
     name: form.name.trim(),

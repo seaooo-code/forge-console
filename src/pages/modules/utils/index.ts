@@ -1,12 +1,7 @@
 import { format, isValid, parseISO } from "date-fns";
 import type { FeishuUserSearchResult } from "@/types/feishu";
 import { updateModule } from "../api/modules-snapshot";
-import {
-  defaultForm,
-  defaultModuleBuildConfig,
-  maxAutoBuildBranches,
-  maxAutoPreviewTtlHours,
-} from "../constants";
+import { defaultForm, defaultModuleBuildConfig, maxAutoBuildBranches } from "../constants";
 import type {
   BuildAdapter,
   ModuleBuildConfig,
@@ -56,9 +51,6 @@ export function buildInitialForm(
     buildConfig: {
       autoBuildBranches: (buildConfig.autoBuildBranches ?? []).map((value) => ({ value })),
       autoBuildEnvironment: buildConfig.autoBuildEnvironment ?? "",
-      autoPreviewRelease: buildConfig.autoPreviewRelease ?? false,
-      autoPreviewTtlHours:
-        buildConfig.autoPreviewTtlHours || defaultModuleBuildConfig.autoPreviewTtlHours,
       buildAdapterId: buildConfig.buildAdapterId ?? "",
       buildAdapterParams: { ...(buildConfig.buildAdapterParams ?? {}) },
       buildContext: buildConfig.buildContext || defaultModuleBuildConfig.buildContext,
@@ -110,8 +102,6 @@ export function buildModuleInput(
     buildConfig: {
       autoBuildBranches,
       autoBuildEnvironment: buildConfig.autoBuildEnvironment,
-      autoPreviewRelease: buildConfig.autoPreviewRelease,
-      autoPreviewTtlHours: Number(buildConfig.autoPreviewTtlHours),
       buildAdapterId: isAdapterMode ? buildConfig.buildAdapterId : undefined,
       buildAdapterParams: isAdapterMode
         ? pickAdapterParams(buildConfig.buildAdapterParams, adapter)
@@ -238,11 +228,6 @@ function validateBuildConfig(config: ModuleBuildConfig) {
 
   if (branches.length > 0 && !config.autoBuildEnvironment) {
     return "填写了自动构建分支时，请选择自动构建环境";
-  }
-
-  const ttl = config.autoPreviewTtlHours ?? 0;
-  if (!Number.isInteger(ttl) || ttl < 1 || ttl > maxAutoPreviewTtlHours) {
-    return `预览有效期需为 1 到 ${maxAutoPreviewTtlHours} 之间的整数小时`;
   }
 
   return "";

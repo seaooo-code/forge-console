@@ -2,7 +2,6 @@ export {
   fetchAllReleaseRecordsSnapshot,
   fetchReleaseRecordDetail,
   fetchReleaseRecordsSnapshot,
-  inactivateTargetedGrayRelease,
   releaseRecordDetailQueryKey,
   releaseRecordsAllQueryKey,
   releaseRecordsSnapshotQueryKey,

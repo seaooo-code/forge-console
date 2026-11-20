@@ -3,6 +3,7 @@ import {
   Activity,
   Building2,
   CircleArrowUp,
+  ClipboardCheck,
   Database,
   GitFork,
   KeyRound,
@@ -34,6 +35,7 @@ const navIcons: Record<NavIconName, LucideIcon> = {
   overview: Activity,
   releaseRecord: CircleArrowUp,
   storage: Database,
+  testPlan: ClipboardCheck,
 };
 
 type AppSidebarProps = {

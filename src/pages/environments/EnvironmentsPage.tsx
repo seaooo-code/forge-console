@@ -174,6 +174,7 @@ function EnvironmentCard({
       <DetailList
         items={[
           { label: "存储配置", value: environment.storageConfigurationName || "未绑定" },
+          { label: "提测单", value: environment.allowTestPlans ? "已开启" : "未开启" },
           { label: "更新", value: environment.updatedAt },
         ]}
       />

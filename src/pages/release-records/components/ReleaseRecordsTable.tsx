@@ -77,13 +77,6 @@ export function buildReleaseRecordsColumnDefs(
       minWidth: 136,
     },
     {
-      cellRenderer: ExpiresAtCell,
-      field: "expiresAt",
-      flex: 0.8,
-      headerName: "过期时间",
-      minWidth: 132,
-    },
-    {
       cellRenderer: StatusCell,
       field: "status",
       flex: 0.65,
@@ -160,14 +153,6 @@ function GrayConfigCell({ data }: ICellRendererParams<ReleasePointerRecord>) {
     return <span className="text-muted-foreground text-xs">-</span>;
   }
 
-  if (data.grayStrategy === "targeted") {
-    return (
-      <span className="truncate font-mono font-semibold text-foreground text-xs">
-        {data.identifier || "-"}
-      </span>
-    );
-  }
-
   if (data.grayStrategy === "percentage") {
     const percentage = Math.max(0, Math.min(100, data.grayPercentage));
 
@@ -185,14 +170,6 @@ function GrayConfigCell({ data }: ICellRendererParams<ReleasePointerRecord>) {
   }
 
   return <span className="text-muted-foreground text-xs">-</span>;
-}
-
-function ExpiresAtCell({ data }: ICellRendererParams<ReleasePointerRecord>) {
-  if (!data) {
-    return null;
-  }
-
-  return <span className="truncate text-muted-foreground text-xs">{data.expiresAtShort}</span>;
 }
 
 function StatusCell({ value }: ICellRendererParams<ReleasePointerRecord, ReleaseRecordStatus>) {

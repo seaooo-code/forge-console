@@ -36,17 +36,12 @@ export function ReleaseDetailPanel({
     grayPercentageError,
     grayPercentageMessage,
     grayPercentageMutation,
-    inactivateError,
-    inactivateMessage,
-    inactivateMutation,
     moduleSnapshot,
     release,
     setGrayPercentageError,
     setGrayPercentageMessage,
-    setInactivateError,
-    setInactivateMessage,
   } = useReleaseRecordDetail(releaseId);
-  const [confirm, setConfirm] = useState<"inactivate" | { grayPercentage: number } | null>(null);
+  const [confirm, setConfirm] = useState<{ grayPercentage: number } | null>(null);
 
   const closeButton = (
     <Button aria-label="关闭详情" onClick={onClose} size="icon" type="button" variant="ghost">
@@ -73,7 +68,6 @@ export function ReleaseDetailPanel({
   const applicationSlug = moduleSnapshot?.modules[0]?.applicationSlug ?? "";
   const isTargeted = release.releaseType === "gray" && release.grayStrategy === "targeted";
   const isPercentage = release.releaseType === "gray" && release.grayStrategy === "percentage";
-  const canInactivate = canCreateRelease && release.status === "active" && isTargeted;
   const link = (label: string, onClick?: () => void) =>
     onClick ? (
       <Button
@@ -130,16 +124,6 @@ export function ReleaseDetailPanel({
               </a>
             </Button>
           ) : null}
-          {canInactivate ? (
-            <Button
-              size="sm"
-              type="button"
-              variant="danger-outline"
-              onClick={() => setConfirm("inactivate")}
-            >
-              手动失效
-            </Button>
-          ) : null}
         </div>
       </header>
 
@@ -149,12 +133,6 @@ export function ReleaseDetailPanel({
             <div className="font-medium">发布说明</div>
             <div className="mt-1 whitespace-pre-wrap leading-6">{release.description}</div>
           </div>
-        </Alert>
-      ) : null}
-
-      {inactivateError || inactivateMessage ? (
-        <Alert variant={inactivateError ? "danger" : "success"}>
-          {inactivateError || inactivateMessage}
         </Alert>
       ) : null}
 
@@ -185,9 +163,7 @@ export function ReleaseDetailPanel({
             },
             { label: "发布时间", value: release.createdAt },
             { label: "更新时间", value: release.updatedAtFull },
-            isTargeted
-              ? { hint: "到期后自动失效", label: "过期时间", value: release.expiresAt }
-              : null,
+            isTargeted ? { label: "过期时间", value: release.expiresAt } : null,
             { label: "操作人", value: release.operator },
           ]}
         />
@@ -230,27 +206,18 @@ export function ReleaseDetailPanel({
       </section>
 
       <ConfirmDialog
-        confirmLabel={confirm === "inactivate" ? "手动失效" : "转为全量"}
-        description={
-          confirm === "inactivate"
-            ? `失效后，标识 ${release.identifier} 的请求会回到比例灰度或全量，不能撤销。`
-            : "比例调到 100% 后，这条灰度会转为全量发布，并替换当前的全量路由。"
-        }
+        confirmLabel="转为全量"
+        description="比例调到 100% 后，这条灰度会转为全量发布，并替换当前的全量路由。"
         isOpen={confirm !== null}
-        isPending={inactivateMutation.isPending || grayPercentageMutation.isPending}
+        isPending={grayPercentageMutation.isPending}
         onCancel={() => setConfirm(null)}
         onConfirm={() => {
-          if (confirm === "inactivate") {
-            setInactivateError("");
-            setInactivateMessage("");
-            inactivateMutation.mutate();
-          } else if (confirm) {
+          if (confirm) {
             updatePercentage(confirm.grayPercentage);
           }
           setConfirm(null);
         }}
-        title={confirm === "inactivate" ? "让这条定向灰度失效？" : "把比例灰度转为全量？"}
-        tone={confirm === "inactivate" ? "danger" : "default"}
+        title="把比例灰度转为全量？"
       />
     </div>
   );

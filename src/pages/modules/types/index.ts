@@ -43,8 +43,6 @@ export type ModuleRepositorySelection = Pick<
 export type ModuleBuildConfigFormState = {
   autoBuildBranches: Array<{ value: string }>;
   autoBuildEnvironment: string;
-  autoPreviewRelease: boolean;
-  autoPreviewTtlHours: number;
   buildAdapterId: string;
   /** 适配器参数值，key 为参数定义里的 key；dockerfile 模式提交时清空。 */
   buildAdapterParams: Record<string, string>;

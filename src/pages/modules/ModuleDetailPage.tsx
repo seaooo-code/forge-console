@@ -384,11 +384,6 @@ function BuildConfigDetails({
             ),
           wide: true,
         },
-        {
-          hint: config.autoPreviewRelease ? `${config.autoPreviewTtlHours} 小时后过期` : undefined,
-          label: "预览通道",
-          value: config.autoPreviewRelease ? "已开启" : "未开启",
-        },
       ]}
     />
   );

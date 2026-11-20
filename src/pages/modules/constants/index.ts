@@ -3,8 +3,6 @@ import type { BuildMode, BuildVariableFormState, ModuleFormState, ModuleKind } f
 export const defaultModuleBuildConfig: ModuleFormState["buildConfig"] = {
   autoBuildBranches: [],
   autoBuildEnvironment: "",
-  autoPreviewRelease: false,
-  autoPreviewTtlHours: 168,
   buildAdapterId: "",
   buildAdapterParams: {},
   buildContext: ".",
@@ -58,8 +56,6 @@ export const kindOptions: Array<{ label: string; value: ModuleKind }> = [
 export const emptySelectValue = "__none__";
 
 export const maxAutoBuildBranches = 20;
-
-export const maxAutoPreviewTtlHours = 24 * 365;
 
 export const buildVariableKeyPattern = /^[A-Z][A-Z0-9_]{0,63}$/;
 

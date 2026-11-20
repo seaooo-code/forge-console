@@ -26,4 +26,5 @@ export type NavIconName =
   | "module"
   | "overview"
   | "releaseRecord"
-  | "storage";
+  | "storage"
+  | "testPlan";

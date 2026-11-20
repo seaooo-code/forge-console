@@ -20,6 +20,7 @@ export type EnvironmentsSnapshot = {
 export type EnvironmentMutationInput = APISchemas["EnvironmentCreateRequest"];
 
 export type EnvironmentFormState = {
+  allowTestPlans: boolean;
   code: string;
   description: string;
   name: string;

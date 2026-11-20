@@ -72,6 +72,14 @@ const StoragePage = lazy(async () => ({
   default: (await import("@/pages/storage")).StoragePage,
 }));
 
+const TestPlansPage = lazy(async () => ({
+  default: (await import("@/pages/test-plans")).TestPlansPage,
+}));
+
+const TestPlanDetailPage = lazy(async () => ({
+  default: (await import("@/pages/test-plans")).TestPlanDetailPage,
+}));
+
 const loginPath = "/login";
 const feishuCallbackPath = "/login/feishu/callback";
 const setupPath = "/setup";
@@ -171,6 +179,8 @@ function ConsoleRoutes() {
         <Route path="builds/:buildId" element={<BuildsRoute />} />
         <Route path="release-records" element={<ReleaseRecordsRoute />} />
         <Route path="release-records/:releaseId" element={<ReleaseRecordsRoute />} />
+        <Route path="test-plans" element={<TestPlansRoute />} />
+        <Route path="test-plans/:testPlanId" element={<TestPlanDetailRoute />} />
         <Route path="deployments" element={<Navigate to="/release-records" replace />} />
         <Route path="deployments/:releaseId" element={<DeploymentDetailRedirect />} />
         <Route path="code-sources" element={<CodeSourcesPage />} />
@@ -414,6 +424,33 @@ function BuildsRoute() {
       onOpenStorage={(storageId: string) =>
         navigate(`/storage/${encodeURIComponent(storageId)}/edit`)
       }
+    />
+  );
+}
+
+function TestPlansRoute() {
+  const navigate = useNavigate();
+
+  return (
+    <TestPlansPage
+      onOpenTestPlan={(id: string) => navigate(`/test-plans/${encodeURIComponent(id)}`)}
+    />
+  );
+}
+
+function TestPlanDetailRoute() {
+  const navigate = useNavigate();
+  const { testPlanId } = useParams<{ testPlanId: string }>();
+
+  if (!testPlanId) {
+    return <Navigate to="/test-plans" replace />;
+  }
+  return (
+    <TestPlanDetailPage
+      key={testPlanId}
+      id={testPlanId}
+      onBack={() => navigate("/test-plans")}
+      onOpenBuild={(buildId: string) => navigate(`/builds/${encodeURIComponent(buildId)}`)}
     />
   );
 }

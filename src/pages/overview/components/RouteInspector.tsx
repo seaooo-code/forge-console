@@ -3,18 +3,12 @@ import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import type { RuntimeEnvironment } from "@/pages/environments";
 import type { BuildRunRecord } from "@/types/builds";
 import type { ModuleRecord } from "@/types/modules";
 
-import {
-  environmentDotClass,
-  releaseKindLabels,
-  releaseKindSubmitLabels,
-  targetedExpiryDayOptions,
-} from "../constants";
+import { environmentDotClass, releaseKindLabels, releaseKindSubmitLabels } from "../constants";
 import type {
   GrayPercentageForm,
   ReleaseComposerForm,
@@ -22,14 +16,7 @@ import type {
   RouteCell,
   RouteEntry,
 } from "../types";
-import {
-  candidateAction,
-  compareUrl,
-  expiresInLabel,
-  isEmptyCell,
-  relativeTime,
-  routeUsages,
-} from "../utils";
+import { candidateAction, compareUrl, isEmptyCell, relativeTime, routeUsages } from "../utils";
 import { SplitBar } from "./RouteMatrix";
 
 type RouteInspectorProps = {
@@ -40,7 +27,6 @@ type RouteInspectorProps = {
   environment: RuntimeEnvironment;
   module: ModuleRecord;
   onCloseComposer: () => void;
-  onInactivate: (releaseId: string) => void;
   onOpenBuild: (buildId: string) => void;
   onOpenComposer: (buildId: string) => void;
   onRelease: (build: BuildRunRecord, form: ReleaseComposerForm, rollback: boolean) => Promise<void>;
@@ -115,7 +101,6 @@ function Box({ children }: { children: React.ReactNode }) {
 function CurrentRoutes({
   canCreateRelease,
   cell,
-  onInactivate,
   onUpdateGray,
   runtimeVersion,
 }: RouteInspectorProps) {
@@ -129,12 +114,11 @@ function CurrentRoutes({
     );
   }
 
-  const percentageOrder = cell.targeted.length + 1;
-  const fullOrder = percentageOrder + (cell.percentage ? 1 : 0);
+  const fullOrder = cell.percentage ? 2 : 1;
   return (
     <>
       <p className="m-0 mb-2.5 px-0.5 text-faint text-xs leading-relaxed">
-        先看定向标识，再按用户 ID 分流比例灰度，其余请求走全量。
+        先按用户 ID 分流比例灰度，其余请求走全量。
       </p>
       <Box>
         {cell.percentage ? (
@@ -143,29 +127,11 @@ function CurrentRoutes({
             percentage={cell.percentage.release.grayPercentage}
           />
         ) : null}
-        {cell.targeted.map((entry, index) => {
-          return (
-            <RouteRow
-              key={entry.release.id}
-              entry={entry}
-              meta={`${entry.release.identifier} · ${expiresInLabel(entry.release.expiresAtRaw)}`}
-              order={index + 1}
-              tag="定向"
-              tagClass="bg-route-targeted-soft text-route-targeted"
-            >
-              {canCreateRelease ? (
-                <Button size="sm" variant="outline" onClick={() => onInactivate(entry.release.id)}>
-                  手动失效
-                </Button>
-              ) : null}
-            </RouteRow>
-          );
-        })}
         {cell.percentage ? (
           <RouteRow
             entry={cell.percentage}
             meta={`${relativeTime(cell.percentage.release.updatedAtRaw)} · ${cell.percentage.release.operator}`}
-            order={percentageOrder}
+            order={1}
             tag={`比例 ${cell.percentage.release.grayPercentage}%`}
             tagClass="bg-route-percentage-soft text-route-percentage"
           >
@@ -322,7 +288,6 @@ function Candidate(props: CandidateProps) {
                 "rounded-md px-1.5 text-xs",
                 usage.kind === "full" && "bg-primary-soft text-primary-text",
                 usage.kind === "percentage" && "bg-route-percentage-soft text-route-percentage",
-                usage.kind === "targeted" && "bg-route-targeted-soft text-route-targeted",
               )}
             >
               {usage.label}
@@ -416,38 +381,20 @@ function ReleaseComposer({
   onRelease,
   rollback,
 }: ReleaseComposerProps) {
-  const { control, formState, handleSubmit, register, setError, watch } =
-    useForm<ReleaseComposerForm>({
-      defaultValues: { expiresInDays: 7, grayPercentage: 10, identifier: "", kind: "full" },
-    });
+  const { control, formState, handleSubmit, setError, watch } = useForm<ReleaseComposerForm>({
+    defaultValues: { grayPercentage: 10, kind: "full" },
+  });
   const form = watch();
   const percentageTaken = Boolean(cell?.percentage);
   const kinds: { disabled: boolean; kind: ReleaseKind }[] = [
     { disabled: false, kind: "full" },
     { disabled: percentageTaken, kind: "percentage" },
-    { disabled: false, kind: "targeted" },
   ];
   const provider = module.repositoryProvider === "gitlab" ? "GitLab" : "GitHub";
 
   const submit = handleSubmit(async (values) => {
-    const identifier = values.identifier.trim();
-    if (values.kind === "targeted") {
-      if (!identifier) {
-        setError("identifier", { message: "填写定向标识" });
-        return;
-      }
-      const same = cell?.targeted.find((entry) => entry.release.identifier === identifier);
-      if (same?.release.buildRecordId === build.id) {
-        setError("identifier", { message: `#${build.number} 已经是 ${identifier} 的定向构建` });
-        return;
-      }
-    }
     try {
-      await onRelease(
-        build,
-        { ...values, identifier, kind: rollback ? "full" : values.kind },
-        rollback,
-      );
+      await onRelease(build, { ...values, kind: rollback ? "full" : values.kind }, rollback);
     } catch (error) {
       setError("root", { message: error instanceof Error ? error.message : "发布失败" });
     }
@@ -527,48 +474,6 @@ function ReleaseComposer({
               )}
             />
           ) : null}
-          {form.kind === "targeted" ? (
-            <div className="flex flex-col gap-2 text-xs">
-              <div className="flex items-center gap-2.5">
-                <label className="w-8 shrink-0 text-faint" htmlFor={`identifier-${build.id}`}>
-                  标识
-                </label>
-                <Input
-                  id={`identifier-${build.id}`}
-                  className="h-8 bg-card font-mono text-xs"
-                  placeholder="例如 qa-zhangwei 或用户 ID"
-                  aria-invalid={Boolean(formState.errors.identifier)}
-                  {...register("identifier")}
-                />
-              </div>
-              <Controller
-                control={control}
-                name="expiresInDays"
-                render={({ field }) => (
-                  <div className="flex items-center gap-2.5">
-                    <span className="w-8 shrink-0 text-faint">有效</span>
-                    {targetedExpiryDayOptions.map((days) => (
-                      <Button
-                        key={days}
-                        type="button"
-                        size="sm"
-                        variant={field.value === days ? "default" : "outline"}
-                        className="h-6.5 rounded-full px-3"
-                        onClick={() => field.onChange(days)}
-                      >
-                        {days} 天
-                      </Button>
-                    ))}
-                  </div>
-                )}
-              />
-              {formState.errors.identifier ? (
-                <p className="m-0 pl-10.5 text-destructive">
-                  {formState.errors.identifier.message}
-                </p>
-              ) : null}
-            </div>
-          ) : null}
         </>
       )}
 
@@ -620,32 +525,14 @@ function impactText({
       ? `${environment.name}的全量从 ${current} 换成 #${build.number}。`
       : `${environment.name}开始有全量：没命中灰度的请求都拿到 #${build.number}。`;
   }
-  if (form.kind === "percentage") {
-    const rest = current ? `其余继续用 ${current}` : "其余用户暂时没有全量构建可用";
-    return `按用户 ID 分流，${form.grayPercentage}% 的用户拿到 #${build.number}，${rest}。`;
-  }
-  const identifier = form.identifier.trim() || "所填标识";
-  return `只有标识为 ${identifier} 的请求拿到 #${build.number}，${form.expiresInDays} 天后自动失效。`;
+  const rest = current ? `其余继续用 ${current}` : "其余用户暂时没有全量构建可用";
+  return `按用户 ID 分流，${form.grayPercentage}% 的用户拿到 #${build.number}，${rest}。`;
 }
 
 function impactNote(cell: RouteCell | undefined, form: ReleaseComposerForm, rollback: boolean) {
   if (form.kind === "percentage" && !rollback)
     return "之后可以随时调整比例，调到 100% 即转为全量。";
-  if (form.kind === "targeted" && !rollback) {
-    const same = cell?.targeted.find(
-      (entry) => entry.release.identifier === form.identifier.trim(),
-    );
-    return same?.build
-      ? `会替换这个标识当前的定向构建 #${same.build.number}。`
-      : "其他请求不受影响。";
-  }
-  const grays = [
-    cell?.percentage ? `比例灰度 #${cell.percentage.build?.number ?? "-"}` : "",
-    cell?.targeted.length
-      ? `定向 ${cell.targeted.map((entry) => entry.release.identifier).join("、")}`
-      : "",
-  ].filter(Boolean);
-  return grays.length
-    ? `${grays.join("、")} 不受影响，命中它们的请求仍拿到灰度构建。`
+  return cell?.percentage
+    ? `比例灰度 #${cell.percentage.build?.number ?? "-"} 不受影响，命中它的请求仍拿到灰度构建。`
     : "确认后立即对所有请求生效。";
 }

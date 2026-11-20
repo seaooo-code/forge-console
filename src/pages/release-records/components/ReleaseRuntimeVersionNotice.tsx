@@ -22,7 +22,7 @@ export function ReleaseRuntimeVersionNotice({ runtimeVersion }: { runtimeVersion
         </span>
       </div>
       <Alert variant="info">
-        只替换该运行时版本下的同类发布：全量替换全量，比例灰度替换比例灰度，定向灰度替换同一标识。其他运行时版本的发布不受影响。
+        只替换该运行时版本下的同类发布：全量替换全量，比例灰度替换比例灰度。其他运行时版本的发布不受影响。
       </Alert>
     </div>
   );

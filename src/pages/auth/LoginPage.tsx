@@ -210,7 +210,7 @@ function NoTenantNotice() {
   );
 }
 
-/** 一格「线上现状」的示意：全量、比例灰度、定向灰度同时生效。 */
+/** 一格「线上现状」的示意：全量、比例灰度和提测单同时生效。 */
 function RoutePreview() {
   return (
     <div aria-hidden="true" className="mt-10 max-w-sm rounded-2xl bg-card p-1.5 shadow-edge">
@@ -234,7 +234,7 @@ function RoutePreview() {
         </div>
         <div className="mt-0.5 flex items-baseline gap-2 text-xs">
           <span className="font-medium text-foreground text-sm tabular-nums">#4219</span>
-          <span className="text-route-targeted">定向 qa-zhangwei</span>
+          <span className="text-route-targeted">提测单 登录改版</span>
         </div>
       </div>
     </div>

@@ -1,4 +1,4 @@
-import { CircleAlert, Clock, KeyRound } from "lucide-react";
+import { CircleAlert, KeyRound } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import type { RuntimeEnvironment } from "@/pages/environments";
@@ -8,15 +8,13 @@ import { expiresInLabel, relativeTime } from "../utils";
 
 type AttentionListProps = {
   canCreateBuild: boolean;
-  canCreateRelease: boolean;
   environments: RuntimeEnvironment[];
   items: AttentionItem[];
   moduleName: (moduleId: string) => string;
-  onInactivate: (releaseId: string) => void;
   onOpenBuild: (buildId: string) => void;
   onOpenCodeSources: () => void;
   onRebuild: (input: { branch: string; environment: string; moduleId: string }) => void;
-  onSelect: (key: CellKey, runtimeVersion?: string) => void;
+  onSelect: (key: CellKey) => void;
   isRebuilding: boolean;
 };
 
@@ -24,11 +22,9 @@ const chip = "bg-card text-foreground shadow-edge hover:bg-hover";
 
 export function AttentionList({
   canCreateBuild,
-  canCreateRelease,
   environments,
   items,
   moduleName,
-  onInactivate,
   onOpenBuild,
   onOpenCodeSources,
   onRebuild,
@@ -47,7 +43,7 @@ export function AttentionList({
       </div>
       {items.length === 0 ? (
         <p className="m-0 rounded-xl bg-card px-4 py-3.5 text-muted-foreground text-sm shadow-edge">
-          没有需要处理的事。构建失败、定向灰度即将过期、代码源凭证即将过期都会出现在这里。
+          没有需要处理的事。构建失败、代码源凭证即将过期都会出现在这里。
         </p>
       ) : (
         <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2 2xl:grid-cols-3">
@@ -87,39 +83,6 @@ export function AttentionList({
                       }
                     >
                       重新构建
-                    </Button>
-                  ) : null}
-                </Card>
-              );
-            }
-            if (item.kind === "targeted-expiring") {
-              const { release, build } = item.entry;
-              const key = { environment: release.environment, moduleId: release.moduleId };
-              return (
-                <Card
-                  key={item.id}
-                  icon={<Clock />}
-                  iconClass="bg-route-targeted-soft text-route-targeted"
-                  meta={`${envName(release.environment)} · ${build ? `#${build.number}` : "构建已不在列表中"} · ${release.identifier}`}
-                  onSelect={() => onSelect(key, release.runtimeVersion)}
-                  title={`${moduleName(release.moduleId)} 定向灰度 ${expiresInLabel(release.expiresAtRaw)}`}
-                >
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className={chip}
-                    onClick={() => onSelect(key, release.runtimeVersion)}
-                  >
-                    查看
-                  </Button>
-                  {canCreateRelease ? (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className={chip}
-                      onClick={() => onInactivate(release.id)}
-                    >
-                      手动失效
                     </Button>
                   ) : null}
                 </Card>

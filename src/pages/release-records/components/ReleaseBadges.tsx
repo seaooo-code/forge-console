@@ -30,7 +30,7 @@ export function ReleaseTypeBadge({
     release.releaseType !== "gray"
       ? "bg-primary-soft text-primary-text"
       : release.grayStrategy === "targeted"
-        ? "bg-route-targeted-soft text-route-targeted"
+        ? "bg-muted text-muted-foreground"
         : "bg-route-percentage-soft text-route-percentage";
 
   return (

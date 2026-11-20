@@ -10,13 +10,12 @@ export type RouteEntry = {
   release: ReleasePointerRecord;
 };
 
-/** 模块在某个环境、某个运行时版本下的访问路由。匹配顺序：定向 → 比例 → 全量。 */
+/** 模块在某个环境、某个运行时版本下的访问路由。匹配顺序：比例 → 全量。 */
 export type RouteCell = {
   environment: string;
   full: RouteEntry | null;
   moduleId: string;
   percentage: RouteEntry | null;
-  targeted: RouteEntry[];
 };
 
 export type CellKey = {
@@ -33,15 +32,12 @@ export type OverviewModel = {
 
 export type AttentionItem =
   | { build: BuildRunRecord; id: string; kind: "build-failed"; module: ModuleRecord | null }
-  | { entry: RouteEntry; id: string; kind: "targeted-expiring" }
   | { connection: CodeSourceConnection; id: string; kind: "credential-expiring" };
 
-export type ReleaseKind = "full" | "percentage" | "targeted";
+export type ReleaseKind = "full" | "percentage";
 
 export type ReleaseComposerForm = {
-  expiresInDays: number;
   grayPercentage: number;
-  identifier: string;
   kind: ReleaseKind;
 };
 

@@ -5,7 +5,6 @@ import { Drawer, DrawerBody, DrawerFooter, DrawerHeader } from "@/components/com
 import { Field } from "@/components/common/Field";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -15,13 +14,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { BuildRunRecord } from "@/types/builds";
-import type {
-  BuildReleaseFormState,
-  BuildReleaseGrayStrategy,
-  BuildReleaseType,
-} from "@/types/releases";
+import type { BuildReleaseFormState, BuildReleaseType } from "@/types/releases";
 
-import { defaultTargetedGrayExpiresAt, targetedGrayExpiresAt } from "../utils";
 import { ReleaseRuntimeVersionNotice } from "./ReleaseRuntimeVersionNotice";
 
 type CreateReleaseFormState = BuildReleaseFormState & {
@@ -49,23 +43,17 @@ export function CreateReleaseDialog({
     control,
     formState: { errors, isSubmitting },
     handleSubmit,
-    register,
     reset,
-    setValue,
     watch,
   } = useForm<CreateReleaseFormState>({
     defaultValues: {
       buildRecordId: "",
-      expiresAt: defaultTargetedGrayExpiresAt(),
       grayPercentage: 0,
-      grayStrategy: "targeted",
-      identifier: "",
       releaseType: "full",
     },
   });
   const buildRecordId = watch("buildRecordId");
   const releaseType = watch("releaseType");
-  const grayStrategy = watch("grayStrategy");
   const selectedBuild = buildOptions.find((build) => build.id === buildRecordId);
   const hasBuildOptions = buildOptions.length > 0;
 
@@ -76,10 +64,7 @@ export function CreateReleaseDialog({
 
     reset({
       buildRecordId: "",
-      expiresAt: defaultTargetedGrayExpiresAt(),
       grayPercentage: 0,
-      grayStrategy: "targeted",
-      identifier: "",
       releaseType: "full",
     });
   }, [isOpen, reset]);
@@ -171,7 +156,7 @@ export function CreateReleaseDialog({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="full">全量</SelectItem>
-                    <SelectItem value="gray">灰度</SelectItem>
+                    <SelectItem value="gray">比例灰度</SelectItem>
                   </SelectContent>
                 </Select>
               )}
@@ -179,107 +164,6 @@ export function CreateReleaseDialog({
           </Field>
 
           {releaseType === "gray" ? (
-            <Field label="灰度方式" htmlFor="release-create-gray-strategy">
-              <Controller
-                control={control}
-                name="grayStrategy"
-                render={({ field }) => (
-                  <Select
-                    value={field.value}
-                    onValueChange={(value: BuildReleaseGrayStrategy) => field.onChange(value)}
-                  >
-                    <SelectTrigger id="release-create-gray-strategy" className="w-full">
-                      <SelectValue placeholder="选择灰度方式" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="targeted">定向</SelectItem>
-                      <SelectItem value="percentage">比例</SelectItem>
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-            </Field>
-          ) : null}
-
-          {releaseType === "gray" && grayStrategy === "targeted" ? (
-            <Field
-              label="定向标识"
-              htmlFor="release-create-identifier"
-              error={errors.identifier?.message}
-            >
-              <Input
-                id="release-create-identifier"
-                placeholder="输入用户、设备或实验标识"
-                {...register("identifier", {
-                  validate: (value) =>
-                    releaseType !== "gray" || grayStrategy !== "targeted" || value.trim()
-                      ? true
-                      : "请输入定向标识",
-                })}
-              />
-            </Field>
-          ) : null}
-
-          {releaseType === "gray" && grayStrategy === "targeted" ? (
-            <Field
-              label="过期时间"
-              htmlFor="release-create-expires-at"
-              error={errors.expiresAt?.message}
-            >
-              <div className="grid gap-2">
-                <Controller
-                  control={control}
-                  name="expiresAt"
-                  rules={{
-                    validate: (value) => {
-                      if (releaseType !== "gray" || grayStrategy !== "targeted") {
-                        return true;
-                      }
-                      if (!value) {
-                        return "请选择过期时间";
-                      }
-                      const expiresAt = new Date(value);
-                      if (Number.isNaN(expiresAt.getTime())) {
-                        return "请选择有效过期时间";
-                      }
-                      return expiresAt.getTime() > Date.now() ? true : "过期时间必须晚于当前时间";
-                    },
-                  }}
-                  render={({ field }) => (
-                    <DateTimePicker
-                      ref={field.ref}
-                      id="release-create-expires-at"
-                      value={field.value}
-                      invalid={Boolean(errors.expiresAt)}
-                      onBlur={field.onBlur}
-                      onChange={field.onChange}
-                    />
-                  )}
-                />
-                <div className="flex flex-wrap gap-2">
-                  {[7, 15, 30].map((days) => (
-                    <Button
-                      key={days}
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="h-8 text-foreground"
-                      onClick={() =>
-                        setValue("expiresAt", targetedGrayExpiresAt(days), {
-                          shouldDirty: true,
-                          shouldValidate: true,
-                        })
-                      }
-                    >
-                      {days} 天
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            </Field>
-          ) : null}
-
-          {releaseType === "gray" && grayStrategy === "percentage" ? (
             <Field
               label="初始比例"
               htmlFor="release-create-gray-percentage"

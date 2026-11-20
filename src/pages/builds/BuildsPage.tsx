@@ -340,10 +340,7 @@ export function BuildsPage({
           try {
             const releaseCreatedAt = await createBuildRelease({
               buildRecordId: releaseBuild.id,
-              expiresAt: form.expiresAt,
               grayPercentage: form.grayPercentage,
-              grayStrategy: form.grayStrategy,
-              identifier: form.identifier,
               releaseType: form.releaseType,
             });
             setNotice({ text: `构建 #${releaseBuild.number} 的发布已生效：${releaseCreatedAt}` });

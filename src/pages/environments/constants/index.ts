@@ -1,6 +1,7 @@
 import type { EnvironmentCardTone, EnvironmentFormState, RuntimeEnvironment } from "../types";
 
 export const defaultForm: EnvironmentFormState = {
+  allowTestPlans: false,
   code: "",
   description: "",
   name: "",

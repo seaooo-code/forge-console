@@ -30,25 +30,6 @@ export function isBuildOlderThanActiveRelease(
   return false;
 }
 
-export function defaultTargetedGrayExpiresAt() {
-  return targetedGrayExpiresAt(7);
-}
-
-export function targetedGrayExpiresAt(days: number) {
-  const value = new Date();
-  value.setDate(value.getDate() + days);
-  return formatDatetimeLocal(value);
-}
-
-export function formatDatetimeLocal(value: Date) {
-  const year = value.getFullYear();
-  const month = `${value.getMonth() + 1}`.padStart(2, "0");
-  const day = `${value.getDate()}`.padStart(2, "0");
-  const hour = `${value.getHours()}`.padStart(2, "0");
-  const minute = `${value.getMinutes()}`.padStart(2, "0");
-  return `${year}-${month}-${day}T${hour}:${minute}`;
-}
-
 export function filterArtifactTreeNodes(
   nodes: BuildArtifactTreeNode[],
   query: string,

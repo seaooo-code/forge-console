@@ -32,13 +32,11 @@ export type ReleasePointerRecord = {
   description: string;
   environment: string;
   environmentName: string;
+  /** 历史定向灰度的过期时间，新发布不再产生。 */
   expiresAt: string;
-  expiresAtRaw: string;
-  expiresAtShort: string;
   id: string;
   grayPercentage: number;
   grayStrategy: ReleaseGrayStrategy;
-  identifier: string;
   module: string;
   moduleId: string;
   operator: string;

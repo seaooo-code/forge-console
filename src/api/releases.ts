@@ -23,19 +23,8 @@ export async function createBuildRelease(input: BuildReleaseInput): Promise<stri
   const payload = await fetchJSON<ReleaseDetailAPIResponse>("/api/v1/releases", {
     body: JSON.stringify({
       buildRecordId: input.buildRecordId,
-      expiresAt:
-        input.releaseType === "gray" && input.grayStrategy === "targeted"
-          ? new Date(input.expiresAt).toISOString()
-          : undefined,
-      grayPercentage:
-        input.releaseType === "gray" && input.grayStrategy === "percentage"
-          ? input.grayPercentage
-          : 0,
-      grayStrategy: input.releaseType === "gray" ? input.grayStrategy : "",
-      identifier:
-        input.releaseType === "gray" && input.grayStrategy === "targeted"
-          ? input.identifier.trim()
-          : "",
+      grayPercentage: input.releaseType === "gray" ? input.grayPercentage : 0,
+      grayStrategy: input.releaseType === "gray" ? "percentage" : "",
       releaseType: input.releaseType,
     }),
     method: "POST",

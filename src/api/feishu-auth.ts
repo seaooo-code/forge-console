@@ -168,6 +168,7 @@ function toAuthSession(payload: FeishuAuthResponse): AuthSession {
       canManageFeishuTenants: Boolean(payload.capabilities?.canManageFeishuTenants),
       canManageModules: Boolean(payload.capabilities?.canManageModules),
       canManageStorage: Boolean(payload.capabilities?.canManageStorage),
+      canManageTestPlans: Boolean(payload.capabilities?.canManageTestPlans),
       canCreateBuild: Boolean(payload.capabilities?.canCreateBuild),
       canCreateRelease: Boolean(payload.capabilities?.canCreateRelease),
     },

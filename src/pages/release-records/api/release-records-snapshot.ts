@@ -158,26 +158,6 @@ export async function updateReleaseGrayPercentage(
   return normalizeReleaseRecord(payload.release);
 }
 
-export async function inactivateTargetedGrayRelease(
-  releaseId: string,
-): Promise<ReleaseRecordDetail> {
-  const normalizedReleaseId = releaseId.trim();
-  if (!normalizedReleaseId) {
-    throw new ReleaseRecordsAPIError("/api/v1/releases", 400, {
-      error: "invalid release request",
-    });
-  }
-
-  const payload = await fetchJSON<ReleaseDetailAPIResponse>(
-    `/api/v1/releases/${encodeURIComponent(normalizedReleaseId)}/inactivate`,
-    {
-      method: "PATCH",
-    },
-  );
-
-  return normalizeReleaseRecord(payload.release);
-}
-
 const releaseRecordsAPIErrorMessages: Record<string, string> = {
   forbidden: "当前账号无权限执行此操作",
   "internal server error": "服务端内部错误，请稍后重试",
@@ -210,12 +190,9 @@ function normalizeReleaseRecord(record: ReleaseRecordAPIRecord): ReleasePointerR
     environment: record.environment || "-",
     environmentName: record.environmentName || record.environment || "-",
     expiresAt: formatRecordNumber(record.expiresAt),
-    expiresAtRaw: record.expiresAt || "",
-    expiresAtShort: formatShortRecordTime(record.expiresAt),
     grayPercentage: record.grayPercentage ?? 0,
     grayStrategy: record.grayStrategy || "",
     id: record.id,
-    identifier: record.identifier || "",
     module: record.moduleName || "-",
     moduleId: record.moduleId || "-",
     operator: record.createdBy || record.createdByUserId || "-",

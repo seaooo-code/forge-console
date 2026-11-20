@@ -5,7 +5,6 @@ import { Controller, useForm } from "react-hook-form";
 import { Drawer, DrawerBody, DrawerFooter, DrawerHeader } from "@/components/common/Drawer";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -19,15 +18,10 @@ import { ReleaseRuntimeVersionNotice } from "@/pages/release-records";
 import type {
   ActiveFullReleaseTarget,
   BuildReleaseFormState,
-  BuildReleaseGrayStrategy,
   BuildReleaseType,
   BuildRunRecord,
 } from "../types";
-import {
-  defaultTargetedGrayExpiresAt,
-  isBuildOlderThanActiveRelease,
-  targetedGrayExpiresAt,
-} from "../utils";
+import { isBuildOlderThanActiveRelease } from "../utils";
 import { Field } from "./Field";
 
 export function BuildReleaseDialog({
@@ -49,21 +43,15 @@ export function BuildReleaseDialog({
     control,
     formState: { errors, isSubmitting },
     handleSubmit,
-    register,
     reset,
-    setValue,
     watch,
   } = useForm<BuildReleaseFormState>({
     defaultValues: {
-      expiresAt: defaultTargetedGrayExpiresAt(),
       grayPercentage: 0,
-      grayStrategy: "targeted",
-      identifier: "",
       releaseType: "full",
     },
   });
   const releaseType = watch("releaseType");
-  const grayStrategy = watch("grayStrategy");
   const isDuplicateFullRelease =
     releaseType === "full" && Boolean(build && activeFullRelease?.buildId === build.id);
   const isRollbackFullRelease =
@@ -81,10 +69,7 @@ export function BuildReleaseDialog({
     }
 
     reset({
-      expiresAt: defaultTargetedGrayExpiresAt(),
       grayPercentage: 0,
-      grayStrategy: "targeted",
-      identifier: "",
       releaseType: "full",
     });
   }, [isOpen, reset]);
@@ -127,7 +112,7 @@ export function BuildReleaseDialog({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="full">全量</SelectItem>
-                    <SelectItem value="gray">灰度</SelectItem>
+                    <SelectItem value="gray">比例灰度</SelectItem>
                   </SelectContent>
                 </Select>
               )}
@@ -135,105 +120,6 @@ export function BuildReleaseDialog({
           </Field>
 
           {releaseType === "gray" ? (
-            <Field label="灰度方式" inputId="build-release-gray-strategy">
-              <Controller
-                control={control}
-                name="grayStrategy"
-                render={({ field }) => (
-                  <Select
-                    value={field.value}
-                    onValueChange={(value: BuildReleaseGrayStrategy) => field.onChange(value)}
-                  >
-                    <SelectTrigger id="build-release-gray-strategy" className="w-full">
-                      <SelectValue placeholder="选择灰度方式" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="targeted">定向</SelectItem>
-                      <SelectItem value="percentage">比例</SelectItem>
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-            </Field>
-          ) : null}
-
-          {releaseType === "gray" && grayStrategy === "targeted" ? (
-            <Field label="定向标识" inputId="build-release-identifier">
-              <Input
-                id="build-release-identifier"
-                placeholder="输入用户、设备或实验标识"
-                {...register("identifier", {
-                  validate: (value) =>
-                    releaseType !== "gray" || grayStrategy !== "targeted" || value.trim()
-                      ? true
-                      : "请输入定向标识",
-                })}
-              />
-              {errors.identifier ? (
-                <div className="text-destructive text-xs">{errors.identifier.message}</div>
-              ) : null}
-            </Field>
-          ) : null}
-
-          {releaseType === "gray" && grayStrategy === "targeted" ? (
-            <Field label="过期时间" inputId="build-release-expires-at">
-              <div className="grid gap-2">
-                <Controller
-                  control={control}
-                  name="expiresAt"
-                  rules={{
-                    validate: (value) => {
-                      if (releaseType !== "gray" || grayStrategy !== "targeted") {
-                        return true;
-                      }
-                      if (!value) {
-                        return "请选择过期时间";
-                      }
-                      const expiresAt = new Date(value);
-                      if (Number.isNaN(expiresAt.getTime())) {
-                        return "请选择有效过期时间";
-                      }
-                      return expiresAt.getTime() > Date.now() ? true : "过期时间必须晚于当前时间";
-                    },
-                  }}
-                  render={({ field }) => (
-                    <DateTimePicker
-                      ref={field.ref}
-                      id="build-release-expires-at"
-                      value={field.value}
-                      invalid={Boolean(errors.expiresAt)}
-                      onBlur={field.onBlur}
-                      onChange={field.onChange}
-                    />
-                  )}
-                />
-                <div className="flex flex-wrap gap-2">
-                  {[7, 15, 30].map((days) => (
-                    <Button
-                      key={days}
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="h-8 text-foreground"
-                      onClick={() =>
-                        setValue("expiresAt", targetedGrayExpiresAt(days), {
-                          shouldDirty: true,
-                          shouldValidate: true,
-                        })
-                      }
-                    >
-                      {days} 天
-                    </Button>
-                  ))}
-                </div>
-                {errors.expiresAt ? (
-                  <div className="text-destructive text-xs">{errors.expiresAt.message}</div>
-                ) : null}
-              </div>
-            </Field>
-          ) : null}
-
-          {releaseType === "gray" && grayStrategy === "percentage" ? (
             <Field label="初始比例" inputId="build-release-gray-percentage">
               <Controller
                 control={control}
