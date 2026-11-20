@@ -104,20 +104,24 @@ export function ApplicationModulesGrid({ modules }: ApplicationModulesGridProps)
 
   return (
     <SectionCard title="接入模块" description="当前应用关联的 RN Bundle 模块" padding="none">
-      <div className="px-2 pb-2">
-        <AgGridReact<ApplicationModuleRecord>
-          rowData={modules}
-          columnDefs={moduleColumnDefs}
-          defaultColDef={defaultColDef}
-          domLayout="autoHeight"
-          headerHeight={40}
-          rowHeight={58}
-          theme={consoleGridTheme}
-          suppressCellFocus
-          suppressContextMenu
-          getRowId={({ data }) => data.id}
-        />
-      </div>
+      {modules.length === 0 ? (
+        <p className="m-0 px-5 pb-5 text-muted-foreground text-sm">还没有关联模块</p>
+      ) : (
+        <div className="px-2 pb-2">
+          <AgGridReact<ApplicationModuleRecord>
+            rowData={modules}
+            columnDefs={moduleColumnDefs}
+            defaultColDef={defaultColDef}
+            domLayout="autoHeight"
+            headerHeight={40}
+            rowHeight={58}
+            theme={consoleGridTheme}
+            suppressCellFocus
+            suppressContextMenu
+            getRowId={({ data }) => data.id}
+          />
+        </div>
+      )}
     </SectionCard>
   );
 }

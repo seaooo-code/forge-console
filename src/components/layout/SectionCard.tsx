@@ -9,7 +9,7 @@ type SectionCardProps = {
   /** Optional accent (e.g. status chip rendered next to the title). */
   badge?: ReactNode;
   className?: string;
-  /** Padding override. Default: `p-5 lg:p-6`. */
+  /** Padding override. `none` keeps the header padded and lets the body (e.g. a table) sit flush. */
   padding?: "none" | "sm" | "md" | "lg";
   children?: ReactNode;
 };
@@ -22,7 +22,7 @@ const paddingClass = {
 };
 
 const paddingHeaderClass = {
-  none: "",
+  none: "px-5 pt-5 pb-3",
   sm: "px-4 pt-4 pb-3",
   md: "px-5 pt-5 pb-3",
   lg: "px-6 pt-6 pb-4",

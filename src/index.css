@@ -189,3 +189,11 @@
     margin: 0;
   }
 }
+
+/*
+ * AG Grid 在 autoHeight 下给行区域留了 150px 最小高度（给空数据浮层用），
+ * 只有一两行时卡片下方会空出一大块。空数据由各表格自己渲染空状态，这里去掉最小高度。
+ */
+.ag-layout-auto-height .ag-center-cols-viewport {
+  min-height: 0;
+}
