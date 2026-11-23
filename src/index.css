@@ -36,8 +36,8 @@
   --color-info-soft: var(--info-soft);
   --color-route-percentage: var(--route-percentage);
   --color-route-percentage-soft: var(--route-percentage-soft);
-  --color-route-targeted: var(--route-targeted);
-  --color-route-targeted-soft: var(--route-targeted-soft);
+  --color-route-test-plan: var(--route-test-plan);
+  --color-route-test-plan-soft: var(--route-test-plan-soft);
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
   --color-border: var(--border);
@@ -106,11 +106,11 @@
   --info-foreground: oklch(0.985 0 0);
   --info-soft: oklch(0.956 0.022 263);
 
-  /* 发布路由：比例灰度与定向灰度 */
+  /* 发布路由：比例灰度与提测单 */
   --route-percentage: oklch(0.555 0.146 49);
   --route-percentage-soft: oklch(0.962 0.033 80);
-  --route-targeted: oklch(0.541 0.247 293);
-  --route-targeted-soft: oklch(0.954 0.026 300);
+  --route-test-plan: oklch(0.541 0.247 293);
+  --route-test-plan-soft: oklch(0.954 0.026 300);
 
   --border: oklch(0.92 0.004 286);
   --input: oklch(0.92 0.004 286);
@@ -162,8 +162,8 @@
 
   --route-percentage: oklch(0.82 0.13 74);
   --route-percentage-soft: oklch(0.27 0.045 74);
-  --route-targeted: oklch(0.75 0.14 300);
-  --route-targeted-soft: oklch(0.26 0.06 300);
+  --route-test-plan: oklch(0.75 0.14 300);
+  --route-test-plan-soft: oklch(0.26 0.06 300);
 
   --border: oklch(0.29 0.005 286);
   --input: oklch(0.31 0.005 286);

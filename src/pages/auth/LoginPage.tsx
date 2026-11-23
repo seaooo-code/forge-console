@@ -234,7 +234,7 @@ function RoutePreview() {
         </div>
         <div className="mt-0.5 flex items-baseline gap-2 text-xs">
           <span className="font-medium text-foreground text-sm tabular-nums">#4219</span>
-          <span className="text-route-targeted">提测单 登录改版</span>
+          <span className="text-route-test-plan">提测单 登录改版</span>
         </div>
       </div>
     </div>

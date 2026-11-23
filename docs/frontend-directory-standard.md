@@ -121,7 +121,7 @@ pages/applications/
 - Tailwind utility 是默认样式方案。
 - 主题 token、CSS 变量、基础 reset 只放 `src/index.css`。
 - 字体全部自托管：UI 使用 `MiSans`（`misans` 包，Apache-2.0，只引入 Normal 子集的 Regular / Medium / Semibold 三个字重），缺字时回退到系统字体 `PingFang SC / Microsoft YaHei`；代码/等宽文本使用 `Roboto Mono`（Fontsource）。字体样式统一在 `src/main.tsx` 引入。
-- 外观采用「外框 + 画布」分区，不用分隔线：`bg-shell` 是导航所在的底色，页面内容放在 `bg-background` 的圆角画布里；画布内的白卡用 `shadow-edge` 的极淡轮廓区分。主色（`primary`）只给主操作、选中项和全量路由，比例灰度、定向灰度分别用 `route-percentage`、`route-targeted` token。
+- 外观采用「外框 + 画布」分区，不用分隔线：`bg-shell` 是导航所在的底色，页面内容放在 `bg-background` 的圆角画布里；画布内的白卡用 `shadow-edge` 的极淡轮廓区分。主色（`primary`）只给主操作、选中项和全量路由，比例灰度、提测单分别用 `route-percentage`、`route-test-plan` token。
 - 交互形态统一如下，新页面照此选择：
   - 列表页头部用 `ListHeader`，标题下的一行摘要用 `SummaryStats`（可点击时直接作为筛选）；不再使用顶部指标卡片行。表格与分页放在同一张白卡里。
   - 内容少、需要边看列表边看详情的（构建、发布记录），用「列表 + 详情面板」：页面用 `Canvas` + `SidePanel` 自己排布两块画布，并在 `ConsoleLayout` 的 `isFullBleedPath` 里登记路径；URL 仍是 `/<list>/:id`。

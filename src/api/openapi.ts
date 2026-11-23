@@ -2844,13 +2844,6 @@ export interface components {
             autoBuildBranches?: string[];
             /** @description Environment code for automatic builds. Required when autoBuildBranches is not empty. */
             autoBuildEnvironment?: string;
-            /** @description Deprecated and ignored: the preview channel was replaced by test plan items that follow a branch. */
-            autoPreviewRelease?: boolean;
-            /**
-             * Format: int32
-             * @description Deprecated and ignored together with autoPreviewRelease.
-             */
-            autoPreviewTtlHours?: number;
             /** @description Build adapter id. Required in adapter mode and must be empty in dockerfile mode. A newly selected adapter must be active. */
             buildAdapterId?: string;
             /** @description Build adapter display name. Read only. */
