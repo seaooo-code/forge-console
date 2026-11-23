@@ -41,7 +41,7 @@ export type ReleasePointerRecord = {
   moduleId: string;
   operator: string;
   releaseType: ReleaseRecordType;
-  /** 发布路由所属的运行时版本，新发布只替换同一运行时版本下的同类发布。 */
+  /** 发布路由所属的运行时版本，新发布只影响同一运行时版本下的发布。 */
   runtimeVersion: string;
   status: ReleaseRecordStatus;
   updatedAt: string;
@@ -50,6 +50,21 @@ export type ReleasePointerRecord = {
 };
 
 export type ReleaseRecordDetail = ReleasePointerRecord;
+
+export type ReleaseEvent = {
+  /** 操作人姓名，系统操作或用户已删除时为「系统」。 */
+  actor: string;
+  createdAt: string;
+  detail: APISchemas["ReleaseEvent"]["detail"];
+  id: number;
+  kind: APISchemas["ReleaseEvent"]["kind"];
+};
+
+export type ReleasePullStats = {
+  /** 按日期倒序，只包含有请求的日期。 */
+  days: { day: string; platforms: Record<string, number>; total: number }[];
+  total: number;
+};
 
 export type ReleaseRecordsSnapshot = {
   pagination: PaginationMeta;

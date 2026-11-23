@@ -181,6 +181,23 @@ export interface paths {
         patch: operations["updateArtifactAccessToken"];
         trace?: never;
     };
+    "/api/v1/artifact-pull-stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List daily client pull statistics */
+        get: operations["listArtifactPullStats"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/artifacts/applications/{applicationSlug}/environments/{environment}/manifest": {
         parameters: {
             query?: never;
@@ -911,6 +928,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/releases/{id}/deactivate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Deactivate release */
+        post: operations["deactivateRelease"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/releases/{id}/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List release events */
+        get: operations["listReleaseEvents"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/releases/{id}/gray-percentage": {
         parameters: {
             query?: never;
@@ -926,6 +977,23 @@ export interface paths {
         head?: never;
         /** Update percentage gray release */
         patch: operations["updateReleaseGrayPercentage"];
+        trace?: never;
+    };
+    "/api/v1/releases/{id}/rollback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Roll back full release */
+        post: operations["rollbackRelease"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/setup/feishu-tenant": {
@@ -1757,10 +1825,45 @@ export interface components {
             /** @description Module display name. */
             name: string;
             /**
-             * @description Why this module is absent from the manifest modules list. no_release_for_runtime: no active route under the requested runtimeVersion; release not found: routes exist under the runtimeVersion but none matched; platform_unavailable: the matched build does not contain the requested platform.
+             * @description Why this module is absent from the manifest modules list. no_release_for_runtime: no active route under the requested runtimeVersion; release not found: routes exist under the runtimeVersion but none matched; platform_unavailable: the matched build does not contain the requested platform; common_incompatible: the Feature build requires higher capability levels than the Common build served in this response (fall back to the bundled package).
              * @enum {string}
              */
-            reason: "no_release_for_runtime" | "release not found" | "platform_unavailable" | "build not found" | "build artifact not available";
+            reason: "no_release_for_runtime" | "release not found" | "platform_unavailable" | "build not found" | "build artifact not available" | "common_incompatible";
+        };
+        ArtifactPullStat: {
+            /**
+             * Format: int64
+             * @description Build number; 0 for missing outcomes or deleted builds.
+             */
+            buildNumber: number;
+            /** @description Build served; empty for missing outcomes. */
+            buildRecordId: string;
+            /** @description Date (YYYY-MM-DD) in the server's local time zone. */
+            day: string;
+            /** @description Environment code. */
+            environment: string;
+            /** @description Module id. */
+            moduleId: string;
+            /** @description Module name; empty when the module was deleted. */
+            moduleName: string;
+            /** @description testPlan, percentage or full when the module got a build; missing:{reason} when it did not, for example missing:no_release_for_runtime. */
+            outcome: string;
+            /** @description Client platform. */
+            platform: string;
+            /**
+             * Format: int64
+             * @description Manifest requests (including 304) that resolved this way on that day.
+             */
+            requests: number;
+            /** @description Client runtimeVersion. */
+            runtimeVersion: string;
+        };
+        ArtifactPullStatsResponse: {
+            /** @description First day included (YYYY-MM-DD). */
+            from: string;
+            stats: components["schemas"]["ArtifactPullStat"][];
+            /** @description Last day included (YYYY-MM-DD), today. */
+            to: string;
         };
         BuildAdapter: {
             /**
@@ -2053,6 +2156,10 @@ export interface components {
             number: number;
             /** @description Platform directories produced by the build: android, ios, harmonyos. */
             platforms: string[];
+            /** @description Capability levels this build provides (forge.json provides). Empty when not declared. */
+            providedCapabilities: {
+                [key: string]: number;
+            };
             /**
              * Format: date-time
              * @description Build queue time.
@@ -2071,6 +2178,10 @@ export interface components {
             repositoryProvider: "github" | "gitlab";
             /** @description Repository web URL. */
             repositoryWebUrl?: string;
+            /** @description Minimum capability levels this build requires from its Common module (forge.json requires). Empty when not declared. */
+            requiredCapabilities: {
+                [key: string]: number;
+            };
             /** @description runtimeVersion from forge.json. Empty until the build succeeds. */
             runtimeVersion: string;
             /**
@@ -2184,6 +2295,20 @@ export interface components {
         };
         BuildVariablesResponse: {
             variables: components["schemas"]["BuildVariable"][];
+        };
+        CapabilityShortfall: {
+            /** @description Capability name. */
+            name: string;
+            /**
+             * Format: int64
+             * @description Level provided by the Common build; null when the Common build does not declare this capability.
+             */
+            provided: number | null;
+            /**
+             * Format: int64
+             * @description Level required by the Feature build.
+             */
+            required: number;
         };
         CodeSourceApp: {
             /**
@@ -2993,6 +3118,37 @@ export interface components {
             /** @description Readiness status. */
             status: string;
         };
+        ReleaseCapabilityConflict: {
+            /**
+             * Format: int64
+             * @description Build number of the conflicting release.
+             */
+            buildNumber: number;
+            /** @description Build of the conflicting release; empty when reason is common_missing. */
+            buildRecordId: string;
+            /** @description Module of the conflicting release. When releasing a Common build these are Feature modules; when releasing a Feature build this is its Common module. */
+            moduleId: string;
+            /** @description Module name. */
+            moduleName: string;
+            /**
+             * @description unmet: the Common build provides lower levels than the Feature build requires. common_missing: the Feature build declares requires but its Common module has no active release for this environment and runtimeVersion.
+             * @enum {string}
+             */
+            reason: "unmet" | "common_missing";
+            /** @description Conflicting active release; empty when reason is common_missing. */
+            releaseId: string;
+            /** @description Release type of the conflicting release (full or gray); empty when reason is common_missing. */
+            releaseType: string;
+            shortfalls: components["schemas"]["CapabilityShortfall"][];
+        };
+        ReleaseConflictErrorResponse: {
+            conflicts?: components["schemas"]["ReleaseCapabilityConflict"][];
+            /**
+             * @description Conflict kind.
+             * @enum {string}
+             */
+            error: "release already active" | "release capability conflict";
+        };
         ReleaseCreateRequest: {
             /** @description Succeeded build record UUID to release. */
             buildRecordId: string;
@@ -3014,9 +3170,36 @@ export interface components {
              */
             releaseType: "full" | "gray";
         };
+        ReleaseDeactivateRequest: {
+            /** @description Optional reason, at most 200 characters. Recorded in the release events. */
+            reason?: string;
+        };
         ReleaseDetailResponse: {
             release: components["schemas"]["ReleaseRecord"];
             route: components["schemas"]["ReleaseRoute"];
+        };
+        ReleaseEvent: {
+            /** @description Who did it; null for system actions or deleted users. */
+            actor: components["schemas"]["UserRef"] | null;
+            /** @description RFC3339 time. */
+            createdAt: string;
+            /** @description Kind-specific detail. created: releaseType, buildRecordId, runtimeVersion, grayPercentage (gray), rollbackFromReleaseId (rollback). gray_percentage_updated: from, to. promoted_to_full: fromPercentage. replaced: byReleaseId. deactivated: reason. */
+            detail: {
+                [key: string]: unknown;
+            };
+            /**
+             * Format: int64
+             * @description Event id.
+             */
+            id: number;
+            /**
+             * @description Event kind.
+             * @enum {string}
+             */
+            kind: "created" | "gray_percentage_updated" | "promoted_to_full" | "replaced" | "deactivated";
+        };
+        ReleaseEventsResponse: {
+            events: components["schemas"]["ReleaseEvent"][];
         };
         ReleaseGrayPercentageUpdateRequest: {
             /**
@@ -3104,6 +3287,10 @@ export interface components {
         };
         ReleaseResolveResponse: {
             route: components["schemas"]["ReleaseRoute"];
+        };
+        ReleaseRollbackRequest: {
+            /** @description Optional description of the new full release, at most 200 characters. */
+            description?: string;
         };
         ReleaseRoute: {
             /** @description Application display name. */
@@ -3647,6 +3834,12 @@ export interface components {
         TestPlansResponse: {
             pagination: components["schemas"]["Pagination"];
             testPlans: components["schemas"]["TestPlan"][];
+        };
+        UserRef: {
+            /** @description Console user id. */
+            id: string;
+            /** @description User name. */
+            name: string;
         };
         UserSummary: {
             /** @description Avatar URL. Empty when the user has no avatar. */
@@ -4570,6 +4763,64 @@ export interface operations {
             };
             /** @description Artifact access token not found. */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    listArtifactPullStats: {
+        parameters: {
+            query?: {
+                /** @description Filter by application id. At least one of applicationId, moduleId and buildRecordId is required. */
+                applicationId?: string;
+                /** @description Filter by environment code. */
+                environment?: string;
+                /** @description Filter by module id. */
+                moduleId?: string;
+                /** @description Filter by build UUID. */
+                buildRecordId?: string;
+                /** @description Days including today, 1-90, default 7. Data older than 90 days is deleted. */
+                days?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Daily counts of manifest requests per module outcome, latest day first, at most 5000 rows. Counts are flushed every 30 seconds. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ArtifactPullStatsResponse"];
+                };
+            };
+            /** @description Invalid filters. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Console session is required. */
+            401: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -7976,7 +8227,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Release created and route activated. */
+            /** @description Release created and route activated. Within the same module, environment and runtimeVersion, a full release replaces the current full release and ends the active percentage gray release; a percentage release replaces the previous one. */
             201: {
                 headers: {
                     [name: string]: unknown;
@@ -8012,13 +8263,13 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Release target is already active for the same build. */
+            /** @description Conflict. error is "release already active" when the build is already active for the same target, or "release capability conflict" with conflicts when a Common and a Feature build that clients could receive together would not be compatible. */
             409: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["ReleaseConflictErrorResponse"];
                 };
             };
             /** @description Server error. */
@@ -8069,6 +8320,147 @@ export interface operations {
                 };
             };
             /** @description Release route not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    deactivateRelease: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Release UUID. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        /** @description Deactivate release payload. */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ReleaseDeactivateRequest"];
+            };
+        };
+        responses: {
+            /** @description Release and its route deactivated. Nothing else is activated: after deactivating a full release, clients of that runtimeVersion that miss the gray bucket get no build and fall back to the bundled package. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReleaseDetailResponse"];
+                };
+            };
+            /** @description Invalid release request. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Console session is required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Current user cannot roll back or deactivate releases of this application (release:rollback). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Release not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description error is "release not active". */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReleaseConflictErrorResponse"];
+                };
+            };
+            /** @description Server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    listReleaseEvents: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Release UUID. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Latest events first, at most 100. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReleaseEventsResponse"];
+                };
+            };
+            /** @description Release id is not a UUID. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Console session is required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Release not found. */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -8139,6 +8531,88 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    rollbackRelease: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Release UUID. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        /** @description Roll back full release payload. */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ReleaseRollbackRequest"];
+            };
+        };
+        responses: {
+            /** @description New full release of the build of the previous full release (same module, environment and runtimeVersion, different build). It ends the active percentage gray release and passes the same capability checks as createRelease. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReleaseDetailResponse"];
+                };
+            };
+            /** @description Invalid release request. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Console session is required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Current user cannot roll back or deactivate releases of this application (release:rollback). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Release not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description error is "release not active", "release rollback unavailable" (not a full release, or no earlier full release), or "release capability conflict" with conflicts. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReleaseConflictErrorResponse"];
                 };
             };
             /** @description Server error. */

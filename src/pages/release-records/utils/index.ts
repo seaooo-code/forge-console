@@ -1,7 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import { Circle, Rocket, ShieldCheck } from "lucide-react";
 
-import type { ReleaseRecordsSnapshot } from "../types";
+import type { ReleaseEvent, ReleaseRecordsSnapshot } from "../types";
 
 export type ReleaseRecordsStat = {
   detail: string;
@@ -50,4 +50,28 @@ export function buildReleaseRecordsStats(
 export function formatShortRecordID(value: string) {
   const normalized = value.trim();
   return normalized ? `#${normalized.slice(-8)}` : "-";
+}
+
+/** 发布操作记录的一行说明。detail 字段见后端 ReleaseEvent。 */
+export function describeReleaseEvent(event: ReleaseEvent) {
+  const detail = event.detail as Record<string, unknown>;
+  switch (event.kind) {
+    case "created": {
+      const target =
+        detail.releaseType === "gray" ? `比例灰度 ${String(detail.grayPercentage ?? 0)}%` : "全量";
+      return detail.rollbackFromReleaseId
+        ? `回滚发布为${target}（回滚自 #${String(detail.rollbackFromReleaseId).slice(-8)}）`
+        : `发布为${target}`;
+    }
+    case "gray_percentage_updated":
+      return `灰度比例 ${String(detail.from)}% → ${String(detail.to)}%`;
+    case "promoted_to_full":
+      return `从 ${String(detail.fromPercentage)}% 灰度转为全量`;
+    case "replaced":
+      return `被新发布 #${String(detail.byReleaseId ?? "").slice(-8)} 替换`;
+    case "deactivated":
+      return detail.reason ? `停用：${String(detail.reason)}` : "停用";
+    default:
+      return event.kind;
+  }
 }

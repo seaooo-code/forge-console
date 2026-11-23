@@ -166,6 +166,12 @@ export function normalizeBuildRecord(record: BuildRecordAPIRecord): BuildRunReco
     renderedDockerfileSha256: record.renderedDockerfileSha256?.trim() ?? "",
     repositoryWebUrl,
     runtimeVersion: record.runtimeVersion.trim(),
+    providedCapabilities: Object.entries(record.providedCapabilities ?? {})
+      .map(([name, level]) => `${name} ${level}`)
+      .join("，"),
+    requiredCapabilities: Object.entries(record.requiredCapabilities ?? {})
+      .map(([name, level]) => `${name} ≥ ${level}`)
+      .join("，"),
     startedAt: formatTime(record.startedAt || record.queuedAt || record.createdAt),
     status: buildStatusMap[record.status],
     triggerId: record.triggerId || "-",

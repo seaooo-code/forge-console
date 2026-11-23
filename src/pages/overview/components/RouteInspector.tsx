@@ -523,7 +523,7 @@ function impactText({
   if (form.kind === "full") {
     return current
       ? `${environment.name}的全量从 ${current} 换成 #${build.number}。`
-      : `${environment.name}开始有全量：没命中灰度的请求都拿到 #${build.number}。`;
+      : `${environment.name}开始有全量：除提测单成员外，所有请求都拿到 #${build.number}。`;
   }
   const rest = current ? `其余继续用 ${current}` : "其余用户暂时没有全量构建可用";
   return `按用户 ID 分流，${form.grayPercentage}% 的用户拿到 #${build.number}，${rest}。`;
@@ -533,6 +533,6 @@ function impactNote(cell: RouteCell | undefined, form: ReleaseComposerForm, roll
   if (form.kind === "percentage" && !rollback)
     return "之后可以随时调整比例，调到 100% 即转为全量。";
   return cell?.percentage
-    ? `比例灰度 #${cell.percentage.build?.number ?? "-"} 不受影响，命中它的请求仍拿到灰度构建。`
+    ? `进行中的比例灰度 #${cell.percentage.build?.number ?? "-"} 会同时结束，原本命中灰度的请求也换成新的全量。`
     : "确认后立即对所有请求生效。";
 }

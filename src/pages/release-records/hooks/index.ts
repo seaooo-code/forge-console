@@ -14,11 +14,17 @@ import { environmentsSnapshotQueryKey, fetchEnvironmentsSnapshot } from "@/pages
 import { useApplicationScopeStore } from "@/store/use-application-scope-store";
 
 import {
+  deactivateRelease,
+  fetchReleaseEvents,
+  fetchReleasePullStats,
   fetchReleaseRecordDetail,
   fetchReleaseRecordsSnapshot,
+  releaseEventsQueryKey,
+  releasePullStatsQueryKey,
   releaseRecordDetailQueryKey,
   releaseRecordsSnapshotQueryKey,
   releaseRecordsSnapshotQueryKeyWithFilters,
+  rollbackRelease,
   updateReleaseGrayPercentage,
 } from "../api/release-records-snapshot";
 import type { ReleaseRecordsFilters } from "../types";
@@ -160,6 +166,34 @@ export function useReleaseRecordDetail(releaseId: string) {
     queryKey: releaseRecordDetailQueryKey(releaseId),
   });
   const releaseModuleId = release?.moduleId;
+  const { data: events, error: eventsError } = useQuery({
+    queryFn: () => fetchReleaseEvents(releaseId),
+    queryKey: releaseEventsQueryKey(releaseId),
+  });
+  const buildRecordId = release?.buildRecordId ?? "";
+  const environment = release?.environment ?? "";
+  const { data: pullStats, error: pullStatsError } = useQuery({
+    enabled: Boolean(buildRecordId && buildRecordId !== "-"),
+    queryFn: () => fetchReleasePullStats(buildRecordId, environment),
+    queryKey: releasePullStatsQueryKey(buildRecordId, environment),
+  });
+  const invalidateRelease = () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: releaseRecordDetailQueryKey(releaseId) }),
+      queryClient.invalidateQueries({ queryKey: releaseEventsQueryKey(releaseId) }),
+      queryClient.invalidateQueries({ queryKey: releaseRecordsSnapshotQueryKey }),
+      releaseModuleId && releaseModuleId !== "-"
+        ? queryClient.invalidateQueries({ queryKey: moduleDetailQueryKey(releaseModuleId) })
+        : Promise.resolve(),
+    ]);
+  const deactivateMutation = useMutation({
+    mutationFn: (reason: string) => deactivateRelease(releaseId, reason),
+    onSuccess: invalidateRelease,
+  });
+  const rollbackMutation = useMutation({
+    mutationFn: (description: string) => rollbackRelease(releaseId, description),
+    onSuccess: invalidateRelease,
+  });
   const { data: moduleSnapshot } = useQuery({
     enabled: Boolean(releaseModuleId && releaseModuleId !== "-"),
     queryFn: () => fetchModuleDetailSnapshot(releaseModuleId ?? ""),
@@ -178,14 +212,7 @@ export function useReleaseRecordDetail(releaseId: string) {
       setGrayPercentageMessage(grayPercentage === 100 ? "已转为全量发布" : "灰度比例已更新");
       setGrayPercentageInput(String(updatedRelease.grayPercentage));
       queryClient.setQueryData(releaseRecordDetailQueryKey(releaseId), updatedRelease);
-
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: releaseRecordDetailQueryKey(releaseId) }),
-        queryClient.invalidateQueries({ queryKey: releaseRecordsSnapshotQueryKey }),
-        releaseModuleId && releaseModuleId !== "-"
-          ? queryClient.invalidateQueries({ queryKey: moduleDetailQueryKey(releaseModuleId) })
-          : Promise.resolve(),
-      ]);
+      await invalidateRelease();
     },
   });
 
@@ -198,14 +225,20 @@ export function useReleaseRecordDetail(releaseId: string) {
   }, [release?.grayPercentage, release?.grayStrategy, release?.releaseType]);
 
   return {
+    deactivateMutation,
     error,
+    events,
+    eventsError,
     grayPercentageError,
     grayPercentageInput,
     grayPercentageMessage,
     grayPercentageMutation,
     isFetching,
     moduleSnapshot,
+    pullStats,
+    pullStatsError,
     release,
+    rollbackMutation,
     setGrayPercentageError,
     setGrayPercentageInput,
     setGrayPercentageMessage,

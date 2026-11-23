@@ -194,6 +194,16 @@ function BuildDetailContent({
             <DetailList
               items={[
                 { hint: platforms, label: "运行时版本", value: build.runtimeVersion || "-" },
+                build.providedCapabilities
+                  ? { label: "提供能力", value: build.providedCapabilities }
+                  : null,
+                build.requiredCapabilities
+                  ? {
+                      hint: "要求所属 Common 构建达到的等级",
+                      label: "依赖能力",
+                      value: build.requiredCapabilities,
+                    }
+                  : null,
                 { label: "耗时", value: build.duration, hint: `开始 ${build.startedAt}` },
                 { label: "完成时间", value: build.finishedAt },
                 {

@@ -2,7 +2,7 @@ import { Alert } from "@/components/ui/alert";
 
 /**
  * 发布弹窗中的运行时版本说明。发布路由按 runtimeVersion 隔离，
- * 新发布只替换同一运行时版本下的同类路由，不影响其他客户端版本正在使用的包。
+ * 新发布只影响同一运行时版本下的路由：全量替换全量并结束进行中的比例灰度，比例灰度替换比例灰度。
  */
 export function ReleaseRuntimeVersionNotice({ runtimeVersion }: { runtimeVersion: string }) {
   if (!runtimeVersion) {
@@ -22,7 +22,7 @@ export function ReleaseRuntimeVersionNotice({ runtimeVersion }: { runtimeVersion
         </span>
       </div>
       <Alert variant="info">
-        只替换该运行时版本下的同类发布：全量替换全量，比例灰度替换比例灰度。其他运行时版本的发布不受影响。
+        只影响该运行时版本下的发布：全量会替换当前全量，并结束进行中的比例灰度；比例灰度替换比例灰度。其他运行时版本的发布不受影响。
       </Alert>
     </div>
   );
