@@ -4605,7 +4605,10 @@ export interface operations {
                 /** @description Optional client user id, for example the signed-in account id. Each module resolves in order: an active test plan this user is a member of, then percentage gray bucketed by userId, then the full release. Without userId only full releases are returned. */
                 userId?: string;
             };
-            header?: never;
+            header?: {
+                /** @description Optional ETag from the previous manifest response. When it still matches, the server returns 304 with no body. */
+                "If-None-Match"?: string;
+            };
             path: {
                 /** @description Application slug. */
                 applicationSlug: string;
@@ -4616,14 +4619,23 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Application module artifact manifest. */
+            /** @description Application module artifact manifest. The ETag header is a hash of the response body; send it back in If-None-Match on the next request. */
             200: {
                 headers: {
+                    /** @description Manifest version tag, a hash of the response body. */
+                    ETag?: string;
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": components["schemas"]["ArtifactManifestResponse"];
                 };
+            };
+            /** @description Manifest unchanged since the ETag sent in If-None-Match. The response has no body. */
+            304: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Invalid artifact manifest request, including missing or invalid platform or runtimeVersion. */
             400: {
