@@ -137,3 +137,13 @@ export type ReleaseChannelFormState = {
   description: string;
   name: string;
 };
+
+/** 健康策略表单。两个比例在界面上按百分比填写，提交时换算成 0-1。 */
+export type ReleaseHealthPolicyFormState = {
+  autoStopGray: boolean;
+  enabled: boolean;
+  maxFailurePercent: number;
+  minDeltaPercent: number;
+  minUsers: number;
+  windowMinutes: number;
+};

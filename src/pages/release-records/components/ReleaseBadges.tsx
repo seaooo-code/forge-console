@@ -2,6 +2,7 @@ import { cn } from "@/lib/utils";
 
 import {
   getReleaseRecordTypeLabel,
+  releaseHealthStatusMeta,
   releaseRecordStatusClass,
   releaseRecordStatusLabels,
 } from "../constants";
@@ -17,6 +18,24 @@ export function ReleaseStatusBadge({ status }: { status: ReleaseRecordStatus }) 
     >
       <i className="size-1.5 rounded-full bg-current" />
       {releaseRecordStatusLabels[status]}
+    </span>
+  );
+}
+
+/** 健康判定结果，status 为空（没有判定过）时不渲染。 */
+export function ReleaseHealthBadge({ status }: { status: ReleasePointerRecord["healthStatus"] }) {
+  if (!status) {
+    return null;
+  }
+  const meta = releaseHealthStatusMeta[status];
+  return (
+    <span
+      className={cn(
+        "inline-flex h-6 items-center rounded-md px-2 font-medium text-xs leading-none",
+        meta.className,
+      )}
+    >
+      {meta.label}
     </span>
   );
 }

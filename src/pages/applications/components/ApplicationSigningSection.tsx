@@ -106,7 +106,7 @@ export function ApplicationSigningSection({
                     {key.keyId}
                   </code>
                   {key.status === "active" ? (
-                    <Badge variant="outline" className="bg-success-soft text-success">
+                    <Badge variant="outline" className="bg-success/12 text-success">
                       生效中
                     </Badge>
                   ) : (

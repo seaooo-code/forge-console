@@ -16,10 +16,12 @@ import { useApplicationScopeStore } from "@/store/use-application-scope-store";
 import {
   deactivateRelease,
   fetchReleaseEvents,
+  fetchReleaseHealth,
   fetchReleasePullStats,
   fetchReleaseRecordDetail,
   fetchReleaseRecordsSnapshot,
   releaseEventsQueryKey,
+  releaseHealthQueryKey,
   releasePullStatsQueryKey,
   releaseRecordDetailQueryKey,
   releaseRecordsSnapshotQueryKey,
@@ -183,6 +185,13 @@ export function useReleaseRecordDetail(releaseId: string) {
     queryFn: () => fetchReleasePullStats(buildRecordId, environment),
     queryKey: releasePullStatsQueryKey(buildRecordId, environment),
   });
+  // 判定每分钟跑一次，上报约 30 秒写库，详情打开时按分钟刷新。
+  const { data: health, error: healthError } = useQuery({
+    enabled: Boolean(release),
+    queryFn: () => fetchReleaseHealth(releaseId),
+    queryKey: releaseHealthQueryKey(releaseId),
+    refetchInterval: 60_000,
+  });
   const invalidateRelease = () =>
     Promise.all([
       queryClient.invalidateQueries({ queryKey: releaseRecordDetailQueryKey(releaseId) }),
@@ -241,6 +250,8 @@ export function useReleaseRecordDetail(releaseId: string) {
     grayPercentageMutation,
     isFetching,
     moduleSnapshot,
+    health,
+    healthError,
     pullStats,
     pullStatsError,
     release,

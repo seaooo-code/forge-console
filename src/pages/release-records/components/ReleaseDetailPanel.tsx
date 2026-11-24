@@ -8,10 +8,10 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
-import { getReleaseRecordTargetLabel } from "../constants";
+import { getReleaseRecordTargetLabel, releaseHealthStatusMeta } from "../constants";
 import { useReleaseRecordDetail } from "../hooks";
-import type { ReleaseEvent, ReleasePullStats, ReleaseRecordDetail } from "../types";
-import { describeReleaseEvent } from "../utils";
+import type { ReleaseEvent, ReleaseHealth, ReleasePullStats, ReleaseRecordDetail } from "../types";
+import { describeReleaseEvent, formatPercent } from "../utils";
 import { ReleaseStatusBadge, ReleaseTypeBadge } from "./ReleaseBadges";
 
 type ReleaseDetailPanelProps = {
@@ -38,6 +38,8 @@ export function ReleaseDetailPanel({
     error,
     events,
     eventsError,
+    health,
+    healthError,
     grayPercentageError,
     grayPercentageMessage,
     grayPercentageMutation,
@@ -249,6 +251,7 @@ export function ReleaseDetailPanel({
         />
       </section>
 
+      <ReleaseHealthSection error={healthError} health={health} />
       <PullStatsSection error={pullStatsError} stats={pullStats} />
       <ReleaseEventsSection error={eventsError} events={events} />
 
@@ -440,6 +443,82 @@ function ReleaseOperationDialog({
       </div>
       {error ? <p className="m-0 mt-2 text-destructive text-sm">{error}</p> : null}
     </ConfirmDialog>
+  );
+}
+
+function ReleaseHealthSection({ error, health }: { error: Error | null; health?: ReleaseHealth }) {
+  const total = health ? health.launchedUsers + health.failedUsers : 0;
+  return (
+    <section className="rounded-xl bg-card p-5 shadow-edge">
+      <div className="mb-4 flex items-baseline justify-between gap-3">
+        <h3 className="m-0 font-medium text-muted-foreground text-xs">健康</h3>
+        {health ? (
+          <span className="text-faint text-xs">
+            最近 {health.policy.windowMinutes} 分钟的客户端启动上报，每分钟判定一次
+          </span>
+        ) : null}
+      </div>
+      {error ? (
+        <ErrorMessage error={error} />
+      ) : !health ? (
+        <div className="h-16 animate-pulse rounded-md bg-muted" />
+      ) : (
+        <div className="flex flex-col gap-3 text-sm">
+          <div className="flex flex-wrap items-center gap-2">
+            <span
+              className={`inline-flex h-6 items-center rounded-md px-2 font-medium text-xs ${releaseHealthStatusMeta[health.status].className}`}
+            >
+              {releaseHealthStatusMeta[health.status].label}
+            </span>
+            {health.policyEnabled ? null : (
+              <span className="text-faint text-xs">
+                该环境没有开启健康策略，以下按策略参数计算，仅供参考，不会自动停用
+              </span>
+            )}
+          </div>
+          {health.status === "no_reports" ? (
+            <Alert variant={health.policyEnabled ? "warning" : "info"}>
+              没有收到客户端上报，这条发布不受自动停用保护。客户端需要接入启动结果上报（launched 和
+              launch_failed）。
+            </Alert>
+          ) : health.status === "insufficient_data" ? (
+            <p className="m-0 text-muted-foreground">
+              已收到上报，窗口内 {total} 个用户，未达到判定下限 {health.policy.minUsers} 个。
+            </p>
+          ) : null}
+          {health.status !== "no_reports" ? (
+            <DetailList
+              items={[
+                {
+                  hint: `${health.failedUsers} / ${total} 个用户启动失败`,
+                  label: "启动失败率",
+                  value: formatPercent(health.failureRate),
+                },
+                {
+                  hint:
+                    health.baselineFailureRate === null
+                      ? "没有可用的全量基线，只按阈值判定"
+                      : `需要比全量高 ${formatPercent(health.policy.minDelta)} 才判为异常`,
+                  label: "全量基线",
+                  value: formatPercent(health.baselineFailureRate),
+                },
+                { label: "阈值", value: formatPercent(health.policy.maxFailureRate) },
+                {
+                  label: "校验 / 下载失败",
+                  value: `${health.verifyFailedUsers} / ${health.downloadFailedUsers} 个用户`,
+                },
+              ]}
+            />
+          ) : null}
+          {health.verifyFailedUsers > 0 ? (
+            <Alert variant="warning">
+              有 {health.verifyFailedUsers}{" "}
+              个用户校验失败：包可能被篡改，或客户端内置的公钥与签名密钥不一致。
+            </Alert>
+          ) : null}
+        </div>
+      )}
+    </section>
   );
 }
 

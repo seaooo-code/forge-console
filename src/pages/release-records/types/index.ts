@@ -46,6 +46,8 @@ export type ReleasePointerRecord = {
   /** 发布路由所属的运行时版本，新发布只影响同一运行时版本下的发布。 */
   runtimeVersion: string;
   status: ReleaseRecordStatus;
+  /** 最近一次健康判定的结果，策略没开、没判定过时为空字符串。 */
+  healthStatus: APISchemas["ReleaseRecord"]["healthStatus"];
   updatedAt: string;
   updatedAtFull: string;
   updatedAtRaw: string;
@@ -61,6 +63,8 @@ export type ReleaseEvent = {
   id: number;
   kind: APISchemas["ReleaseEvent"]["kind"];
 };
+
+export type ReleaseHealth = APISchemas["ReleaseHealthResponse"];
 
 export type ReleasePullStats = {
   /** 按日期倒序，只包含有请求的日期。 */

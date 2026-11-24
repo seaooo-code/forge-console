@@ -72,8 +72,25 @@ export function describeReleaseEvent(event: ReleaseEvent) {
     case "replaced":
       return `被新发布 #${String(detail.byReleaseId ?? "").slice(-8)} 替换`;
     case "deactivated":
+      if (detail.auto) {
+        return `健康判定自动停用：启动失败率 ${formatPercent(detail.failureRate)}，阈值 ${formatPercent(detail.maxFailureRate)}`;
+      }
       return detail.reason ? `停用：${String(detail.reason)}` : "停用";
+    case "health_unhealthy": {
+      const baseline =
+        typeof detail.baselineFailureRate === "number"
+          ? `，全量 ${formatPercent(detail.baselineFailureRate)}`
+          : "";
+      return `健康判定为异常：启动失败率 ${formatPercent(detail.failureRate)}（${String(detail.failedUsers ?? 0)} / ${
+        Number(detail.launchedUsers ?? 0) + Number(detail.failedUsers ?? 0)
+      } 个用户）${baseline}，阈值 ${formatPercent(detail.maxFailureRate)}`;
+    }
     default:
       return event.kind;
   }
+}
+
+/** 把 0-1 的比例格式化为百分比，保留一位小数；不是数字时返回 "-"。 */
+export function formatPercent(value: unknown) {
+  return typeof value === "number" && Number.isFinite(value) ? `${(value * 100).toFixed(1)}%` : "-";
 }

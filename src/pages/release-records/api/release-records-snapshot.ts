@@ -4,6 +4,7 @@ import { describeReleaseCapabilityConflict } from "@/api/releases";
 
 import type {
   ReleaseEvent,
+  ReleaseHealth,
   ReleasePointerRecord,
   ReleasePullStats,
   ReleaseRecordDetail,
@@ -16,6 +17,7 @@ export const releaseRecordDetailQueryKey = (releaseId: string) =>
   ["release-record-detail", releaseId] as const;
 export const releaseRecordsSnapshotQueryKey = ["release-records-snapshot"] as const;
 export const releaseEventsQueryKey = (releaseId: string) => ["release-events", releaseId] as const;
+export const releaseHealthQueryKey = (releaseId: string) => ["release-health", releaseId] as const;
 export const releasePullStatsQueryKey = (buildRecordId: string, environment: string) =>
   ["release-pull-stats", buildRecordId, environment] as const;
 export const releaseRecordsSnapshotQueryKeyWithFilters = (
@@ -206,6 +208,11 @@ export async function fetchReleaseEvents(releaseId: string): Promise<ReleaseEven
   }));
 }
 
+/** 按客户端启动结果现场计算的发布健康，不写库、不触发动作，见 forge-server/docs/release-health.md。 */
+export function fetchReleaseHealth(releaseId: string): Promise<ReleaseHealth> {
+  return fetchJSON<ReleaseHealth>(`/api/v1/releases/${encodeURIComponent(releaseId)}/health`);
+}
+
 /** 这条发布对应构建在该环境下最近 7 天的拉包次数，按天汇总。 */
 export async function fetchReleasePullStats(
   buildRecordId: string,
@@ -277,6 +284,7 @@ function normalizeReleaseRecord(record: ReleaseRecordAPIRecord): ReleasePointerR
     releaseType: record.releaseType,
     runtimeVersion: record.runtimeVersion || "",
     status: record.status,
+    healthStatus: record.healthStatus ?? "",
     updatedAt: formatShortRecordTime(record.updatedAt),
     updatedAtFull: formatRecordNumber(record.updatedAt),
     updatedAtRaw: record.updatedAt,

@@ -147,6 +147,40 @@ export interface paths {
         patch: operations["updateApplicationMember"];
         trace?: never;
     };
+    "/api/v1/applications/{slug}/release-health-policies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List release health policies */
+        get: operations["listReleaseHealthPolicies"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/applications/{slug}/release-health-policies/{environment}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Update release health policy */
+        put: operations["updateReleaseHealthPolicy"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/applications/{slug}/signing": {
         parameters: {
             query?: never;
@@ -280,6 +314,23 @@ export interface paths {
         get: operations["listArtifactPullStats"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/artifacts/applications/{applicationSlug}/environments/{environment}/launch-reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Report module launch outcomes */
+        post: operations["createLaunchReport"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1065,6 +1116,23 @@ export interface paths {
         head?: never;
         /** Update percentage gray release */
         patch: operations["updateReleaseGrayPercentage"];
+        trace?: never;
+    };
+    "/api/v1/releases/{id}/health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get release health */
+        get: operations["getReleaseHealth"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/releases/{id}/rollback": {
@@ -3019,6 +3087,44 @@ export interface components {
             /** @description Health status. */
             status: string;
         };
+        LaunchReportEvent: {
+            /** @description buildRecordId of the module in the manifest. */
+            buildRecordId: string;
+            /** @description Module id from the manifest. */
+            moduleId: string;
+            /** @description RFC3339 time. Events older than 24 hours or more than 5 minutes in the future are dropped. Defaults to the server time. */
+            occurredAt?: string;
+            /**
+             * @description launched: reached the module's ready point. launch_failed: crashed before the ready point and the client rolled back. verify_failed: sha256 or signature check failed. download_failed: download failed. Only launched and launch_failed count toward the failure rate, and they must be reported together.
+             * @enum {string}
+             */
+            outcome: "launched" | "launch_failed" | "verify_failed" | "download_failed";
+            /** @description Optional short reason code defined by the client, at most 64 bytes, for example js_exception. Do not send stack traces. */
+            reason?: string;
+            /** @description releaseId of the module in the manifest; empty when the module came from a test plan. Health is judged per release, so events without it only count for statistics. */
+            releaseId?: string;
+        };
+        LaunchReportRequest: {
+            /** @description Release channel the client reported when pulling the manifest; empty for the default channel. */
+            channel?: string;
+            events: components["schemas"]["LaunchReportEvent"][];
+            /**
+             * @description Client platform.
+             * @enum {string}
+             */
+            platform: "android" | "ios" | "harmonyos";
+            /** @description Client runtimeVersion. */
+            runtimeVersion: string;
+            /** @description Client user id. Users are deduplicated per 5-minute bucket; events without userId are counted but do not take part in health judgment. */
+            userId?: string;
+        };
+        LaunchReportResponse: {
+            /**
+             * Format: int32
+             * @description Events counted. Malformed or expired events are skipped without failing the batch.
+             */
+            accepted: number;
+        };
         Module: {
             /** @description Linked application id. */
             applicationId: string;
@@ -3345,7 +3451,7 @@ export interface components {
             actor: components["schemas"]["UserRef"] | null;
             /** @description RFC3339 time. */
             createdAt: string;
-            /** @description Kind-specific detail. created: releaseType, buildRecordId, runtimeVersion, channel, grayPercentage (gray), rollbackFromReleaseId (rollback). gray_percentage_updated: from, to. promoted_to_full: fromPercentage. replaced: byReleaseId. deactivated: reason. */
+            /** @description Kind-specific detail. created: releaseType, buildRecordId, runtimeVersion, channel, grayPercentage (gray), rollbackFromReleaseId (rollback). gray_percentage_updated: from, to. promoted_to_full: fromPercentage. replaced: byReleaseId. deactivated: reason, plus auto, failureRate, launchedUsers, failedUsers, maxFailureRate, minDelta, windowMinutes and baselineFailureRate when stopped by health judgment. health_unhealthy: failureRate, launchedUsers, failedUsers, maxFailureRate, minDelta, windowMinutes, baselineFailureRate. */
             detail: {
                 [key: string]: unknown;
             };
@@ -3358,7 +3464,7 @@ export interface components {
              * @description Event kind.
              * @enum {string}
              */
-            kind: "created" | "gray_percentage_updated" | "promoted_to_full" | "replaced" | "deactivated";
+            kind: "created" | "gray_percentage_updated" | "promoted_to_full" | "replaced" | "deactivated" | "health_unhealthy";
         };
         ReleaseEventsResponse: {
             events: components["schemas"]["ReleaseEvent"][];
@@ -3369,6 +3475,95 @@ export interface components {
              * @description Updated percentage gray value. 100 promotes this release to full.
              */
             grayPercentage: number;
+        };
+        ReleaseHealthPoliciesResponse: {
+            policies: components["schemas"]["ReleaseHealthPolicy"][];
+        };
+        ReleaseHealthPolicy: {
+            /** @description Deactivate a percentage gray release when it becomes unhealthy. Full releases are only flagged. */
+            autoStopGray: boolean;
+            /** @description False when the policy was never saved and the values are defaults. */
+            configured: boolean;
+            /** @description Judge active releases of this application and environment every minute. */
+            enabled: boolean;
+            /** @description Environment code. */
+            environment: string;
+            /** @description Environment display name. */
+            environmentName: string;
+            /** @description Failure rate threshold, greater than 0 and at most 1. */
+            maxFailureRate: number;
+            /** @description For percentage gray releases with a baseline full release, the failure rate must also exceed the baseline by this much, 0-1. */
+            minDelta: number;
+            /**
+             * Format: int32
+             * @description Minimum launched plus launch_failed users in the window before judging.
+             */
+            minUsers: number;
+            /** @description Last update time; empty when never saved. */
+            updatedAt: string;
+            /**
+             * Format: int32
+             * @description Judgment window, 5-1440 minutes, starting no earlier than the release.
+             */
+            windowMinutes: number;
+        };
+        ReleaseHealthPolicyRequest: {
+            /** @description Deactivate unhealthy percentage gray releases. */
+            autoStopGray: boolean;
+            /** @description Enable judgment. */
+            enabled: boolean;
+            /** @description Greater than 0 and at most 1. */
+            maxFailureRate: number;
+            /** @description 0-1. */
+            minDelta: number;
+            /**
+             * Format: int32
+             * @description 1-1000000.
+             */
+            minUsers: number;
+            /**
+             * Format: int32
+             * @description 5-1440.
+             */
+            windowMinutes: number;
+        };
+        ReleaseHealthResponse: {
+            /** @description Failure rate of the active full release used as baseline; null without a usable baseline. */
+            baselineFailureRate: number | null;
+            /**
+             * Format: int64
+             * @description download_failed users in the window.
+             */
+            downloadFailedUsers: number;
+            /** @description Computation time. */
+            evaluatedAt: string;
+            /**
+             * Format: int64
+             * @description launch_failed users in the window.
+             */
+            failedUsers: number;
+            /** @description failedUsers / (launchedUsers + failedUsers); 0 without samples. */
+            failureRate: number;
+            /**
+             * Format: int64
+             * @description launched users in the window.
+             */
+            launchedUsers: number;
+            policy: components["schemas"]["ReleaseHealthPolicy"];
+            /** @description False when the policy is off; the status is then computed with the policy's current values for reference only and no action is taken. */
+            policyEnabled: boolean;
+            /**
+             * @description no_reports: no launched or launch_failed report since the release was created, so the release is not protected. insufficient_data: fewer users than minUsers in the window. healthy or unhealthy: judged result.
+             * @enum {string}
+             */
+            status: "no_reports" | "insufficient_data" | "healthy" | "unhealthy";
+            /**
+             * Format: int64
+             * @description verify_failed users in the window; may indicate tampered packages or a wrong embedded public key.
+             */
+            verifyFailedUsers: number;
+            /** @description Start of the judgment window. */
+            windowStart: string;
         };
         ReleaseRecord: {
             /** @description Application display name. */
@@ -3408,6 +3603,11 @@ export interface components {
              * @enum {string}
              */
             grayStrategy?: "" | "targeted" | "percentage";
+            /**
+             * @description Latest health judgment; empty when never judged (policy off). See docs/release-health.md.
+             * @enum {string}
+             */
+            healthStatus: "" | "no_reports" | "insufficient_data" | "healthy" | "unhealthy";
             /** @description Release UUID. */
             id: string;
             /** @description Module id. */
@@ -4921,6 +5121,140 @@ export interface operations {
             };
         };
     };
+    listReleaseHealthPolicies: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Immutable application slug. */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description One policy per environment bound to the application; unsaved environments return defaults. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReleaseHealthPoliciesResponse"];
+                };
+            };
+            /** @description Invalid request. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication is required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    updateReleaseHealthPolicy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Immutable application slug. */
+                slug: string;
+                /** @description Environment code bound to the application. */
+                environment: string;
+            };
+            cookie?: never;
+        };
+        /** @description Release health policy payload. */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReleaseHealthPolicyRequest"];
+            };
+        };
+        responses: {
+            /** @description Policies of all environments after the update. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReleaseHealthPoliciesResponse"];
+                };
+            };
+            /** @description Invalid request. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication is required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Current user cannot update this application (application:update). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     getApplicationSigning: {
         parameters: {
             query?: never;
@@ -5596,6 +5930,72 @@ export interface operations {
             };
             /** @description Console session is required. */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    createLaunchReport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Application slug. */
+                applicationSlug: string;
+                /** @description Environment code. */
+                environment: string;
+            };
+            cookie?: never;
+        };
+        /** @description Launch report, at most 50 events. */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LaunchReportRequest"];
+            };
+        };
+        responses: {
+            /** @description Events accepted for aggregation; counts are flushed every 30 seconds. */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LaunchReportResponse"];
+                };
+            };
+            /** @description Invalid request. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication is required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found. */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -9306,6 +9706,65 @@ export interface operations {
                 };
             };
             /** @description Release not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getReleaseHealth: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Release UUID. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Live health computed from launch reports, without side effects. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReleaseHealthResponse"];
+                };
+            };
+            /** @description Invalid request. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication is required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found. */
             404: {
                 headers: {
                     [name: string]: unknown;

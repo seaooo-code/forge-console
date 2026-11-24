@@ -3,7 +3,7 @@ import type { ColDef, ICellRendererParams } from "ag-grid-community";
 import { EnvironmentBadge } from "@/components/common/EnvironmentBadge";
 import { getReleaseRecordTypeLabel } from "../constants";
 import type { EnvironmentTone, ReleasePointerRecord, ReleaseRecordStatus } from "../types";
-import { ReleaseStatusBadge } from "./ReleaseBadges";
+import { ReleaseHealthBadge, ReleaseStatusBadge } from "./ReleaseBadges";
 
 /** 详情面板打开时只保留这些列。 */
 const compactColumns = new Set(["id", "module", "environment", "releaseType", "status"]);
@@ -187,10 +187,18 @@ function GrayConfigCell({ data }: ICellRendererParams<ReleasePointerRecord>) {
   return <span className="text-muted-foreground text-xs">-</span>;
 }
 
-function StatusCell({ value }: ICellRendererParams<ReleasePointerRecord, ReleaseRecordStatus>) {
+function StatusCell({
+  data,
+  value,
+}: ICellRendererParams<ReleasePointerRecord, ReleaseRecordStatus>) {
   if (!value) {
     return null;
   }
 
-  return <ReleaseStatusBadge status={value} />;
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <ReleaseStatusBadge status={value} />
+      {value === "active" ? <ReleaseHealthBadge status={data?.healthStatus ?? ""} /> : null}
+    </span>
+  );
 }
