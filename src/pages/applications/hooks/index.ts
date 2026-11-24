@@ -20,6 +20,14 @@ import {
   applicationsSnapshotQueryKey,
 } from "../api/application-list-filters";
 import {
+  applicationSigningQueryKey,
+  createSigningKey,
+  deleteSigningKey,
+  fetchApplicationSigning,
+  type SigningKey,
+  updateApplicationSigning,
+} from "../api/application-signing";
+import {
   type ApplicationDetailAPIResponse,
   deleteApplicationMember,
   fetchApplicationDeleteCheck,
@@ -433,5 +441,66 @@ export function useApplicationChannels(applicationSlug: string) {
     setActionError,
     setDeleteTarget,
     submitForm,
+  };
+}
+
+/** 应用的包签名配置：开关、生成密钥（轮换）和删除 retired 密钥。 */
+export function useApplicationSigning(applicationSlug: string) {
+  const queryClient = useQueryClient();
+  const signingQuery = useQuery({
+    queryFn: () => fetchApplicationSigning(applicationSlug),
+    queryKey: applicationSigningQueryKey(applicationSlug),
+  });
+  const [actionError, setActionError] = useState("");
+  const [isMutating, setIsMutating] = useState(false);
+  const [isGenerateOpen, setIsGenerateOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<SigningKey | null>(null);
+
+  const run = async (action: () => Promise<unknown>, fallbackMessage: string) => {
+    setActionError("");
+    setIsMutating(true);
+    try {
+      await action();
+      await queryClient.invalidateQueries({
+        queryKey: applicationSigningQueryKey(applicationSlug),
+      });
+      return true;
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : fallbackMessage);
+      return false;
+    } finally {
+      setIsMutating(false);
+    }
+  };
+
+  return {
+    actionError,
+    confirmDelete: async () => {
+      if (
+        deleteTarget &&
+        (await run(
+          () => deleteSigningKey(applicationSlug, deleteTarget.keyId),
+          "删除密钥失败，请稍后重试",
+        ))
+      ) {
+        setDeleteTarget(null);
+      }
+    },
+    confirmGenerate: async () => {
+      if (await run(() => createSigningKey(applicationSlug), "生成密钥失败，请稍后重试")) {
+        setIsGenerateOpen(false);
+      }
+    },
+    deleteTarget,
+    isGenerateOpen,
+    isLoading: signingQuery.isLoading,
+    isMutating,
+    loadError: signingQuery.error,
+    setActionError,
+    setDeleteTarget,
+    setIsGenerateOpen,
+    setRequireSignedReleases: (require: boolean) =>
+      run(() => updateApplicationSigning(applicationSlug, require), "保存签名配置失败，请稍后重试"),
+    signing: signingQuery.data,
   };
 }

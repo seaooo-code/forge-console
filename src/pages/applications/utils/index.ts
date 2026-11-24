@@ -131,3 +131,13 @@ export function upsertMemberInList(
 
   return members.map((member, index) => (index === existingIndex ? nextMember : member));
 }
+
+/** 把 RFC3339 时间格式化为本地时间的 YYYY-MM-DD HH:mm，空值或无法解析时返回 "-"。 */
+export function formatMinuteTime(value: string) {
+  const date = new Date(value);
+  if (!value || Number.isNaN(date.getTime())) {
+    return "-";
+  }
+  const pad = (part: number) => `${part}`.padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}

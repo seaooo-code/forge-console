@@ -194,6 +194,16 @@ function BuildDetailContent({
             <DetailList
               items={[
                 { hint: platforms, label: "运行时版本", value: build.runtimeVersion || "-" },
+                build.status === "success"
+                  ? {
+                      hint: build.signingKeyId
+                        ? "文件列表已签名，随 manifest 下发"
+                        : "应用没有签名密钥，或构建早于密钥生成",
+                      label: "包签名",
+                      mono: Boolean(build.signingKeyId),
+                      value: build.signingKeyId ? `已签名 · ${build.signingKeyId}` : "未签名",
+                    }
+                  : null,
                 build.providedCapabilities
                   ? { label: "提供能力", value: build.providedCapabilities }
                   : null,

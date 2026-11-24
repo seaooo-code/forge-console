@@ -56,6 +56,8 @@ export type BuildRunRecord = {
   repositoryWebUrl: string;
   /** forge.json 中的运行时版本，构建成功前为空字符串。 */
   runtimeVersion: string;
+  /** 签名该构建文件列表的密钥 id，未签名时为空字符串。 */
+  signingKeyId: string;
   /** forge.json 的能力声明，格式化成 "commonApi 3" 这样的文本，没有声明时为空字符串。 */
   providedCapabilities: string;
   requiredCapabilities: string;

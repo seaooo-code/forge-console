@@ -41,6 +41,7 @@ const releaseAPIErrorMessages: Record<string, string> = {
   "internal server error": "服务端内部错误，请稍后重试",
   "invalid release request": "发布参数无效，请确认构建状态、发布类型和灰度配置",
   "release already active": "该构建已是当前发布目标的生效版本，没有新的路由变化",
+  "release build unsigned": "应用要求只发布已签名的构建，这个构建没有签名，请重新构建后再发布",
   "release channel not found": "发布渠道不存在，可能已被删除，请刷新后重试",
   "release not active": "这条发布已经失效",
   "release rollback unavailable": "没有可以回滚的上一次全量发布",

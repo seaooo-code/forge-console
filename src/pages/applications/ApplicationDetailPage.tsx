@@ -12,6 +12,7 @@ import { ApplicationDetailFallback } from "./components/ApplicationDetailFallbac
 import { ApplicationEnvironmentsGrid } from "./components/ApplicationEnvironmentsGrid";
 import { ApplicationMembersSection } from "./components/ApplicationMembersSection";
 import { ApplicationModulesGrid } from "./components/ApplicationModulesGrid";
+import { ApplicationSigningSection } from "./components/ApplicationSigningSection";
 import { ClientIntegrationSection } from "./components/ClientIntegrationSection";
 import { applicationStatusClass } from "./constants";
 import { useApplicationDetail, useApplicationStatusToggle } from "./hooks";
@@ -161,6 +162,7 @@ export function ApplicationDetailPage({
           <TabsTrigger value="environments">环境 · {detail.environments.length}</TabsTrigger>
           <TabsTrigger value="modules">模块 · {detail.modules.length}</TabsTrigger>
           <TabsTrigger value="channels">发布渠道</TabsTrigger>
+          <TabsTrigger value="signing">包签名</TabsTrigger>
         </TabsList>
 
         <TabsContent value="integration" className="mt-5 flex flex-col gap-4">
@@ -198,6 +200,13 @@ export function ApplicationDetailPage({
           <ApplicationChannelsSection
             applicationSlug={application.slug}
             canManage={detail.capabilities.canRelease}
+          />
+        </TabsContent>
+
+        <TabsContent value="signing" className="mt-5">
+          <ApplicationSigningSection
+            applicationSlug={application.slug}
+            canManage={canEditApplication}
           />
         </TabsContent>
       </Tabs>

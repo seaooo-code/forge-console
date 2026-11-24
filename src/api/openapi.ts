@@ -147,6 +147,58 @@ export interface paths {
         patch: operations["updateApplicationMember"];
         trace?: never;
     };
+    "/api/v1/applications/{slug}/signing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get application signing settings */
+        get: operations["getApplicationSigning"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update application signing settings */
+        patch: operations["updateApplicationSigning"];
+        trace?: never;
+    };
+    "/api/v1/applications/{slug}/signing/keys": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Generate signing key */
+        post: operations["createSigningKey"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/applications/{slug}/signing/keys/{keyId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete retired signing key */
+        delete: operations["deleteSigningKey"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/applications/{slug}/status": {
         parameters: {
             query?: never;
@@ -1639,6 +1691,15 @@ export interface components {
             owners: components["schemas"]["ApplicationOption"][];
             platforms: components["schemas"]["ApplicationOption"][];
         };
+        ApplicationSigningResponse: {
+            keys: components["schemas"]["SigningKey"][];
+            /** @description When true, creating a release or rolling back rejects unsigned builds. */
+            requireSignedReleases: boolean;
+        };
+        ApplicationSigningUpdateRequest: {
+            /** @description Only allow releasing signed builds. Turning it on requires an active key. */
+            requireSignedReleases: boolean;
+        };
         ApplicationStatusUpdateRequest: {
             /**
              * @description Application status code.
@@ -1829,6 +1890,8 @@ export interface components {
              * @enum {string}
              */
             releaseType: "" | "full" | "gray";
+            /** @description Signature of the matched build's file list, or null when the build is not signed. See docs/artifact-signing.md. */
+            signature: components["schemas"]["ArtifactSignature"] | null;
             /**
              * @description Which rule matched this module.
              * @enum {string}
@@ -1906,6 +1969,19 @@ export interface components {
             stats: components["schemas"]["ArtifactPullStat"][];
             /** @description Last day included (YYYY-MM-DD), today. */
             to: string;
+        };
+        ArtifactSignature: {
+            /**
+             * @description Signature algorithm.
+             * @enum {string}
+             */
+            algorithm: "ed25519";
+            /** @description Key id of the signing key; pick the embedded public key with this id. */
+            keyId: string;
+            /** @description Base64 of the signed JSON bytes: application, moduleId, environment, buildRecordId, buildNumber, runtimeVersion, commitSha, signedAt and files (path with platform prefix, sizeBytes, sha256). Verify the signature over these exact bytes before parsing. */
+            payload: string;
+            /** @description Base64 Ed25519 signature of the payload bytes. */
+            signature: string;
         };
         BuildAdapter: {
             /**
@@ -2226,6 +2302,8 @@ export interface components {
             };
             /** @description runtimeVersion from forge.json. Empty until the build succeeds. */
             runtimeVersion: string;
+            /** @description Key id of the signing key that signed this build's file list; empty when the build is not signed. */
+            signingKeyId: string;
             /**
              * Format: date-time
              * @description Build start time.
@@ -3229,7 +3307,7 @@ export interface components {
              * @description Conflict kind.
              * @enum {string}
              */
-            error: "release already active" | "release capability conflict";
+            error: "release already active" | "release build unsigned" | "release capability conflict";
         };
         ReleaseCreateRequest: {
             /** @description Succeeded build record UUID to release. */
@@ -3458,6 +3536,36 @@ export interface components {
         SetupStatusResponse: {
             /** @description True when no Feishu tenant exists yet. */
             setupRequired: boolean;
+        };
+        SigningKey: {
+            /**
+             * @description Signature algorithm.
+             * @enum {string}
+             */
+            algorithm: "ed25519";
+            /**
+             * Format: date-time
+             * @description Creation time.
+             */
+            createdAt: string;
+            /** @description Who generated the key; null when the user was deleted. */
+            createdBy: components["schemas"]["UserRef"] | null;
+            /** @description First 16 hex characters of the public key's SHA-256. */
+            keyId: string;
+            /** @description Base64 of the raw 32-byte Ed25519 public key, to embed in clients. */
+            publicKey: string;
+            /** @description Time the key was retired; empty for the active key. */
+            retiredAt: string;
+            /**
+             * Format: int32
+             * @description Builds signed with this key.
+             */
+            signedBuilds: number;
+            /**
+             * @description active signs new builds; retired no longer signs but its signed builds stay valid.
+             * @enum {string}
+             */
+            status: "active" | "retired";
         };
         StorageConfiguration: {
             /**
@@ -4795,6 +4903,292 @@ export interface operations {
             };
             /** @description Application member or application not found. */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getApplicationSigning: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Immutable application slug. */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Signing settings and keys, active key first. Private keys are never returned. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplicationSigningResponse"];
+                };
+            };
+            /** @description Invalid signing request. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Console session is required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Application or signing key not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    updateApplicationSigning: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Immutable application slug. */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        /** @description Signing settings payload. */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApplicationSigningUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Updated signing settings. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplicationSigningResponse"];
+                };
+            };
+            /** @description Invalid signing request. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Console session is required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Current user cannot update this application (application:update). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Application or signing key not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description error is "signing key required": turning on requireSignedReleases needs an active key. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    createSigningKey: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Immutable application slug. */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description New active Ed25519 key. The previous active key becomes retired. Ship clients with the new public key before generating it, otherwise they reject newly signed builds. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SigningKey"];
+                };
+            };
+            /** @description Invalid signing request. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Console session is required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Current user cannot update this application (application:update). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Application or signing key not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    deleteSigningKey: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Immutable application slug. */
+                slug: string;
+                /** @description Signing key id. */
+                keyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Key deleted. Builds it signed keep their signatures. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid signing request. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Console session is required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Current user cannot update this application (application:update). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Application or signing key not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description error is "signing key active": generate a new key first. */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -8648,7 +9042,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Conflict. error is "release already active" when the build is already active for the same target, or "release capability conflict" with conflicts when a Common and a Feature build that clients could receive together would not be compatible. */
+            /** @description Conflict. error is "release build unsigned" when the application requires signed releases and the build is not signed, "release already active" when the build is already active for the same target, or "release capability conflict" with conflicts when a Common and a Feature build that clients could receive together would not be compatible. */
             409: {
                 headers: {
                     [name: string]: unknown;

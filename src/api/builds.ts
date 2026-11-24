@@ -166,6 +166,7 @@ export function normalizeBuildRecord(record: BuildRecordAPIRecord): BuildRunReco
     renderedDockerfileSha256: record.renderedDockerfileSha256?.trim() ?? "",
     repositoryWebUrl,
     runtimeVersion: record.runtimeVersion.trim(),
+    signingKeyId: record.signingKeyId ?? "",
     providedCapabilities: Object.entries(record.providedCapabilities ?? {})
       .map(([name, level]) => `${name} ${level}`)
       .join("，"),
