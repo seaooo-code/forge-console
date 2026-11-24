@@ -118,6 +118,8 @@ export function useReleaseBuild() {
     mutationFn: ({ buildId, form }: { buildId: string; form: ReleaseComposerForm }) =>
       createBuildRelease({
         buildRecordId: buildId,
+        // 概览页的快捷发布只发默认渠道，渠道发布在构建页和发布记录页选择。
+        channel: "",
         grayPercentage: form.grayPercentage,
         releaseType: form.kind === "full" ? "full" : "gray",
       }),

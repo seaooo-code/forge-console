@@ -2,6 +2,14 @@ import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-quer
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 
+import {
+  createReleaseChannel,
+  deleteReleaseChannel,
+  fetchReleaseChannels,
+  type ReleaseChannel,
+  releaseChannelsQueryKey,
+  updateReleaseChannel,
+} from "@/api/release-channels";
 import { usePagination } from "@/hooks/use-pagination";
 
 import {
@@ -29,6 +37,7 @@ import type {
   ApplicationMemberRecord,
   ApplicationStatusCode,
   HostApplication,
+  ReleaseChannelFormState,
 } from "../types";
 import { upsertMemberInList } from "../utils";
 
@@ -336,5 +345,93 @@ export function useApplicationMembers(
     setMemberFormValue,
     setRoleChangeTarget,
     roleChangeTarget,
+  };
+}
+
+/** 应用发布渠道的列表与增删改。target 为 null 时表单用于新建，否则编辑该渠道（code 不可改）。 */
+export function useApplicationChannels(applicationSlug: string) {
+  const queryClient = useQueryClient();
+  const channelsQuery = useQuery({
+    queryFn: () => fetchReleaseChannels(applicationSlug),
+    queryKey: releaseChannelsQueryKey(applicationSlug),
+  });
+  const [formTarget, setFormTarget] = useState<ReleaseChannel | null | undefined>(undefined);
+  const [deleteTarget, setDeleteTarget] = useState<ReleaseChannel | null>(null);
+  const [actionError, setActionError] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+  const form = useForm<ReleaseChannelFormState>({
+    defaultValues: { code: "", description: "", name: "" },
+  });
+
+  const openForm = (target: ReleaseChannel | null) => {
+    setActionError("");
+    form.reset({
+      code: target?.code ?? "",
+      description: target?.description ?? "",
+      name: target?.name ?? "",
+    });
+    setFormTarget(target);
+  };
+  const closeForm = () => {
+    setFormTarget(undefined);
+    setActionError("");
+  };
+  const refresh = () =>
+    queryClient.invalidateQueries({ queryKey: releaseChannelsQueryKey(applicationSlug) });
+
+  const submitForm = form.handleSubmit(async (values) => {
+    setActionError("");
+    try {
+      if (formTarget) {
+        await updateReleaseChannel(applicationSlug, formTarget.code, {
+          description: values.description.trim(),
+          name: values.name.trim(),
+        });
+      } else {
+        await createReleaseChannel(applicationSlug, {
+          code: values.code.trim(),
+          description: values.description.trim(),
+          name: values.name.trim(),
+        });
+      }
+      await refresh();
+      setFormTarget(undefined);
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : "保存渠道失败，请稍后重试");
+    }
+  });
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) {
+      return;
+    }
+    setActionError("");
+    setIsDeleting(true);
+    try {
+      await deleteReleaseChannel(applicationSlug, deleteTarget.code);
+      await refresh();
+      setDeleteTarget(null);
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : "删除渠道失败，请稍后重试");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  return {
+    actionError,
+    channels: channelsQuery.data ?? [],
+    closeForm,
+    confirmDelete,
+    deleteTarget,
+    form,
+    formTarget,
+    isDeleting,
+    isLoading: channelsQuery.isLoading,
+    loadError: channelsQuery.error,
+    openForm,
+    setActionError,
+    setDeleteTarget,
+    submitForm,
   };
 }

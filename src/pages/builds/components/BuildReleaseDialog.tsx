@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 
 import { Drawer, DrawerBody, DrawerFooter, DrawerHeader } from "@/components/common/Drawer";
+import { ReleaseChannelField } from "@/components/common/ReleaseChannelField";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,15 +26,19 @@ import { isBuildOlderThanActiveRelease } from "../utils";
 import { Field } from "./Field";
 
 export function BuildReleaseDialog({
-  activeFullRelease,
+  applicationSlug,
   build,
+  getActiveFullRelease,
   isOpen,
   onClose,
   onSubmit,
   submitError,
 }: {
-  activeFullRelease?: ActiveFullReleaseTarget;
+  /** 构建所属应用的 slug，用来读取应用的发布渠道。 */
+  applicationSlug: string;
   build: BuildRunRecord | null;
+  /** 返回该构建所在模块、环境、运行时版本下指定渠道生效中的全量发布。 */
+  getActiveFullRelease: (channel: string) => ActiveFullReleaseTarget | undefined;
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (form: BuildReleaseFormState) => Promise<void>;
@@ -47,11 +52,13 @@ export function BuildReleaseDialog({
     watch,
   } = useForm<BuildReleaseFormState>({
     defaultValues: {
+      channel: "",
       grayPercentage: 0,
       releaseType: "full",
     },
   });
   const releaseType = watch("releaseType");
+  const activeFullRelease = getActiveFullRelease(watch("channel"));
   const isDuplicateFullRelease =
     releaseType === "full" && Boolean(build && activeFullRelease?.buildId === build.id);
   const isRollbackFullRelease =
@@ -69,6 +76,7 @@ export function BuildReleaseDialog({
     }
 
     reset({
+      channel: "",
       grayPercentage: 0,
       releaseType: "full",
     });
@@ -97,6 +105,19 @@ export function BuildReleaseDialog({
 
         <DrawerBody className="space-y-5">
           <ReleaseRuntimeVersionNotice runtimeVersion={build.runtimeVersion} />
+
+          <Controller
+            control={control}
+            name="channel"
+            render={({ field }) => (
+              <ReleaseChannelField
+                applicationSlug={applicationSlug}
+                id="build-release-channel"
+                value={field.value}
+                onChange={field.onChange}
+              />
+            )}
+          />
 
           <Field label="发布类型" inputId="build-release-type">
             <Controller
@@ -169,7 +190,7 @@ export function BuildReleaseDialog({
 
           {isDuplicateFullRelease ? (
             <Alert variant="warning">
-              该构建已是该运行时版本下生效中的全量发布，不能重复提交全量发布。
+              该构建已是该渠道、该运行时版本下生效中的全量发布，不能重复提交全量发布。
             </Alert>
           ) : null}
           {isRollbackFullRelease ? (

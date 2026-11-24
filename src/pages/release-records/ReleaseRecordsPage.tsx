@@ -55,6 +55,7 @@ export function ReleaseRecordsPage({
   const { clampPage, filters, page, pageSize, setPage, setPageSize, updateFilters } =
     useReleaseRecordsFilters();
   const {
+    applicationSlugByModuleId,
     buildOptions,
     environmentOptions,
     environmentTones,
@@ -221,6 +222,7 @@ export function ReleaseRecordsPage({
       ) : null}
 
       <CreateReleaseDialog
+        applicationSlugByModuleId={applicationSlugByModuleId}
         buildOptions={buildOptions}
         isBuildsFetching={isBuildsFetching}
         isOpen={isCreateReleaseDialogOpen}
@@ -236,6 +238,7 @@ export function ReleaseRecordsPage({
           try {
             const releaseCreatedAt = await createBuildRelease({
               buildRecordId: form.buildRecordId,
+              channel: form.channel,
               grayPercentage: form.grayPercentage,
               releaseType: form.releaseType,
             });

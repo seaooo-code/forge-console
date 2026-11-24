@@ -56,6 +56,13 @@ export function buildReleaseRecordsColumnDefs(
       minWidth: 90,
     },
     {
+      cellRenderer: ChannelCell,
+      field: "channel",
+      flex: 0.55,
+      headerName: "渠道",
+      minWidth: 84,
+    },
+    {
       cellRenderer: RuntimeVersionCell,
       field: "runtimeVersion",
       flex: 0.7,
@@ -127,6 +134,14 @@ function ModuleCell({ data }: ICellRendererParams<ReleasePointerRecord>) {
     <div className="min-w-0 leading-tight">
       <div className="truncate font-semibold text-foreground text-sm">{data.module}</div>
     </div>
+  );
+}
+
+function ChannelCell({ value }: ICellRendererParams<ReleasePointerRecord, string>) {
+  return value ? (
+    <span className="truncate font-mono font-semibold text-foreground text-xs">{value}</span>
+  ) : (
+    <span className="text-muted-foreground text-xs">默认</span>
   );
 }
 

@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Drawer, DrawerBody, DrawerFooter, DrawerHeader } from "@/components/common/Drawer";
 import { Field } from "@/components/common/Field";
+import { ReleaseChannelField } from "@/components/common/ReleaseChannelField";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +24,8 @@ type CreateReleaseFormState = BuildReleaseFormState & {
 };
 
 type CreateReleaseDialogProps = {
+  /** 模块 ID 到所属应用 slug 的映射，用来读取构建所属应用的发布渠道。 */
+  applicationSlugByModuleId: Map<string, string>;
   buildOptions: BuildRunRecord[];
   isBuildsFetching: boolean;
   isOpen: boolean;
@@ -32,6 +35,7 @@ type CreateReleaseDialogProps = {
 };
 
 export function CreateReleaseDialog({
+  applicationSlugByModuleId,
   buildOptions,
   isBuildsFetching,
   isOpen,
@@ -44,10 +48,12 @@ export function CreateReleaseDialog({
     formState: { errors, isSubmitting },
     handleSubmit,
     reset,
+    setValue,
     watch,
   } = useForm<CreateReleaseFormState>({
     defaultValues: {
       buildRecordId: "",
+      channel: "",
       grayPercentage: 0,
       releaseType: "full",
     },
@@ -64,6 +70,7 @@ export function CreateReleaseDialog({
 
     reset({
       buildRecordId: "",
+      channel: "",
       grayPercentage: 0,
       releaseType: "full",
     });
@@ -105,7 +112,11 @@ export function CreateReleaseDialog({
                 <Select
                   value={field.value}
                   disabled={isBuildsFetching || !hasBuildOptions}
-                  onValueChange={field.onChange}
+                  onValueChange={(value) => {
+                    field.onChange(value);
+                    // 换了构建可能换了应用，已选的渠道不一定还存在。
+                    setValue("channel", "");
+                  }}
                 >
                   <SelectTrigger id="release-create-build" className="w-full">
                     <SelectValue
@@ -140,6 +151,21 @@ export function CreateReleaseDialog({
 
           {selectedBuild ? (
             <ReleaseRuntimeVersionNotice runtimeVersion={selectedBuild.runtimeVersion} />
+          ) : null}
+
+          {selectedBuild ? (
+            <Controller
+              control={control}
+              name="channel"
+              render={({ field }) => (
+                <ReleaseChannelField
+                  applicationSlug={applicationSlugByModuleId.get(selectedBuild.moduleId) ?? ""}
+                  id="release-create-channel"
+                  value={field.value}
+                  onChange={field.onChange}
+                />
+              )}
+            />
           ) : null}
 
           <Field label="发布类型" htmlFor="release-create-type">

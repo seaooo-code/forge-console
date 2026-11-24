@@ -59,7 +59,12 @@ export function useBuildsPageData(filters: BuildListFilters) {
       }
 
       releases.set(
-        buildReleaseTargetKey(record.moduleId, record.environment, record.runtimeVersion),
+        buildReleaseTargetKey(
+          record.moduleId,
+          record.environment,
+          record.runtimeVersion,
+          record.channel,
+        ),
         {
           build: buildsById.get(record.buildRecordId),
           buildId: record.buildRecordId,
@@ -69,6 +74,11 @@ export function useBuildsPageData(filters: BuildListFilters) {
 
     return releases;
   }, [buildsById, releaseRecordsSnapshot]);
+  const applicationSlugByModuleId = useMemo(
+    () =>
+      new Map(modulesSnapshot?.modules.map((module) => [module.id, module.applicationSlug ?? ""])),
+    [modulesSnapshot],
+  );
   const moduleOptions = useMemo(
     () =>
       modulesSnapshot?.modules.map((module) => ({
@@ -90,6 +100,7 @@ export function useBuildsPageData(filters: BuildListFilters) {
   );
   return {
     activeFullReleaseByTarget,
+    applicationSlugByModuleId,
     clampPage,
     environmentOptions,
     error,

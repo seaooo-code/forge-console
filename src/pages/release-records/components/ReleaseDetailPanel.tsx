@@ -193,6 +193,14 @@ export function ReleaseDetailPanel({
           items={[
             { label: "发布目标", value: getReleaseRecordTargetLabel(release) },
             {
+              hint: release.channel
+                ? "只对上报该渠道的客户端生效，停用后这些客户端回落到默认渠道"
+                : "所有客户端；渠道客户端在渠道里没有发布时也使用默认渠道",
+              label: "发布渠道",
+              mono: Boolean(release.channel),
+              value: release.channel || "默认渠道",
+            },
+            {
               hint: "只影响该运行时版本下的发布",
               label: "运行时版本",
               value: release.runtimeVersion || "-",

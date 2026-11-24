@@ -29,13 +29,18 @@ export function collectRuntimeVersions(model: Pick<OverviewModel, "builds" | "re
   return [...versions].sort((a, b) => b.localeCompare(a, undefined, { numeric: true }));
 }
 
-/** 按「模块 × 环境」整理一个运行时版本下的生效路由。 */
+/** 按「模块 × 环境」整理一个运行时版本下默认渠道的生效路由；渠道发布在发布记录页查看。 */
 export function buildRouteCells(model: OverviewModel, runtimeVersion: string) {
   const buildsById = new Map(model.builds.map((build) => [build.id, build]));
   const cells = new Map<string, RouteCell>();
 
   for (const release of model.releases) {
-    if (release.status !== "active" || release.runtimeVersion !== runtimeVersion) continue;
+    if (
+      release.status !== "active" ||
+      release.runtimeVersion !== runtimeVersion ||
+      release.channel !== ""
+    )
+      continue;
     const key = cellId({ environment: release.environment, moduleId: release.moduleId });
     const cell = cells.get(key) ?? {
       environment: release.environment,

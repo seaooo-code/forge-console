@@ -131,3 +131,9 @@ export type ApplicationMemberFormState = {
   role: ApplicationMemberRecord["role"];
   userId: string;
 };
+
+export type ReleaseChannelFormState = {
+  code: string;
+  description: string;
+  name: string;
+};

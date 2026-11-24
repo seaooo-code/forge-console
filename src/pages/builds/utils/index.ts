@@ -7,13 +7,14 @@ import type {
   BuildRunStatus,
 } from "../types";
 
-/** 发布路由按模块、环境和运行时版本隔离，同一 key 下的全量发布才会互相替换。 */
+/** 发布路由按模块、环境、渠道和运行时版本隔离，同一 key 下的全量发布才会互相替换。channel 为空表示默认渠道。 */
 export function buildReleaseTargetKey(
   moduleId: string,
   environment: string,
   runtimeVersion: string,
+  channel: string,
 ) {
-  return `${moduleId}:${environment}:${runtimeVersion}`;
+  return `${moduleId}:${environment}:${channel}:${runtimeVersion}`;
 }
 
 export function isBuildOlderThanActiveRelease(

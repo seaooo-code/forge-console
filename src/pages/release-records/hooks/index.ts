@@ -111,6 +111,11 @@ export function useReleaseRecordsData(
     () => buildsSnapshot?.builds.filter((build) => build.status === "success") ?? [],
     [buildsSnapshot],
   );
+  const applicationSlugByModuleId = useMemo(
+    () =>
+      new Map(modulesSnapshot?.modules.map((module) => [module.id, module.applicationSlug ?? ""])),
+    [modulesSnapshot],
+  );
   const moduleOptions = useMemo(
     () =>
       modulesSnapshot?.modules.map((module) => ({
@@ -140,6 +145,7 @@ export function useReleaseRecordsData(
   );
 
   return {
+    applicationSlugByModuleId,
     buildOptions,
     environmentOptions,
     environmentTones,

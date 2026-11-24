@@ -258,6 +258,7 @@ function normalizeReleaseRecord(record: ReleaseRecordAPIRecord): ReleasePointerR
     artifactKey: record.artifactKey || "-",
     artifactUrl: record.artifactUrl || "",
     buildRecordId: record.buildRecordId || "-",
+    channel: record.channel ?? "",
     createdAt: formatRecordNumber(record.createdAt),
     createdAtRaw: record.createdAt,
     createdAtShort: formatShortRecordTime(record.createdAt),

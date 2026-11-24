@@ -24,6 +24,7 @@ export async function createBuildRelease(input: BuildReleaseInput): Promise<stri
   const payload = await fetchJSON<ReleaseDetailAPIResponse>("/api/v1/releases", {
     body: JSON.stringify({
       buildRecordId: input.buildRecordId,
+      channel: input.channel,
       grayPercentage: input.releaseType === "gray" ? input.grayPercentage : 0,
       grayStrategy: input.releaseType === "gray" ? "percentage" : "",
       releaseType: input.releaseType,
@@ -40,6 +41,7 @@ const releaseAPIErrorMessages: Record<string, string> = {
   "internal server error": "服务端内部错误，请稍后重试",
   "invalid release request": "发布参数无效，请确认构建状态、发布类型和灰度配置",
   "release already active": "该构建已是当前发布目标的生效版本，没有新的路由变化",
+  "release channel not found": "发布渠道不存在，可能已被删除，请刷新后重试",
   "release not active": "这条发布已经失效",
   "release rollback unavailable": "没有可以回滚的上一次全量发布",
   "release route not found": "发布路由不存在",

@@ -58,6 +58,42 @@ export interface paths {
         patch: operations["updateApplication"];
         trace?: never;
     };
+    "/api/v1/applications/{slug}/channels": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List release channels */
+        get: operations["listReleaseChannels"];
+        put?: never;
+        /** Create release channel */
+        post: operations["createReleaseChannel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/applications/{slug}/channels/{code}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete release channel */
+        delete: operations["deleteReleaseChannel"];
+        options?: never;
+        head?: never;
+        /** Update release channel */
+        patch: operations["updateReleaseChannel"];
+        trace?: never;
+    };
     "/api/v1/applications/{slug}/delete-check": {
         parameters: {
             query?: never;
@@ -1760,6 +1796,8 @@ export interface components {
             branch: string;
             /** @description Matched build record UUID. */
             buildRecordId: string;
+            /** @description Channel of the matched release. Empty when the release belongs to the default channel or the module came from a test plan. */
+            channel: string;
             /** @description Commit SHA of the matched build. */
             commitSha: string;
             files: components["schemas"]["ArtifactManifestFile"][];
@@ -1801,6 +1839,8 @@ export interface components {
         };
         ArtifactManifestResponse: {
             application: components["schemas"]["ArtifactManifestApplication"];
+            /** @description Channel actually used for resolution. Empty when no channel was requested or the requested channel is not registered for the application, in which case only the default channel is used. */
+            channel: string;
             environment: components["schemas"]["ArtifactManifestEnvironment"];
             missingModules: components["schemas"]["ArtifactMissingModule"][];
             modules: components["schemas"]["ArtifactManifestModule"][];
@@ -1838,6 +1878,8 @@ export interface components {
             buildNumber: number;
             /** @description Build served; empty for missing outcomes. */
             buildRecordId: string;
+            /** @description Channel used for resolution; empty for the default channel and for unregistered channels. */
+            channel: string;
             /** @description Date (YYYY-MM-DD) in the server's local time zone. */
             day: string;
             /** @description Environment code. */
@@ -3141,6 +3183,46 @@ export interface components {
             releaseType: string;
             shortfalls: components["schemas"]["CapabilityShortfall"][];
         };
+        ReleaseChannel: {
+            /**
+             * Format: int32
+             * @description Active releases of this channel across all environments. The channel can only be deleted when this is 0.
+             */
+            activeReleases: number;
+            /** @description Channel code reported by clients. Immutable after creation. */
+            code: string;
+            /**
+             * Format: date-time
+             * @description Creation time.
+             */
+            createdAt: string;
+            /** @description Description. */
+            description: string;
+            /** @description Display name. */
+            name: string;
+            /**
+             * Format: date-time
+             * @description Update time.
+             */
+            updatedAt: string;
+        };
+        ReleaseChannelCreateRequest: {
+            /** @description Channel code: a lowercase letter, then lowercase letters, digits and hyphens, at most 32 characters. */
+            code: string;
+            /** @description Optional description, at most 200 characters. */
+            description?: string;
+            /** @description Display name, at most 50 characters. */
+            name: string;
+        };
+        ReleaseChannelUpdateRequest: {
+            /** @description Optional description, at most 200 characters. */
+            description?: string;
+            /** @description Display name, at most 50 characters. */
+            name: string;
+        };
+        ReleaseChannelsResponse: {
+            channels: components["schemas"]["ReleaseChannel"][];
+        };
         ReleaseConflictErrorResponse: {
             conflicts?: components["schemas"]["ReleaseCapabilityConflict"][];
             /**
@@ -3152,6 +3234,8 @@ export interface components {
         ReleaseCreateRequest: {
             /** @description Succeeded build record UUID to release. */
             buildRecordId: string;
+            /** @description Optional release channel code registered for the application. Empty or omitted releases to the default channel. A release only replaces releases of the same channel and runtimeVersion. */
+            channel?: string;
             /** @description Release description. */
             description?: string;
             /**
@@ -3183,7 +3267,7 @@ export interface components {
             actor: components["schemas"]["UserRef"] | null;
             /** @description RFC3339 time. */
             createdAt: string;
-            /** @description Kind-specific detail. created: releaseType, buildRecordId, runtimeVersion, grayPercentage (gray), rollbackFromReleaseId (rollback). gray_percentage_updated: from, to. promoted_to_full: fromPercentage. replaced: byReleaseId. deactivated: reason. */
+            /** @description Kind-specific detail. created: releaseType, buildRecordId, runtimeVersion, channel, grayPercentage (gray), rollbackFromReleaseId (rollback). gray_percentage_updated: from, to. promoted_to_full: fromPercentage. replaced: byReleaseId. deactivated: reason. */
             detail: {
                 [key: string]: unknown;
             };
@@ -3217,6 +3301,8 @@ export interface components {
             artifactUrl?: string;
             /** @description Build record UUID used by this release. */
             buildRecordId: string;
+            /** @description Release channel code; empty string is the default channel. */
+            channel: string;
             /**
              * Format: date-time
              * @description Release creation time.
@@ -3301,6 +3387,8 @@ export interface components {
             artifactUrl?: string;
             /** @description Build record UUID used by this route. */
             buildRecordId: string;
+            /** @description Release channel code; empty string is the default channel. */
+            channel: string;
             /**
              * Format: date-time
              * @description Route creation time.
@@ -4161,6 +4249,299 @@ export interface operations {
             };
         };
     };
+    listReleaseChannels: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Immutable application slug. */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Channels of the application, oldest first. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReleaseChannelsResponse"];
+                };
+            };
+            /** @description Invalid release channel request. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Console session is required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Application or channel not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    createReleaseChannel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Immutable application slug. */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        /** @description Release channel payload. */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReleaseChannelCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Channel created. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReleaseChannel"];
+                };
+            };
+            /** @description Invalid release channel request. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Console session is required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Current user cannot release in this application (release:create). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Application or channel not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description error is "release channel already exists". */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    deleteReleaseChannel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Immutable application slug. */
+                slug: string;
+                /** @description Channel code. */
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Channel deleted. Historical releases keep their channel code. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid release channel request. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Console session is required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Current user cannot release in this application (release:create). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Application or channel not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description error is "release channel in use": the channel still has active releases in some environment. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    updateReleaseChannel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Immutable application slug. */
+                slug: string;
+                /** @description Channel code. */
+                code: string;
+            };
+            cookie?: never;
+        };
+        /** @description Release channel payload. */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReleaseChannelUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Channel updated. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReleaseChannel"];
+                };
+            };
+            /** @description Invalid release channel request. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Console session is required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Current user cannot release in this application (release:create). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Application or channel not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     checkApplicationDelete: {
         parameters: {
             query?: never;
@@ -4848,6 +5229,8 @@ export interface operations {
                 runtimeVersion: string;
                 /** @description Optional client user id, for example the signed-in account id. Each module resolves in order: an active test plan this user is a member of, then percentage gray bucketed by userId, then the full release. Without userId only full releases are returned. */
                 userId?: string;
+                /** @description Optional release channel code baked into the client, for example beta. Each module first resolves the channel's percentage gray and full release, then falls back to the default channel. Unregistered channels resolve as the default channel. Lowercase letter first, then lowercase letters, digits and hyphens, at most 32 characters. */
+                channel?: string;
             };
             header?: {
                 /** @description Optional ETag from the previous manifest response. When it still matches, the server returns 304 with no body. */
@@ -8173,6 +8556,8 @@ export interface operations {
                 status?: "active" | "inactive";
                 /** @description Release type filter. */
                 releaseType?: "full" | "gray";
+                /** @description Release channel filter. Omit to list all channels; pass an empty value to list only the default channel. */
+                channel?: string;
                 /** @description One-based page number. Defaults to 1. */
                 page?: number;
                 /** @description Rows per page, from 1 to 100. Defaults to 20. */
@@ -8227,7 +8612,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Release created and route activated. Within the same module, environment and runtimeVersion, a full release replaces the current full release and ends the active percentage gray release; a percentage release replaces the previous one. */
+            /** @description Release created and route activated. Within the same module, environment, channel and runtimeVersion, a full release replaces the current full release and ends the active percentage gray release; a percentage release replaces the previous one. */
             201: {
                 headers: {
                     [name: string]: unknown;
@@ -8254,7 +8639,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Build record not found. */
+            /** @description Build record not found, or error is "release channel not found" when channel is not registered for the application. */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -8294,6 +8679,8 @@ export interface operations {
                 runtimeVersion?: string;
                 /** @description Optional user id for percentage gray bucketing. */
                 userId?: string;
+                /** @description Optional release channel. Routes of this channel are preferred, then the default channel. */
+                channel?: string;
             };
             header?: never;
             path?: never;

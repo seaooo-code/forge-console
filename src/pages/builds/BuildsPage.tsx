@@ -71,6 +71,7 @@ export function BuildsPage({
   });
   const {
     activeFullReleaseByTarget,
+    applicationSlugByModuleId,
     clampPage,
     environmentOptions,
     error,
@@ -314,13 +315,17 @@ export function BuildsPage({
         }}
       />
       <BuildReleaseDialog
-        activeFullRelease={
+        applicationSlug={
+          releaseBuild ? (applicationSlugByModuleId.get(releaseBuild.moduleId) ?? "") : ""
+        }
+        getActiveFullRelease={(channel) =>
           releaseBuild
             ? activeFullReleaseByTarget.get(
                 buildReleaseTargetKey(
                   releaseBuild.moduleId,
                   releaseBuild.environment,
                   releaseBuild.runtimeVersion,
+                  channel,
                 ),
               )
             : undefined
@@ -340,6 +345,7 @@ export function BuildsPage({
           try {
             const releaseCreatedAt = await createBuildRelease({
               buildRecordId: releaseBuild.id,
+              channel: form.channel,
               grayPercentage: form.grayPercentage,
               releaseType: form.releaseType,
             });

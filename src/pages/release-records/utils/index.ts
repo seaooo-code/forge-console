@@ -57,8 +57,10 @@ export function describeReleaseEvent(event: ReleaseEvent) {
   const detail = event.detail as Record<string, unknown>;
   switch (event.kind) {
     case "created": {
-      const target =
-        detail.releaseType === "gray" ? `比例灰度 ${String(detail.grayPercentage ?? 0)}%` : "全量";
+      const channel = detail.channel ? `（渠道 ${String(detail.channel)}）` : "";
+      const target = `${
+        detail.releaseType === "gray" ? `比例灰度 ${String(detail.grayPercentage ?? 0)}%` : "全量"
+      }${channel}`;
       return detail.rollbackFromReleaseId
         ? `回滚发布为${target}（回滚自 #${String(detail.rollbackFromReleaseId).slice(-8)}）`
         : `发布为${target}`;

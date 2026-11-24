@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 
+import { ApplicationChannelsSection } from "./components/ApplicationChannelsSection";
 import { ApplicationDetailFallback } from "./components/ApplicationDetailFallback";
 import { ApplicationEnvironmentsGrid } from "./components/ApplicationEnvironmentsGrid";
 import { ApplicationMembersSection } from "./components/ApplicationMembersSection";
@@ -159,6 +160,7 @@ export function ApplicationDetailPage({
           <TabsTrigger value="members">成员 · {detail.members.length}</TabsTrigger>
           <TabsTrigger value="environments">环境 · {detail.environments.length}</TabsTrigger>
           <TabsTrigger value="modules">模块 · {detail.modules.length}</TabsTrigger>
+          <TabsTrigger value="channels">发布渠道</TabsTrigger>
         </TabsList>
 
         <TabsContent value="integration" className="mt-5 flex flex-col gap-4">
@@ -190,6 +192,13 @@ export function ApplicationDetailPage({
 
         <TabsContent value="modules" className="mt-5">
           <ApplicationModulesGrid modules={detail.modules} />
+        </TabsContent>
+
+        <TabsContent value="channels" className="mt-5">
+          <ApplicationChannelsSection
+            applicationSlug={application.slug}
+            canManage={detail.capabilities.canRelease}
+          />
         </TabsContent>
       </Tabs>
     </div>

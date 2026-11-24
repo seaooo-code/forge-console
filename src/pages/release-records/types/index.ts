@@ -25,6 +25,8 @@ export type ReleasePointerRecord = {
   artifactUrl: string;
   application: string;
   buildRecordId: string;
+  /** 发布所属的渠道，默认渠道为空字符串。 */
+  channel: string;
   createdAt: string;
   createdAtRaw: string;
   createdAtShort: string;
