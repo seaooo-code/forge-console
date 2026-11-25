@@ -35,3 +35,18 @@ export function toCommitDetail({
     url: commitSha && web ? `${web}/commit/${encodeURIComponent(commitSha)}` : "",
   };
 }
+
+/**
+ * 是否是可以发全量的主线分支：模块默认分支、main、master，或 release/、release- 开头的分支。
+ * 功能分支一般先合入主线再发全量，发布时据此提醒，不拦截。
+ */
+export function isMainlineBranch(branch: string, defaultBranch: string) {
+  const name = branch.trim();
+  if (!name) return true;
+  return (
+    name === defaultBranch.trim() ||
+    name === "main" ||
+    name === "master" ||
+    /^release[/-]/.test(name)
+  );
+}

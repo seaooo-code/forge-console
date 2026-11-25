@@ -2729,9 +2729,12 @@ export interface components {
         CommitComparison: {
             /**
              * Format: int64
-             * @description For diverged, commits only in from.
+             * @description For diverged, number of commits only in from.
              */
             behindBy: number;
+            behindCommits: components["schemas"]["BranchCommit"][];
+            /** @description For diverged, false when behindBy is a lower bound. */
+            behindExact: boolean;
             commits: components["schemas"]["BranchCommit"][];
             /**
              * @description ahead: to is after from, commits are new in to. behind: to is before from (rollback), commits are in from but not in to. diverged: both sides have their own commits, commits are new in to and behindBy counts the other side. identical: same commit.

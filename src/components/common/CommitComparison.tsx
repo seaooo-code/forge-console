@@ -3,11 +3,11 @@ import { ExternalLink, GitCompareArrows, LoaderCircle } from "lucide-react";
 
 import {
   compareModuleCommits,
+  type ModuleCommitComparison,
   ModulesAPIError,
   moduleCommitComparisonQueryKey,
 } from "@/api/modules";
 import { cn } from "@/lib/utils";
-import { toCommitDetail } from "@/utils";
 
 import { CommitLink, commitByline } from "./CommitInfo";
 
@@ -72,13 +72,14 @@ export function CommitComparison({
   }
 
   const total = `${comparison.totalCommits}${comparison.totalExact ? "" : "+"}`;
+  const behindTotal = `${comparison.behindBy}${comparison.behindExact ? "" : "+"}`;
   const summary = {
     ahead: `${toLabel}比${fromLabel}新 ${total} 个提交`,
     behind: `${toLabel}比${fromLabel}旧 ${total} 个提交，发布后这些提交会被撤下`,
-    diverged: `${toLabel}和${fromLabel}不在同一条提交线上：${toLabel}有 ${total} 个${fromLabel}没有的提交，${fromLabel}有 ${comparison.behindBy} 个${toLabel}没有的提交`,
+    diverged: `${toLabel}和${fromLabel}不在同一条提交线上：发布后新增 ${total} 个提交，撤下 ${behindTotal} 个${fromLabel}独有的提交`,
     identical: `${toLabel}和${fromLabel}是同一个提交`,
   }[comparison.status];
-  const hidden = comparison.totalCommits - comparison.commits.length;
+  const isRisky = comparison.status === "behind" || comparison.status === "diverged";
 
   return (
     <div className={cn("space-y-2", className)}>
@@ -86,9 +87,7 @@ export function CommitComparison({
         <div
           className={cn(
             "flex min-w-0 items-start gap-1.5 text-xs",
-            comparison.status === "behind" || comparison.status === "diverged"
-              ? "text-warning"
-              : "text-muted-foreground",
+            isRisky ? "text-warning" : "text-muted-foreground",
           )}
         >
           <GitCompareArrows className="mt-px size-3.5 shrink-0" />
@@ -106,37 +105,93 @@ export function CommitComparison({
           </a>
         ) : null}
       </div>
-      {comparison.commits.length > 0 ? (
-        <ol className="max-h-64 divide-y overflow-auto rounded-lg border">
-          {comparison.commits.map((item) => {
-            const commit = toCommitDetail({
-              authorName: item.authorName,
-              committedAt: item.committedAt,
-              sha: item.sha,
-              title: item.title,
-            });
-            commit.url = item.webUrl;
-            return (
-              <li key={item.sha} className="flex items-start gap-2.5 px-3 py-2">
-                <CommitLink commit={commit} className="mt-0.5" />
-                <div className="min-w-0 flex-1">
-                  <div className="break-words text-foreground text-xs">
-                    {item.title || "（无提交说明）"}
-                  </div>
-                  <div className="mt-0.5 text-[11px] text-muted-foreground">
-                    {commitByline(commit)}
-                  </div>
-                </div>
-              </li>
-            );
-          })}
-          {hidden > 0 || !comparison.totalExact ? (
-            <li className="px-3 py-2 text-muted-foreground text-xs">
-              还有更早的提交没有列出，到完整对比里查看
-            </li>
-          ) : null}
-        </ol>
+      {comparison.status === "diverged" ? (
+        <>
+          <CommitList
+            commits={comparison.commits}
+            exact={comparison.totalExact}
+            title={`发布后新增（${total}）`}
+            total={comparison.totalCommits}
+          />
+          <CommitList
+            commits={comparison.behindCommits}
+            exact={comparison.behindExact}
+            title={`发布后撤下（${behindTotal}）：${fromLabel}有、${toLabel}没有`}
+            tone="warning"
+            total={comparison.behindBy}
+          />
+        </>
+      ) : (
+        <CommitList
+          commits={comparison.commits}
+          exact={comparison.totalExact}
+          total={comparison.totalCommits}
+        />
+      )}
+    </div>
+  );
+}
+
+/** 差异提交列表，新的在前；只展示最新的一部分时提示到完整对比里看。 */
+function CommitList({
+  commits,
+  exact,
+  title,
+  tone,
+  total,
+}: {
+  commits: ModuleCommitComparison["commits"];
+  exact: boolean;
+  title?: string;
+  tone?: "warning";
+  total: number;
+}) {
+  if (commits.length === 0) {
+    return null;
+  }
+  return (
+    <div className="space-y-1">
+      {title ? (
+        <div
+          className={cn("text-xs", tone === "warning" ? "text-warning" : "text-muted-foreground")}
+        >
+          {title}
+        </div>
       ) : null}
+      <ol
+        className={cn(
+          "max-h-64 divide-y overflow-auto rounded-lg border",
+          tone === "warning" && "border-warning/40",
+        )}
+      >
+        {commits.map((item) => {
+          const commit = {
+            authorName: item.authorName,
+            committedAt: item.committedAt,
+            sha: item.sha,
+            title: item.title,
+            url: item.webUrl,
+          };
+          return (
+            <li key={item.sha} className="flex items-start gap-2.5 px-3 py-2">
+              <CommitLink commit={commit} className="mt-0.5" />
+              <div className="min-w-0 flex-1">
+                <div className="break-words text-foreground text-xs">
+                  {item.title || "（无提交说明）"}
+                </div>
+                <div className="mt-0.5 text-[11px] text-muted-foreground">
+                  {commitByline(commit)}
+                </div>
+              </div>
+            </li>
+          );
+        })}
+        {total > commits.length || !exact ? (
+          <li className="px-3 py-2 text-muted-foreground text-xs">
+            还有更早的提交没有列出，到完整对比里查看
+          </li>
+        ) : null}
+      </ol>
     </div>
   );
 }

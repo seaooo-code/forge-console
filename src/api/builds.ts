@@ -155,6 +155,7 @@ export function normalizeBuildRecord(record: BuildRecordAPIRecord): BuildRunReco
     commitSha,
     createdAt: formatRecordNumber(record.createdAt),
     createdAtRaw: record.createdAt,
+    defaultBranch: record.defaultBranch?.trim() ?? "",
     createdBy: record.createdBy,
     duration: formatDuration(record.startedAt ?? "", record.finishedAt ?? ""),
     environment: record.environment,

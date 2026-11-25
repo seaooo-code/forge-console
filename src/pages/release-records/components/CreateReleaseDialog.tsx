@@ -5,6 +5,7 @@ import { Controller, useForm } from "react-hook-form";
 import { CommitCard } from "@/components/common/CommitInfo";
 import { Drawer, DrawerBody, DrawerFooter, DrawerHeader } from "@/components/common/Drawer";
 import { Field } from "@/components/common/Field";
+import { MainlineReleaseNotice } from "@/components/common/MainlineReleaseNotice";
 import { ReleaseChannelField } from "@/components/common/ReleaseChannelField";
 import { ReleaseCommitDiff } from "@/components/common/ReleaseCommitDiff";
 import { Alert } from "@/components/ui/alert";
@@ -176,13 +177,21 @@ export function CreateReleaseDialog({
             <section className="space-y-2">
               <h3 className="m-0 font-medium text-muted-foreground text-xs">要发布的代码</h3>
               <CommitCard commit={selectedBuild.commit} />
+              {releaseType === "full" ? (
+                <MainlineReleaseNotice
+                  branch={selectedBuild.branch}
+                  defaultBranch={selectedBuild.defaultBranch}
+                />
+              ) : null}
               <ReleaseCommitDiff
+                branch={selectedBuild.branch}
                 buildId={selectedBuild.id}
                 commitSha={selectedBuild.commitSha}
                 moduleId={selectedBuild.moduleId}
                 online={
                   onlineFull
                     ? {
+                        branch: onlineFull.buildBranch,
                         buildId: onlineFull.buildRecordId,
                         buildNumber: onlineFull.buildNumber,
                         commit: onlineFull.commit,

@@ -209,6 +209,7 @@ function BuildDetailContent({
             {build.status === "success" && build.runtimeVersion ? (
               <div className="mt-4">
                 <ReleaseCommitDiff
+                  branch={build.branch}
                   buildId={build.id}
                   commitSha={build.commitSha}
                   moduleId={build.moduleId}

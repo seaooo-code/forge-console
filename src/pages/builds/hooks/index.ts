@@ -66,6 +66,7 @@ export function useBuildsPageData(filters: BuildListFilters) {
           record.channel,
         ),
         {
+          branch: record.buildBranch,
           build: buildsById.get(record.buildRecordId),
           buildId: record.buildRecordId,
           buildNumber: record.buildNumber,

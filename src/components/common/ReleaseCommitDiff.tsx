@@ -1,9 +1,13 @@
+import { GitBranch } from "lucide-react";
+
 import type { CommitDetail } from "@/types/commits";
 
 import { CommitComparison } from "./CommitComparison";
 import { CommitInline } from "./CommitInfo";
 
 export type OnlineReleaseCommit = {
+  /** 线上构建的分支，构建被删除时为空字符串。 */
+  branch: string;
   buildId: string;
   /** 线上构建的构建号，构建被删除时为 0。 */
   buildNumber: number;
@@ -14,6 +18,7 @@ export type OnlineReleaseCommit = {
  * 发布前和构建详情里展示「和线上全量差了哪些提交」。online 为空表示这个环境、渠道、运行时版本还没有全量发布。
  */
 export function ReleaseCommitDiff({
+  branch,
   buildId,
   commitSha,
   moduleId,
@@ -21,6 +26,8 @@ export function ReleaseCommitDiff({
   onlineLabel = "线上全量",
   targetLabel = "这个构建",
 }: {
+  /** 这个构建的分支。 */
+  branch: string;
   buildId: string;
   commitSha: string;
   moduleId: string;
@@ -50,8 +57,19 @@ export function ReleaseCommitDiff({
           {onlineLabel}
           {online.buildNumber ? ` #${online.buildNumber}` : ""}
         </span>
+        {online.branch ? (
+          <span className="inline-flex shrink-0 items-center gap-1 font-mono text-muted-foreground">
+            <GitBranch className="size-3.5" />
+            {online.branch}
+          </span>
+        ) : null}
         <CommitInline commit={online.commit} />
       </div>
+      {online.branch && branch && online.branch !== branch ? (
+        <p className="m-0 text-warning text-xs">
+          {onlineLabel}来自 {online.branch}，{targetLabel}来自 {branch}，两边不是同一个分支。
+        </p>
+      ) : null}
       {online.commit.sha && commitSha ? (
         <CommitComparison
           from={online.commit.sha}

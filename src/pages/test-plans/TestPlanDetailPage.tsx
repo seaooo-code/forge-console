@@ -8,6 +8,7 @@ import { PageErrorState, PageHeader, PageSkeleton, SectionCard } from "@/compone
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { fetchAllReleaseRecordsSnapshot, releaseRecordsAllQueryKey } from "@/pages/release-records";
 import { toCommitDetail } from "@/utils";
 
 import {
@@ -29,6 +30,7 @@ import {
 import { TestAccountsDialog } from "./components/TestAccountsDialog";
 import { TestPlanConflictDialog } from "./components/TestPlanConflictDialog";
 import { TestPlanItemDialog } from "./components/TestPlanItemDialog";
+import { TestPlanItemOnlineDiff } from "./components/TestPlanItemOnlineDiff";
 import { TestPlanMemberDialog } from "./components/TestPlanMemberDialog";
 import { TestPlanSettingsDialog } from "./components/TestPlanSettingsDialog";
 import { testPlanItemModeLabels, testPlanStatusClass, testPlanStatusLabels } from "./constants";
@@ -74,6 +76,33 @@ export function TestPlanDetailPage({ id, onBack, onOpenBuild }: TestPlanDetailPa
     () => Object.fromEntries((data?.items ?? []).map((item) => [item.moduleId, item.moduleName])),
     [data?.items],
   );
+  // 提测环境生效中的发布，用来展示每个条目和线上全量（默认渠道）相差的提交。
+  const activeReleaseFilters = {
+    applicationId: data?.testPlan.applicationId ?? "",
+    environment: data?.testPlan.environment ?? "",
+    status: "active" as const,
+  };
+  const { data: activeReleases } = useQuery({
+    queryFn: data ? () => fetchAllReleaseRecordsSnapshot(activeReleaseFilters) : skipToken,
+    queryKey: releaseRecordsAllQueryKey(activeReleaseFilters),
+  });
+  const onlineFull = (item: TestPlanItemRecord) => {
+    const record = activeReleases?.records.find(
+      (release) =>
+        release.releaseType === "full" &&
+        release.channel === "" &&
+        release.moduleId === item.moduleId &&
+        release.runtimeVersion === item.runtimeVersion,
+    );
+    return record
+      ? {
+          branch: record.buildBranch,
+          buildId: record.buildRecordId,
+          buildNumber: record.buildNumber,
+          commit: record.commit,
+        }
+      : undefined;
+  };
 
   if (isPending) {
     return <PageSkeleton />;
@@ -275,6 +304,7 @@ export function TestPlanDetailPage({ id, onBack, onOpenBuild }: TestPlanDetailPa
                     </Button>
                   </div>
                 ) : null}
+                <TestPlanItemOnlineDiff item={item} online={onlineFull(item)} />
               </div>
             ))}
           </div>

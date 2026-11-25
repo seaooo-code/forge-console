@@ -3,6 +3,7 @@ import { Controller, useForm } from "react-hook-form";
 
 import { CommitComparison } from "@/components/common/CommitComparison";
 import { CommitInline } from "@/components/common/CommitInfo";
+import { MainlineReleaseNotice } from "@/components/common/MainlineReleaseNotice";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { RuntimeEnvironment } from "@/pages/environments";
@@ -199,7 +200,10 @@ function RouteRow({ children, entry, meta, order, tag, tagClass }: RouteRowProps
         </span>
         <span className="ml-auto min-w-0 truncate text-right text-faint text-xs">{meta}</span>
       </div>
-      <div className="mt-1 flex min-w-0 pl-6.5">
+      <div className="mt-1 flex min-w-0 items-center gap-1.5 pl-6.5 text-faint text-xs">
+        {entry.release.buildBranch ? (
+          <span className="shrink-0 font-mono">{entry.release.buildBranch}</span>
+        ) : null}
         <CommitInline commit={entry.release.commit} />
       </div>
       {children ? <div className="mt-2 pl-6.5">{children}</div> : null}
@@ -420,8 +424,18 @@ function ReleaseComposer({
     }
   });
 
+  const fullBranch = cell?.full?.release.buildBranch ?? "";
+
   return (
     <form className="flex flex-col gap-3 px-2.5 pb-3" onSubmit={submit}>
+      {rollback || form.kind === "full" ? (
+        <MainlineReleaseNotice branch={build.branch} defaultBranch={module.defaultBranch ?? ""} />
+      ) : null}
+      {fullBranch && build.branch && fullBranch !== build.branch ? (
+        <p className="m-0 text-warning text-xs">
+          当前全量来自 {fullBranch}，这个构建来自 {build.branch}，两边不是同一个分支。
+        </p>
+      ) : null}
       {compareFrom && build.commitSha ? (
         <CommitComparison
           from={compareFrom}

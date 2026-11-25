@@ -38,6 +38,8 @@ export type BuildRunRecord = {
   commitSha: string;
   createdAt: string;
   createdAtRaw: string;
+  /** 模块配置的默认分支，没配置时为空字符串。 */
+  defaultBranch: string;
   /** 手动构建为控制台用户，webhook 构建为代码源连接创建人；历史构建或用户已删除时为 null。 */
   createdBy: APISchemas["UserSummary"] | null;
   duration: string;
