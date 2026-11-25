@@ -106,9 +106,11 @@ const moduleAPIErrorMessages: Record<string, string> = {
   "invalid build request": "构建参数无效，请检查分支和环境",
   "invalid build variable request":
     "构建变量参数无效：key 需匹配 ^[A-Z][A-Z0-9_]{0,63}$ 且不能以 FORGE_ 开头，密钥值不能为空",
+  "build variable environment not found": "构建变量的作用环境不存在，请重新选择",
   "invalid code source request": "代码源请求参数无效",
   "module id already exists": "模块 ID 已存在，请更换后重试",
-  "module is referenced": "模块已被引用，不能删除",
+  "module is referenced":
+    "模块仍有关联数据：已有构建或发布记录，或作为通用模块被功能模块引用，暂不能删除",
   "module not found": "模块不存在",
   "module repository already exists":
     "该仓库已用相同 Dockerfile 路径绑定其他模块，请更换仓库或 Dockerfile 路径",
@@ -128,7 +130,8 @@ export async function updateModule(
   moduleId: string,
   input: ModuleMutationInput,
 ): Promise<ModuleRecord> {
-  const { id: _id, ...payloadInput } = input;
+  // 构建变量只在创建时随模块提交，编辑模块时走构建变量接口。
+  const { buildVariables: _buildVariables, id: _id, ...payloadInput } = input;
   const updateInput: APISchemas["ModuleUpdateRequest"] = payloadInput;
   const payload = await fetchJSON<ModuleDetailAPIResponse>(
     `/api/v1/modules/${encodeURIComponent(moduleId)}`,

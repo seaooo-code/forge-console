@@ -58,6 +58,8 @@ export type ModuleBuildConfigFormState = {
 export type ModuleFormState = {
   applicationId: string;
   buildConfig: ModuleBuildConfigFormState;
+  /** 只在新建模块时提交，随模块一起创建；编辑模块时构建变量走详情页的独立接口。 */
+  buildVariables: BuildVariableFormState[];
   commonModuleId: string;
   connectionId: string;
   id: string;

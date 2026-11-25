@@ -36,7 +36,8 @@ export function BuildVariableDialog({
   variable,
 }: {
   environmentOptions: Array<{ label: string; value: string }>;
-  existingVariables: ModuleBuildVariable[];
+  /** 用来提示同一作用环境下的同名变量，只用到 key 和 environmentCode。 */
+  existingVariables: Array<Pick<ModuleBuildVariable, "environmentCode" | "key">>;
   isOpen: boolean;
   onClose: () => void;
   /** form 为 null 表示编辑密钥时未填写新值，无需请求后端。 */

@@ -39,6 +39,7 @@ export function buildInitialForm(
       ...defaultForm,
       applicationId: fallbackApplicationId,
       buildConfig: { ...defaultModuleBuildConfig, autoBuildBranches: [], buildAdapterParams: {} },
+      buildVariables: [],
       connectionId: fallbackConnectionId,
       ownerDepartmentIds: [],
     };
@@ -59,6 +60,7 @@ export function buildInitialForm(
       ciJob: buildConfig.ciJob ?? "",
       dockerfilePath: buildConfig.dockerfilePath || defaultModuleBuildConfig.dockerfilePath,
     },
+    buildVariables: [],
     commonModuleId: moduleRecord.commonModuleId ?? "",
     connectionId: moduleRecord.codeSourceConnectionId,
     id: moduleRecord.id,
@@ -112,6 +114,14 @@ export function buildModuleInput(
       ciJob: isCIMode ? buildConfig.ciJob.trim() : undefined,
       dockerfilePath: buildConfig.dockerfilePath.trim(),
     },
+    buildVariables: form.buildVariables.length
+      ? form.buildVariables.map((variable) => ({
+          environmentCode: variable.environmentCode,
+          isSecret: variable.isSecret,
+          key: variable.key.trim(),
+          value: variable.value,
+        }))
+      : undefined,
     commonModuleId: form.kind === "Feature" ? form.commonModuleId.trim() : undefined,
     id: form.id.trim(),
     kind: form.kind,

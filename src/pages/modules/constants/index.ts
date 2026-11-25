@@ -21,6 +21,7 @@ export const buildModeLabels: Record<BuildMode, string> = {
 export const defaultForm: ModuleFormState = {
   applicationId: "",
   buildConfig: defaultModuleBuildConfig,
+  buildVariables: [],
   commonModuleId: "",
   connectionId: "",
   id: "",

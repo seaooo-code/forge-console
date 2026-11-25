@@ -8,6 +8,7 @@ import type { FeishuUserSearchResult } from "@/types/feishu";
 
 import { createModule, modulesRootQueryKey } from "./api/modules-snapshot";
 import { ModuleBuildConfigFields } from "./components/ModuleBuildConfigFields";
+import { ModuleCreateBuildVariablesField } from "./components/ModuleCreateBuildVariablesField";
 import { ModuleFormFields } from "./components/ModuleFormFields";
 import {
   ModuleCodeSourceRequired,
@@ -233,6 +234,13 @@ export function ModuleCreatePage({
             moduleId={isEditMode ? moduleRecord?.id : undefined}
             register={register}
           />
+          {isEditMode ? null : (
+            <ModuleCreateBuildVariablesField
+              clearFormError={clearFormError}
+              control={control}
+              environmentOptions={environmentOptions}
+            />
+          )}
         </div>
       </section>
 

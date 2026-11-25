@@ -3221,6 +3221,8 @@ export interface components {
             /** @description Linked application id. */
             applicationId: string;
             buildConfig?: components["schemas"]["ModuleBuildConfig"];
+            /** @description Optional build variables created together with the module in one transaction, at most 100. Same rules as the build variable upsert API; a key may appear only once per environmentCode. */
+            buildVariables?: components["schemas"]["BuildVariableUpsertRequest"][];
             /** @description Required for Feature modules. Must point to a Common module of the same application. */
             commonModuleId?: string;
             /** @description Immutable module id. */
