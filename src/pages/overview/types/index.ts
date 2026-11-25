@@ -18,9 +18,26 @@ export type RouteCell = {
   percentage: RouteEntry | null;
 };
 
-export type CellKey = {
+/** 网格里的一行一列：模块 × 环境，不区分运行时版本（例如「需要处理」里的失败构建还没有版本号）。 */
+export type CellLocation = {
   environment: string;
   moduleId: string;
+};
+
+/** 网格里的一个格子：运行时版本分段 × 模块 × 环境。 */
+export type CellKey = CellLocation & {
+  runtimeVersion: string;
+};
+
+/** 线上现状按运行时版本分段，每段是一组兼容的通用包和功能包。 */
+export type RuntimeGroup = {
+  /** 默认渠道下生效中的路由数（全量和比例灰度各算一条）。 */
+  activeRoutes: number;
+  /** 有生效路由的版本默认展示，其余收进「历史版本」。 */
+  isActive: boolean;
+  /** 最近一次发布或成功构建的时间，用于排序。 */
+  lastActivityRaw: string;
+  runtimeVersion: string;
 };
 
 export type OverviewModel = {

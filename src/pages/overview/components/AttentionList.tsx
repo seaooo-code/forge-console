@@ -3,7 +3,7 @@ import { CircleAlert, KeyRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { RuntimeEnvironment } from "@/pages/environments";
 
-import type { AttentionItem, CellKey } from "../types";
+import type { AttentionItem, CellLocation } from "../types";
 import { expiresInLabel, relativeTime } from "../utils";
 
 type AttentionListProps = {
@@ -14,7 +14,7 @@ type AttentionListProps = {
   onOpenBuild: (buildId: string) => void;
   onOpenCodeSources: () => void;
   onRebuild: (input: { branch: string; environment: string; moduleId: string }) => void;
-  onSelect: (key: CellKey) => void;
+  onSelect: (key: CellLocation) => void;
   isRebuilding: boolean;
 };
 

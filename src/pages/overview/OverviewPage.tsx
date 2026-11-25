@@ -21,14 +21,15 @@ import {
   useSetupProgress,
   useUpdateGrayPercentage,
 } from "./hooks";
-import type { CellKey, ReleaseComposerForm, RouteEntry } from "./types";
+import type { CellKey, CellLocation, ReleaseComposerForm, RouteEntry, RuntimeGroup } from "./types";
 import {
   buildRouteCells,
   cellBuilds,
   cellId,
   collectAttentionItems,
-  collectRuntimeVersions,
+  collectRuntimeGroups,
   newerBuildCount,
+  splitRuntimeGroups,
 } from "./utils";
 
 type OverviewPageProps = {
@@ -56,7 +57,7 @@ export function OverviewPage({
   const canCreateRelease = Boolean(session?.capabilities.canCreateRelease);
   const { connections, error, isLoading, model, refetch } = useOverviewData(applicationId);
 
-  const [pickedVersion, setPickedVersion] = useState("");
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [picked, setPicked] = useState<CellKey | null>(null);
   const [composerBuildId, setComposerBuildId] = useState("");
   const [toast, setToast] = useState("");
@@ -65,17 +66,20 @@ export function OverviewPage({
   const updateGray = useUpdateGrayPercentage();
   const rebuild = useRebuild();
 
-  const runtimeVersions = useMemo(() => (model ? collectRuntimeVersions(model) : []), [model]);
-  const runtimeVersion = runtimeVersions.includes(pickedVersion)
-    ? pickedVersion
-    : (runtimeVersions[0] ?? "");
-  const cells = useMemo(
-    () => (model ? buildRouteCells(model, runtimeVersion) : new Map()),
-    [model, runtimeVersion],
+  const { history, leading } = useMemo(
+    () => splitRuntimeGroups(model ? collectRuntimeGroups(model) : []),
+    [model],
   );
+  const visibleGroups = useMemo(
+    () => (isHistoryOpen ? [...leading, ...history] : leading),
+    [history, isHistoryOpen, leading],
+  );
+  // 还没产出版本号的构建（排队、构建中、失败）不知道属于哪个版本，统一放在最上面那一段。
+  const pendingRuntimeVersion = leading[0]?.runtimeVersion ?? "";
+  const cells = useMemo(() => (model ? buildRouteCells(model) : new Map()), [model]);
   const modules = model?.modules ?? [];
   const environments = model?.environments ?? [];
-  const selected = resolveSelection(picked, modules, environments);
+  const selected = resolveSelection(picked, modules, environments, visibleGroups);
 
   useEffect(() => {
     if (!toast) return;
@@ -83,10 +87,14 @@ export function OverviewPage({
     return () => window.clearTimeout(timer);
   }, [toast]);
 
-  const select = useCallback((key: CellKey) => {
-    setPicked(key);
-    setComposerBuildId("");
-  }, []);
+  /** 没带运行时版本的位置（例如「需要处理」里的失败构建）落到最上面那一段。 */
+  const select = useCallback(
+    (key: CellLocation & { runtimeVersion?: string }) => {
+      setPicked({ ...key, runtimeVersion: key.runtimeVersion ?? pendingRuntimeVersion });
+      setComposerBuildId("");
+    },
+    [pendingRuntimeVersion],
+  );
 
   useEffect(() => {
     const handleKey = (event: KeyboardEvent) => {
@@ -105,18 +113,25 @@ export function OverviewPage({
       const move = moves[event.key];
       if (!move || !selected) return;
       event.preventDefault();
-      const row = modules.findIndex((module) => module.id === selected.moduleId);
+      // 上下方向键在所有展开的分段之间连续移动：分段内是模块行，到底后进入下一段。
+      const rows = visibleGroups.flatMap((group) =>
+        modules.map((module) => ({ moduleId: module.id, runtimeVersion: group.runtimeVersion })),
+      );
+      const row = rows.findIndex(
+        (item) =>
+          item.moduleId === selected.moduleId && item.runtimeVersion === selected.runtimeVersion,
+      );
       const col = environments.findIndex((env) => env.id === selected.environment);
       const next = {
+        ...rows[clamp(row + move[0], rows.length)],
         environment: environments[clamp(col + move[1], environments.length)].id,
-        moduleId: modules[clamp(row + move[0], modules.length)].id,
       };
       select(next);
       document.querySelector<HTMLElement>(`[data-cell-id="${cellId(next)}"]`)?.focus();
     };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [environments, modules, select, selected]);
+  }, [environments, modules, select, selected, visibleGroups]);
 
   if (!applicationId) {
     return (
@@ -150,14 +165,26 @@ export function OverviewPage({
   const attention = collectAttentionItems(model, connections);
   const moduleName = (moduleId: string) =>
     modules.find((module) => module.id === moduleId)?.name ?? moduleId;
+  // 只统计默认展示的分段，历史版本没有生效路由。
   let percentageCount = 0;
   let newerCells = 0;
-  for (const module of modules) {
-    for (const env of environments) {
-      const key = { environment: env.id, moduleId: module.id };
-      const cell = cells.get(cellId(key));
-      if (cell?.percentage) percentageCount += 1;
-      if (newerBuildCount(cellBuilds(model.builds, key, runtimeVersion), cell)) newerCells += 1;
+  for (const group of leading) {
+    for (const module of modules) {
+      for (const env of environments) {
+        const key = {
+          environment: env.id,
+          moduleId: module.id,
+          runtimeVersion: group.runtimeVersion,
+        };
+        const cell = cells.get(cellId(key));
+        if (cell?.percentage) percentageCount += 1;
+        const builds = cellBuilds(
+          model.builds,
+          key,
+          group.runtimeVersion === pendingRuntimeVersion,
+        );
+        if (newerBuildCount(builds, cell)) newerCells += 1;
+      }
     }
   }
 
@@ -219,32 +246,6 @@ export function OverviewPage({
               个格子有新构建可发布
             </p>
           </div>
-          {runtimeVersions.length ? (
-            <div className="flex items-center gap-2 text-faint text-xs">
-              运行时版本
-              <div className="inline-flex gap-px rounded-lg bg-muted p-0.5">
-                {runtimeVersions.map((version) => (
-                  <Button
-                    key={version}
-                    size="sm"
-                    variant="ghost"
-                    aria-pressed={version === runtimeVersion}
-                    onClick={() => {
-                      setPickedVersion(version);
-                      setComposerBuildId("");
-                    }}
-                    className={cn(
-                      "h-6.5 rounded-md px-2.5 font-normal text-muted-foreground hover:bg-transparent hover:text-foreground",
-                      version === runtimeVersion &&
-                        "bg-background text-foreground shadow-edge hover:bg-background",
-                    )}
-                  >
-                    {version}
-                  </Button>
-                ))}
-              </div>
-            </div>
-          ) : null}
         </header>
 
         <AttentionList
@@ -274,9 +275,13 @@ export function OverviewPage({
             builds={model.builds}
             cells={cells}
             environments={environments}
+            history={history}
+            isHistoryOpen={isHistoryOpen}
+            leading={leading}
             modules={modules}
             onSelect={select}
-            runtimeVersion={runtimeVersion}
+            onToggleHistory={() => setIsHistoryOpen((open) => !open)}
+            pendingRuntimeVersion={pendingRuntimeVersion}
             selected={selected}
           />
         )}
@@ -288,7 +293,11 @@ export function OverviewPage({
       >
         {selectedModule && selectedEnv && selected ? (
           <RouteInspector
-            builds={cellBuilds(model.builds, selected, runtimeVersion)}
+            builds={cellBuilds(
+              model.builds,
+              selected,
+              selected.runtimeVersion === pendingRuntimeVersion,
+            )}
             canCreateRelease={canCreateRelease}
             cell={selectedCell}
             composerBuildId={composerBuildId}
@@ -299,7 +308,7 @@ export function OverviewPage({
             onOpenComposer={setComposerBuildId}
             onRelease={handleRelease}
             onUpdateGray={handleUpdateGray}
-            runtimeVersion={runtimeVersion}
+            runtimeVersion={selected.runtimeVersion || "（暂无）"}
           />
         ) : (
           <p className="m-0 text-muted-foreground text-sm">
@@ -325,21 +334,27 @@ function clamp(index: number, length: number) {
   return Math.min(length - 1, Math.max(0, index));
 }
 
+/** 选中的格子不在当前展开的分段里（例如收起了历史版本）时，回到第一段第一个模块的最后一个环境。 */
 function resolveSelection(
   picked: CellKey | null,
   modules: { id: string }[],
   environments: { id: string }[],
+  groups: RuntimeGroup[],
 ): CellKey | null {
   if (
     picked &&
     modules.some((module) => module.id === picked.moduleId) &&
-    environments.some((env) => env.id === picked.environment)
+    environments.some((env) => env.id === picked.environment) &&
+    groups.some((group) => group.runtimeVersion === picked.runtimeVersion)
   ) {
     return picked;
   }
   const module = modules[0];
   const env = environments[environments.length - 1];
-  return module && env ? { environment: env.id, moduleId: module.id } : null;
+  const group = groups[0];
+  return module && env && group
+    ? { environment: env.id, moduleId: module.id, runtimeVersion: group.runtimeVersion }
+    : null;
 }
 
 function PickApplication({

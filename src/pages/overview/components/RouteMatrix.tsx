@@ -1,3 +1,5 @@
+import { ChevronRight } from "lucide-react";
+import { Fragment } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { RuntimeEnvironment } from "@/pages/environments";
@@ -5,16 +7,23 @@ import type { BuildRunRecord } from "@/types/builds";
 import type { ModuleRecord } from "@/types/modules";
 
 import { environmentDotClass } from "../constants";
-import type { CellKey, RouteCell } from "../types";
+import type { CellKey, RouteCell, RuntimeGroup } from "../types";
 import { cellBuilds, cellId, isEmptyCell, newerBuildCount, relativeTime } from "../utils";
 
 type RouteMatrixProps = {
   builds: BuildRunRecord[];
   cells: Map<string, RouteCell>;
   environments: RuntimeEnvironment[];
+  /** 收进「历史版本」的分段，展开时画在默认分段下面。 */
+  history: RuntimeGroup[];
+  isHistoryOpen: boolean;
+  /** 默认展示的分段，顺序即展示顺序。 */
+  leading: RuntimeGroup[];
   modules: ModuleRecord[];
   onSelect: (key: CellKey) => void;
-  runtimeVersion: string;
+  onToggleHistory: () => void;
+  /** 还没有版本号的排队、构建中构建显示在这一段。 */
+  pendingRuntimeVersion: string;
   selected: CellKey | null;
 };
 
@@ -22,12 +31,76 @@ export function RouteMatrix({
   builds,
   cells,
   environments,
+  history,
+  isHistoryOpen,
+  leading,
   modules,
   onSelect,
-  runtimeVersion,
+  onToggleHistory,
+  pendingRuntimeVersion,
   selected,
 }: RouteMatrixProps) {
   const columns = { gridTemplateColumns: `11rem repeat(${environments.length}, minmax(0, 1fr))` };
+
+  const renderGroup = (group: RuntimeGroup, isHistory: boolean) => (
+    <section
+      key={group.runtimeVersion || "none"}
+      aria-label={group.runtimeVersion ? `运行时版本 ${group.runtimeVersion}` : "模块与环境"}
+      className={cn("flex flex-col gap-2.5", isHistory && "opacity-80")}
+    >
+      {group.runtimeVersion ? (
+        <div className="flex items-baseline gap-2 px-2.5 pt-1 text-xs">
+          <span className="font-medium font-mono text-foreground text-sm">
+            {group.runtimeVersion}
+          </span>
+          <span className={group.isActive ? "text-muted-foreground" : "text-faint"}>
+            {group.isActive ? `${group.activeRoutes} 条生效路由` : "没有生效中的发布"}
+          </span>
+          {group.lastActivityRaw ? (
+            <span className="text-faint">· 最近活动 {relativeTime(group.lastActivityRaw)}</span>
+          ) : null}
+        </div>
+      ) : null}
+      {modules.map((module) => (
+        <div
+          key={module.id}
+          className="grid gap-1 rounded-2xl bg-card p-1.5 shadow-edge"
+          style={columns}
+        >
+          <div className="min-w-0 px-2.5 pt-2.5 pb-2">
+            <div className="flex items-center gap-1.5">
+              <span className="truncate font-medium text-sm">{module.name}</span>
+              <span className="shrink-0 rounded bg-muted px-1.5 text-muted-foreground text-xs">
+                {module.kind === "Common" ? "通用" : "功能"}
+              </span>
+            </div>
+            <p className="m-0 mt-1 truncate font-mono text-faint text-xs">
+              {module.repositoryFullName || module.repository}
+            </p>
+          </div>
+          {environments.map((env) => {
+            const key = {
+              environment: env.id,
+              moduleId: module.id,
+              runtimeVersion: group.runtimeVersion,
+            };
+            const id = cellId(key);
+            return (
+              <Cell
+                key={env.id}
+                builds={cellBuilds(builds, key, group.runtimeVersion === pendingRuntimeVersion)}
+                cell={cells.get(id)}
+                id={id}
+                label={`${module.name} ${env.name}${group.runtimeVersion ? ` ${group.runtimeVersion}` : ""}`}
+                onSelect={() => onSelect(key)}
+                selected={Boolean(selected && cellId(selected) === id)}
+              />
+            );
+          })}
+        </div>
+      ))}
+    </section>
+  );
 
   return (
     <section aria-label="模块与环境" className="mt-7">
@@ -44,42 +117,34 @@ export function RouteMatrix({
         ))}
       </div>
 
-      <div className="flex flex-col gap-2.5">
-        {modules.map((module) => (
-          <div
-            key={module.id}
-            className="grid gap-1 rounded-2xl bg-card p-1.5 shadow-edge"
-            style={columns}
-          >
-            <div className="min-w-0 px-2.5 pt-2.5 pb-2">
-              <div className="flex items-center gap-1.5">
-                <span className="truncate font-medium text-sm">{module.name}</span>
-                <span className="shrink-0 rounded bg-muted px-1.5 text-muted-foreground text-xs">
-                  {module.kind === "Common" ? "通用" : "功能"}
+      <div className="flex flex-col gap-5">
+        {leading.map((group) => renderGroup(group, false))}
+        {history.length ? (
+          <Fragment>
+            <Button
+              variant="ghost"
+              size="sm"
+              aria-expanded={isHistoryOpen}
+              onClick={onToggleHistory}
+              className="h-7 self-start px-2.5 font-normal text-muted-foreground text-xs"
+            >
+              <ChevronRight
+                className={cn("size-3.5 transition-transform", isHistoryOpen && "rotate-90")}
+              />
+              历史版本（{history.length}）
+              {isHistoryOpen ? null : (
+                <span className="font-mono text-faint">
+                  {history
+                    .slice(0, 3)
+                    .map((group) => group.runtimeVersion)
+                    .join("、")}
+                  {history.length > 3 ? " …" : ""}
                 </span>
-              </div>
-              <p className="m-0 mt-1 truncate font-mono text-faint text-xs">
-                {module.repositoryFullName || module.repository}
-              </p>
-            </div>
-            {environments.map((env) => {
-              const key = { environment: env.id, moduleId: module.id };
-              const isSelected =
-                selected?.moduleId === module.id && selected.environment === env.id;
-              return (
-                <Cell
-                  key={env.id}
-                  builds={cellBuilds(builds, key, runtimeVersion)}
-                  cell={cells.get(cellId(key))}
-                  id={cellId(key)}
-                  label={`${module.name} ${env.name}`}
-                  onSelect={() => onSelect(key)}
-                  selected={isSelected}
-                />
-              );
-            })}
-          </div>
-        ))}
+              )}
+            </Button>
+            {isHistoryOpen ? history.map((group) => renderGroup(group, true)) : null}
+          </Fragment>
+        ) : null}
       </div>
 
       <div className="flex items-center gap-4 px-1.5 pt-2 text-muted-foreground text-xs">
