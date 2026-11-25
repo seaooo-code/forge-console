@@ -2,6 +2,7 @@ import { LoaderCircle } from "lucide-react";
 import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 
+import { BranchCommitSummary } from "@/components/common/BranchCommitSummary";
 import { BranchPicker } from "@/components/common/BranchPicker";
 import { Drawer, DrawerBody, DrawerFooter, DrawerHeader } from "@/components/common/Drawer";
 import { Alert } from "@/components/ui/alert";
@@ -153,20 +154,23 @@ export function BuildCreateDialog({
               name="branch"
               rules={{ validate: (value) => (value.trim() ? true : "请输入分支") }}
               render={({ field }) => (
-                <BranchPicker
-                  id="build-create-branch"
-                  moduleId={selectedModuleId}
-                  defaultBranch={selectedModule?.defaultBranch}
-                  invalid={Boolean(errors.branch)}
-                  value={field.value}
-                  onBlur={field.onBlur}
-                  onChange={field.onChange}
-                />
+                <div className="space-y-2">
+                  <BranchPicker
+                    id="build-create-branch"
+                    moduleId={selectedModuleId}
+                    defaultBranch={selectedModule?.defaultBranch}
+                    invalid={Boolean(errors.branch)}
+                    value={field.value}
+                    onBlur={field.onBlur}
+                    onChange={field.onChange}
+                  />
+                  {errors.branch ? (
+                    <div className="text-destructive text-xs">{errors.branch.message}</div>
+                  ) : null}
+                  <BranchCommitSummary branch={field.value} moduleId={selectedModuleId} />
+                </div>
               )}
             />
-            {errors.branch ? (
-              <div className="text-destructive text-xs">{errors.branch.message}</div>
-            ) : null}
           </Field>
 
           <Field label="环境" inputId="build-create-environment">

@@ -979,6 +979,23 @@ export interface paths {
         patch: operations["updateModule"];
         trace?: never;
     };
+    "/api/v1/modules/{id}/branch-commit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the latest commit of a module repository branch */
+        get: operations["getModuleBranchCommit"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/modules/{id}/branches": {
         parameters: {
             query?: never;
@@ -2050,6 +2067,20 @@ export interface components {
             payload: string;
             /** @description Base64 Ed25519 signature of the payload bytes. */
             signature: string;
+        };
+        BranchCommit: {
+            /** @description Commit author name. */
+            authorName: string;
+            /** @description Branch name. */
+            branch: string;
+            /** @description Commit time in RFC3339, or empty when unknown. */
+            committedAt: string;
+            /** @description Full commit SHA. */
+            sha: string;
+            /** @description First line of the commit message. */
+            title: string;
+            /** @description Commit page on the code source, or empty when unknown. */
+            webUrl: string;
         };
         BuildAdapter: {
             /**
@@ -3185,6 +3216,9 @@ export interface components {
              * @description Module update time.
              */
             updatedAt?: string;
+        };
+        ModuleBranchCommitResponse: {
+            commit: components["schemas"]["BranchCommit"];
         };
         ModuleBranchesResponse: {
             /** @description Matched branch names. */
@@ -9063,6 +9097,77 @@ export interface operations {
             };
             /** @description Server error. */
             500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getModuleBranchCommit: {
+        parameters: {
+            query: {
+                /** @description Branch name. */
+                branch: string;
+            };
+            header?: never;
+            path: {
+                /** @description Module id. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Latest commit of the branch. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ModuleBranchCommitResponse"];
+                };
+            };
+            /** @description Branch is empty, code source connection is inactive or request is invalid. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Current user cannot create builds for this module. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Module, code source connection or branch not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Code source provider request failed. */
+            502: {
                 headers: {
                     [name: string]: unknown;
                 };

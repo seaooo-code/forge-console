@@ -36,7 +36,16 @@ export const moduleBranchesQueryKey = (moduleId: string, query: string) => [
   query,
 ];
 
+export const moduleBranchCommitQueryKey = (moduleId: string, branch: string) => [
+  ...modulesRootQueryKey,
+  "branch-commit",
+  moduleId,
+  branch,
+];
+
 type ModuleAPIRecord = APISchemas["Module"];
+
+export type ModuleBranchCommit = APISchemas["BranchCommit"];
 
 type ModuleBranchesAPIResponse = APISchemas["ModuleBranchesResponse"];
 
@@ -116,6 +125,19 @@ export async function searchModuleBranches(moduleId: string, query: string): Pro
   );
 
   return payload.branches;
+}
+
+/** 查询模块仓库某个分支当前最新的提交；分支不存在时后端返回 404。 */
+export async function fetchModuleBranchCommit(
+  moduleId: string,
+  branch: string,
+): Promise<ModuleBranchCommit> {
+  const params = new URLSearchParams({ branch });
+  const payload = await fetchJSON<APISchemas["ModuleBranchCommitResponse"]>(
+    `/api/v1/modules/${encodeURIComponent(moduleId)}/branch-commit?${params.toString()}`,
+  );
+
+  return payload.commit;
 }
 
 export function normalizeModuleListFilters(

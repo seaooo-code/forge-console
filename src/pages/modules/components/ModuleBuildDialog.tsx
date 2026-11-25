@@ -1,5 +1,6 @@
 import { type ReactNode, useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
+import { BranchCommitSummary } from "@/components/common/BranchCommitSummary";
 import { BranchPicker } from "@/components/common/BranchPicker";
 import { Drawer, DrawerBody, DrawerFooter, DrawerHeader } from "@/components/common/Drawer";
 import { Alert } from "@/components/ui/alert";
@@ -82,14 +83,17 @@ export function ModuleBuildDialog({
               control={control}
               name="branch"
               render={({ field }) => (
-                <BranchPicker
-                  id="module-build-branch"
-                  moduleId={module.id}
-                  defaultBranch={module.defaultBranch}
-                  value={field.value}
-                  onBlur={field.onBlur}
-                  onChange={field.onChange}
-                />
+                <div className="space-y-2">
+                  <BranchPicker
+                    id="module-build-branch"
+                    moduleId={module.id}
+                    defaultBranch={module.defaultBranch}
+                    value={field.value}
+                    onBlur={field.onBlur}
+                    onChange={field.onChange}
+                  />
+                  <BranchCommitSummary branch={field.value} moduleId={module.id} />
+                </div>
               )}
             />
           </Field>
