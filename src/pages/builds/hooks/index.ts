@@ -68,6 +68,8 @@ export function useBuildsPageData(filters: BuildListFilters) {
         {
           build: buildsById.get(record.buildRecordId),
           buildId: record.buildRecordId,
+          buildNumber: record.buildNumber,
+          commit: record.commit,
         },
       );
     }

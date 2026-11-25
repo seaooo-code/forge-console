@@ -1,9 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
-import { ExternalLink, Rocket, X } from "lucide-react";
+import { ExternalLink, GitBranch, Rocket, X } from "lucide-react";
 import { useState } from "react";
 
 import { buildAdapterDetailQueryKey, fetchBuildAdapter } from "@/api/build-adapters";
 import { fetchModuleDetailSnapshot, moduleDetailQueryKey } from "@/api/modules";
+import { CommitCard } from "@/components/common/CommitInfo";
+import { ReleaseCommitDiff } from "@/components/common/ReleaseCommitDiff";
 import { DetailList, ErrorMessage } from "@/components/layout";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -16,7 +18,12 @@ import {
   buildTriggerLabels,
   repositoryProviderLabels,
 } from "../constants";
-import type { BuildPlatform, BuildRecordDetail, BuildRunRecord } from "../types";
+import type {
+  ActiveFullReleaseTarget,
+  BuildPlatform,
+  BuildRecordDetail,
+  BuildRunRecord,
+} from "../types";
 import {
   getArtifactBaseURL,
   getStorageConfigurationDisplayName,
@@ -24,12 +31,14 @@ import {
 } from "../utils";
 import { ArtifactTreePanel } from "./ArtifactTreePanel";
 import { BuildLogPanel } from "./BuildLogPanel";
-import { BuildCommitLink, BuildCreator, BuildPlatformBadges } from "./BuildMeta";
+import { BuildCreator, BuildPlatformBadges } from "./BuildMeta";
 import { BuildStatusBadge } from "./BuildStatusBadge";
 
 type BuildDetailPanelProps = {
   buildId: string;
   canCreateRelease: boolean;
+  /** 返回构建所在模块、环境、运行时版本下默认渠道生效中的全量发布。 */
+  getActiveFullRelease: (build: BuildRunRecord) => ActiveFullReleaseTarget | undefined;
   onClose: () => void;
   onOpenBuild: (buildId: string) => void;
   onOpenBuildAdapter: (adapterId: string) => void;
@@ -85,6 +94,7 @@ function CloseButton({ onClose }: { onClose: () => void }) {
 function BuildDetailContent({
   build,
   canCreateRelease,
+  getActiveFullRelease,
   onClose,
   onOpenBuild,
   onOpenBuildAdapter,
@@ -190,6 +200,26 @@ function BuildDetailContent({
           ) : null}
 
           <section className="rounded-xl bg-card p-5 shadow-edge">
+            <h3 className="m-0 mb-3 font-medium text-muted-foreground text-xs">代码</h3>
+            <div className="mb-2 flex min-w-0 items-center gap-1.5 text-muted-foreground text-xs">
+              <GitBranch className="size-3.5 shrink-0" />
+              <span className="truncate font-mono">{build.branch}</span>
+            </div>
+            <CommitCard commit={build.commit} />
+            {build.status === "success" && build.runtimeVersion ? (
+              <div className="mt-4">
+                <ReleaseCommitDiff
+                  buildId={build.id}
+                  commitSha={build.commitSha}
+                  moduleId={build.moduleId}
+                  online={getActiveFullRelease(build)}
+                  onlineLabel={`${build.environmentName}线上全量`}
+                />
+              </div>
+            ) : null}
+          </section>
+
+          <section className="rounded-xl bg-card p-5 shadow-edge">
             <h3 className="m-0 mb-4 font-medium text-muted-foreground text-xs">构建</h3>
             <DetailList
               items={[
@@ -232,7 +262,6 @@ function BuildDetailContent({
                   label: "创建人",
                   value: <BuildCreator createdBy={build.createdBy} />,
                 },
-                { label: "Commit", value: <BuildCommitLink build={build} /> },
                 { label: "平台", value: <BuildPlatformBadges platforms={build.platforms} /> },
                 {
                   hint: build.status === "queued" ? "等待分配" : undefined,

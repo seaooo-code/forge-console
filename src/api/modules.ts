@@ -43,7 +43,17 @@ export const moduleBranchCommitQueryKey = (moduleId: string, branch: string) => 
   branch,
 ];
 
+export const moduleCommitComparisonQueryKey = (moduleId: string, from: string, to: string) => [
+  ...modulesRootQueryKey,
+  "compare",
+  moduleId,
+  from,
+  to,
+];
+
 type ModuleAPIRecord = APISchemas["Module"];
+
+export type ModuleCommitComparison = APISchemas["CommitComparison"];
 
 export type ModuleBranchCommit = APISchemas["BranchCommit"];
 
@@ -138,6 +148,20 @@ export async function fetchModuleBranchCommit(
   );
 
   return payload.commit;
+}
+
+/** 比较模块仓库里的两个提交：to 相对 from 多了哪些提交，或者回退时会撤掉哪些提交。 */
+export async function compareModuleCommits(
+  moduleId: string,
+  from: string,
+  to: string,
+): Promise<ModuleCommitComparison> {
+  const params = new URLSearchParams({ from, to });
+  const payload = await fetchJSON<APISchemas["ModuleCommitComparisonResponse"]>(
+    `/api/v1/modules/${encodeURIComponent(moduleId)}/compare?${params.toString()}`,
+  );
+
+  return payload.comparison;
 }
 
 export function normalizeModuleListFilters(

@@ -1,7 +1,8 @@
-import { ExternalLink, Package, PowerOff, Undo2, X } from "lucide-react";
+import { ExternalLink, GitBranch, Package, PowerOff, Undo2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 
+import { CommitCard } from "@/components/common/CommitInfo";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { DetailList, ErrorMessage } from "@/components/layout";
 import { Alert } from "@/components/ui/alert";
@@ -188,6 +189,22 @@ export function ReleaseDetailPanel({
           }
         />
       ) : null}
+
+      <section className="rounded-xl bg-card p-5 shadow-edge">
+        <h3 className="m-0 mb-3 font-medium text-muted-foreground text-xs">代码</h3>
+        <div className="mb-2 flex min-w-0 items-center gap-1.5 text-muted-foreground text-xs">
+          <span className="shrink-0 font-medium text-foreground tabular-nums">
+            {release.buildNumber ? `构建 #${release.buildNumber}` : "构建已清理"}
+          </span>
+          {release.buildBranch ? (
+            <>
+              <GitBranch className="size-3.5 shrink-0" />
+              <span className="truncate font-mono">{release.buildBranch}</span>
+            </>
+          ) : null}
+        </div>
+        <CommitCard commit={release.commit} />
+      </section>
 
       <section className="rounded-xl bg-card p-5 shadow-edge">
         <h3 className="m-0 mb-4 font-medium text-muted-foreground text-xs">发布信息</h3>

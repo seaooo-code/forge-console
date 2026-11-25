@@ -1,4 +1,5 @@
 import type { APISchemas } from "@/api/client";
+import type { CommitDetail } from "@/types/commits";
 import type { PaginationMeta, PaginationParams } from "@/types/pagination";
 
 export type ReleaseRecordStatus = APISchemas["ReleaseRecord"]["status"];
@@ -24,7 +25,13 @@ export type ReleasePointerRecord = {
   artifactKey: string;
   artifactUrl: string;
   application: string;
+  /** 发布使用的构建的分支，构建被删除时为空字符串。 */
+  buildBranch: string;
+  /** 发布使用的构建的构建号，构建被删除时为 0。 */
+  buildNumber: number;
   buildRecordId: string;
+  /** 发布使用的构建的提交。 */
+  commit: CommitDetail;
   /** 发布所属的渠道，默认渠道为空字符串。 */
   channel: string;
   createdAt: string;

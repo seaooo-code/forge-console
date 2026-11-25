@@ -2,11 +2,13 @@ import { skipToken, useQuery } from "@tanstack/react-query";
 import { ExternalLink, LogIn, LogOut, Pencil, Plus, Trash2, UserRound } from "lucide-react";
 import { useMemo, useState } from "react";
 
+import { CommitInline } from "@/components/common/CommitInfo";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { PageErrorState, PageHeader, PageSkeleton, SectionCard } from "@/components/layout";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { toCommitDetail } from "@/utils";
 
 import {
   addTestPlanMembers,
@@ -36,7 +38,6 @@ import {
   expiresAtAfterDays,
   formatDateTime,
   formatRemaining,
-  shortSha,
 } from "./utils";
 
 type TestPlanDetailPageProps = {
@@ -235,8 +236,18 @@ export function TestPlanDetailPage({ id, onBack, onOpenBuild }: TestPlanDetailPa
                   className="h-auto p-0 text-xs"
                   onClick={() => onOpenBuild(item.buildRecordId)}
                 >
-                  #{item.buildNumber} · {shortSha(item.commitSha)}
+                  #{item.buildNumber}
                 </Button>
+                <CommitInline
+                  className="max-w-80"
+                  commit={toCommitDetail({
+                    authorName: item.commitAuthorName,
+                    committedAt: item.committedAt,
+                    repositoryWebUrl: item.repositoryWebUrl,
+                    sha: item.commitSha,
+                    title: item.commitTitle,
+                  })}
+                />
                 <span className="text-muted-foreground text-xs">{item.runtimeVersion}</span>
                 <span className="ml-auto text-faint text-xs">
                   {item.updatedBy || "自动更新"} · {formatDateTime(item.updatedAt)}

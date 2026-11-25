@@ -272,6 +272,11 @@ export function BuildsPage({
           <BuildDetailPanel
             buildId={selectedBuildId}
             canCreateRelease={canCreateRelease}
+            getActiveFullRelease={(build) =>
+              activeFullReleaseByTarget.get(
+                buildReleaseTargetKey(build.moduleId, build.environment, build.runtimeVersion, ""),
+              )
+            }
             onClose={() => onSelectBuild(null)}
             onOpenBuild={onSelectBuild}
             onOpenBuildAdapter={onOpenBuildAdapter}

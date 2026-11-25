@@ -1032,6 +1032,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/modules/{id}/compare": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Compare two commits of the module repository */
+        get: operations["compareModuleCommits"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/ping": {
         parameters: {
             query?: never;
@@ -2071,7 +2088,7 @@ export interface components {
         BranchCommit: {
             /** @description Commit author name. */
             authorName: string;
-            /** @description Branch name. */
+            /** @description Branch name; empty for commits in a comparison. */
             branch: string;
             /** @description Commit time in RFC3339, or empty when unknown. */
             committedAt: string;
@@ -2330,8 +2347,14 @@ export interface components {
             ciPipelineUrl?: string;
             /** @description Code source connection id of the module repository. */
             codeSourceConnectionId: string;
+            /** @description Commit author name, filled together with commitTitle. */
+            commitAuthorName: string;
             /** @description Commit built by this record. Webhook builds record the pushed commit; manual builds fill it after checkout. */
             commitSha: string;
+            /** @description First line of the commit message, filled when the build succeeds. Empty for older builds or when the code source lookup failed. */
+            commitTitle: string;
+            /** @description Commit time in RFC3339, filled together with commitTitle; empty when unknown. */
+            committedAt: string;
             /**
              * Format: date-time
              * @description Build record creation time.
@@ -2702,6 +2725,28 @@ export interface components {
         };
         CodeSourcesResponse: {
             apps: components["schemas"]["CodeSourceApp"][];
+        };
+        CommitComparison: {
+            /**
+             * Format: int64
+             * @description For diverged, commits only in from.
+             */
+            behindBy: number;
+            commits: components["schemas"]["BranchCommit"][];
+            /**
+             * @description ahead: to is after from, commits are new in to. behind: to is before from (rollback), commits are in from but not in to. diverged: both sides have their own commits, commits are new in to and behindBy counts the other side. identical: same commit.
+             * @enum {string}
+             */
+            status: "ahead" | "behind" | "diverged" | "identical";
+            /**
+             * Format: int64
+             * @description Number of differing commits; commits holds at most the newest 50.
+             */
+            totalCommits: number;
+            /** @description False when there were too many commits to count and totalCommits is a lower bound. */
+            totalExact: boolean;
+            /** @description Compare page on the code source, or empty when unknown. */
+            webUrl: string;
         };
         DashboardBuildRecord: {
             /** @description Application display name. */
@@ -3251,6 +3296,9 @@ export interface components {
             /** @description Dockerfile path relative to the repository root. Defaults to FORGE_WORKER_DOCKERFILE. Only used in dockerfile mode. */
             dockerfilePath?: string;
         };
+        ModuleCommitComparisonResponse: {
+            comparison: components["schemas"]["CommitComparison"];
+        };
         ModuleCreateRequest: {
             /** @description Linked application id. */
             applicationId: string;
@@ -3379,6 +3427,25 @@ export interface components {
             };
             /** @description Readiness status. */
             status: string;
+        };
+        ReleaseBuild: {
+            /** @description Branch of the build. */
+            branch: string;
+            /** @description Commit author name; empty for older builds. */
+            commitAuthorName: string;
+            /** @description Commit SHA of the build. */
+            commitSha: string;
+            /** @description First line of the commit message; empty for older builds. */
+            commitTitle: string;
+            /** @description Commit time in RFC3339; empty when unknown. */
+            committedAt: string;
+            /**
+             * Format: int64
+             * @description Build number within the module; 0 when the build was deleted.
+             */
+            number: number;
+            /** @description Module repository web URL for building commit links. */
+            repositoryWebUrl: string;
         };
         ReleaseCapabilityConflict: {
             /**
@@ -3608,6 +3675,7 @@ export interface components {
             artifactKey: string;
             /** @description Released artifact public URL. */
             artifactUrl?: string;
+            build: components["schemas"]["ReleaseBuild"];
             /** @description Build record UUID used by this release. */
             buildRecordId: string;
             /** @description Release channel code; empty string is the default channel. */
@@ -4146,8 +4214,14 @@ export interface components {
             buildNumber: number;
             /** @description Current build record UUID. */
             buildRecordId: string;
+            /** @description Commit author name; empty for older builds. */
+            commitAuthorName: string;
             /** @description Commit SHA of the build. */
             commitSha: string;
+            /** @description First line of the commit message; empty for older builds. */
+            commitTitle: string;
+            /** @description Commit time in RFC3339; empty when unknown. */
+            committedAt: string;
             /**
              * @description follow: replaced by every newer succeeded build of the branch. pinned: fixed build.
              * @enum {string}
@@ -4164,6 +4238,8 @@ export interface components {
             moduleName: string;
             /** @description Platforms in the build. */
             platforms: string[];
+            /** @description Module repository web URL for building commit links. */
+            repositoryWebUrl: string;
             /** @description runtimeVersion of the build. Clients with another runtimeVersion skip this item. */
             runtimeVersion: string;
             /**
@@ -9415,6 +9491,70 @@ export interface operations {
             };
             /** @description Server error. */
             500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    compareModuleCommits: {
+        parameters: {
+            query: {
+                /** @description Base commit SHA, usually the build currently online. */
+                from: string;
+                /** @description Target commit SHA, usually the build to release. */
+                to: string;
+            };
+            header?: never;
+            path: {
+                /** @description Module id. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Direction and differing commits of to relative to from. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ModuleCommitComparisonResponse"];
+                };
+            };
+            /** @description from or to is empty, code source connection is inactive or request is invalid. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Module, code source connection or commit not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Server error. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Code source provider request failed. */
+            502: {
                 headers: {
                     [name: string]: unknown;
                 };

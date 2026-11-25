@@ -1,12 +1,13 @@
 import type { ColDef, ICellRendererParams } from "ag-grid-community";
 
+import { CommitInline } from "@/components/common/CommitInfo";
 import { EnvironmentBadge } from "@/components/common/EnvironmentBadge";
 import { getReleaseRecordTypeLabel } from "../constants";
 import type { EnvironmentTone, ReleasePointerRecord, ReleaseRecordStatus } from "../types";
 import { ReleaseHealthBadge, ReleaseStatusBadge } from "./ReleaseBadges";
 
 /** 详情面板打开时只保留这些列。 */
-const compactColumns = new Set(["id", "module", "environment", "releaseType", "status"]);
+const compactColumns = new Set(["id", "module", "build", "environment", "releaseType", "status"]);
 
 export function buildReleaseRecordsColumnDefs(
   environmentTones: ReadonlyMap<string, EnvironmentTone>,
@@ -39,6 +40,15 @@ export function buildReleaseRecordsColumnDefs(
       flex: 0.75,
       headerName: "模块",
       minWidth: 130,
+    },
+    {
+      cellRenderer: BuildCommitCell,
+      colId: "build",
+      field: "buildNumber",
+      flex: 1.4,
+      headerName: "构建 / 提交",
+      minWidth: 220,
+      sortable: false,
     },
     {
       cellRenderer: ({ data }: ICellRendererParams<ReleasePointerRecord>) =>
@@ -133,6 +143,28 @@ function ModuleCell({ data }: ICellRendererParams<ReleasePointerRecord>) {
   return (
     <div className="min-w-0 leading-tight">
       <div className="truncate font-semibold text-foreground text-sm">{data.module}</div>
+    </div>
+  );
+}
+
+function BuildCommitCell({ data }: ICellRendererParams<ReleasePointerRecord>) {
+  if (!data) {
+    return null;
+  }
+
+  return (
+    <div className="min-w-0 leading-tight">
+      <div className="flex min-w-0 items-center gap-1.5 text-xs">
+        <span className="shrink-0 font-medium text-foreground tabular-nums">
+          {data.buildNumber ? `#${data.buildNumber}` : "构建已清理"}
+        </span>
+        {data.buildBranch ? (
+          <span className="truncate font-mono text-muted-foreground">{data.buildBranch}</span>
+        ) : null}
+      </div>
+      <div className="mt-1 flex min-w-0">
+        <CommitInline commit={data.commit} />
+      </div>
     </div>
   );
 }

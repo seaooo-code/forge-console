@@ -1,10 +1,10 @@
 import type { ColDef, ICellRendererParams } from "ag-grid-community";
 import { GitBranch, Rocket } from "lucide-react";
-
+import { CommitInline } from "@/components/common/CommitInfo";
 import { Button } from "@/components/ui/button";
 import { buildTriggerLabels } from "../constants";
 import type { BuildRunRecord, BuildRunStatus } from "../types";
-import { BuildCommitLink, BuildCreator, BuildPlatformBadges } from "./BuildMeta";
+import { BuildCreator, BuildPlatformBadges } from "./BuildMeta";
 import { BuildStatusBadge } from "./BuildStatusBadge";
 
 /** 详情面板打开时只保留这些列，其余信息在面板里看。 */
@@ -49,9 +49,9 @@ export function buildBuildsColumnDefs({
     {
       cellRenderer: BranchCell,
       field: "branch",
-      flex: 1.2,
-      headerName: "分支 / Commit",
-      minWidth: 200,
+      flex: 1.7,
+      headerName: "分支 / 提交",
+      minWidth: 260,
     },
     {
       cellRenderer: RuntimeVersionCell,
@@ -159,7 +159,7 @@ function BranchCell({ data }: ICellRendererParams<BuildRunRecord>) {
         <span className="truncate font-mono text-foreground text-xs">{data.branch}</span>
       </div>
       <div className="mt-1 flex min-w-0 items-center gap-1.5 pl-5">
-        <BuildCommitLink build={data} />
+        <CommitInline commit={data.commit} />
       </div>
     </div>
   );

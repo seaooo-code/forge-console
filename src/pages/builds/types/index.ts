@@ -1,4 +1,5 @@
 import type { APISchemas } from "@/api/client";
+import type { OnlineReleaseCommit } from "@/components/common/ReleaseCommitDiff";
 import type {
   BuildCreateFormState as SharedBuildCreateFormState,
   BuildCreateInput as SharedBuildCreateInput,
@@ -82,9 +83,8 @@ export type BuildLogState = {
   lastSeq?: number;
 };
 
-export type ActiveFullReleaseTarget = {
+export type ActiveFullReleaseTarget = OnlineReleaseCommit & {
   build?: BuildRunRecord;
-  buildId: string;
 };
 
 export type BuildModuleOption = {

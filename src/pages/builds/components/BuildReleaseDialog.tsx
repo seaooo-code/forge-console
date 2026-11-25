@@ -2,8 +2,10 @@ import { LoaderCircle } from "lucide-react";
 import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 
+import { CommitCard } from "@/components/common/CommitInfo";
 import { Drawer, DrawerBody, DrawerFooter, DrawerHeader } from "@/components/common/Drawer";
 import { ReleaseChannelField } from "@/components/common/ReleaseChannelField";
+import { ReleaseCommitDiff } from "@/components/common/ReleaseCommitDiff";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -105,6 +107,16 @@ export function BuildReleaseDialog({
 
         <DrawerBody className="space-y-5">
           <ReleaseRuntimeVersionNotice runtimeVersion={build.runtimeVersion} />
+          <section className="space-y-2">
+            <h3 className="m-0 font-medium text-muted-foreground text-xs">要发布的代码</h3>
+            <CommitCard commit={build.commit} />
+            <ReleaseCommitDiff
+              buildId={build.id}
+              commitSha={build.commitSha}
+              moduleId={build.moduleId}
+              online={activeFullRelease}
+            />
+          </section>
 
           <Controller
             control={control}

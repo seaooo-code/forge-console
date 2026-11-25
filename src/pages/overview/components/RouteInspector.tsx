@@ -1,7 +1,8 @@
-import { ExternalLink } from "lucide-react";
 import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 
+import { CommitComparison } from "@/components/common/CommitComparison";
+import { CommitInline } from "@/components/common/CommitInfo";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { RuntimeEnvironment } from "@/pages/environments";
@@ -16,7 +17,7 @@ import type {
   RouteCell,
   RouteEntry,
 } from "../types";
-import { candidateAction, compareUrl, isEmptyCell, relativeTime, routeUsages } from "../utils";
+import { candidateAction, isEmptyCell, relativeTime, routeUsages } from "../utils";
 import { SplitBar } from "./RouteMatrix";
 
 type RouteInspectorProps = {
@@ -135,6 +136,16 @@ function CurrentRoutes({
             tag={`比例 ${cell.percentage.release.grayPercentage}%`}
             tagClass="bg-route-percentage-soft text-route-percentage"
           >
+            {cell.full ? (
+              <CommitComparison
+                className="mb-2"
+                from={cell.full.release.commit.sha}
+                fromLabel="全量"
+                moduleId={cell.percentage.release.moduleId}
+                to={cell.percentage.release.commit.sha}
+                toLabel="灰度"
+              />
+            ) : null}
             {canCreateRelease ? (
               <GrayPercentageEditor entry={cell.percentage} onSubmit={onUpdateGray} />
             ) : null}
@@ -187,6 +198,9 @@ function RouteRow({ children, entry, meta, order, tag, tagClass }: RouteRowProps
           {entry.build ? `#${entry.build.number}` : "构建已清理"}
         </span>
         <span className="ml-auto min-w-0 truncate text-right text-faint text-xs">{meta}</span>
+      </div>
+      <div className="mt-1 flex min-w-0 pl-6.5">
+        <CommitInline commit={entry.release.commit} />
       </div>
       {children ? <div className="mt-2 pl-6.5">{children}</div> : null}
     </div>
@@ -250,7 +264,7 @@ function GrayPercentageEditor({
 type CandidateProps = RouteInspectorProps & { build: BuildRunRecord; isFirstRelease: boolean };
 
 function Candidate(props: CandidateProps) {
-  const { build, canCreateRelease, cell, composerBuildId, isFirstRelease, module } = props;
+  const { build, canCreateRelease, cell, composerBuildId, isFirstRelease } = props;
   const action = candidateAction(build, cell);
   const open = composerBuildId === build.id;
   const full = cell?.full?.build;
@@ -294,8 +308,11 @@ function Candidate(props: CandidateProps) {
             </span>
           ))}
         </span>
-        <span className="col-start-1 truncate font-mono text-faint text-xs">
-          {build.branch} · {build.commitShortSha || "未检出"} · {relativeTime(build.createdAtRaw)}
+        <span className="col-start-1 flex min-w-0 items-center gap-1.5 text-faint text-xs">
+          <span className="shrink-0 font-mono">{build.branch}</span>
+          <span className="shrink-0">·</span>
+          <CommitInline commit={build.commit} />
+          <span className="shrink-0">· {relativeTime(build.createdAtRaw)}</span>
         </span>
         <span className="col-start-2 row-span-2 row-start-1 flex items-center gap-1.5">
           <CandidateButton
@@ -312,7 +329,7 @@ function Candidate(props: CandidateProps) {
       {open ? (
         <ReleaseComposer
           {...props}
-          compare={compareUrl(module, full?.commitSha ?? "", build.commitSha)}
+          compareFrom={full?.commitSha ?? cell?.full?.release.commit.sha ?? ""}
           rollback={action.kind === "rollback"}
         />
       ) : null}
@@ -369,12 +386,16 @@ function CandidateButton({
   );
 }
 
-type ReleaseComposerProps = CandidateProps & { compare: string; rollback: boolean };
+type ReleaseComposerProps = CandidateProps & {
+  /** 当前全量的 commit，没有全量时为空字符串。 */
+  compareFrom: string;
+  rollback: boolean;
+};
 
 function ReleaseComposer({
   build,
   cell,
-  compare,
+  compareFrom,
   environment,
   module,
   onCloseComposer,
@@ -390,7 +411,6 @@ function ReleaseComposer({
     { disabled: false, kind: "full" },
     { disabled: percentageTaken, kind: "percentage" },
   ];
-  const provider = module.repositoryProvider === "gitlab" ? "GitLab" : "GitHub";
 
   const submit = handleSubmit(async (values) => {
     try {
@@ -402,16 +422,14 @@ function ReleaseComposer({
 
   return (
     <form className="flex flex-col gap-3 px-2.5 pb-3" onSubmit={submit}>
-      {compare ? (
-        <a
-          className="inline-flex items-center gap-1 self-start font-medium text-primary-text text-xs no-underline hover:underline"
-          href={compare}
-          rel="noreferrer"
-          target="_blank"
-        >
-          在 {provider} 查看与当前全量的提交差异
-          <ExternalLink className="size-3" />
-        </a>
+      {compareFrom && build.commitSha ? (
+        <CommitComparison
+          from={compareFrom}
+          fromLabel="当前全量"
+          moduleId={module.id}
+          to={build.commitSha}
+          toLabel="这个构建"
+        />
       ) : null}
 
       {rollback ? null : (

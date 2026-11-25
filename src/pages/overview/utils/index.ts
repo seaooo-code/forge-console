@@ -3,7 +3,6 @@ import { zhCN } from "date-fns/locale";
 
 import type { CodeSourceConnection } from "@/pages/code-sources";
 import type { BuildRunRecord } from "@/types/builds";
-import type { ModuleRecord } from "@/types/modules";
 
 import { credentialExpiringWithinMs } from "../constants";
 import type {
@@ -151,16 +150,6 @@ export function newerBuildCount(builds: BuildRunRecord[], cell: RouteCell | unde
     (build) =>
       build.status === "success" && build.number > base && routeUsages(cell, build.id).length === 0,
   ).length;
-}
-
-/** 代码托管平台上两个 commit 之间的对比页；缺 commit 或仓库地址时返回空字符串。 */
-export function compareUrl(module: ModuleRecord | undefined, from: string, to: string) {
-  const web = module?.repositoryWebUrl?.trim().replace(/\/+$/, "");
-  if (!web || !from || !to || from === to) return "";
-  const range = `${encodeURIComponent(from)}...${encodeURIComponent(to)}`;
-  return module?.repositoryProvider === "gitlab"
-    ? `${web}/-/compare/${range}`
-    : `${web}/compare/${range}`;
 }
 
 export function relativeTime(value: string) {

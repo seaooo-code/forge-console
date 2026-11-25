@@ -1,4 +1,5 @@
 import type { APISchemas } from "@/api/client";
+import type { CommitDetail } from "@/types/commits";
 
 import type { PaginationMeta, PaginationParams } from "./pagination";
 
@@ -31,11 +32,10 @@ export type BuildRunRecord = {
   buildAdapterId: string;
   /** 适配器构建使用的适配器版本，Dockerfile 构建或渲染前为 null。 */
   buildAdapterVersion: number | null;
+  /** 构建使用的提交；标题、作者和时间在构建成功时记录，旧构建为空。 */
+  commit: CommitDetail;
   /** 完整 commit SHA，构建检出前为空字符串。 */
   commitSha: string;
-  commitShortSha: string;
-  /** 代码托管平台上的提交页地址，缺少仓库地址或 commit 时为空字符串。 */
-  commitUrl: string;
   createdAt: string;
   createdAtRaw: string;
   /** 手动构建为控制台用户，webhook 构建为代码源连接创建人；历史构建或用户已删除时为 null。 */

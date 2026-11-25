@@ -9,6 +9,7 @@ import type {
   BuildRunStatus,
   BuildsSnapshot,
 } from "@/types/builds";
+import { toCommitDetail } from "@/utils";
 
 export const buildsRootQueryKey = ["builds-snapshot"] as const;
 
@@ -144,13 +145,14 @@ export function normalizeBuildRecord(record: BuildRecordAPIRecord): BuildRunReco
     branch: record.branch || "-",
     buildAdapterId: record.buildAdapterId?.trim() ?? "",
     buildAdapterVersion: record.buildAdapterVersion ?? null,
+    commit: toCommitDetail({
+      authorName: record.commitAuthorName,
+      committedAt: record.committedAt,
+      repositoryWebUrl,
+      sha: commitSha,
+      title: record.commitTitle,
+    }),
     commitSha,
-    commitShortSha: commitSha.slice(0, 8),
-    // GitHub 和 GitLab 的提交页都是 {web}/commit/{sha}。
-    commitUrl:
-      commitSha && repositoryWebUrl
-        ? `${repositoryWebUrl}/commit/${encodeURIComponent(commitSha)}`
-        : "",
     createdAt: formatRecordNumber(record.createdAt),
     createdAtRaw: record.createdAt,
     createdBy: record.createdBy,

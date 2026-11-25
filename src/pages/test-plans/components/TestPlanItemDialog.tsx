@@ -210,6 +210,7 @@ export function TestPlanItemDialog({
                         <SelectItem key={build.id} value={build.id}>
                           #{build.number} · {shortSha(build.commitSha)} · {build.runtimeVersion} ·{" "}
                           {build.createdAt}
+                          {build.commit.title ? ` · ${build.commit.title}` : ""}
                         </SelectItem>
                       ))}
                     </SelectContent>

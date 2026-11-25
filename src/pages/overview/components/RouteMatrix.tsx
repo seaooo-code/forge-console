@@ -200,6 +200,7 @@ function Cell({ builds, cell, id, label, onSelect, selected }: CellProps) {
         <>
           {cell?.full ? (
             <Lane
+              commitTitle={cell.full.release.commit.title}
               meta={relativeTime(cell.full.release.updatedAtRaw)}
               number={cell.full.build?.number}
               tagClass="text-primary-text"
@@ -212,6 +213,7 @@ function Cell({ builds, cell, id, label, onSelect, selected }: CellProps) {
             <>
               <SplitBar percentage={cell.percentage.release.grayPercentage} />
               <Lane
+                commitTitle={cell.percentage.release.commit.title}
                 number={cell.percentage.build?.number}
                 tag={`比例 ${cell.percentage.release.grayPercentage}%`}
                 tagClass="text-route-percentage"
@@ -238,23 +240,31 @@ function Cell({ builds, cell, id, label, onSelect, selected }: CellProps) {
 }
 
 function Lane({
+  commitTitle,
   meta,
   number,
   tag,
   tagClass,
 }: {
+  /** 这条路由所用构建的提交说明，旧构建没有记录时不展示。 */
+  commitTitle?: string;
   meta?: string;
   number?: number;
   tag: string;
   tagClass: string;
 }) {
   return (
-    <span className="flex min-w-0 items-baseline gap-1.5 text-xs leading-relaxed">
-      {number !== undefined ? (
-        <span className="font-medium text-foreground text-sm tabular-nums">#{number}</span>
+    <span className="flex min-w-0 flex-col" title={commitTitle || undefined}>
+      <span className="flex min-w-0 items-baseline gap-1.5 text-xs leading-relaxed">
+        {number !== undefined ? (
+          <span className="font-medium text-foreground text-sm tabular-nums">#{number}</span>
+        ) : null}
+        <span className={cn("min-w-0 truncate", tagClass)}>{tag}</span>
+        {meta ? <span className="ml-auto shrink-0 text-faint">{meta}</span> : null}
+      </span>
+      {commitTitle ? (
+        <span className="min-w-0 truncate text-[11px] text-faint leading-snug">{commitTitle}</span>
       ) : null}
-      <span className={cn("min-w-0 truncate", tagClass)}>{tag}</span>
-      {meta ? <span className="ml-auto shrink-0 text-faint">{meta}</span> : null}
     </span>
   );
 }

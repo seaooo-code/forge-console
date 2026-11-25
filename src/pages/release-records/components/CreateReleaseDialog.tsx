@@ -1,9 +1,12 @@
+import { skipToken, useQuery } from "@tanstack/react-query";
 import { LoaderCircle } from "lucide-react";
 import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
+import { CommitCard } from "@/components/common/CommitInfo";
 import { Drawer, DrawerBody, DrawerFooter, DrawerHeader } from "@/components/common/Drawer";
 import { Field } from "@/components/common/Field";
 import { ReleaseChannelField } from "@/components/common/ReleaseChannelField";
+import { ReleaseCommitDiff } from "@/components/common/ReleaseCommitDiff";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +20,10 @@ import {
 import type { BuildRunRecord } from "@/types/builds";
 import type { BuildReleaseFormState, BuildReleaseType } from "@/types/releases";
 
+import {
+  fetchAllReleaseRecordsSnapshot,
+  releaseRecordsAllQueryKey,
+} from "../api/release-records-snapshot";
 import { ReleaseRuntimeVersionNotice } from "./ReleaseRuntimeVersionNotice";
 
 type CreateReleaseFormState = BuildReleaseFormState & {
@@ -60,7 +67,24 @@ export function CreateReleaseDialog({
   });
   const buildRecordId = watch("buildRecordId");
   const releaseType = watch("releaseType");
+  const channel = watch("channel");
   const selectedBuild = buildOptions.find((build) => build.id === buildRecordId);
+  // 选中构建所在模块和环境里生效中的发布，用来展示和线上全量相差的提交。
+  const activeReleaseFilters = {
+    environment: selectedBuild?.environment ?? "",
+    moduleId: selectedBuild?.moduleId ?? "",
+    status: "active" as const,
+  };
+  const { data: activeReleases } = useQuery({
+    queryFn: selectedBuild ? () => fetchAllReleaseRecordsSnapshot(activeReleaseFilters) : skipToken,
+    queryKey: releaseRecordsAllQueryKey(activeReleaseFilters),
+  });
+  const onlineFull = activeReleases?.records.find(
+    (record) =>
+      record.releaseType === "full" &&
+      record.runtimeVersion === selectedBuild?.runtimeVersion &&
+      record.channel === channel,
+  );
   const hasBuildOptions = buildOptions.length > 0;
 
   useEffect(() => {
@@ -132,8 +156,9 @@ export function CreateReleaseDialog({
                   <SelectContent>
                     {buildOptions.map((build) => (
                       <SelectItem key={build.id} value={build.id}>
-                        {build.createdAt} / {build.module} / {build.version}
+                        {build.createdAt} / {build.module} #{build.number} / {build.version}
                         {build.runtimeVersion ? ` / ${build.runtimeVersion}` : ""}
+                        {build.commit.title ? ` / ${build.commit.title}` : ""}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -142,12 +167,31 @@ export function CreateReleaseDialog({
             />
             {selectedBuild ? (
               <div className="truncate text-muted-foreground text-xs">
-                {selectedBuild.application} / {selectedBuild.branch}
-                {selectedBuild.commitShortSha ? ` @ ${selectedBuild.commitShortSha}` : ""} / #
-                {selectedBuild.id.slice(-8)}
+                {selectedBuild.application} / {selectedBuild.branch} / #{selectedBuild.number}
               </div>
             ) : null}
           </Field>
+
+          {selectedBuild ? (
+            <section className="space-y-2">
+              <h3 className="m-0 font-medium text-muted-foreground text-xs">要发布的代码</h3>
+              <CommitCard commit={selectedBuild.commit} />
+              <ReleaseCommitDiff
+                buildId={selectedBuild.id}
+                commitSha={selectedBuild.commitSha}
+                moduleId={selectedBuild.moduleId}
+                online={
+                  onlineFull
+                    ? {
+                        buildId: onlineFull.buildRecordId,
+                        buildNumber: onlineFull.buildNumber,
+                        commit: onlineFull.commit,
+                      }
+                    : undefined
+                }
+              />
+            </section>
+          ) : null}
 
           {selectedBuild ? (
             <ReleaseRuntimeVersionNotice runtimeVersion={selectedBuild.runtimeVersion} />

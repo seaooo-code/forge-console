@@ -1,7 +1,7 @@
 import { type APIErrorPayload, type APISchemas, createFetchClient } from "@/api/client";
 import { fetchAllPaginatedItems, normalizePagination } from "@/api/pagination";
 import { describeReleaseCapabilityConflict } from "@/api/releases";
-
+import { toCommitDetail } from "@/utils";
 import type {
   ReleaseEvent,
   ReleaseHealth,
@@ -265,7 +265,16 @@ function normalizeReleaseRecord(record: ReleaseRecordAPIRecord): ReleasePointerR
     artifact: record.artifactKey || record.artifactUrl || "-",
     artifactKey: record.artifactKey || "-",
     artifactUrl: record.artifactUrl || "",
+    buildBranch: record.build.branch,
+    buildNumber: record.build.number,
     buildRecordId: record.buildRecordId || "-",
+    commit: toCommitDetail({
+      authorName: record.build.commitAuthorName,
+      committedAt: record.build.committedAt,
+      repositoryWebUrl: record.build.repositoryWebUrl,
+      sha: record.build.commitSha,
+      title: record.build.commitTitle,
+    }),
     channel: record.channel ?? "",
     createdAt: formatRecordNumber(record.createdAt),
     createdAtRaw: record.createdAt,
