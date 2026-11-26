@@ -1,9 +1,9 @@
 import type { ColDef, ICellRendererParams } from "ag-grid-community";
-import { GitBranch, Rocket } from "lucide-react";
+import { GitBranch, Rocket, Undo2 } from "lucide-react";
 import { CommitInline } from "@/components/common/CommitInfo";
 import { Button } from "@/components/ui/button";
 import { buildTriggerLabels } from "../constants";
-import type { BuildRunRecord, BuildRunStatus } from "../types";
+import type { BuildReleaseState, BuildRunRecord, BuildRunStatus } from "../types";
 import { BuildCreator, BuildPlatformBadges } from "./BuildMeta";
 import { BuildStatusBadge } from "./BuildStatusBadge";
 
@@ -13,10 +13,13 @@ const compactColumns = new Set(["number", "module", "version", "status", "create
 export function buildBuildsColumnDefs({
   canCreateRelease,
   compact = false,
+  getReleaseState,
   onPublish,
 }: {
   canCreateRelease: boolean;
   compact?: boolean;
+  /** 构建在默认渠道下的线上状态，决定操作列展示标签还是发布按钮。 */
+  getReleaseState: (build: BuildRunRecord) => BuildReleaseState;
   onPublish: (build: BuildRunRecord) => void;
 }): ColDef<BuildRunRecord>[] {
   const columns: ColDef<BuildRunRecord>[] = [
@@ -105,7 +108,12 @@ export function buildBuildsColumnDefs({
     },
     {
       cellRenderer: (params: ICellRendererParams<BuildRunRecord>) => (
-        <ActionsCell canCreateRelease={canCreateRelease} data={params.data} onPublish={onPublish} />
+        <ActionsCell
+          canCreateRelease={canCreateRelease}
+          data={params.data}
+          getReleaseState={getReleaseState}
+          onPublish={onPublish}
+        />
       ),
       colId: "actions",
       headerName: "操作",
@@ -113,7 +121,7 @@ export function buildBuildsColumnDefs({
       lockPinned: true,
       pinned: "right",
       resizable: false,
-      width: 104,
+      width: 180,
       sortable: false,
     },
   ];
@@ -210,20 +218,41 @@ function StatusCell({ value }: ICellRendererParams<BuildRunRecord, BuildRunStatu
 function ActionsCell({
   canCreateRelease,
   data,
+  getReleaseState,
   onPublish,
 }: {
   canCreateRelease: boolean;
   data?: BuildRunRecord;
+  getReleaseState: (build: BuildRunRecord) => BuildReleaseState;
   onPublish: (build: BuildRunRecord) => void;
 }) {
   if (!data) {
     return null;
   }
 
-  const canPublish = canCreateRelease && data.status === "success";
+  // 当前全量不再提供发布入口；要发到其他渠道，在构建详情里发布。
+  const state = data.status === "success" ? getReleaseState(data) : null;
+  if (state?.kind === "full") {
+    return (
+      <div className="flex h-full items-center" data-build-row-action="true">
+        <span
+          className="whitespace-nowrap rounded-md bg-primary-soft px-2 py-0.5 text-primary-text text-xs"
+          title="所在环境、运行时版本下默认渠道的线上全量；发到其他渠道请在构建详情里操作"
+        >
+          线上全量
+        </span>
+      </div>
+    );
+  }
 
+  const canPublish = canCreateRelease && data.status === "success";
   return (
-    <div className="flex h-full items-center" data-build-row-action="true">
+    <div className="flex h-full items-center gap-2" data-build-row-action="true">
+      {state?.kind === "gray" ? (
+        <span className="whitespace-nowrap rounded-md bg-route-percentage-soft px-2 py-0.5 text-route-percentage text-xs">
+          灰度 {state.grayPercentage}%
+        </span>
+      ) : null}
       <Button
         variant="outline"
         type="button"
@@ -235,8 +264,12 @@ function ActionsCell({
           onPublish(data);
         }}
       >
-        <Rocket className="size-3.5" />
-        发布
+        {state?.kind === "rollback" ? (
+          <Undo2 className="size-3.5" />
+        ) : (
+          <Rocket className="size-3.5" />
+        )}
+        {state?.kind === "rollback" ? "回退到此" : "发布"}
       </Button>
     </div>
   );

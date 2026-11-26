@@ -87,6 +87,16 @@ export type ActiveFullReleaseTarget = OnlineReleaseCommit & {
   build?: BuildRunRecord;
 };
 
+/**
+ * 构建在所在环境、运行时版本、默认渠道下的线上状态，决定构建列表操作列展示什么：
+ * full 是当前全量；gray 是正在比例灰度；rollback 比当前全量旧，发布即回退；release 是其他成功构建。
+ */
+export type BuildReleaseState =
+  | { kind: "full" }
+  | { grayPercentage: number; kind: "gray" }
+  | { kind: "rollback" }
+  | { kind: "release" };
+
 export type BuildModuleOption = {
   applicationName: string;
   defaultBranch: string;

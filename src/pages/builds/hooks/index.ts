@@ -77,6 +77,21 @@ export function useBuildsPageData(filters: BuildListFilters) {
 
     return releases;
   }, [buildsById, releaseRecordsSnapshot]);
+  // 默认渠道下正在比例灰度的构建 → 灰度比例。
+  const activeGrayPercentageByBuildId = useMemo(() => {
+    const grays = new Map<string, number>();
+    for (const record of releaseRecordsSnapshot?.records ?? []) {
+      if (
+        record.status === "active" &&
+        record.releaseType === "gray" &&
+        record.grayStrategy === "percentage" &&
+        record.channel === ""
+      ) {
+        grays.set(record.buildRecordId, record.grayPercentage);
+      }
+    }
+    return grays;
+  }, [releaseRecordsSnapshot]);
   const applicationSlugByModuleId = useMemo(
     () =>
       new Map(modulesSnapshot?.modules.map((module) => [module.id, module.applicationSlug ?? ""])),
@@ -103,6 +118,7 @@ export function useBuildsPageData(filters: BuildListFilters) {
   );
   return {
     activeFullReleaseByTarget,
+    activeGrayPercentageByBuildId,
     applicationSlugByModuleId,
     clampPage,
     environmentOptions,

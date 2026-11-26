@@ -3,6 +3,7 @@ import type {
   ActiveFullReleaseTarget,
   BuildArtifactTreeNode,
   BuildRecordDetail,
+  BuildReleaseState,
   BuildRunRecord,
   BuildRunStatus,
 } from "../types";
@@ -21,6 +22,10 @@ export function isBuildOlderThanActiveRelease(
   build: BuildRunRecord,
   activeRelease: ActiveFullReleaseTarget,
 ) {
+  // 同一模块的构建号递增，有构建号时直接比较；构建已清理时退回按创建时间比较。
+  if (activeRelease.buildNumber > 0 && build.number > 0) {
+    return build.number < activeRelease.buildNumber;
+  }
   const buildCreatedAt = Date.parse(build.createdAtRaw);
   const activeBuildCreatedAt = Date.parse(activeRelease.build?.createdAtRaw ?? "");
 
@@ -208,4 +213,22 @@ export function formatBytes(value: number) {
   }
 
   return `${size >= 10 || unitIndex === 0 ? size.toFixed(0) : size.toFixed(1)} ${units[unitIndex]}`;
+}
+
+/** 构建在默认渠道下的线上状态，见 BuildReleaseState。 */
+export function getBuildReleaseState(
+  build: BuildRunRecord,
+  activeFull: ActiveFullReleaseTarget | undefined,
+  grayPercentage: number | undefined,
+): BuildReleaseState {
+  if (activeFull?.buildId === build.id) {
+    return { kind: "full" };
+  }
+  if (grayPercentage !== undefined) {
+    return { grayPercentage, kind: "gray" };
+  }
+  if (activeFull && isBuildOlderThanActiveRelease(build, activeFull)) {
+    return { kind: "rollback" };
+  }
+  return { kind: "release" };
 }

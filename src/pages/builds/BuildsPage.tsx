@@ -30,7 +30,7 @@ import { buildBuildsColumnDefs } from "./components/BuildsColumns";
 import { buildStatusSummaryItems, buildTriggerFilterOptions } from "./constants";
 import { useBuildsPageData } from "./hooks";
 import type { BuildListFilters, BuildRunRecord } from "./types";
-import { buildReleaseTargetKey } from "./utils";
+import { buildReleaseTargetKey, getBuildReleaseState } from "./utils";
 
 const emptyBuildListFilters: BuildListFilters = {
   applicationId: "",
@@ -71,6 +71,7 @@ export function BuildsPage({
   });
   const {
     activeFullReleaseByTarget,
+    activeGrayPercentageByBuildId,
     applicationSlugByModuleId,
     clampPage,
     environmentOptions,
@@ -129,8 +130,26 @@ export function BuildsPage({
   const hasPanel = Boolean(selectedBuildId);
   const columnDefs = useMemo(
     () =>
-      buildBuildsColumnDefs({ canCreateRelease, compact: hasPanel, onPublish: openReleaseDialog }),
-    [canCreateRelease, hasPanel, openReleaseDialog],
+      buildBuildsColumnDefs({
+        canCreateRelease,
+        compact: hasPanel,
+        getReleaseState: (build) =>
+          getBuildReleaseState(
+            build,
+            activeFullReleaseByTarget.get(
+              buildReleaseTargetKey(build.moduleId, build.environment, build.runtimeVersion, ""),
+            ),
+            activeGrayPercentageByBuildId.get(build.id),
+          ),
+        onPublish: openReleaseDialog,
+      }),
+    [
+      activeFullReleaseByTarget,
+      activeGrayPercentageByBuildId,
+      canCreateRelease,
+      hasPanel,
+      openReleaseDialog,
+    ],
   );
   const summaryItems = buildStatusSummaryItems.map((item) => ({
     id: item.filter,
