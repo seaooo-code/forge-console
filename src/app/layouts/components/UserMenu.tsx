@@ -39,7 +39,7 @@ export function UserMenu() {
           type="button"
           className="h-auto min-w-0 flex-1 justify-start gap-2.5 rounded-lg px-1.5 py-1.5 hover:bg-foreground/5"
         >
-          <UserAvatar avatarURL={user.avatarThumb} name={displayName} />
+          <UserAvatar avatarURL={user.avatarUrl} name={displayName} />
           <span className="min-w-0 text-left leading-tight">
             <span className="block truncate font-medium text-foreground text-sm">
               {displayName}
@@ -55,14 +55,12 @@ export function UserMenu() {
         sideOffset={8}
       >
         <div className="flex items-center gap-2.5 px-2 py-2">
-          <UserAvatar avatarURL={user.avatarThumb} name={displayName} />
+          <UserAvatar avatarURL={user.avatarUrl} name={displayName} />
           <div className="min-w-0 leading-tight">
             <div className="truncate font-medium text-sm">{displayName}</div>
-            {user.enterpriseEmail ? (
-              <div className="truncate text-faint text-xs">{user.enterpriseEmail}</div>
-            ) : null}
-            {session.tenant.name ? (
-              <div className="truncate text-faint text-xs">租户：{session.tenant.name}</div>
+            {user.email ? <div className="truncate text-faint text-xs">{user.email}</div> : null}
+            {session.activeTenant.name ? (
+              <div className="truncate text-faint text-xs">租户：{session.activeTenant.name}</div>
             ) : null}
           </div>
         </div>

@@ -7,7 +7,6 @@ import { cn } from "@/lib/utils";
 
 export type OwnerSearchUser = {
   avatarUrl: string;
-  departmentIds: string[];
   email: string;
   id: string;
   name: string;

@@ -16,18 +16,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-import { createFeishuTenant, feishuTenantsQueryKey, updateFeishuTenant } from "./api";
-import { defaultFeishuTenantForm, feishuTenantStatusLabels } from "./constants";
-import type { FeishuTenant, FeishuTenantFormState, FeishuTenantStatus } from "./types";
+import { createTenant, tenantsQueryKey, updateTenant } from "./api";
+import { defaultTenantForm, tenantStatusLabels } from "./constants";
+import type { Tenant, TenantFormState, TenantStatus } from "./types";
 
-type FeishuTenantFormDrawerProps = {
+type TenantFormDrawerProps = {
   /** 编辑的租户；undefined 表示新建。 */
-  tenant?: FeishuTenant;
+  tenant?: Tenant;
   onClose: () => void;
 };
 
-/** 新建、编辑飞书租户的右侧抽屉。App ID 创建后不能修改；编辑时 App Secret 留空表示沿用原值。 */
-export function FeishuTenantFormDrawer({ tenant, onClose }: FeishuTenantFormDrawerProps) {
+/** 新建、编辑租户的右侧抽屉。App ID 创建后不能修改；编辑时 App Secret 留空表示沿用原值。 */
+export function TenantFormDrawer({ tenant, onClose }: TenantFormDrawerProps) {
   const queryClient = useQueryClient();
   const isEdit = Boolean(tenant);
   const [formError, setFormError] = useState("");
@@ -37,25 +37,25 @@ export function FeishuTenantFormDrawer({ tenant, onClose }: FeishuTenantFormDraw
     handleSubmit,
     register,
     watch,
-  } = useForm<FeishuTenantFormState>({
+  } = useForm<TenantFormState>({
     defaultValues: tenant
       ? {
-          appId: tenant.appId,
-          appSecret: "",
+          feishuAppId: tenant.feishuAppId,
+          feishuAppSecret: "",
           id: tenant.id,
           name: tenant.name,
           sortOrder: String(tenant.sortOrder),
           status: tenant.status,
         }
-      : defaultFeishuTenantForm,
+      : defaultTenantForm,
   });
   const disabling = tenant?.status === "active" && watch("status") === "disabled";
 
-  const onSubmit = async (form: FeishuTenantFormState) => {
+  const onSubmit = async (form: TenantFormState) => {
     const id = form.id.trim();
     const name = form.name.trim();
-    const appId = form.appId.trim();
-    const appSecret = form.appSecret.trim();
+    const feishuAppId = form.feishuAppId.trim();
+    const feishuAppSecret = form.feishuAppSecret.trim();
     const sortOrder = Number(form.sortOrder);
     if (!/^[a-z][a-z0-9-]{1,31}$/.test(id)) {
       setFormError("租户 ID 需以小写字母开头，只能包含小写字母、数字和中划线，长度 2～32");
@@ -65,11 +65,11 @@ export function FeishuTenantFormDrawer({ tenant, onClose }: FeishuTenantFormDraw
       setFormError("请填写租户名称");
       return;
     }
-    if (!/^cli_[A-Za-z0-9]{8,64}$/.test(appId)) {
+    if (!/^cli_[A-Za-z0-9]{8,64}$/.test(feishuAppId)) {
       setFormError("App ID 格式不正确，应以 cli_ 开头");
       return;
     }
-    if (!isEdit && !appSecret) {
+    if (!isEdit && !feishuAppSecret) {
       setFormError("请填写 App Secret");
       return;
     }
@@ -81,11 +81,18 @@ export function FeishuTenantFormDrawer({ tenant, onClose }: FeishuTenantFormDraw
     setFormError("");
     try {
       if (tenant) {
-        await updateFeishuTenant(tenant.id, { appSecret, name, sortOrder, status: form.status });
+        await updateTenant(tenant.id, { feishuAppSecret, name, sortOrder, status: form.status });
       } else {
-        await createFeishuTenant({ appId, appSecret, id, name, sortOrder, status: form.status });
+        await createTenant({
+          feishuAppId,
+          feishuAppSecret,
+          id,
+          name,
+          sortOrder,
+          status: form.status,
+        });
       }
-      await queryClient.invalidateQueries({ queryKey: feishuTenantsQueryKey });
+      await queryClient.invalidateQueries({ queryKey: tenantsQueryKey });
       onClose();
     } catch (error) {
       setFormError(error instanceof Error ? error.message : "保存失败，请稍后重试");
@@ -96,7 +103,7 @@ export function FeishuTenantFormDrawer({ tenant, onClose }: FeishuTenantFormDraw
     <Drawer isOpen onClose={onClose} className="max-w-xl">
       <form className="flex min-h-0 flex-1 flex-col" onSubmit={handleSubmit(onSubmit)}>
         <DrawerHeader
-          title={isEdit ? "编辑飞书租户" : "新建飞书租户"}
+          title={isEdit ? "编辑租户" : "新建租户"}
           description="每个租户对应一个飞书自建应用，用户在登录页选择租户后用该应用授权"
           onClose={onClose}
         />
@@ -129,7 +136,7 @@ export function FeishuTenantFormDrawer({ tenant, onClose }: FeishuTenantFormDraw
                   render={({ field }) => (
                     <Select
                       value={field.value}
-                      onValueChange={(value) => field.onChange(value as FeishuTenantStatus)}
+                      onValueChange={(value) => field.onChange(value as TenantStatus)}
                     >
                       <SelectTrigger className="w-full">
                         <SelectValue />
@@ -137,7 +144,7 @@ export function FeishuTenantFormDrawer({ tenant, onClose }: FeishuTenantFormDraw
                       <SelectContent>
                         {(["active", "disabled"] as const).map((status) => (
                           <SelectItem key={status} value={status}>
-                            {feishuTenantStatusLabels[status]}
+                            {tenantStatusLabels[status]}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -163,7 +170,7 @@ export function FeishuTenantFormDrawer({ tenant, onClose }: FeishuTenantFormDraw
                   className={isEdit ? "bg-muted font-mono text-muted-foreground" : "font-mono"}
                   placeholder="cli_..."
                   autoComplete="off"
-                  {...register("appId")}
+                  {...register("feishuAppId")}
                 />
               </FormSectionField>
               <FormSectionField label="App Secret" required={!isEdit}>
@@ -171,7 +178,7 @@ export function FeishuTenantFormDrawer({ tenant, onClose }: FeishuTenantFormDraw
                   type="password"
                   autoComplete="new-password"
                   placeholder={isEdit ? "留空则沿用已保存的密钥" : "粘贴应用的 App Secret"}
-                  {...register("appSecret")}
+                  {...register("feishuAppSecret")}
                 />
               </FormSectionField>
               <p className="m-0 text-faint text-xs leading-relaxed">

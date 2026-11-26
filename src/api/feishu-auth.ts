@@ -1,5 +1,5 @@
 import { apiBaseUrl } from "@/api/client";
-import type { AuthSession, FeishuAuthResponse, FeishuLoginTenant, GlobalRole } from "@/types/auth";
+import type { AuthSession, AuthSessionResponse, LoginTenant, Role } from "@/types/auth";
 
 const authRedirectStorageKey = "forge-console.auth-redirect-path";
 const lastTenantStorageKey = "forge-console.last-feishu-tenant";
@@ -9,17 +9,32 @@ const pendingLoginMaxAgeMs = 30 * 60 * 1000;
 const authorizationRequests = new Map<string, Promise<AuthSession>>();
 let sessionRequest: Promise<AuthSession | null> | null = null;
 
-/** 登录页可选的飞书租户，接口不需要登录。 */
-export async function fetchLoginTenants(): Promise<FeishuLoginTenant[]> {
-  const response = await fetch(`${apiBaseUrl}/api/v1/auth/feishu/tenants`, {
+/** 登录页可选的租户，接口不需要登录。 */
+export async function fetchLoginTenants(): Promise<LoginTenant[]> {
+  const response = await fetch(`${apiBaseUrl}/api/v1/auth/tenants`, {
     credentials: "include",
   });
   if (!response.ok) {
     const errorMessage = await readErrorMessage(response);
     throw new Error(errorMessage || `读取登录租户失败：${response.status}`);
   }
-  const payload = (await response.json()) as { tenants: FeishuLoginTenant[] };
+  const payload = (await response.json()) as { tenants: LoginTenant[] };
   return payload.tenants;
+}
+
+/** 切换会话当前所在的租户。只有 SuperAdmin 能切到所属租户以外的租户。 */
+export async function switchAuthSessionTenant(tenantId: string): Promise<AuthSession> {
+  const response = await fetch(`${apiBaseUrl}/api/v1/auth/session/tenant`, {
+    credentials: "include",
+    method: "PUT",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ tenantId }),
+  });
+  if (!response.ok) {
+    const errorMessage = await readErrorMessage(response);
+    throw new Error(errorMessage || `切换租户失败：${response.status}`);
+  }
+  return toAuthSession((await response.json()) as AuthSessionResponse);
 }
 
 export function readLastLoginTenant() {
@@ -105,7 +120,7 @@ async function requestAuthSession(): Promise<AuthSession | null> {
     throw new Error(errorMessage || `读取登录态失败：${response.status}`);
   }
 
-  return toAuthSession((await response.json()) as FeishuAuthResponse);
+  return toAuthSession((await response.json()) as AuthSessionResponse);
 }
 
 export async function logoutAuthSession() {
@@ -150,12 +165,13 @@ async function exchangeFeishuAuthorization(code: string, state: string): Promise
     throw new Error(errorMessage || `飞书登录失败：${response.status}`);
   }
 
-  const payload = (await response.json()) as FeishuAuthResponse;
+  const payload = (await response.json()) as AuthSessionResponse;
 
   return toAuthSession(payload);
 }
 
-function toAuthSession(payload: FeishuAuthResponse): AuthSession {
+function toAuthSession(payload: AuthSessionResponse): AuthSession {
+  const emptyTenant = { id: "", name: "" };
   return {
     authorizedAt: new Date().toISOString(),
     capabilities: {
@@ -165,15 +181,16 @@ function toAuthSession(payload: FeishuAuthResponse): AuthSession {
       canManageBuildAdapters: Boolean(payload.capabilities?.canManageBuildAdapters),
       canManageCodeSources: Boolean(payload.capabilities?.canManageCodeSources),
       canManageEnvironments: Boolean(payload.capabilities?.canManageEnvironments),
-      canManageFeishuTenants: Boolean(payload.capabilities?.canManageFeishuTenants),
       canManageModules: Boolean(payload.capabilities?.canManageModules),
       canManageStorage: Boolean(payload.capabilities?.canManageStorage),
       canManageTestPlans: Boolean(payload.capabilities?.canManageTestPlans),
       canCreateBuild: Boolean(payload.capabilities?.canCreateBuild),
       canCreateRelease: Boolean(payload.capabilities?.canCreateRelease),
+      canManageTenants: Boolean(payload.capabilities?.canManageTenants),
     },
-    roles: (payload.roles ?? []) as GlobalRole[],
-    tenant: payload.tenant ?? { id: "", name: "" },
+    roles: (payload.roles ?? []) as Role[],
+    homeTenant: payload.homeTenant ?? emptyTenant,
+    activeTenant: payload.activeTenant ?? emptyTenant,
     token: payload.token,
     user: payload.user,
   };

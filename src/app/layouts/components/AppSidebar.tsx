@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils";
 import { useConsoleLayoutStore } from "../model/use-console-layout-store";
 import type { NavGroup, NavIconName, NavItem } from "../types";
 import { ApplicationSwitcher } from "./ApplicationSwitcher";
+import { TenantSwitcher } from "./TenantSwitcher";
 import { ThemeSwitch } from "./ThemeSwitch";
 import { UserMenu } from "./UserMenu";
 
@@ -78,6 +79,7 @@ export function AppSidebar({ navGroups, onNavigate }: AppSidebarProps) {
         ))}
       </nav>
 
+      <TenantSwitcher />
       <div className="flex items-center gap-2 pt-2">
         <UserMenu />
         <ThemeSwitch />

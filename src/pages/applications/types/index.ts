@@ -89,7 +89,6 @@ export type ApplicationFormState = {
   name: string;
   owner: string;
   ownerAvatarUrl: string;
-  ownerDepartmentIds: string[];
   ownerEmail: string;
   ownerUserId: string;
   platforms: string[];

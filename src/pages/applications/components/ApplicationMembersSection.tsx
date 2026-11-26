@@ -1,7 +1,11 @@
 import { Plus, Trash2 } from "lucide-react";
 import { Controller } from "react-hook-form";
 
-import { searchFeishuUsers } from "@/api/feishu-user-search";
+import {
+  type AssignableUser,
+  resolveAssignableUser,
+  searchAssignableUsers,
+} from "@/api/feishu-user-search";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { OwnerPicker } from "@/components/common/OwnerPicker";
 import { SectionCard } from "@/components/layout";
@@ -15,7 +19,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { FeishuUserSearchResult } from "@/types/feishu";
 
 import { useApplicationMembers } from "../hooks";
 import type { ApplicationMemberRecord } from "../types";
@@ -91,19 +94,22 @@ export function ApplicationMembersSection({
                     validate: () => Boolean(selectedMemberUserId) || "请选择成员",
                   }}
                   render={({ field }) => (
-                    <OwnerPicker<FeishuUserSearchResult>
+                    <OwnerPicker
                       value={field.value}
                       inputName={field.name}
                       inputRef={field.ref}
                       placeholder="搜索成员姓名、邮箱或账号"
-                      searchUsers={searchFeishuUsers}
+                      searchUsers={searchAssignableUsers}
                       onBlur={field.onBlur}
                       onChange={(value) => {
                         field.onChange(value);
                         setMemberFormValue("userId", "", { shouldValidate: true });
                       }}
-                      onSelect={(user) => {
-                        setMemberFormValue("userId", user.id, { shouldValidate: true });
+                      onSelect={async (user) => {
+                        // 通讯录里的人先换成当前租户的 Forge 用户。
+                        const resolved = await resolveAssignableUser(user as AssignableUser);
+                        setMemberFormValue("memberName", resolved.name, { shouldDirty: true });
+                        setMemberFormValue("userId", resolved.id, { shouldValidate: true });
                       }}
                     />
                   )}
@@ -238,7 +244,7 @@ function MemberRow({
             {memberDisplayName(member)}
           </div>
           <div className="mt-0.5 truncate text-muted-foreground text-xs">
-            {member.email || member.team || member.userId}
+            {member.email || member.userId}
           </div>
         </div>
       </div>

@@ -52,8 +52,8 @@ const EnvironmentsPage = lazy(async () => ({
   default: (await import("@/pages/environments")).EnvironmentsPage,
 }));
 
-const FeishuTenantsPage = lazy(async () => ({
-  default: (await import("@/pages/feishu-tenants")).FeishuTenantsPage,
+const TenantsPage = lazy(async () => ({
+  default: (await import("@/pages/tenants")).TenantsPage,
 }));
 
 const ModulesPage = lazy(async () => ({
@@ -193,9 +193,9 @@ function ConsoleRoutes() {
         <Route path="environments" element={<EnvironmentsRoute />} />
         <Route path="environments/new" element={<EnvironmentsRoute />} />
         <Route path="environments/:environmentId/edit" element={<EnvironmentsRoute />} />
-        <Route path="feishu-tenants" element={<FeishuTenantsRoute />} />
-        <Route path="feishu-tenants/new" element={<FeishuTenantsRoute />} />
-        <Route path="feishu-tenants/:tenantId/edit" element={<FeishuTenantsRoute />} />
+        <Route path="tenants" element={<TenantsRoute />} />
+        <Route path="tenants/new" element={<TenantsRoute />} />
+        <Route path="tenants/:tenantId/edit" element={<TenantsRoute />} />
         <Route path="access-tokens" element={<AccessTokensPage />} />
         <Route path="*" element={<ConsoleRouteNotFound />} />
       </Route>
@@ -514,23 +514,23 @@ function EnvironmentsRoute() {
   );
 }
 
-function FeishuTenantsRoute() {
+function TenantsRoute() {
   const navigate = useNavigate();
   const location = useLocation();
   const { tenantId } = useParams<{ tenantId: string }>();
   const drawer = tenantId
     ? { mode: "edit" as const, tenantId }
-    : location.pathname === "/feishu-tenants/new"
+    : location.pathname === "/tenants/new"
       ? { mode: "create" as const }
       : undefined;
 
   return (
-    <FeishuTenantsPage
+    <TenantsPage
       drawer={drawer}
-      onCloseDrawer={() => navigate("/feishu-tenants")}
-      onCreateTenant={() => navigate("/feishu-tenants/new")}
+      onCloseDrawer={() => navigate("/tenants")}
+      onCreateTenant={() => navigate("/tenants/new")}
       onEditTenant={(nextTenantId: string) =>
-        navigate(`/feishu-tenants/${encodeURIComponent(nextTenantId)}/edit`)
+        navigate(`/tenants/${encodeURIComponent(nextTenantId)}/edit`)
       }
     />
   );

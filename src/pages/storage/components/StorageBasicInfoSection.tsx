@@ -1,6 +1,6 @@
 import { type Control, Controller, type UseFormRegister } from "react-hook-form";
 
-import { searchFeishuUsers } from "@/api/feishu-user-search";
+import { type AssignableUser, searchAssignableUsers } from "@/api/feishu-user-search";
 import { FormSectionField, FormSectionHeader } from "@/components/common/FormSectionHeader";
 import { OwnerPicker } from "@/components/common/OwnerPicker";
 import { Card } from "@/components/ui/card";
@@ -12,7 +12,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { FeishuUserSearchResult } from "@/types/feishu";
 import type { StorageAdapter, StorageStatus } from "@/types/storage";
 
 import { storageAdapterOptions } from "../constants";
@@ -21,7 +20,7 @@ import type { StorageFormState } from "../types";
 type StorageBasicInfoSectionProps = {
   control: Control<StorageFormState>;
   onOwnerChange: (value: string) => void;
-  onOwnerSelect: (user: FeishuUserSearchResult) => void;
+  onOwnerSelect: (user: AssignableUser) => void;
   register: UseFormRegister<StorageFormState>;
 };
 
@@ -91,7 +90,7 @@ export function StorageBasicInfoSection({
                 inputName={field.name}
                 inputRef={field.ref}
                 value={field.value}
-                searchUsers={searchFeishuUsers}
+                searchUsers={searchAssignableUsers}
                 onBlur={field.onBlur}
                 onChange={onOwnerChange}
                 onSelect={onOwnerSelect}

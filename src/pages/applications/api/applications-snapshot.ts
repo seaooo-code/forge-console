@@ -329,7 +329,6 @@ function normalizeApplicationMember(member: ApplicationMemberRecord): Applicatio
     id: member.id || member.userId,
     name: member.name || member.userId,
     role: member.role,
-    team: member.team || "",
     userId: member.userId || member.id,
   };
 }

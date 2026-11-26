@@ -1,10 +1,11 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useWatch } from "react-hook-form";
+import type { AssignableUser } from "@/api/feishu-user-search";
+import { resolveAssignableUser } from "@/api/feishu-user-search";
 import { FormActions, PageHeader } from "@/components/layout";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { applicationsRootQueryKey } from "@/pages/applications";
-import type { FeishuUserSearchResult } from "@/types/feishu";
 
 import { createModule, modulesRootQueryKey } from "./api/modules-snapshot";
 import { ModuleBuildConfigFields } from "./components/ModuleBuildConfigFields";
@@ -17,12 +18,7 @@ import {
 } from "./components/ModuleFormStatus";
 import { useModuleBuildAdapters, useModuleFormData } from "./hooks";
 import type { ModuleFormState, ModuleKind, ModuleRepositorySelection } from "./types";
-import {
-  buildModuleInput,
-  getOwnerUserId,
-  updateExistingModule,
-  validateModuleInput,
-} from "./utils";
+import { buildModuleInput, updateExistingModule, validateModuleInput } from "./utils";
 
 type ModuleCreatePageProps = {
   mode?: "create" | "edit";
@@ -106,24 +102,18 @@ export function ModuleCreatePage({
     clearFormError();
     setValue("owner", value, { shouldDirty: true, shouldTouch: true });
     setValue("ownerAvatarUrl", "", { shouldDirty: true });
-    setValue("ownerDepartmentIds", [], { shouldDirty: true });
     setValue("ownerEmail", "", { shouldDirty: true });
-    setValue("ownerFeishuOpenId", "", { shouldDirty: true });
-    setValue("ownerFeishuUnionId", "", { shouldDirty: true });
-    setValue("ownerFeishuUserId", "", { shouldDirty: true });
     setValue("ownerUserId", "", { shouldDirty: true });
   };
 
-  const handleOwnerSelect = (user: FeishuUserSearchResult) => {
+  const handleOwnerSelect = async (user: AssignableUser) => {
     clearFormError();
-    setValue("owner", user.name, { shouldDirty: true, shouldTouch: true });
-    setValue("ownerAvatarUrl", user.avatarUrl, { shouldDirty: true });
-    setValue("ownerDepartmentIds", user.departmentIds, { shouldDirty: true });
-    setValue("ownerEmail", user.email, { shouldDirty: true });
-    setValue("ownerFeishuOpenId", user.openId, { shouldDirty: true });
-    setValue("ownerFeishuUnionId", user.unionId, { shouldDirty: true });
-    setValue("ownerFeishuUserId", user.userId, { shouldDirty: true });
-    setValue("ownerUserId", getOwnerUserId(user), { shouldDirty: true, shouldTouch: true });
+    // 通讯录里的人先换成当前租户的 Forge 用户，表单只提交 ownerUserId。
+    const resolved = await resolveAssignableUser(user);
+    setValue("owner", resolved.name, { shouldDirty: true, shouldTouch: true });
+    setValue("ownerAvatarUrl", resolved.avatarUrl, { shouldDirty: true });
+    setValue("ownerEmail", resolved.email, { shouldDirty: true });
+    setValue("ownerUserId", resolved.id, { shouldDirty: true, shouldTouch: true });
   };
 
   const handleConnectionChange = (value: string) => {

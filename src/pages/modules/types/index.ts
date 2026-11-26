@@ -67,11 +67,7 @@ export type ModuleFormState = {
   name: string;
   owner: string;
   ownerAvatarUrl: string;
-  ownerDepartmentIds: string[];
   ownerEmail: string;
-  ownerFeishuOpenId: string;
-  ownerFeishuUnionId: string;
-  ownerFeishuUserId: string;
   ownerUserId: string;
   repository: ModuleRepositorySelection | null;
 };

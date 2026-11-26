@@ -2,7 +2,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { MonitorSmartphone, Plus, RefreshCw } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 
-import { searchFeishuUsers } from "@/api/feishu-user-search";
+import { searchAssignableUsers } from "@/api/feishu-user-search";
 import {
   ConsoleClearableFilterSelect,
   ConsoleOwnerSearchFilter,
@@ -183,7 +183,7 @@ export function ApplicationsPage({
             />
             <ConsoleOwnerSearchFilter
               value={filters.owner}
-              searchUsers={searchFeishuUsers}
+              searchUsers={searchAssignableUsers}
               onValueChange={(owner) => updateFilters({ owner })}
             />
             <ConsoleSearchInput

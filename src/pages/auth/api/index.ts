@@ -2,7 +2,7 @@ import { type APIErrorPayload, type APISchemas, createFetchClient } from "@/api/
 
 type SetupStatusResponse = APISchemas["SetupStatusResponse"];
 
-export type SetupFeishuTenantInput = APISchemas["SetupFeishuTenantRequest"];
+export type SetupTenantInput = APISchemas["SetupTenantRequest"];
 
 export const setupStatusQueryKey = ["auth", "setup-status"] as const;
 
@@ -42,6 +42,6 @@ export async function fetchSetupRequired(): Promise<boolean> {
 }
 
 /** 用启动日志里的初始化令牌创建第一个飞书租户。 */
-export async function setupFirstFeishuTenant(input: SetupFeishuTenantInput) {
-  await fetchJSON("/api/v1/setup/feishu-tenant", { body: JSON.stringify(input), method: "POST" });
+export async function setupFirstTenant(input: SetupTenantInput) {
+  await fetchJSON("/api/v1/setup/tenant", { body: JSON.stringify(input), method: "POST" });
 }

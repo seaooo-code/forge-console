@@ -1,5 +1,4 @@
 import { format, isValid, parseISO } from "date-fns";
-import type { FeishuUserSearchResult } from "@/types/feishu";
 import { updateModule } from "../api/modules-snapshot";
 import { defaultForm, defaultModuleBuildConfig, maxAutoBuildBranches } from "../constants";
 import type {
@@ -41,7 +40,6 @@ export function buildInitialForm(
       buildConfig: { ...defaultModuleBuildConfig, autoBuildBranches: [], buildAdapterParams: {} },
       buildVariables: [],
       connectionId: fallbackConnectionId,
-      ownerDepartmentIds: [],
     };
   }
 
@@ -68,11 +66,7 @@ export function buildInitialForm(
     name: moduleRecord.name,
     owner: moduleRecord.owner,
     ownerAvatarUrl: moduleRecord.ownerAvatarUrl ?? "",
-    ownerDepartmentIds: [],
     ownerEmail: moduleRecord.ownerEmail ?? "",
-    ownerFeishuOpenId: "",
-    ownerFeishuUnionId: "",
-    ownerFeishuUserId: "",
     ownerUserId: moduleRecord.ownerUserId,
     repository: {
       connectionId: moduleRecord.codeSourceConnectionId,
@@ -126,13 +120,6 @@ export function buildModuleInput(
     id: form.id.trim(),
     kind: form.kind,
     name: form.name.trim(),
-    owner: form.owner.trim(),
-    ownerAvatarUrl: form.ownerAvatarUrl.trim(),
-    ownerDepartmentIds: form.ownerDepartmentIds,
-    ownerEmail: form.ownerEmail.trim(),
-    ownerFeishuOpenId: form.ownerFeishuOpenId.trim(),
-    ownerFeishuUnionId: form.ownerFeishuUnionId.trim(),
-    ownerFeishuUserId: form.ownerFeishuUserId.trim(),
     ownerUserId: form.ownerUserId.trim(),
     repository: {
       connectionId: form.repository?.connectionId ?? "",
@@ -162,7 +149,7 @@ export function validateModuleInput(input: ModuleMutationInput) {
     return "请选择当前应用的通用模块";
   }
 
-  if (!input.owner || !input.ownerUserId) {
+  if (!input.ownerUserId) {
     return "请从搜索结果中选择负责人";
   }
 
@@ -270,8 +257,4 @@ export function formatDateTime(value: string | undefined) {
 
   const date = parseISO(value);
   return isValid(date) ? format(date, "yyyy-MM-dd HH:mm:ss") : value;
-}
-
-export function getOwnerUserId(user: FeishuUserSearchResult) {
-  return user.id || user.openId || user.userId || user.unionId;
 }

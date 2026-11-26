@@ -9,11 +9,11 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-import { fetchSetupRequired, setupFirstFeishuTenant, setupStatusQueryKey } from "./api";
+import { fetchSetupRequired, setupFirstTenant, setupStatusQueryKey } from "./api";
 
 type SetupFormState = {
-  appId: string;
-  appSecret: string;
+  feishuAppId: string;
+  feishuAppSecret: string;
   id: string;
   name: string;
   token: string;
@@ -41,24 +41,24 @@ export function SetupPage() {
     handleSubmit,
     register,
   } = useForm<SetupFormState>({
-    defaultValues: { appId: "", appSecret: "", id: "", name: "", token: "" },
+    defaultValues: { feishuAppId: "", feishuAppSecret: "", id: "", name: "", token: "" },
   });
 
   const onSubmit = async (form: SetupFormState) => {
     const input = {
-      appId: form.appId.trim(),
-      appSecret: form.appSecret.trim(),
+      feishuAppId: form.feishuAppId.trim(),
+      feishuAppSecret: form.feishuAppSecret.trim(),
       id: form.id.trim(),
       name: form.name.trim(),
       token: form.token.trim(),
     };
-    if (!input.token || !input.id || !input.name || !input.appId || !input.appSecret) {
+    if (!input.token || !input.id || !input.name || !input.feishuAppId || !input.feishuAppSecret) {
       setFormError("请填写全部字段");
       return;
     }
     setFormError("");
     try {
-      await setupFirstFeishuTenant(input);
+      await setupFirstTenant(input);
       setDone(true);
     } catch (caught) {
       setFormError(caught instanceof Error ? caught.message : "初始化失败，请稍后重试");
@@ -142,7 +142,7 @@ export function SetupPage() {
                   className="font-mono"
                   autoComplete="off"
                   placeholder="cli_..."
-                  {...register("appId")}
+                  {...register("feishuAppId")}
                 />
               </FormSectionField>
               <FormSectionField label="App Secret" required>
@@ -150,7 +150,7 @@ export function SetupPage() {
                   type="password"
                   autoComplete="new-password"
                   placeholder="飞书应用的 App Secret，加密保存"
-                  {...register("appSecret")}
+                  {...register("feishuAppSecret")}
                 />
               </FormSectionField>
               <div className="rounded-xl bg-muted px-4 py-3 text-muted-foreground text-xs leading-relaxed">

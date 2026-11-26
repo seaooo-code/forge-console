@@ -8,12 +8,12 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/use-auth-store";
 
-import { feishuTenantsQueryKey, fetchFeishuTenants } from "./api";
-import { feishuTenantStatusLabels } from "./constants";
-import { FeishuTenantFormDrawer } from "./FeishuTenantFormDrawer";
-import type { FeishuTenant } from "./types";
+import { fetchTenants, tenantsQueryKey } from "./api";
+import { tenantStatusLabels } from "./constants";
+import { TenantFormDrawer } from "./TenantFormDrawer";
+import type { Tenant } from "./types";
 
-type FeishuTenantsPageProps = {
+type TenantsPageProps = {
   /** 新建或编辑时在列表之上打开的抽屉；undefined 表示不打开。 */
   drawer?: { mode: "create" } | { mode: "edit"; tenantId: string };
   onCloseDrawer: () => void;
@@ -21,12 +21,12 @@ type FeishuTenantsPageProps = {
   onEditTenant: (tenantId: string) => void;
 };
 
-export function FeishuTenantsPage({
+export function TenantsPage({
   drawer,
   onCloseDrawer,
   onCreateTenant,
   onEditTenant,
-}: FeishuTenantsPageProps) {
+}: TenantsPageProps) {
   const session = useAuthStore((state) => state.session);
   const {
     data: tenants,
@@ -34,8 +34,8 @@ export function FeishuTenantsPage({
     isFetching,
     refetch,
   } = useQuery({
-    queryFn: fetchFeishuTenants,
-    queryKey: feishuTenantsQueryKey,
+    queryFn: fetchTenants,
+    queryKey: tenantsQueryKey,
   });
   const activeCount = tenants?.filter((tenant) => tenant.status === "active").length;
   const editingTenant =
@@ -44,7 +44,7 @@ export function FeishuTenantsPage({
   return (
     <div className="flex flex-col gap-5">
       <ListHeader
-        title="飞书租户"
+        title="租户"
         summary={
           <SummaryStats
             items={[
@@ -58,7 +58,7 @@ export function FeishuTenantsPage({
             <Button
               variant="outline"
               size="icon"
-              aria-label="刷新飞书租户"
+              aria-label="刷新租户"
               disabled={isFetching}
               onClick={() => void refetch()}
             >
@@ -86,17 +86,14 @@ export function FeishuTenantsPage({
         </section>
       ) : tenants.length === 0 ? (
         <div className="rounded-xl bg-card p-10 shadow-edge">
-          <EmptyState
-            title="还没有飞书租户"
-            description="新建租户后，用户就能在登录页选择它登录。"
-          />
+          <EmptyState title="还没有租户" description="新建租户后，用户就能在登录页选择它登录。" />
         </div>
       ) : (
         <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {tenants.map((tenant) => (
-            <FeishuTenantCard
+            <TenantCard
               key={tenant.id}
-              isCurrent={session?.tenant.id === tenant.id}
+              isCurrent={session?.activeTenant.id === tenant.id}
               isSelected={drawer?.mode === "edit" && drawer.tenantId === tenant.id}
               onEdit={onEditTenant}
               tenant={tenant}
@@ -105,13 +102,9 @@ export function FeishuTenantsPage({
         </section>
       )}
 
-      {drawer?.mode === "create" ? <FeishuTenantFormDrawer onClose={onCloseDrawer} /> : null}
+      {drawer?.mode === "create" ? <TenantFormDrawer onClose={onCloseDrawer} /> : null}
       {drawer?.mode === "edit" && editingTenant ? (
-        <FeishuTenantFormDrawer
-          key={editingTenant.id}
-          tenant={editingTenant}
-          onClose={onCloseDrawer}
-        />
+        <TenantFormDrawer key={editingTenant.id} tenant={editingTenant} onClose={onCloseDrawer} />
       ) : null}
       {drawer?.mode === "edit" && tenants && !editingTenant ? (
         <Alert variant="warning">没有找到租户 {drawer.tenantId}，它可能已被删除或路径无效。</Alert>
@@ -120,7 +113,7 @@ export function FeishuTenantsPage({
   );
 }
 
-function FeishuTenantCard({
+function TenantCard({
   isCurrent,
   isSelected,
   onEdit,
@@ -129,7 +122,7 @@ function FeishuTenantCard({
   isCurrent: boolean;
   isSelected: boolean;
   onEdit: (tenantId: string) => void;
-  tenant: FeishuTenant;
+  tenant: Tenant;
 }) {
   return (
     <Button
@@ -148,7 +141,7 @@ function FeishuTenantCard({
             <span className="font-mono text-faint text-xs">{tenant.id}</span>
           </span>
           <span className="mt-1 block truncate font-mono text-muted-foreground text-sm">
-            {tenant.appId}
+            {tenant.feishuAppId}
           </span>
         </span>
         <span
@@ -159,7 +152,7 @@ function FeishuTenantCard({
               : "bg-muted text-muted-foreground",
           )}
         >
-          {feishuTenantStatusLabels[tenant.status]}
+          {tenantStatusLabels[tenant.status]}
         </span>
       </span>
       <DetailList

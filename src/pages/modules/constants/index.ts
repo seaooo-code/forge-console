@@ -29,11 +29,7 @@ export const defaultForm: ModuleFormState = {
   name: "",
   owner: "",
   ownerAvatarUrl: "",
-  ownerDepartmentIds: [],
   ownerEmail: "",
-  ownerFeishuOpenId: "",
-  ownerFeishuUnionId: "",
-  ownerFeishuUserId: "",
   ownerUserId: "",
   repository: null,
 };

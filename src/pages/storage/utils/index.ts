@@ -68,7 +68,7 @@ export function validateStorageInput(input: StorageMutationInput, isEditMode: bo
     return "更新访问密钥时需同时填写 Access Key ID 与 Secret Access Key";
   }
 
-  if (!input.owner || !input.ownerUserId) {
+  if (!input.ownerUserId) {
     return "请从搜索结果中选择负责人";
   }
 
@@ -87,12 +87,6 @@ export function buildStorageMutationInput(form: StorageFormState): StorageMutati
     endpoint: form.endpoint.trim(),
     forcePathStyle: form.forcePathStyle,
     name: form.name.trim(),
-    owner: form.owner.trim(),
-    ownerAvatarUrl: form.ownerAvatarUrl.trim(),
-    ownerEmail: form.ownerEmail.trim(),
-    ownerFeishuOpenId: form.ownerFeishuOpenId.trim(),
-    ownerFeishuUnionId: form.ownerFeishuUnionId.trim(),
-    ownerFeishuUserId: form.ownerFeishuUserId.trim(),
     ownerUserId: form.ownerUserId.trim(),
     publicBaseUrl: form.publicBaseUrl.trim(),
     region: form.region.trim(),

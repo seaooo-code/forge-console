@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
 import type { Control, UseFormRegisterReturn } from "react-hook-form";
 import { Controller } from "react-hook-form";
-import { searchFeishuUsers } from "@/api/feishu-user-search";
+import type { AssignableUser } from "@/api/feishu-user-search";
+import { searchAssignableUsers } from "@/api/feishu-user-search";
 import { OwnerPicker } from "@/components/common/OwnerPicker";
 import { Input } from "@/components/ui/input";
 import {
@@ -11,7 +12,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { FeishuUserSearchResult } from "@/types/feishu";
 import { codeSourceProviderLabels, kindOptions } from "../constants";
 import type {
   CodeSourceConnection,
@@ -36,7 +36,7 @@ type ModuleFormFieldsProps = {
   onConnectionChange: (value: string) => void;
   onKindChange: (value: ModuleKind) => void;
   onOwnerChange: (value: string) => void;
-  onOwnerSelect: (user: FeishuUserSearchResult) => void;
+  onOwnerSelect: (user: AssignableUser) => void;
   onRepositoryChange: (repository: ModuleRepositorySelection | null) => void;
   selectedConnection: CodeSourceConnection | undefined;
   selectedKind: ModuleKind;
@@ -120,7 +120,7 @@ export function ModuleFormFields({
                   inputName={field.name}
                   inputRef={field.ref}
                   value={field.value}
-                  searchUsers={searchFeishuUsers}
+                  searchUsers={searchAssignableUsers}
                   onBlur={field.onBlur}
                   onChange={onOwnerChange}
                   onSelect={onOwnerSelect}

@@ -2,8 +2,12 @@ import { skipToken, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowRight, PackagePlus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { searchFeishuUsers } from "@/api/feishu-user-search";
-import { OwnerPicker, type OwnerSearchUser } from "@/components/common/OwnerPicker";
+import {
+  type AssignableUser,
+  resolveAssignableUser,
+  searchAssignableUsers,
+} from "@/api/feishu-user-search";
+import { OwnerPicker } from "@/components/common/OwnerPicker";
 import { FormActions, FormLayout, PageHeader, SectionCard } from "@/components/layout";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -127,16 +131,17 @@ export function ApplicationCreatePage({
   const handleOwnerChange = (value: string) => {
     setValue("owner", value, { shouldDirty: true, shouldTouch: true });
     setValue("ownerAvatarUrl", "", { shouldDirty: true });
-    setValue("ownerDepartmentIds", [], { shouldDirty: true });
     setValue("ownerEmail", "", { shouldDirty: true });
     setValue("ownerUserId", "", { shouldDirty: true });
   };
 
-  const handleOwnerSelect = (user: OwnerSearchUser) => {
-    setValue("ownerAvatarUrl", user.avatarUrl, { shouldDirty: true });
-    setValue("ownerDepartmentIds", user.departmentIds, { shouldDirty: true });
-    setValue("ownerEmail", user.email, { shouldDirty: true });
-    setValue("ownerUserId", user.id, { shouldDirty: true });
+  const handleOwnerSelect = async (user: AssignableUser) => {
+    // 通讯录里的人先换成当前租户的 Forge 用户，表单只提交 ownerUserId。
+    const resolved = await resolveAssignableUser(user);
+    setValue("owner", resolved.name, { shouldDirty: true, shouldTouch: true });
+    setValue("ownerAvatarUrl", resolved.avatarUrl, { shouldDirty: true });
+    setValue("ownerEmail", resolved.email, { shouldDirty: true });
+    setValue("ownerUserId", resolved.id, { shouldDirty: true });
   };
 
   const handleFormSubmit = async (form: ApplicationFormState) => {
@@ -152,7 +157,6 @@ export function ApplicationCreatePage({
       !input.slug ||
       !input.name ||
       !input.platform ||
-      !input.owner ||
       !input.description ||
       input.environments.length === 0
     ) {
@@ -252,7 +256,7 @@ export function ApplicationCreatePage({
                   inputName={field.name}
                   inputRef={field.ref}
                   value={field.value}
-                  searchUsers={searchFeishuUsers}
+                  searchUsers={searchAssignableUsers}
                   onBlur={field.onBlur}
                   onChange={handleOwnerChange}
                   onSelect={handleOwnerSelect}
